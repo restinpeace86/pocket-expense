@@ -125,6 +125,7 @@
 | distance_source | distance_source | null | |
 | applied_fuel_rate_per_km | integer | null | 계산 시점 단가 스냅샷 (D-018) |
 | custom_payload | jsonb | not null, default '{}' | 양식 커스텀 필드 입력값 `{ field_key: value }` |
+| self_approved | boolean | not null, default false | 본인 최종 결재로 결재 생략 승인 여부 (D-026) |
 | current_round | integer | not null, default 0 | 결재 회차 (상신마다 +1) |
 | rejection_reason | text | null | 최근 반려 사유 |
 | submitted_at / approved_at / rejected_at / paid_at | timestamptz | null | 상태 전이 시각 |
