@@ -1,0 +1,40 @@
+# Google Drive / Temp sync
+.tmp.driveupload/
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+/playwright-report
+/test-results
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# env files
+.env
+.env*.local
+
+# Vercel deployment cache / config
+.vercel
+
+# Claude Code personal local settings (팀 공유 X)
+.claude/settings.local.json
+
+# TypeScript & logs
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS misc
+.DS_Store
+*.pem
