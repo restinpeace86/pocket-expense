@@ -1,3 +1,5 @@
+-- ⚠️ DEPRECATED: spec/data/schema.md(2026-10-13)와 불일치. implementation/todo.md T1-1에서 전면 재작성한다. 이 파일을 Supabase에 적용하지 말 것.
+
 -- 0. 자동 updated_at 갱신용 트리거 함수 생성
 create or replace function update_updated_at_column()
 returns trigger as $$
