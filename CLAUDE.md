@@ -187,19 +187,6 @@ Vision LLM, Kakao Mobility, 알림톡은 각각 어댑터 모듈 뒤에 둔다. 
 5. 승인된 Spec과 기획의 임의 변경 금지
 
 
-# Project: PocketExpense (B2B Expense Management SaaS)
-
-## 🏛️ Architecture & Documentation Map
-Our specs are stored in `/specs/`:
-1. `landing-page.md`: Value proposition & entry point.
-2. `admin-onboarding.md`: Fast-track workspace creation & owner authentication.
-3. `roles-and-permissions.md`: Role hierarchy (`owner`, `admin`, `employee`) & join/invitation flow.
-4. `template-configuration.md`: Dual template system (Default standard + AI custom builder).
-5. `admin-settings.md`: Expense policies & smart auto-mapping tax closing package export.
-
-## 🔄 Core User Journey Flow
-[Landing] ➔ [Workspace Creation & Owner Setup] ➔ [Team Invitation & Role Assignment] ➔ [Template Setup] ➔ [Expense Operations & One-Click Tax Closing Export]
-
 # 문서 지도
 
 | 경로 | 내용 |
@@ -211,6 +198,8 @@ Our specs are stored in `/specs/`:
 | `spec/common/ui-rules.md` | 반응형, 디자인 시스템, 상태 배지, 로딩·에러 |
 | `spec/common/routes.md` | 전체 라우트 맵과 접근 권한 |
 | `spec/features/auth-onboarding.md` | 소셜 로그인, 회사 생성, 직원 가입, 멤버 승인 |
+| `spec/features/roles-and-permissions.md` | 역할(admin/employee)·결재자·권한 매트릭스 |
+| `spec/features/expense-claim-flow.md` | 영수증 여러 장 업로드 → 경비 N건 일괄 상신 |
 | `spec/features/form-template.md` | 사내 지출결의서 양식 분석·노코드 보정·자동 채움 |
 | `spec/features/receipt-parser.md` | Vision LLM 영수증 파싱 |
 | `spec/features/smart-meal.md` | 식대 인원수 기반 분할 |
@@ -218,6 +207,10 @@ Our specs are stored in `/specs/`:
 | `spec/features/approval-workflow.md` | 결재라인 설정, 상신, 순차 결재 |
 | `spec/features/kakao-alimtalk.md` | 알림톡 발송 시점·템플릿·실패 처리 |
 | `spec/features/tax-export.md` | 월말 엑셀·영수증 ZIP·PDF 출력 |
+| `spec/screens/landing-page.md` | 랜딩 페이지 |
+| `spec/screens/admin-onboarding.md` | 회사 생성 위저드 |
 | `spec/screens/employee-mobile.md` | 직원 화면 |
 | `spec/screens/approver.md` | 결재자 화면 (알림톡 링크 진입) |
-| `spec/screens/admin-dashboard.md` | 관리자 PC 화면 |
+| `spec/screens/admin-dashboard.md` | 관리자 PC 화면 (사이드바, 홈, 경비, 멤버, 부서, 결재라인, 세무 마감, 알림 이력) |
+| `spec/screens/admin-settings.md` | 관리자 설정: 회사 정보, 정산 정책, 청구 기한, 초대 |
+| `spec/screens/template-configuration.md` | 사내 양식 설정 화면 (기본 양식 + AI 맞춤 양식) |

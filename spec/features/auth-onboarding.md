@@ -8,13 +8,14 @@
 - 로그인 후 분기는 `spec/common/routes.md` §1을 따른다.
 
 ## 2. 회사 생성 (첫 관리자)
-1. 로그인한 사용자가 `/onboarding`에서 [새 회사 만들기] 선택.
-2. 입력: 회사명(필수), 사업자등록번호(선택), 본인 정보(§3의 직원 정보와 동일 항목).
+1. 랜딩의 [우리 회사 무료로 시작하기] 또는 `/onboarding`의 [새 회사 만들기]로 진입. 화면: `spec/screens/admin-onboarding.md`.
+2. 입력: 회사명(필수), 사업자등록번호(선택), 부서 목록(태그, 1개 이상), 본인 정보(이름·휴대폰·부서·직급·개인정보 동의).
 3. 서버에서 한 트랜잭션으로 처리:
    - `companies` 생성 (`invite_code` 자동 발급: 영문 대문자+숫자 8자리, 혼동 문자 0/O/1/I 제외)
-   - `departments`에 사용자가 입력한 부서 1개 생성
+   - `departments`에 입력한 부서들 생성
    - `members` 생성 (`role='admin'`, `status='approved'`, `approved_at=now()`)
-4. 완료 후 `/workspace/[id]/admin/settings`로 이동해 초기 설정을 안내한다(식대 한도 → 부서 → 결재라인 → 양식 → 초대 링크 순서의 체크리스트).
+   - 기본 결재라인 생성: `approval_lines`(`department_id=null`) + 1단계 결재자 = 생성자 (D-030)
+4. 완료 후 관리자 대시보드(`/workspace/[id]/admin`)로 이동해 초기 설정 체크리스트와 직원 초대 카드를 보여 준다(D-033).
 
 ## 3. 직원 가입
 ### 3.1 진입
@@ -44,7 +45,7 @@
 - 관리자 대시보드에 승인 대기 건수를 표시한다(알림톡 발송 없음).
 
 ## 4. 멤버 승인·관리 (관리자)
-- 화면: `spec/screens/admin-dashboard.md` §멤버 관리.
+- 화면: `spec/screens/admin-dashboard.md` ④. 역할 체계: `spec/features/roles-and-permissions.md`.
 - 승인: `pending` → `approved`, `approved_at` 기록. 거절: member 행 삭제(해당 계정은 다시 가입 가능).
 - 역할 변경: `employee` ↔ `admin`. 마지막 남은 admin은 강등·비활성화할 수 없다.
 - 비활성화: `approved` → `inactive`. 로그인은 되지만 회사 데이터에 접근할 수 없다. 기존 경비·결재 이력은 보존한다.

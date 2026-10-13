@@ -18,6 +18,7 @@
 | `approval_step_status` | `waiting`(앞 단계 대기), `pending`(내 차례), `approved`, `rejected`, `skipped`, `canceled` |
 | `parse_status` | `none`, `success`, `failed` |
 | `notification_status` | `queued`, `sent`, `failed` |
+| `claim_deadline_type` | `none`(사용 안 함), `end_of_month`(결제월 말일까지), `days_after`(결제일로부터 N일) |
 
 ## 2. 테이블
 
@@ -29,6 +30,8 @@
 | invite_code | text | not null, unique | 직원 초대 코드 (재발급 가능) |
 | meal_limit_per_person | integer | not null, default 10000 | 1인당 식대 지원 한도 |
 | fuel_rate_per_km | integer | not null, default 200 | 자차 km당 유류비 단가 |
+| claim_deadline_type | claim_deadline_type | not null, default 'none' | 청구 기한 방식 (D-031) |
+| claim_deadline_days | integer | null, 1~90 | `days_after`일 때 N |
 
 ### 2.2 `departments` — 부서
 | 컬럼 | 타입 | 제약 | 설명 |

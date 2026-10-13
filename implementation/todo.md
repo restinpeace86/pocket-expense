@@ -28,14 +28,15 @@
 - [ ] T1-6 RLS 격리 테스트 (타사 데이터 접근 불가 확인)
 
 ## T2. 인증·온보딩 — 기준: `spec/features/auth-onboarding.md`, `spec/common/routes.md`
+- [ ] T2-0 랜딩 페이지 (`spec/screens/landing-page.md`)
 - [ ] T2-1 카카오/Google 로그인, `/auth/callback`, 로그인 후 분기 미들웨어
-- [ ] T2-2 회사 생성 플로우 (첫 관리자, invite_code 발급)
+- [ ] T2-2 회사 생성 위저드 (`spec/screens/admin-onboarding.md`: 부서 태그, invite_code, 기본 결재라인=생성자, 대시보드 이동)
 - [ ] T2-3 `/join/[inviteCode]` 진입 + 직원 정보 입력 + 개인정보 동의
 - [ ] T2-4 승인 대기 화면
 
-## T3. 관리자 기본 — 기준: `spec/screens/admin-dashboard.md` ④⑤⑧
+## T3. 관리자 기본 — 기준: `spec/screens/admin-dashboard.md` 0·④⑤, `spec/screens/admin-settings.md`, `spec/features/roles-and-permissions.md`
 - [ ] T3-1 관리자 레이아웃(사이드바, Split View, 모바일 접힘)
-- [ ] T3-2 회사 설정 (식대 한도, 유류비 단가, 초대 링크·QR·재발급)
+- [ ] T3-2 회사·정책 설정 (식대 한도, 유류비 단가, 청구 기한 D-031, 초대 링크·QR·재발급)
 - [ ] T3-3 부서 관리
 - [ ] T3-4 멤버 관리 (승인/거절, 역할, 부서, 비활성화 규칙)
 
@@ -43,20 +44,21 @@
 - [ ] T4-1 기본/부서별 결재라인 CRUD + 단계 편집
 - [ ] T4-2 청구자 기준 결재라인 선택 함수 + 단위 테스트
 
-## T5. 사내 양식 — 기준: `spec/features/form-template.md`, admin ⑦
+## T5. 사내 양식 — 기준: `spec/features/form-template.md`, `spec/screens/template-configuration.md`
 - [ ] T5-1 양식 업로드 + Gemini 분석 어댑터 (실패 Fallback)
 - [ ] T5-2 블록형 필드 편집기 + 바인딩 지정
-- [ ] T5-3 지출결의서 렌더러(공용) + 기본 양식 + 미리보기
+- [ ] T5-3 지출결의서 렌더러(공용) + 기본 양식(template-configuration §2) + 미리보기 + 기본 양식으로 되돌리기
 - [ ] T5-4 버전 저장/활성화
 
 ## T6. 경비 작성 — 기준: `spec/screens/employee-mobile.md` ①②④, `spec/features/receipt-parser.md`, `spec/features/smart-meal.md`
 - [ ] T6-1 직원 홈 / 경비 리스트
 - [ ] T6-2 경비 작성 폼 골격 (카테고리, 결제수단, 임시저장, 수정, 삭제)
-- [ ] T6-3 영수증 업로드 + Gemini 파싱 어댑터 + 빈 필드 자동 채움 + 실패 Fallback
+- [ ] T6-3 영수증 업로드 + Gemini 파싱 어댑터 + 빈 필드 자동 채움 + 카테고리 추천(D-032) + 실패 Fallback
 - [ ] T6-4 식대 인원수 분할 계산 + 실시간 안내 + 단위 테스트
 - [ ] T6-5 외부 미팅비 입력
 - [ ] T6-6 회사 양식 고유 항목 동적 렌더링 + 지출결의서 미리보기
 - [ ] T6-7 내 정보 (프로필, 정산 계좌, 차량번호)
+- [ ] T6-8 청구 기한 초과 경고 (D-031)
 
 ## T7. 출장비 — 기준: `spec/features/trip-expense.md`
 - [ ] T7-1 세부 유형별 입력·검증
@@ -76,6 +78,7 @@
 - [ ] T9-4 내 결재함
 - [ ] T9-5 직원 경비 상세 (결재 타임라인, 반려 사유, 재상신)
 - [ ] T9-6 알림톡 발송 연결 (상신, 단계 승인, 최종 승인, 반려)
+- [ ] T9-7 영수증 여러 장 업로드 → 경비 N건 생성·검토 목록·일괄 상신 (`spec/features/expense-claim-flow.md`)
 
 ## T10. 월말 출력 — 기준: `spec/features/tax-export.md`, admin ⑨
 - [ ] T10-1 대상 조회 + 미포함 경고
@@ -84,7 +87,7 @@
 - [ ] T10-4 ⛔ 보류(O-02) 더존/세무사랑 업로드 호환 매핑 — 업로드 템플릿 미확보. 임의로 구현 가능으로 바꾸지 말 것
 
 ## T11. 관리자 운영 화면 — 기준: `spec/screens/admin-dashboard.md` ①②③⑩
-- [ ] T11-1 대시보드 홈 (체크리스트, 할 일, 이번 달 요약)
+- [ ] T11-1 대시보드 홈 (체크리스트, 초대 카드, KPI 3종·전월 대비, 할 일, 카테고리 차트)
 - [ ] T11-2 경비 목록 (필터, 확인 포인트 배지) + 정산완료 일괄 처리
 - [ ] T11-3 경비 상세 (관리자)
 - [ ] T11-4 알림 이력 + 재발송 + 개발 모드 배너

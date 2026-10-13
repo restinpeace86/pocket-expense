@@ -5,12 +5,12 @@
 ## 1. 공개 / 인증
 | 경로 | 화면 | 접근 |
 |---|---|---|
-| `/` | 랜딩 → 로그인 상태에 따라 분기 | 전체 |
+| `/` | 랜딩 페이지(`spec/screens/landing-page.md`). 로그인 상태면 아래 분기 | 전체 |
 | `/login` | 카카오/Google 로그인. `?next=` 지원 | 비로그인 |
 | `/join/[inviteCode]` | 초대 링크/QR 진입. 회사명 표시 후 로그인 → 직원 온보딩 | 전체 |
 | `/onboarding` | 진입 분기: [초대 코드로 회사 합류] / [새 회사 만들기] | 로그인 + member 없음 |
 | `/onboarding/join` | 직원 정보 입력 | 로그인 + member 없음 |
-| `/onboarding/create-company` | 회사 생성 (첫 관리자) | 로그인 + member 없음 |
+| `/onboarding/create-company` | 회사 생성 위저드 (`spec/screens/admin-onboarding.md`) | 로그인 + member 없음 |
 | `/onboarding/pending` | 승인 대기 안내 | `pending` 멤버 |
 | `/auth/callback` | OAuth 콜백 | — |
 
@@ -20,7 +20,8 @@
 | 경로 | 화면 |
 |---|---|
 | `/workspace/[id]/employee` | 홈 / 내 경비 리스트 |
-| `/workspace/[id]/employee/new` | 경비 작성 |
+| `/workspace/[id]/employee/new` | 경비 작성 (영수증 한 장) |
+| `/workspace/[id]/employee/new/batch` | 영수증 여러 장 업로드·검토·일괄 상신 (`spec/features/expense-claim-flow.md`) |
 | `/workspace/[id]/employee/expenses/[expenseId]` | 경비 상세 (결재 타임라인, 수정·재상신) |
 | `/workspace/[id]/employee/expenses/[expenseId]/edit` | `draft`·`rejected` 경비 수정 |
 | `/workspace/[id]/employee/profile` | 내 정보 수정, 정산 계좌, 로그아웃 |
@@ -40,8 +41,8 @@
 | `/workspace/[id]/admin/members` | 멤버 관리 (가입 승인, 역할, 부서, 비활성) |
 | `/workspace/[id]/admin/departments` | 부서 관리 |
 | `/workspace/[id]/admin/approval-lines` | 결재라인 설정 |
-| `/workspace/[id]/admin/form-template` | 사내 양식 업로드·보정·미리보기 |
-| `/workspace/[id]/admin/settings` | 회사 정보, 식대 한도, 유류비 단가, 초대 링크/QR |
+| `/workspace/[id]/admin/form-template` | 사내 양식 설정 (`spec/screens/template-configuration.md`) |
+| `/workspace/[id]/admin/settings` | 회사 정보, 식대 한도, 유류비 단가, 청구 기한, 초대 링크/QR (`spec/screens/admin-settings.md`) |
 | `/workspace/[id]/admin/export` | 월말 마감·출력 |
 | `/workspace/[id]/admin/notifications` | 알림톡 발송 이력 |
 

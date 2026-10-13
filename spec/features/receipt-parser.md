@@ -20,6 +20,7 @@
 | `supply_amount` | integer \| null | 공급가액. 표기 없으면 null |
 | `vat_amount` | integer \| null | 부가세. 표기 없으면 null (계산으로 추정하지 않음) |
 | `expense_date` | `YYYY-MM-DD` | 결제일자 |
+| `suggested_category` | `meal` / `trip` / `meeting` / null | 카테고리 추천(D-032). 카테고리가 비어 있을 때만 기본값으로 채우고 "AI 추천" 표시. 판단이 어려우면 null |
 
 - 응답은 JSON 스키마로 강제(Structured Output)하고, 서버에서 형식·범위를 검증한다(금액 음수 불가, 날짜는 오늘 이후 불가).
 - 범위 밖(오버엔지니어링 금지): 카드번호, 승인번호, 품목별 내역, 가맹점 사업자번호.
