@@ -1,6 +1,6 @@
 # [Spec] 카카오 알림톡 결재 알림
 
-관련: D-007, D-013, O-01 / 데이터: `notification_logs`
+관련: D-007, D-013, D-034, O-01 / 데이터: `notification_logs` / 알림 단위: 지출소명서 1건
 
 ## 1. 개요
 결재 요청과 결과를 카카오 알림톡으로 보내, 결재자와 직원이 앱 설치 없이 카카오톡 링크로 바로 처리·확인하게 한다.
@@ -16,15 +16,15 @@
 링크 기준 URL은 `NEXT_PUBLIC_SITE_URL`. (알림톡 버튼 링크 도메인은 템플릿 심사 시 등록 필요)
 | 코드 | 수신자 | 시점 | 내용 | 버튼 링크 |
 |---|---|---|---|---|
-| `APPROVAL_REQUEST` | 현재 차례 결재자 | 상신 직후, 이전 단계 승인 직후 | `[PocketExpense] #{청구자}님의 경비 결재 요청` / 카테고리, 금액, 결제일, 가맹점, 결재 단계(1/2) | [결재하기] `/workspace/{companyId}/approvals/{expenseId}` |
-| `APPROVAL_COMPLETED` | 청구자 | 최종 승인 직후 | `경비가 최종 승인되었습니다. 정산 대기 중입니다.` / 카테고리, 금액, 정산 방향·금액 | [내역 보기] `/workspace/{companyId}/employee/expenses/{expenseId}` |
-| `APPROVAL_REJECTED` | 청구자 | 반려 직후 | `경비가 반려되었습니다.` / 반려자, 반려 사유, 카테고리, 금액 | [수정하기] `/workspace/{companyId}/employee/expenses/{expenseId}` |
+| `APPROVAL_REQUEST` | 현재 차례 결재자 | 상신 직후, 이전 단계 승인 직후 | `[PocketExpense] #{청구자}님의 지출소명서 결재 요청` / 제목, 건수, 합계, 기간, 결재 단계(1/2) | [결재하기] `/workspace/{companyId}/approvals/{claimId}` |
+| `APPROVAL_COMPLETED` | 청구자 | 최종 승인 직후 | `지출소명서가 최종 승인되었습니다. 정산 대기 중입니다.` / 제목, 건수, 합계, 지급·납부 금액 | [내역 보기] `/workspace/{companyId}/employee/claims/{claimId}` |
+| `APPROVAL_REJECTED` | 청구자 | 반려 직후 | `지출소명서가 반려되었습니다.` / 제목, 반려자, 반려 사유, 지목 항목 수 | [수정하기] `/workspace/{companyId}/employee/claims/{claimId}` |
 
 - 이 3개 외의 알림(가입 승인, 정산완료 등)은 현재 범위가 아니다.
 
 ## 4. 링크 진입 보안 (D-013)
 - 링크에는 비밀 토큰을 넣지 않는다. 진입 시 로그인 여부를 확인하고, 미로그인이면 `/login?next=<링크 경로>`로 보낸 뒤 원래 화면으로 돌아온다.
-- 로그인한 멤버가 해당 경비의 현재 결재자가 아니면 읽기 전용(열람 권한이 있을 때) 또는 "접근 권한이 없습니다" 안내.
+- 로그인한 멤버가 해당 소명서의 현재 결재자가 아니면 읽기 전용(열람 권한이 있을 때) 또는 "접근 권한이 없습니다" 안내.
 
 ## 5. 실패 처리
 - 실패 건은 `notification_logs.status='failed'`와 `error_message`를 남긴다. 자동 재시도는 1회(30초 후)만 한다.

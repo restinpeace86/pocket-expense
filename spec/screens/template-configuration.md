@@ -7,19 +7,29 @@
 - **AI 맞춤 양식**: 회사가 평소 쓰던 양식이 있으면 등록해서 쓴다(선택).
 
 ## 2. 기본 양식 (활성 양식이 없을 때 적용)
-표준 항목만으로 구성되며 `form-template.md` §4의 바인딩 키를 쓴다.
+표준 항목만으로 구성되며 `form-template.md` §4의 바인딩 키를 쓴다. 헤더 + 항목 표 구조(D-034).
+
+**헤더**
 | 순서 | 항목 | 바인딩 |
 |---|---|---|
-| 1 | 사용 일자 | `expense.expense_date` |
-| 2 | 사용처(가맹점명) | `expense.merchant_name` |
-| 3 | 합계금액 / 공급가액 / 부가세 | `expense.amount` / `expense.supply_amount` / `expense.vat_amount` |
-| 4 | 지출 카테고리 | `expense.category` (+ 출장 세부유형 `expense.trip_type`) |
-| 5 | 결제수단 | `expense.payment_method` |
-| 6 | 적요(지출 목적) | `expense.purpose` |
-| 7 | 청구자 / 부서 | `member.name` / `member.department` |
-| 8 | 회사 지원금 / 개인 부담금 | `expense.company_supported_amount` / `expense.personal_burden_amount` |
+| 1 | 제목 | `claim.title` |
+| 2 | 청구자 / 부서 / 직급 | `member.name` / `member.department` / `member.position` |
+| 3 | 소명 내용 | `claim.description` |
+| 4 | 상신일 | `claim.submitted_at` |
+| 5 | 합계 / 회사 지원금 / 개인 부담금 | `claim.total_amount` / `claim.total_company_supported` / `claim.total_personal_burden` |
+
+**항목 표 (영수증 1장 = 1행)**
+| 순서 | 열 | 바인딩 |
+|---|---|---|
+| 1 | 사용 일자 | `item.expense_date` |
+| 2 | 사용처(가맹점명) | `item.merchant_name` |
+| 3 | 지출 카테고리 | `item.category` (+ 출장 세부유형 `item.trip_type`) |
+| 4 | 결제수단 | `item.payment_method` |
+| 5 | 공급가액 / 부가세 / 합계금액 | `item.supply_amount` / `item.vat_amount` / `item.amount` |
+| 6 | 적요 | `item.purpose` |
+| 7 | 회사 지원금 / 개인 부담금 | `item.company_supported_amount` / `item.personal_burden_amount` |
 - 영수증 이미지와 결재란은 렌더러가 자동으로 붙인다(`form-template.md` §5).
-- 카테고리별 항목(인원수, 참석자, 출발지·도착지·주행거리 등)은 해당 카테고리 경비에만 표시한다.
+- 카테고리별 값(인원수, 참석자, 출발지·도착지·주행거리 등)은 항목 상세에 표시하고, 항목 표의 적요 칸에 요약한다(예: "3명", "서울→부산 128.4km").
 
 ## 3. AI 맞춤 양식 화면 구성
 - 상단 상태: "현재 사용 중: 기본 양식" 또는 "현재 사용 중: 맞춤 양식 v3" + [기본 양식으로 되돌리기](활성 양식 해제).

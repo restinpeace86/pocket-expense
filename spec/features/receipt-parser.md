@@ -1,13 +1,13 @@
 # [Spec] Vision LLM 영수증 파싱
 
-관련: D-006, D-017 / 데이터: `expenses` (receipt_path, parse_status, ai_parsed_payload, merchant_name, amount, supply_amount, vat_amount, expense_date)
+관련: D-006, D-017, D-034 / 데이터: `expense_items` (receipt_path, parse_status, ai_parsed_payload, merchant_name, amount, supply_amount, vat_amount, expense_date, category) / 여러 장 동시 처리: `spec/features/expense-claim-flow.md` Step 2
 
 ## 1. 개요
 직원이 촬영·업로드한 영수증 이미지를 Storage에 원본 저장하고, Gemini Vision으로 핵심 거래 정보를 추출해 입력 폼에 자동으로 채운다. 추출 결과는 초안이며 직원이 확인·수정한다.
 
 ## 2. 처리 흐름
 1. 직원이 영수증 선택(카메라/갤러리/PDF).
-2. 클라이언트에서 이미지 긴 변 2000px 이하로 리사이즈 후 업로드 → `receipts` 버킷에 원본 저장(`spec/data/schema.md` §4). 아직 경비 행이 없으면 `draft` 경비를 먼저 생성한다.
+2. 클라이언트에서 이미지 긴 변 2000px 이하로 리사이즈 후 업로드 → `receipts` 버킷에 원본 저장(`spec/data/schema.md` §4). 영수증마다 소명서 안에 항목 1건을 먼저 생성하고 `parse_status='parsing'`으로 둔다.
 3. 서버 액션이 Gemini Vision 호출 (`GEMINI_API_KEY`, 서버 전용).
 4. 결과를 `ai_parsed_payload`에 원본 그대로 저장하고 `parse_status` 갱신.
 5. 추출값을 폼의 **빈 필드에만** 채운다(직원이 이미 입력한 값은 덮어쓰지 않음).

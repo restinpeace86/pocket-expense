@@ -70,7 +70,7 @@ PocketExpense는 5~30인 소기업·스타트업·비영리 단체가 **영수�
 
 ### 제2조. 단일 파이프라인
 PocketExpense는 범용 그룹웨어가 아니다.
-**[사내 양식 등록 → 영수증 촬영·파싱 → 사내 양식 자동 채움 → 결재라인 상신 → 카카오 알림톡 결재 → 세무 패키지 출력]** 이라는 하나의 파이프라인에 집중한다.
+**[사내 양식 등록 → 영수증 여러 장 촬영·파싱 → 지출소명서(헤더 + 영수증 항목 표) 자동 채움 → 결재라인 상신 → 카카오 알림톡 결재 → 세무 패키지 출력]** 이라는 하나의 파이프라인에 집중한다.
 
 ### 제3조. 범위 원칙
 `spec/`에 정의된 기능이 현재 구현 범위의 전부이다. 범위 밖 기능은 구현하지 않고 제안한다.
@@ -156,7 +156,7 @@ Vision LLM, Kakao Mobility, 알림톡은 각각 어댑터 모듈 뒤에 둔다. 
 ### 제6조. 구현 완료 기준
 다음 절차를 모두 거친 상태를 "Review 요청 가능"으로 본다.
 구현 → TypeScript 검증 → Test 검증 → Build 검증 → 실제 화면 확인 → Spec 일치 확인.
-금액 계산 로직(식대 분할, 유류비, 부가세, 정산 방향)과 결재 상태 전이는 반드시 단위 테스트를 포함한다.
+금액 계산 로직(식대 분할, 유류비, 부가세, 소명서 합계, 정산 방향)과 결재 상태 전이는 반드시 단위 테스트를 포함한다.
 프로젝트에 없는 검증 명령을 임의로 만들어 실행하지 않는다.
 
 ### 제7조. 구현 기록
@@ -194,12 +194,12 @@ Vision LLM, Kakao Mobility, 알림톡은 각각 어댑터 모듈 뒤에 둔다. 
 | `project/overview.md` | 서비스 목적, 타겟, USP, 비즈니스 모델 |
 | `project/decision-log.md` | 확정 결정 + 미결 사항(Open) |
 | `spec/data/schema.md` | 테이블·컬럼·enum·RLS·Storage (데이터 단일 출처) |
-| `spec/data/expense-lifecycle.md` | 경비 상태 전이, 결재 진행, 정산 방향 (규칙 단일 출처) |
+| `spec/data/expense-lifecycle.md` | 지출소명서 상태 전이, 결재 진행, 금액 계산, 정산 방향 (규칙 단일 출처) |
 | `spec/common/ui-rules.md` | 반응형, 디자인 시스템, 상태 배지, 로딩·에러 |
 | `spec/common/routes.md` | 전체 라우트 맵과 접근 권한 |
 | `spec/features/auth-onboarding.md` | 소셜 로그인, 회사 생성, 직원 가입, 멤버 승인 |
 | `spec/features/roles-and-permissions.md` | 역할(admin/employee)·결재자·권한 매트릭스 |
-| `spec/features/expense-claim-flow.md` | 영수증 여러 장 업로드 → 경비 N건 일괄 상신 |
+| `spec/features/expense-claim-flow.md` | 지출소명서 작성 흐름 (영수증 N장 → 소명서 1건 → 일괄 결재) |
 | `spec/features/form-template.md` | 사내 지출결의서 양식 분석·노코드 보정·자동 채움 |
 | `spec/features/receipt-parser.md` | Vision LLM 영수증 파싱 |
 | `spec/features/smart-meal.md` | 식대 인원수 기반 분할 |

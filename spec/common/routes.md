@@ -19,25 +19,25 @@
 ## 2. 직원 (모바일)
 | 경로 | 화면 |
 |---|---|
-| `/workspace/[id]/employee` | 홈 / 내 경비 리스트 |
-| `/workspace/[id]/employee/new` | 경비 작성 (영수증 한 장) |
-| `/workspace/[id]/employee/new/batch` | 영수증 여러 장 업로드·검토·일괄 상신 (`spec/features/expense-claim-flow.md`) |
-| `/workspace/[id]/employee/expenses/[expenseId]` | 경비 상세 (결재 타임라인, 수정·재상신) |
-| `/workspace/[id]/employee/expenses/[expenseId]/edit` | `draft`·`rejected` 경비 수정 |
+| `/workspace/[id]/employee` | 홈 / 내 소명서 리스트 |
+| `/workspace/[id]/employee/claims/new` | `draft` 소명서 생성 후 편집 화면으로 리다이렉트 |
+| `/workspace/[id]/employee/claims/[claimId]` | 소명서 상세 (결재 타임라인, 반려 정보) |
+| `/workspace/[id]/employee/claims/[claimId]/edit` | `draft`·`rejected` 소명서 편집 (헤더 + 영수증 항목 표, 영수증 추가) |
+| `/workspace/[id]/employee/claims/[claimId]/items/[itemId]` | 영수증 항목 편집 |
 | `/workspace/[id]/employee/profile` | 내 정보 수정, 정산 계좌, 로그아웃 |
 
 ## 3. 결재자 (모바일 우선)
 | 경로 | 화면 | 접근 |
 |---|---|---|
 | `/workspace/[id]/approvals` | 내 결재함 (대기 / 처리완료 탭) | 결재라인에 지정된 적 있는 멤버 (메뉴는 결재 대기·이력이 있을 때만 노출) |
-| `/workspace/[id]/approvals/[expenseId]` | 결재 화면 (**알림톡 링크 도착지**) | 해당 경비의 결재자. 현재 차례가 아니면 읽기 전용 |
+| `/workspace/[id]/approvals/[claimId]` | 소명서 결재 화면 (**알림톡 링크 도착지**) | 해당 소명서의 결재자. 현재 차례가 아니면 읽기 전용 |
 
 ## 4. 관리자 (PC)
 | 경로 | 화면 |
 |---|---|
 | `/workspace/[id]/admin` | 대시보드 홈 |
-| `/workspace/[id]/admin/expenses` | 전체 경비 목록 |
-| `/workspace/[id]/admin/expenses/[expenseId]` | 경비 상세 (읽기 + 정산완료 처리) |
+| `/workspace/[id]/admin/claims` | 전체 소명서 목록 |
+| `/workspace/[id]/admin/claims/[claimId]` | 소명서 상세 (읽기 + 정산완료 처리) |
 | `/workspace/[id]/admin/members` | 멤버 관리 (가입 승인, 역할, 부서, 비활성) |
 | `/workspace/[id]/admin/departments` | 부서 관리 |
 | `/workspace/[id]/admin/approval-lines` | 결재라인 설정 |

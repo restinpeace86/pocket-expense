@@ -3,6 +3,7 @@
 > 이 문서가 테이블·컬럼·enum의 유일한 기준이다. 다른 문서와 다르면 이 문서를 따른다. (D-001)
 > 모든 테이블은 `id uuid PK default gen_random_uuid()`, `created_at`, `updated_at timestamptz`(updated_at 트리거)를 가진다. 아래 표에서는 생략한다.
 > 금액은 모두 원 단위 정수(`integer`)다.
+> **경비 구조 (D-034)**: 지출소명서 1건(`expense_claims`, 헤더) 안에 영수증 항목 N건(`expense_items`, 행). 결재·상태·정산완료는 소명서 단위, 카테고리·금액 계산·영수증은 항목 단위다.
 
 ## 1. Enum
 
@@ -10,13 +11,13 @@
 |---|---|
 | `member_role` | `admin`, `employee` |
 | `member_status` | `pending`(승인 대기), `approved`(활성), `inactive`(비활성/퇴사) |
-| `expense_category` | `meal`(식대), `trip`(출장비), `meeting`(외부 미팅비) |
+| `claim_status` | `draft`, `submitted`, `approved`, `rejected`, `paid` (소명서 상태) |
+| `expense_category` | `meal`(식대), `trip`(출장비), `meeting`(외부 미팅비) (항목 카테고리) |
 | `payment_method` | `personal_card`(개인카드), `corporate_card`(법인카드) |
-| `expense_status` | `draft`, `submitted`, `approved`, `rejected`, `paid` |
 | `trip_type` | `own_car`(자차), `public_transport`(대중교통), `taxi`(택시), `lodging`(숙박), `toll_parking`(통행료·주차), `other`(기타) |
 | `distance_source` | `api`(카카오 길찾기 산출), `manual`(직접 입력) |
 | `approval_step_status` | `waiting`(앞 단계 대기), `pending`(내 차례), `approved`, `rejected`, `skipped`, `canceled` |
-| `parse_status` | `none`, `success`, `failed` |
+| `parse_status` | `none`, `parsing`, `success`, `failed` |
 | `notification_status` | `queued`, `sent`, `failed` |
 | `claim_deadline_type` | `none`(사용 안 함), `end_of_month`(결제월 말일까지), `days_after`(결제일로부터 N일) |
 
@@ -66,12 +67,12 @@
 | account_number | text | not null | |
 | account_holder | text | not null | 예금주 |
 
-### 2.5 `form_templates` — 사내 지출결의서 양식 (D-019)
+### 2.5 `form_templates` — 사내 지출소명서 양식 (D-019)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | company_id | uuid | FK companies | |
 | version | integer | not null, unique(company_id, version) | 1부터 증가 |
-| schema | jsonb | not null | 양식 정의 객체 (`spec/features/form-template.md` §3) |
+| schema | jsonb | not null | 양식 정의 객체 — 헤더 필드 + 항목(표) 필드 (`spec/features/form-template.md` §3) |
 | source_file_path | text | null | 업로드한 원본 양식 파일 (Storage `form-templates`) |
 | ai_extracted_schema | jsonb | null | LLM 1차 추출 원본 (보정 전) |
 | is_active | boolean | not null, default false | 회사당 활성 양식 최대 1개 (partial unique) |
@@ -92,15 +93,34 @@
 | step_order | integer | not null, unique(approval_line_id, step_order) | 1부터 |
 | approver_member_id | uuid | FK members, not null | `approved` 상태 멤버만 지정 가능 |
 
-### 2.7 `expenses` — 경비 청구
+### 2.7 `expense_claims` — 지출소명서 (헤더, 결재 단위) (D-034)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | company_id | uuid | FK companies, not null | |
 | member_id | uuid | FK members, not null | 청구자 |
 | form_template_id | uuid | FK form_templates, null | 작성 당시 활성 양식 |
-| category | expense_category | not null | |
-| payment_method | payment_method | not null | (D-010) |
-| status | expense_status | not null, default 'draft' | |
+| title | text | not null | 소명서 제목. 예: "10/15 부산 출장" (자동 제안, 수정 가능) |
+| description | text | null | 소명 내용(공통 사유) |
+| status | claim_status | not null, default 'draft' | |
+| header_custom_payload | jsonb | not null, default '{}' | 양식 헤더 고유 항목 값 `{ field_key: value }` |
+| item_count | integer | not null, default 0 | 항목 수 (서버가 항목 변경 시 갱신) |
+| total_amount | integer | not null, default 0 | 항목 `amount` 합계 (서버 갱신) |
+| total_company_supported | integer | not null, default 0 | 항목 회사지원금 합계 (서버 갱신) |
+| total_personal_burden | integer | not null, default 0 | 항목 개인부담금 합계 (서버 갱신) |
+| self_approved | boolean | not null, default false | 본인 최종 결재로 결재 생략 승인 여부 (D-026) |
+| current_round | integer | not null, default 0 | 결재 회차 (상신마다 +1) |
+| rejection_reason | text | null | 최근 반려 사유 |
+| submitted_at / approved_at / rejected_at / paid_at | timestamptz | null | 상태 전이 시각 |
+| paid_by_member_id | uuid | FK members, null | 정산완료 처리자 |
+
+### 2.8 `expense_items` — 영수증 항목 (행) (D-034)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| claim_id | uuid | FK expense_claims, cascade, not null | 소속 소명서 |
+| company_id | uuid | FK companies, not null | RLS용 |
+| sort_order | integer | not null, default 0 | 소명서 안 표시 순서 |
+| category | expense_category | null (상신 시 필수) | |
+| payment_method | payment_method | null (상신 시 필수) | (D-010) |
 | expense_date | date | null (상신 시 필수) | 결제/사용 일자. 출력 기준월 (D-016) |
 | merchant_name | text | null | 가맹점명 (자차는 null 허용) |
 | amount | integer | null (상신 시 필수) | 총 결제금액 |
@@ -110,7 +130,7 @@
 | applied_meal_limit_per_person | integer | null | 계산 시점 1인 한도 스냅샷 (D-018) |
 | company_supported_amount | integer | null | 회사 지원금 |
 | personal_burden_amount | integer | not null, default 0 | 개인 부담금 |
-| purpose | text | null | 지출 목적/적요. `meeting` 필수 |
+| purpose | text | null | 항목 적요. `meeting` 필수 |
 | attendees | text | null | 참석자 (`meeting`) |
 | client_name | text | null | 거래처/상대 회사명 (`meeting`) |
 | receipt_path | text | null | Storage `receipts` 경로. `own_car` 외 상신 시 필수 |
@@ -127,30 +147,28 @@
 | distance_km | numeric(8,1) | null | 주행거리 |
 | distance_source | distance_source | null | |
 | applied_fuel_rate_per_km | integer | null | 계산 시점 단가 스냅샷 (D-018) |
-| custom_payload | jsonb | not null, default '{}' | 양식 커스텀 필드 입력값 `{ field_key: value }` |
-| self_approved | boolean | not null, default false | 본인 최종 결재로 결재 생략 승인 여부 (D-026) |
-| current_round | integer | not null, default 0 | 결재 회차 (상신마다 +1) |
-| rejection_reason | text | null | 최근 반려 사유 |
-| submitted_at / approved_at / rejected_at / paid_at | timestamptz | null | 상태 전이 시각 |
-| paid_by_member_id | uuid | FK members, null | 정산완료 처리자 |
+| item_custom_payload | jsonb | not null, default '{}' | 양식 항목(표) 고유 필드 값 `{ field_key: value }` |
 
-### 2.8 `expense_approvals` — 경비별 결재 진행 (스냅샷, D-012)
+- 소명서 1건의 항목은 1~30건이다.
+
+### 2.9 `claim_approvals` — 소명서별 결재 진행 (스냅샷, D-012)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
-| expense_id | uuid | FK expenses, cascade | |
+| claim_id | uuid | FK expense_claims, cascade | |
 | company_id | uuid | FK companies | RLS용 |
 | round | integer | not null | 결재 회차 |
-| step_order | integer | not null, unique(expense_id, round, step_order) | |
+| step_order | integer | not null, unique(claim_id, round, step_order) | |
 | approver_member_id | uuid | FK members | |
 | status | approval_step_status | not null | |
 | comment | text | null | 반려 사유(반려 시 필수) / 승인 코멘트 |
+| flagged_item_ids | uuid[] | not null, default '{}' | 반려 시 결재자가 지목한 문제 항목(선택) |
 | acted_at | timestamptz | null | |
 
-### 2.9 `notification_logs` — 알림톡 발송 이력
+### 2.10 `notification_logs` — 알림톡 발송 이력
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | company_id | uuid | FK companies | |
-| expense_id | uuid | FK expenses, null | |
+| claim_id | uuid | FK expense_claims, null | |
 | recipient_member_id | uuid | FK members | |
 | recipient_phone | text | not null | 발송 시점 번호 |
 | template_code | text | not null | `spec/features/kakao-alimtalk.md` §3 |
@@ -172,8 +190,9 @@
 | member_bank_accounts | 본인, 자기 회사 admin | 본인 |
 | form_templates | 자기 회사 | admin |
 | approval_lines, approval_line_steps | 자기 회사 | admin |
-| expenses | 본인 경비 / 해당 경비의 결재자(expense_approvals에 있는 멤버) / 자기 회사 admin | 본인: `draft`·`rejected` 상태에서만 수정·삭제(`draft`만 삭제). 상태 전이는 서버 액션(RPC)으로만 |
-| expense_approvals | 해당 경비 열람 가능자 | 서버 액션(RPC)으로만 |
+| expense_claims | 본인 소명서 / 해당 소명서의 결재자(claim_approvals에 있는 멤버) / 자기 회사 admin | 본인: `draft`·`rejected` 상태에서만 수정, `draft`만 삭제. 상태·합계 컬럼은 서버 액션(RPC)으로만 |
+| expense_items | 소속 소명서 열람 가능자 | 본인: 소속 소명서가 `draft`·`rejected`일 때만 추가·수정·삭제 |
+| claim_approvals | 해당 소명서 열람 가능자 | 서버 액션(RPC)으로만 |
 | notification_logs | 자기 회사 admin | 서버 전용 |
 
 - 승인 대기(`pending`)·비활성(`inactive`) 멤버는 자기 member 행 외 회사 데이터에 접근할 수 없다.
@@ -182,7 +201,7 @@
 ## 4. Storage
 | 버킷 | 공개 | 경로 규칙 | 접근 |
 |---|---|---|---|
-| `receipts` | 비공개 | `{company_id}/{member_id}/{expense_id}/{uuid}.{ext}` | 해당 경비 열람 가능자. signed URL(유효 10분)로만 표시 |
+| `receipts` | 비공개 | `{company_id}/{member_id}/{claim_id}/{item_id}.{ext}` | 소속 소명서 열람 가능자. signed URL(유효 10분)로만 표시 |
 | `form-templates` | 비공개 | `{company_id}/{uuid}.{ext}` | 자기 회사 admin |
 
 - 허용 형식: 영수증 jpg/png/webp/pdf, 양식 jpg/png/pdf. 최대 10MB.
