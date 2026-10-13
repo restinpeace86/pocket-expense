@@ -187,6 +187,19 @@ Vision LLM, Kakao Mobility, 알림톡은 각각 어댑터 모듈 뒤에 둔다. 
 5. 승인된 Spec과 기획의 임의 변경 금지
 
 
+# Project: PocketExpense (B2B Expense Management SaaS)
+
+## 🏛️ Architecture & Documentation Map
+Our specs are stored in `/specs/`:
+1. `landing-page.md`: Value proposition & entry point.
+2. `admin-onboarding.md`: Fast-track workspace creation & owner authentication.
+3. `roles-and-permissions.md`: Role hierarchy (`owner`, `admin`, `employee`) & join/invitation flow.
+4. `template-configuration.md`: Dual template system (Default standard + AI custom builder).
+5. `admin-settings.md`: Expense policies & smart auto-mapping tax closing package export.
+
+## 🔄 Core User Journey Flow
+[Landing] ➔ [Workspace Creation & Owner Setup] ➔ [Team Invitation & Role Assignment] ➔ [Template Setup] ➔ [Expense Operations & One-Click Tax Closing Export]
+
 # 문서 지도
 
 | 경로 | 내용 |
