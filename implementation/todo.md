@@ -21,15 +21,15 @@
 
 ## T1. DB 스키마 — 기준: `spec/data/schema.md`, `spec/data/expense-lifecycle.md`
 - [ ] T1-1 `supabase/migrations/001_initial_schema.sql` 재작성 (enum, 테이블, updated_at 트리거, 제약)
-- [ ] T1-2 RLS 정책 + `current_member()` 헬퍼
+- [ ] T1-2 RLS 정책 + `current_member()`·`is_admin()` 헬퍼 + 최고 관리자 1명 제약
 - [ ] T1-3 Storage 버킷(`receipts`, `form-templates`) 및 정책
 - [ ] T1-4 상태 전이 RPC/서버 함수 골격 (상신, 승인, 반려, 정산완료)
 - [ ] T1-5 Supabase 적용 및 TypeScript 타입 생성
 - [ ] T1-6 RLS 격리 테스트 (타사 데이터 접근 불가 확인)
 
 ## T2. 인증·온보딩 — 기준: `spec/features/auth-onboarding.md`, `spec/common/routes.md`
-- [ ] T2-0 랜딩 페이지 (`spec/screens/landing-page.md`)
-- [ ] T2-1 카카오/Google 로그인, `/auth/callback`, 로그인 후 분기 미들웨어
+- [ ] T2-0 랜딩 페이지 (`spec/screens/landing-page.md`: 소개 동영상 또는 목업 애니메이션)
+- [ ] T2-1 카카오/Google 로그인, `/auth/callback`, 로그인 후 분기 미들웨어(역할별 워크스페이스)
 - [ ] T2-2 회사 생성 위저드 (`spec/screens/admin-onboarding.md`: 부서 태그, invite_code, 기본 결재라인=생성자, 대시보드 이동)
 - [ ] T2-3 `/join/[inviteCode]` 진입 + 직원 정보 입력 + 개인정보 동의
 - [ ] T2-4 승인 대기 화면
@@ -38,7 +38,7 @@
 - [ ] T3-1 관리자 레이아웃(사이드바, Split View, 모바일 접힘)
 - [ ] T3-2 회사·정책 설정 (식대 한도, 유류비 단가, 청구 기한 D-031, 초대 링크·QR·재발급)
 - [ ] T3-3 부서 관리
-- [ ] T3-4 멤버 관리 (승인/거절, 역할, 부서, 비활성화 규칙)
+- [ ] T3-4 멤버 관리 (승인/거절, 부서, 비활성화 규칙, 역할 변경·관리자 비활성화는 최고 관리자만, 최고 관리자 넘기기 — D-038) + 권한 단위 테스트
 - [ ] T3-5 계정과목 목록·매핑 화면 + 회사 생성 시 기본값 생성 (`spec/features/account-titles.md`, D-036)
 
 ## T4. 결재라인 설정 — 기준: `spec/features/approval-workflow.md` §2, admin ⑥

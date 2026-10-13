@@ -120,7 +120,8 @@ Spec이 명확하지 않으면 임의로 판단해 구현하지 않는다. `proj
 승인된 Spec을 기준으로 구현한다. 기획을 변경하거나 새 기능을 독자적으로 결정하지 않는다.
 
 ### 제3조. 서비스 내 역할
-- **관리자(admin)**: 회사 설정, 멤버 승인, 결재라인·양식 설정, 정산완료 처리, 월말 출력을 담당한다.
+- **최고 관리자(super_admin)**: 회사를 등록한 계정, 회사당 1명. 관리자의 모든 권한 + 관리자 지정·해제 + 최고 관리자 넘기기.
+- **관리자(admin)**: 회사 설정, 멤버 승인, 결재라인·양식·계정과목 설정, 정산완료 처리, 월말 출력을 담당한다.
 - **결재자(approver)**: 결재라인에 지정된 멤버. 역할(role)이 아니라 결재라인 지정으로 결정된다.
 - **직원(employee)**: 경비를 청구하고 결재 결과를 받는다.
 
@@ -198,7 +199,7 @@ Vision LLM, Kakao Mobility, 알림톡은 각각 어댑터 모듈 뒤에 둔다. 
 | `spec/common/ui-rules.md` | 반응형, 디자인 시스템, 상태 배지, 로딩·에러 |
 | `spec/common/routes.md` | 전체 라우트 맵과 접근 권한 |
 | `spec/features/auth-onboarding.md` | 소셜 로그인, 회사 생성, 직원 가입, 멤버 승인 |
-| `spec/features/roles-and-permissions.md` | 역할(admin/employee)·결재자·권한 매트릭스 |
+| `spec/features/roles-and-permissions.md` | 역할(super_admin/admin/employee)·결재자·권한 매트릭스·최고 관리자 넘기기 |
 | `spec/features/expense-claim-flow.md` | 지출소명서 작성 흐름 (영수증 N장 → 소명서 1건 → 일괄 결재) |
 | `spec/features/form-template.md` | 사내 지출결의서 양식 분석·노코드 보정·자동 채움 |
 | `spec/features/receipt-parser.md` | Vision LLM 영수증 파싱 |

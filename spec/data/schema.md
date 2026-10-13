@@ -9,7 +9,7 @@
 
 | 이름 | 값 |
 |---|---|
-| `member_role` | `admin`, `employee` |
+| `member_role` | `super_admin`(최고 관리자, 회사당 1명), `admin`(관리자), `employee`(직원) (D-038) |
 | `member_status` | `pending`(승인 대기), `approved`(활성), `inactive`(비활성/퇴사) |
 | `claim_status` | `draft`, `submitted`, `approved`, `rejected`, `paid` (소명서 상태) |
 | `expense_category` | `meal`(일반 식대), `trip`(출장비), `meeting`(외부 미팅비) (항목 카테고리. 출장 중 비용은 모두 `trip`, D-035) |
@@ -53,7 +53,7 @@
 | position | text | null | 직급/직책 (선택) |
 | employee_number | text | null | 사번 (선택) |
 | vehicle_number | text | null | 차량번호 (선택, 자차 출장비용) |
-| role | member_role | not null, default 'employee' | |
+| role | member_role | not null, default 'employee' | `super_admin`은 회사당 정확히 1명 (partial unique: company_id where role='super_admin') |
 | status | member_status | not null, default 'pending' | |
 | privacy_agreed_at | timestamptz | not null | 개인정보 수집·이용 동의 시각 |
 | approved_at | timestamptz | null | 관리자 가입 승인 시각 |
@@ -205,13 +205,13 @@
 | sent_at | timestamptz | null | |
 
 ## 3. RLS 정책 (전 테이블 RLS enable + 아래 정책 필수)
-공통 헬퍼: `current_member()` = `auth.uid()`와 `members.auth_user_id`가 일치하고 `status='approved'`인 멤버.
+공통 헬퍼: `current_member()` = `auth.uid()`와 `members.auth_user_id`가 일치하고 `status='approved'`인 멤버. `is_admin()` = current_member의 role이 `super_admin` 또는 `admin`. **아래 표의 "admin"은 `is_admin()`(관리자 이상)을 뜻한다.**
 
 | 테이블 | 조회 | 생성/수정/삭제 |
 |---|---|---|
 | companies | 자기 회사 | admin만 수정. 생성은 회사 생성 서버 액션(서버 전용) |
 | departments | 자기 회사 | admin |
-| members | 자기 회사 멤버 (pending 본인은 자기 행만) | 본인: 자기 프로필(role·status 제외) / admin: role·status·부서 |
+| members | 자기 회사 멤버 (pending 본인은 자기 행만) | 본인: 자기 프로필(role·status 제외) / admin: 직원의 status·부서 / role 변경·관리자 비활성화·최고 관리자 넘기기는 `super_admin`만, 서버 액션으로 (`roles-and-permissions.md` §3) |
 | member_bank_accounts | 본인, 자기 회사 admin | 본인 |
 | form_templates | 자기 회사 | admin |
 | approval_lines, approval_line_steps | 자기 회사 | admin |

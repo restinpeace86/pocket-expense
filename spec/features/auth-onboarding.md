@@ -13,7 +13,7 @@
 3. 서버에서 한 트랜잭션으로 처리:
    - `companies` 생성 (`invite_code` 자동 발급: 영문 대문자+숫자 8자리, 혼동 문자 0/O/1/I 제외)
    - `departments`에 입력한 부서들 생성
-   - `members` 생성 (`role='admin'`, `status='approved'`, `approved_at=now()`)
+   - `members` 생성 (`role='super_admin'` 최고 관리자, `status='approved'`, `approved_at=now()`) (D-038)
    - 기본 결재라인 생성: `approval_lines`(`department_id=null`) + 1단계 결재자 = 생성자 (D-030)
    - 기본 계정과목 3개(복리후생비, 여비교통비, 기업업무추진비)와 기본 매핑 생성 (D-036, `spec/features/account-titles.md` §2~§3)
 4. 완료 후 관리자 대시보드(`/workspace/[id]/admin`)로 이동해 초기 설정 체크리스트와 직원 초대 카드를 보여 준다(D-033).
@@ -48,7 +48,7 @@
 ## 4. 멤버 승인·관리 (관리자)
 - 화면: `spec/screens/admin-dashboard.md` ④. 역할 체계: `spec/features/roles-and-permissions.md`.
 - 승인: `pending` → `approved`, `approved_at` 기록. 거절: member 행 삭제(해당 계정은 다시 가입 가능).
-- 역할 변경: `employee` ↔ `admin`. 마지막 남은 admin은 강등·비활성화할 수 없다.
+- 역할 변경(`employee` ↔ `admin`)과 관리자 비활성화는 최고 관리자(`super_admin`)만 할 수 있다. 최고 관리자는 강등·비활성화할 수 없고, 바꾸려면 최고 관리자 넘기기를 한다(`roles-and-permissions.md` §3).
 - 비활성화: `approved` → `inactive`. 로그인은 되지만 회사 데이터에 접근할 수 없다. 기존 경비·결재 이력은 보존한다.
   - 비활성화하려는 멤버가 결재라인에 포함되어 있으면 "결재라인 ○개에 포함되어 있습니다. 먼저 결재라인을 수정하세요"를 안내하고 막는다.
   - 비활성화하려는 멤버가 현재 `pending` 결재 단계를 가지고 있으면 처리 전까지 막는다.

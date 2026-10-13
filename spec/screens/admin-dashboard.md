@@ -1,6 +1,6 @@
 # [Spec] 관리자 PC 화면
 
-대상: `role = 'admin'` (대표 또는 경리 담당) / 라우트: `spec/common/routes.md` §4 / 권한: `spec/features/roles-and-permissions.md`
+대상: 관리자 이상 — 최고 관리자(`super_admin`) · 관리자(`admin`) (대표 또는 경리 담당) / 라우트: `spec/common/routes.md` §4 / 권한: `spec/features/roles-and-permissions.md`
 관리자는 결재라인의 현재 결재자가 아닌 한 경비를 승인·반려할 수 없다(`expense-lifecycle.md` §3-8). 본인이 현재 결재자인 건은 [결재하기]로 결재 화면(`approver.md`)을 연다.
 
 ## 0. 레이아웃 · 사이드바
@@ -43,7 +43,9 @@
 - 상단: 초대 링크 복사, QR 보기/다운로드(PNG), [초대 코드 재발급].
 - 탭: **승인 대기** / 활성 / 비활성.
 - 승인 대기: 이름, 휴대폰, 부서, 직급, 가입 신청일 → [승인] [거절].
-- 활성 테이블: 이름, 부서(인라인 변경), 직급, 휴대폰, 역할(관리자로 지정/해제), 포함된 결재라인, 정산 계좌 등록 여부 → [비활성화].
+- 활성 테이블: 이름, 부서(인라인 변경), 직급, 휴대폰, 역할 배지(최고 관리자 / 관리자 / 직원), 포함된 결재라인, 정산 계좌 등록 여부 → [비활성화].
+  - **최고 관리자에게만** 보이는 액션: [관리자로 지정] / [관리자 해제], 관리자 [비활성화], [최고 관리자 넘기기](확인 다이얼로그, `roles-and-permissions.md` §3.1).
+  - 관리자에게는 역할 변경 버튼이 보이지 않고, 직원만 비활성화할 수 있다. 최고 관리자 행에는 비활성화 버튼이 없다.
 - 규칙: `spec/features/auth-onboarding.md` §4, `spec/features/roles-and-permissions.md`.
 
 ## ⑤ 부서 관리 (`/admin/departments`)

@@ -14,7 +14,7 @@
 | `/onboarding/pending` | 승인 대기 안내 | `pending` 멤버 |
 | `/auth/callback` | OAuth 콜백 | — |
 
-로그인 후 분기: member 없음 → `/onboarding` / `pending` → `/onboarding/pending` / `inactive` → 이용 중지 안내 / `approved` → `next` 또는 `/workspace/[id]/employee`(admin은 `/workspace/[id]/admin`).
+로그인 후 분기: member 없음 → `/onboarding` / `pending` → `/onboarding/pending` / `inactive` → 이용 중지 안내 / `approved` → `next` 또는 역할별 워크스페이스: 관리자 이상(`super_admin`, `admin`)은 관리자 워크스페이스 `/workspace/[id]/admin`, 직원은 직원 워크스페이스 `/workspace/[id]/employee`.
 
 ## 2. 직원 (모바일)
 | 경로 | 화면 |
@@ -47,4 +47,4 @@
 | `/workspace/[id]/admin/export` | 월말 마감·출력 |
 | `/workspace/[id]/admin/notifications` | 알림톡 발송 이력 |
 
-모든 `/admin/**` 경로는 `role = 'admin'`만 접근할 수 있다.
+모든 `/admin/**` 경로는 관리자 이상(`super_admin`, `admin`)만 접근할 수 있다(D-038).
