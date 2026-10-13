@@ -43,6 +43,7 @@
 |---|---|---|
 | header | `member.name`, `member.department`, `member.position`, `member.employee_number` | 청구자 정보 |
 | header | `claim.title`, `claim.description`, `claim.submitted_at` | 소명서 제목·소명 내용·상신일 |
+| header | `claim.trip_destination`, `claim.trip_period`, `claim.trip_purpose` | 출장지·출장 기간(시작~종료)·출장 목적 (출장 소명서) |
 | header | `claim.total_amount`, `claim.total_company_supported`, `claim.total_personal_burden`, `claim.item_count` | 합계 |
 | item | `item.expense_date`, `item.merchant_name`, `item.amount`, `item.supply_amount`, `item.vat_amount` | 영수증 파싱/입력값 |
 | item | `item.category`, `item.trip_type`, `item.payment_method` | 카테고리·유형·결제수단 표시명 |

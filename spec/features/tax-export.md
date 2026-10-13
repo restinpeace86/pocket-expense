@@ -32,16 +32,17 @@ PocketExpense_{회사명}_{YYYY-MM}.zip
 | 그룹 | 컬럼 | 값 |
 |---|---|---|
 | 식별 | 소명서번호 / 소명서 제목 / 소명 내용 | `expense_claims.id` 앞 8자리 / `title` / `description` |
+| 출장 | 출장여부 / 출장지 / 출장기간 / 출장목적 | 소명서의 `is_business_trip` / `trip_destination` / `trip_start_date~trip_end_date` / `trip_purpose` |
 | 식별 | 항목번호 | `expense_items.id` 앞 8자리 (영수증 파일명과 동일) |
 | 거래 | 결제일자 | `expense_date` |
 | 거래 | 가맹점명 | `merchant_name` |
 | 거래 | 공급가액 / 부가세 / 합계금액 | `supply_amount` / `vat_amount` / `amount` |
 | 거래 | 결제수단 | 개인카드 / 법인카드 |
-| 분류 | 카테고리 / 출장 세부유형 | 식대·출장비·미팅비 / `trip_type` 표시명 |
+| 분류 | 카테고리 / 출장 세부유형 | 일반 식대·출장비·외부 미팅비 / `trip_type` 표시명 (출장 식비, 대중교통, 택시, 통행료·주차, 숙박, 자차 유류비, 기타) |
 | 청구자 | 부서 / 사용자 / 직급 / 사번 | `members`, `departments` |
 | 내용 | 지출목적(적요) | `purpose` |
 | 내용 | 인원수 / 참석자 / 거래처 | `headcount` / `attendees` / `client_name` |
-| 출장 | 출장시작일 / 출장종료일 | `trip_start_date` / `trip_end_date` |
+| 출장 | 숙박 체크인 / 체크아웃 | 항목의 `trip_start_date` / `trip_end_date` (`lodging`) |
 | 출장 | 출발지 / 도착지 / 왕복여부 / 주행거리(km) / 거리입력방식 / 차량번호 | 자차 정보 (`is_round_trip`, `distance_source`: 자동·직접, `members.vehicle_number`) |
 | 계산기준 | 적용 1인 식대한도 / 적용 km당 유류비 단가 | `applied_meal_limit_per_person` / `applied_fuel_rate_per_km` |
 | 정산 | 회사지원금 / 개인부담금 | `company_supported_amount` / `personal_burden_amount` |
@@ -58,7 +59,7 @@ PocketExpense_{회사명}_{YYYY-MM}.zip
 - 금액 셀은 숫자 형식(천 단위 구분), 날짜 셀은 날짜 형식. 첫 행 고정, 자동 필터 적용.
 
 ### 3.3 엑셀 시트2 "요약"
-- 사용자별 합계, 카테고리별 합계, 결제수단별 합계, 정산구분별(지급/납부) 합계, 소명서별 합계(제목·건수·합계·상태).
+- 사용자별 합계, 카테고리별 합계(출장비는 세부 유형별 소계 포함), 결제수단별 합계, 정산구분별(지급/납부) 합계, 소명서별 합계(제목·건수·합계·상태).
 
 ### 3.4 회계 프로그램 호환 매핑 — ⛔ 보류(O-02)
 - 더존/세무사랑 등 업로드 전용 양식으로 컬럼을 바꿔 담는 매핑만 보류한다. 템플릿 확보 시 시트1 데이터에서 변환하는 별도 시트로 추가한다. 시트1·시트2 출력은 보류 대상이 아니다.

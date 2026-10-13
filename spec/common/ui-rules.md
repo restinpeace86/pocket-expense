@@ -14,7 +14,7 @@
 
 ## 3. 디자인 시스템
 - TailwindCSS 기본, 일관된 색상 팔레트, `rounded-xl`, `shadow-sm`의 깔끔한 SaaS 톤.
-- 아이콘: `lucide-react` (카테고리 아이콘: 식대 `Utensils`, 출장비 `Car`, 미팅비 `Users`).
+- 아이콘: `lucide-react` (카테고리: 일반 식대 `Utensils`, 출장비 `Briefcase`, 미팅비 `Users` / 출장 세부 유형: 출장 식비 `UtensilsCrossed`, 대중교통 `TrainFront`, 택시 `CarTaxiFront`, 통행료·주차 `ParkingSquare`, 숙박 `BedDouble`, 자차 `Car`, 기타 `Receipt`).
 
 ## 4. 상태 배지 표준 (D-022) — 지출소명서 상태
 | 상태 | 표시명 | 클래스 |

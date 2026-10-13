@@ -34,14 +34,16 @@
 - `rejected` 상태에서 수정하면 상태는 `rejected` 그대로 유지되고, 재상신할 때 `submitted`로 바뀐다.
 
 ## 2. 상신 검증 (서버에서 재검증)
-**소명서**: `title` 필수, 항목 1건 이상(최대 30건), 활성 양식의 필수 헤더 필드.
+**소명서**: `title` 필수, 항목 1건 이상(최대 30건), 활성 양식의 필수 헤더 필드. 출장 소명서(`is_business_trip`)면 `trip_destination`, `trip_start_date`, `trip_end_date`(≥ 시작일), `trip_purpose` 필수.
 **항목마다**: `category`, `payment_method`, `expense_date`, `amount`(>0), 활성 양식의 필수 항목 필드(해당 카테고리 적용분), 그리고 카테고리별 필수:
 | 카테고리 | 추가 필수 |
 |---|---|
 | `meal` | `receipt_path`, `headcount`(≥1) |
 | `meeting` | `receipt_path`, `purpose` |
 | `trip` / `own_car` | `start_location`, `end_location`, `distance_km`(>0) — 영수증 선택 |
-| `trip` / 그 외 유형 | `receipt_path`, `trip_type` |
+| `trip` / `lodging` | `receipt_path`, `trip_start_date`, `trip_end_date` |
+| `trip` / `other` | `receipt_path`, `purpose` |
+| `trip` / 그 외 유형(`meal`, `public_transport`, `taxi`, `toll_parking`) | `receipt_path`, `trip_type` |
 
 - 검증 실패 시 상신하지 않고, 실패한 항목과 누락 필드를 모두 돌려준다.
 - 파싱 중(`parse_status='parsing'`)인 항목이 있으면 상신할 수 없다.
@@ -65,7 +67,7 @@
 - `claim_approvals`의 모든 회차를 보존한다. 소명서 상세 화면은 회차별 타임라인(상신 → 단계별 승인/반려/스킵 → 결과, 반려 시 지목된 항목)을 보여 준다.
 
 ## 5. 금액 계산 규칙 (항목 단위)
-### 5.1 식대 (`meal`) — D-009
+### 5.1 일반 식대 (`meal`) — D-009
 ```
 limit = applied_meal_limit_per_person × headcount
 company_supported_amount = min(amount, limit)
@@ -74,11 +76,12 @@ personal_burden_amount   = max(amount - limit, 0)
 - `applied_meal_limit_per_person`는 계산 시점의 `companies.meal_limit_per_person` 값이다(D-018). 상신 시 서버 재계산으로 확정.
 - 한도는 항목(영수증) 단위로 적용한다. 같은 소명서 안 여러 식대 항목의 한도를 합산·이월하지 않는다.
 
-### 5.2 외부 미팅비 (`meeting`), 출장비 중 `own_car` 외 유형
+### 5.2 외부 미팅비 (`meeting`), 출장비 중 `own_car` 외 유형 (출장 식비 포함, D-035)
 ```
 company_supported_amount = amount
 personal_burden_amount   = 0
 ```
+- 출장 식비(`trip` / `meal`)에는 일반 식대의 1인 한도 분할을 적용하지 않는다.
 
 ### 5.3 자차 출장비 (`trip` / `own_car`)
 ```
@@ -106,4 +109,5 @@ total_personal_burden   = Σ item.personal_burden_amount
 - 정산 금액은 저장하지 않고 위 규칙으로 계산해 화면·엑셀에 표시한다.
 
 ## 6. 청구 기한 (D-031, 항목 단위 판정)
+- 출장 소명서의 출장비 항목 중 결제일자가 출장 기간 밖이면 "출장 기간 밖" 경고를 표시한다(상신 가능).
 - 항목마다 회사 청구 기한을 판정한다. 기한 초과 항목이 하나라도 있으면 소명서에 "기한 초과" 배지를 표시한다. 상신은 막지 않는다.

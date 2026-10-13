@@ -202,8 +202,8 @@ Vision LLM, Kakao Mobility, 알림톡은 각각 어댑터 모듈 뒤에 둔다. 
 | `spec/features/expense-claim-flow.md` | 지출소명서 작성 흐름 (영수증 N장 → 소명서 1건 → 일괄 결재) |
 | `spec/features/form-template.md` | 사내 지출결의서 양식 분석·노코드 보정·자동 채움 |
 | `spec/features/receipt-parser.md` | Vision LLM 영수증 파싱 |
-| `spec/features/smart-meal.md` | 식대 인원수 기반 분할 |
-| `spec/features/trip-expense.md` | 출장비 세부 유형, 자차 거리·유류비 |
+| `spec/features/smart-meal.md` | 일반 식대 인원수 기반 분할 |
+| `spec/features/trip-expense.md` | 출장 소명서, 출장비 세부 유형(출장 식비·교통·통행료·숙박·자차), 자차 거리·유류비 |
 | `spec/features/approval-workflow.md` | 결재라인 설정, 상신, 순차 결재 |
 | `spec/features/kakao-alimtalk.md` | 알림톡 발송 시점·템플릿·실패 처리 |
 | `spec/features/tax-export.md` | 월말 엑셀·영수증 ZIP·PDF 출력 |

@@ -12,9 +12,9 @@
 | `member_role` | `admin`, `employee` |
 | `member_status` | `pending`(승인 대기), `approved`(활성), `inactive`(비활성/퇴사) |
 | `claim_status` | `draft`, `submitted`, `approved`, `rejected`, `paid` (소명서 상태) |
-| `expense_category` | `meal`(식대), `trip`(출장비), `meeting`(외부 미팅비) (항목 카테고리) |
+| `expense_category` | `meal`(일반 식대), `trip`(출장비), `meeting`(외부 미팅비) (항목 카테고리. 출장 중 비용은 모두 `trip`, D-035) |
 | `payment_method` | `personal_card`(개인카드), `corporate_card`(법인카드) |
-| `trip_type` | `own_car`(자차), `public_transport`(대중교통), `taxi`(택시), `lodging`(숙박), `toll_parking`(통행료·주차), `other`(기타) |
+| `trip_type` | `meal`(출장 식비), `public_transport`(대중교통), `taxi`(택시), `toll_parking`(통행료·주차), `lodging`(숙박), `own_car`(자차 유류비), `other`(기타) |
 | `distance_source` | `api`(카카오 길찾기 산출), `manual`(직접 입력) |
 | `approval_step_status` | `waiting`(앞 단계 대기), `pending`(내 차례), `approved`, `rejected`, `skipped`, `canceled` |
 | `parse_status` | `none`, `parsing`, `success`, `failed` |
@@ -101,6 +101,10 @@
 | form_template_id | uuid | FK form_templates, null | 작성 당시 활성 양식 |
 | title | text | not null | 소명서 제목. 예: "10/15 부산 출장" (자동 제안, 수정 가능) |
 | description | text | null | 소명 내용(공통 사유) |
+| is_business_trip | boolean | not null, default false | 출장 소명서 여부 (D-035) |
+| trip_destination | text | null | 출장지. `is_business_trip`이면 상신 시 필수 |
+| trip_start_date / trip_end_date | date | null | 출장 기간. `is_business_trip`이면 상신 시 필수 |
+| trip_purpose | text | null | 출장 목적. `is_business_trip`이면 상신 시 필수 |
 | status | claim_status | not null, default 'draft' | |
 | header_custom_payload | jsonb | not null, default '{}' | 양식 헤더 고유 항목 값 `{ field_key: value }` |
 | item_count | integer | not null, default 0 | 항목 수 (서버가 항목 변경 시 갱신) |
@@ -126,7 +130,7 @@
 | amount | integer | null (상신 시 필수) | 총 결제금액 |
 | supply_amount | integer | null | 공급가액 (D-017) |
 | vat_amount | integer | null | 부가세 (D-017) |
-| headcount | integer | null, ≥1 | 인원수. `meal` 필수, `meeting` 선택 (D-009) |
+| headcount | integer | null, ≥1 | 인원수. 일반 식대 `meal` 필수, `meeting`·출장 식비 선택 (D-009) |
 | applied_meal_limit_per_person | integer | null | 계산 시점 1인 한도 스냅샷 (D-018) |
 | company_supported_amount | integer | null | 회사 지원금 |
 | personal_burden_amount | integer | not null, default 0 | 개인 부담금 |
@@ -137,8 +141,8 @@
 | parse_status | parse_status | not null, default 'none' | |
 | ai_parsed_payload | jsonb | null | LLM 파싱 원본 결과 |
 | trip_type | trip_type | null | `trip` 필수 |
-| trip_start_date | date | null | 출장 시작일 |
-| trip_end_date | date | null | 출장 종료일 (숙박 등) |
+| trip_start_date | date | null | 숙박 체크인일 (`lodging`) |
+| trip_end_date | date | null | 숙박 체크아웃일 (`lodging`) |
 | start_location | text | null | 출발지 주소 (`own_car`) |
 | start_lat / start_lng | numeric | null | 출발지 좌표 |
 | end_location | text | null | 도착지 주소 (`own_car`) |

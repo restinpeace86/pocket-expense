@@ -15,8 +15,9 @@
 | 1 | 제목 | `claim.title` |
 | 2 | 청구자 / 부서 / 직급 | `member.name` / `member.department` / `member.position` |
 | 3 | 소명 내용 | `claim.description` |
-| 4 | 상신일 | `claim.submitted_at` |
-| 5 | 합계 / 회사 지원금 / 개인 부담금 | `claim.total_amount` / `claim.total_company_supported` / `claim.total_personal_burden` |
+| 4 | 출장지 / 출장 기간 / 출장 목적 (출장 소명서일 때만 표시) | `claim.trip_destination` / `claim.trip_period` / `claim.trip_purpose` |
+| 5 | 상신일 | `claim.submitted_at` |
+| 6 | 합계 / 회사 지원금 / 개인 부담금 | `claim.total_amount` / `claim.total_company_supported` / `claim.total_personal_burden` |
 
 **항목 표 (영수증 1장 = 1행)**
 | 순서 | 열 | 바인딩 |
