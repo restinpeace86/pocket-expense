@@ -15,6 +15,7 @@
    - `departments`에 입력한 부서들 생성
    - `members` 생성 (`role='admin'`, `status='approved'`, `approved_at=now()`)
    - 기본 결재라인 생성: `approval_lines`(`department_id=null`) + 1단계 결재자 = 생성자 (D-030)
+   - 기본 계정과목 3개(복리후생비, 여비교통비, 기업업무추진비)와 기본 매핑 생성 (D-036, `spec/features/account-titles.md` §2~§3)
 4. 완료 후 관리자 대시보드(`/workspace/[id]/admin`)로 이동해 초기 설정 체크리스트와 직원 초대 카드를 보여 준다(D-033).
 
 ## 3. 직원 가입

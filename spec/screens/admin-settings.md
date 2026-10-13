@@ -26,6 +26,7 @@
 - 초대 링크 복사, QR 보기/다운로드(PNG), [초대 코드 재발급](이전 링크 즉시 무효). 멤버 관리 화면과 같은 기능.
 
 ## 4. 같은 [설정] 그룹의 다른 화면
+- 계정과목: `/admin/account-titles` (`admin-dashboard.md` ⑪)
 - 부서: `/admin/departments` (`admin-dashboard.md` ⑤)
 - 결재라인: `/admin/approval-lines` (`admin-dashboard.md` ⑥)
 - 사내 양식: `/admin/form-template` (`template-configuration.md`)

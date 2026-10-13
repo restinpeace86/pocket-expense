@@ -20,7 +20,7 @@
 | 전이 | 주체 | 조건 | 처리 |
 |---|---|---|---|
 | (신규) → `draft` | 청구자 | — | 소명서 생성. 항목 추가·수정은 자유(필수값 검증 없음) |
-| `draft` → `submitted` | 청구자 | §2 상신 검증 통과 | 금액 재계산·합계 갱신, `current_round += 1`, 결재라인 스냅샷 생성(§3), `submitted_at` 기록, 첫 결재자에게 알림톡 |
+| `draft` → `submitted` | 청구자 | §2 상신 검증 통과 | 금액 재계산·합계 갱신, 항목별 계정과목 스냅샷(§7), `current_round += 1`, 결재라인 스냅샷 생성(§3), `submitted_at` 기록, 첫 결재자에게 알림톡 |
 | `rejected` → `submitted` | 청구자 | §2 상신 검증 통과 | 위와 동일(새 회차). `rejection_reason`은 새 반려 시 덮어씀 |
 | `draft`/`rejected` → `approved` | 청구자 | §2 통과 + §3-3에서 남은 결재 단계 없음 | 결재 생략. `current_round += 1`, 스냅샷 단계 전부 `skipped`, `self_approved = true`, `submitted_at`·`approved_at` 동시 기록. 알림톡 없음 |
 | `submitted` → `approved` | 마지막 결재자 | 마지막 `pending` 단계 승인 | 소명서 안 **모든 항목을 한 번에 승인**. `approved_at` 기록, 청구자에게 최종 승인 알림톡 |
@@ -49,6 +49,7 @@
 - 파싱 중(`parse_status='parsing'`)인 항목이 있으면 상신할 수 없다.
 - 항목 `amount`가 `supply_amount + vat_amount`와 다르면 상신은 허용하되 경고를 표시한다(면세·봉사료 등 존재).
 - 상신 시점에 모든 항목의 금액 계산(§5)을 서버에서 다시 수행해 저장하고, 소명서 합계 컬럼을 갱신한다.
+- 결재 생략·재상신을 포함한 모든 상신에서 계정과목 스냅샷(§7)을 다시 수행한다. 단, 관리자가 개별 조정한 항목(`account_title_overridden`)은 유지한다.
 
 ## 3. 결재 진행 규칙 (D-011, D-012)
 1. **결재라인 선택**: 청구자의 `department_id`와 일치하는 결재라인이 있으면 그것을, 없으면 회사 기본 결재라인(`department_id is null`)을 쓴다. 둘 다 없으면 상신을 막고 "관리자에게 결재라인 설정을 요청하세요"를 안내한다.
@@ -111,3 +112,8 @@ total_personal_burden   = Σ item.personal_burden_amount
 ## 6. 청구 기한 (D-031, 항목 단위 판정)
 - 출장 소명서의 출장비 항목 중 결제일자가 출장 기간 밖이면 "출장 기간 밖" 경고를 표시한다(상신 가능).
 - 항목마다 회사 청구 기한을 판정한다. 기한 초과 항목이 하나라도 있으면 소명서에 "기한 초과" 배지를 표시한다. 상신은 막지 않는다.
+
+## 7. 계정과목 (D-036, 항목 단위)
+- 상신 시 항목의 내부 분류(`category`, `trip_type`)로 `account_title_mappings`를 찾아 `account_title_id`, `account_title_name`, `account_title_code`를 저장한다.
+- 매핑이 없는 분류가 있으면 상신은 막지 않고 계정과목을 비운 채 저장하며, 관리자 대시보드 할 일에 "계정과목 미지정 항목 n건"을 표시한다.
+- 관리자는 상태와 무관하게 항목별 계정과목을 바꿀 수 있다(`account_title_overridden = true`). 금액 등 다른 값은 바꿀 수 없다.

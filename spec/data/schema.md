@@ -93,6 +93,24 @@
 | step_order | integer | not null, unique(approval_line_id, step_order) | 1부터 |
 | approver_member_id | uuid | FK members, not null | `approved` 상태 멤버만 지정 가능 |
 
+### 2.6a `account_titles` / `account_title_mappings` — 계정과목 (D-036, `spec/features/account-titles.md`)
+`account_titles`
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| company_id | uuid | FK companies, not null | |
+| name | text | not null, unique(company_id, name) | 계정과목명 (예: 여비교통비) |
+| code | text | null | 세무사무소 회계 프로그램 계정코드 |
+| sort_order | integer | default 0 | |
+
+`account_title_mappings`
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| company_id | uuid | FK companies, not null | |
+| category | expense_category | not null | 내부 분류: 카테고리 |
+| trip_type | trip_type | null | 내부 분류: 출장 세부 유형 (`trip`일 때만, 그 외 null) |
+| account_title_id | uuid | FK account_titles, not null | |
+| | | unique(company_id, category, trip_type) — null 포함 | |
+
 ### 2.7 `expense_claims` — 지출소명서 (헤더, 결재 단위) (D-034)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
@@ -152,6 +170,9 @@
 | distance_source | distance_source | null | |
 | applied_fuel_rate_per_km | integer | null | 계산 시점 단가 스냅샷 (D-018) |
 | item_custom_payload | jsonb | not null, default '{}' | 양식 항목(표) 고유 필드 값 `{ field_key: value }` |
+| account_title_id | uuid | FK account_titles, null | 상신 시 매핑으로 결정 (D-036) |
+| account_title_name / account_title_code | text | null | 상신 시점 계정과목명·코드 스냅샷 |
+| account_title_overridden | boolean | not null, default false | 관리자가 개별 조정했는지 |
 
 - 소명서 1건의 항목은 1~30건이다.
 
@@ -194,8 +215,9 @@
 | member_bank_accounts | 본인, 자기 회사 admin | 본인 |
 | form_templates | 자기 회사 | admin |
 | approval_lines, approval_line_steps | 자기 회사 | admin |
+| account_titles, account_title_mappings | 자기 회사 admin | admin |
 | expense_claims | 본인 소명서 / 해당 소명서의 결재자(claim_approvals에 있는 멤버) / 자기 회사 admin | 본인: `draft`·`rejected` 상태에서만 수정, `draft`만 삭제. 상태·합계 컬럼은 서버 액션(RPC)으로만 |
-| expense_items | 소속 소명서 열람 가능자 | 본인: 소속 소명서가 `draft`·`rejected`일 때만 추가·수정·삭제 |
+| expense_items | 소속 소명서 열람 가능자 (계정과목 컬럼은 admin 화면에서만 표시) | 본인: 소속 소명서가 `draft`·`rejected`일 때만 추가·수정·삭제. 계정과목 컬럼은 서버 액션(상신 스냅샷, admin 개별 조정)으로만 |
 | claim_approvals | 해당 소명서 열람 가능자 | 서버 액션(RPC)으로만 |
 | notification_logs | 자기 회사 admin | 서버 전용 |
 
