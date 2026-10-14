@@ -7,7 +7,8 @@
 |---|---|---|
 | `/` | 랜딩 페이지(`spec/screens/landing-page.md`). 로그인 상태면 아래 분기 | 전체 |
 | `/login` | 카카오/Google 로그인. `?next=` 지원 | 비로그인 |
-| `/join/[inviteCode]` | 초대 링크/QR 진입. 회사명 표시 후 로그인 → 직원 온보딩 | 전체 |
+| `/join/[inviteCode]` | 공용 초대 링크/QR 진입. 회사명 표시 후 로그인 → 직원 온보딩 → 승인 대기 | 전체 |
+| `/join/i/[token]` | 개별 초대 링크 진입(D-042). 로그인 → 미리 채워진 정보 확인 → 즉시 활성 | 전체 |
 | `/onboarding` | 진입 분기: [초대 코드로 회사 합류] / [새 회사 만들기] | 로그인 + member 없음 |
 | `/onboarding/join` | 직원 정보 입력 | 로그인 + member 없음 |
 | `/onboarding/create-company` | 회사 생성 위저드 (`spec/screens/admin-onboarding.md`) | 로그인 + member 없음 |
@@ -29,22 +30,22 @@
 ## 3. 결재자 (모바일 우선)
 | 경로 | 화면 | 접근 |
 |---|---|---|
-| `/workspace/[id]/approvals` | 내 결재함 (대기 / 처리완료 탭) | 결재라인에 지정된 적 있는 멤버 (메뉴는 결재 대기·이력이 있을 때만 노출) |
-| `/workspace/[id]/approvals/[claimId]` | 소명서 결재 화면 (**알림톡 링크 도착지**) | 해당 소명서의 결재자. 현재 차례가 아니면 읽기 전용 |
+| `/workspace/[id]/approvals` | 내 결재함 (대기 / 처리완료 탭) | 사전 검토자로 지정된 적 있는 멤버, 관리자 이상 |
+| `/workspace/[id]/approvals/[claimId]` | 소명서 결재 화면 (**알림톡 링크 도착지**) | 해당 소명서의 사전 검토자 또는 관리자 이상. 처리 권한이 없으면 읽기 전용 |
 
 ## 4. 관리자 (PC)
 | 경로 | 화면 |
 |---|---|
 | `/workspace/[id]/admin` | 대시보드 홈 |
-| `/workspace/[id]/admin/claims` | 전체 소명서 목록 |
-| `/workspace/[id]/admin/claims/[claimId]` | 소명서 상세 (읽기 + 정산완료 처리) |
-| `/workspace/[id]/admin/members` | 멤버 관리 (가입 승인, 역할, 부서, 비활성) |
+| `/workspace/[id]/admin/claims` | 지출 승인 관리 (`spec/screens/admin-expense-approvals.md`) |
+| `/workspace/[id]/admin/claims/[claimId]` | 지출 승인 관리에서 소명서 선택 상태(딥링크) |
+| `/workspace/[id]/admin/members` | 멤버 관리 (`spec/screens/admin-team-members.md`) |
 | `/workspace/[id]/admin/departments` | 부서 관리 |
-| `/workspace/[id]/admin/approval-lines` | 결재라인 설정 |
+| `/workspace/[id]/admin/approval-lines` | 사전 검토 결재라인 설정 (선택 기능, D-039) |
 | `/workspace/[id]/admin/form-template` | 사내 양식 설정 (`spec/screens/template-configuration.md`) |
 | `/workspace/[id]/admin/settings` | 회사 정보, 식대 한도, 유류비 단가, 청구 기한, 초대 링크/QR (`spec/screens/admin-settings.md`) |
 | `/workspace/[id]/admin/account-titles` | 계정과목 목록·내부 분류 매핑 (`spec/features/account-titles.md`) |
-| `/workspace/[id]/admin/export` | 월말 마감·출력 |
+| `/workspace/[id]/admin/export` | 세무 마감 (`spec/screens/tax-closing.md`) |
 | `/workspace/[id]/admin/notifications` | 알림톡 발송 이력 |
 
 모든 `/admin/**` 경로는 관리자 이상(`super_admin`, `admin`)만 접근할 수 있다(D-038).

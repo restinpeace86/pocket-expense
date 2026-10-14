@@ -1,6 +1,6 @@
 # [Spec] 소셜 로그인 · 회사 생성 · 직원 온보딩 · 멤버 승인
 
-관련: D-002, D-003, D-004, D-025 / 데이터: `companies`, `departments`, `members`, `member_bank_accounts`
+관련: D-002, D-003, D-004, D-025, D-042 / 데이터: `companies`, `departments`, `members`, `member_bank_accounts`
 
 ## 1. 로그인
 - 로그인 수단: **카카오 로그인**, **Google 로그인**(Supabase Auth OAuth). 휴대폰 번호 인증은 쓰지 않는다(D-002).
@@ -14,11 +14,19 @@
    - `companies` 생성 (`invite_code` 자동 발급: 영문 대문자+숫자 8자리, 혼동 문자 0/O/1/I 제외)
    - `departments`에 입력한 부서들 생성
    - `members` 생성 (`role='super_admin'` 최고 관리자, `status='approved'`, `approved_at=now()`) (D-038)
-   - 기본 결재라인 생성: `approval_lines`(`department_id=null`) + 1단계 결재자 = 생성자 (D-030)
+   - 기본 결재라인 생성: `approval_lines`(`department_id=null`), 사전 검토 0단계(= 관리자 직통 결재, D-039)
    - 기본 계정과목 3개(복리후생비, 여비교통비, 기업업무추진비)와 기본 매핑 생성 (D-036, `spec/features/account-titles.md` §2~§3)
 4. 완료 후 관리자 대시보드(`/workspace/[id]/admin`)로 이동해 초기 설정 체크리스트와 직원 초대 카드를 보여 준다(D-033).
 
 ## 3. 직원 가입
+### 3.0 가입 경로 두 가지 (D-042)
+| 경로 | 진입 | 가입 후 상태 |
+|---|---|---|
+| **개별 초대** | 관리자가 [신규 멤버 초대하기]로 보낸 개인 링크 `/join/i/{token}` (알림톡 또는 링크 복사) | **즉시 활성**(`approved`, `joined_via='invitation'`). 초대 시 입력한 이름·휴대폰·부서·직급이 미리 채워짐 |
+| **공용 링크/QR** | 회사 공용 초대 링크 `/join/{inviteCode}` 또는 QR | **승인 대기**(`pending`, `joined_via='shared_link'`) → 관리자 승인 |
+- 개별 초대 토큰은 1회용이다. 가입 완료 시 `accepted`, 관리자가 취소하면 `canceled`로 무효화된다.
+- 화면: `spec/screens/admin-team-members.md` §4.A.
+
 ### 3.1 진입
 - 관리자가 배포한 초대 링크(`/join/[inviteCode]`) 또는 QR로 진입하면 회사명을 보여 주고 로그인시킨다. 로그인 후 초대 코드를 유지한 채 `/onboarding/join`으로 이동한다.
 - 링크 없이 `/onboarding`으로 들어온 경우 [초대 코드로 회사 합류]에서 코드를 직접 입력한다. 코드가 유효하면 회사명을 보여 주고 "○○회사가 맞나요?"로 확인받는다(D-003).
@@ -38,7 +46,7 @@
 | 이메일 | 자동 | OAuth 계정 이메일 |
 | 개인정보 수집·이용 동의 | 필수 | 수집 항목(이름, 휴대폰, 부서, 계좌 등)·목적(경비 정산, 결재 알림)·보유 기간 고지 |
 
-- 제출 시 `members`(`role='employee'`, `status='pending'`) 생성, 계좌 입력 시 `member_bank_accounts` 생성.
+- 제출 시 `members`(`role='employee'`) 생성: 공용 링크는 `status='pending'`, 개별 초대는 `status='approved'`(초대 `accepted`). 계좌 입력 시 `member_bank_accounts` 생성.
 - 이미 member가 있는 계정은 가입할 수 없다(D-004). "이미 ○○회사에 소속되어 있습니다" 안내.
 
 ### 3.3 승인 대기
@@ -46,7 +54,7 @@
 - 관리자 대시보드에 승인 대기 건수를 표시한다(알림톡 발송 없음).
 
 ## 4. 멤버 승인·관리 (관리자)
-- 화면: `spec/screens/admin-dashboard.md` ④. 역할 체계: `spec/features/roles-and-permissions.md`.
+- 화면: `spec/screens/admin-team-members.md`. 역할 체계: `spec/features/roles-and-permissions.md`.
 - 승인: `pending` → `approved`, `approved_at` 기록. 거절: member 행 삭제(해당 계정은 다시 가입 가능).
 - 역할 변경(`employee` ↔ `admin`)과 관리자 비활성화는 최고 관리자(`super_admin`)만 할 수 있다. 최고 관리자는 강등·비활성화할 수 없고, 바꾸려면 최고 관리자 넘기기를 한다(`roles-and-permissions.md` §3).
 - 비활성화: `approved` → `inactive`. 로그인은 되지만 회사 데이터에 접근할 수 없다. 기존 경비·결재 이력은 보존한다.

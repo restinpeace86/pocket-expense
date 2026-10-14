@@ -14,7 +14,7 @@
                   │   수정 후 재상신    ▼
                   └────────────── rejected ─────(재상신 시 submitted, round+1)
 
- draft ──(상신, 청구자가 결재라인의 최종 결재자)──▶ approved   ※ 본인 최종 결재: 결재 생략 (§3-3)
+ draft ──(상신, 청구자가 최고 관리자)──▶ approved   ※ 결재 생략 (§3-3)
 ```
 
 | 전이 | 주체 | 조건 | 처리 |
@@ -22,10 +22,11 @@
 | (신규) → `draft` | 청구자 | — | 소명서 생성. 항목 추가·수정은 자유(필수값 검증 없음) |
 | `draft` → `submitted` | 청구자 | §2 상신 검증 통과 | 금액 재계산·합계 갱신, 항목별 계정과목 스냅샷(§7), `current_round += 1`, 결재라인 스냅샷 생성(§3), `submitted_at` 기록, 첫 결재자에게 알림톡 |
 | `rejected` → `submitted` | 청구자 | §2 상신 검증 통과 | 위와 동일(새 회차). `rejection_reason`은 새 반려 시 덮어씀 |
-| `draft`/`rejected` → `approved` | 청구자 | §2 통과 + §3-3에서 남은 결재 단계 없음 | 결재 생략. `current_round += 1`, 스냅샷 단계 전부 `skipped`, `self_approved = true`, `submitted_at`·`approved_at` 동시 기록. 알림톡 없음 |
-| `submitted` → `approved` | 마지막 결재자 | 마지막 `pending` 단계 승인 | 소명서 안 **모든 항목을 한 번에 승인**. `approved_at` 기록, 청구자에게 최종 승인 알림톡 |
-| `submitted` → `rejected` | 현재 결재자 | 반려 사유 필수 | 소명서 전체 반려. 문제 항목 지목(`flagged_item_ids`)은 선택. 현재 단계 `rejected`, 이후 `waiting` 단계는 `canceled`, `rejection_reason`·`rejected_at` 기록, 청구자에게 반려 알림톡 |
-| `approved` → `paid` | admin | — | `paid_at`, `paid_by_member_id` 기록. 여러 소명서 일괄 처리 가능 |
+| `draft`/`rejected` → `approved` | 청구자(최고 관리자) | §2 통과 + §3-3 결재 생략 | 결재 생략. `current_round += 1`, 스냅샷 단계 전부 `skipped`, `self_approved = true`, `submitted_at`·`approved_at` 동시 기록. 알림톡 없음 |
+| `submitted` → `approved` | 관리자 이상(청구자 제외) | `final` 단계 `pending`에서 [일괄 승인] | 소명서 안 **모든 항목을 한 번에 승인**. `approved_at` 기록, 청구자에게 최종 승인 알림톡 |
+| `submitted` → `rejected` | 현재 단계 처리 권한자 | 반려 사유 필수 | 소명서 전체 반려. 문제 항목 지목(`flagged_item_ids`)은 선택. 현재 단계 `rejected`, 이후 `waiting` 단계는 `canceled`, `rejection_reason`·`rejected_at` 기록, 청구자에게 반려 알림톡 |
+| `approved` → `paid` | 관리자 이상 | — | `paid_at`, `paid_by_member_id` 기록. 여러 소명서 일괄 처리 가능 |
+| `draft` 삭제 제한 | — | — | 세무 마감된 항목(`closed_month` 있음)이 든 소명서는 삭제 불가(D-045) |
 | `draft` 삭제 | 청구자 | `draft`만 | 항목과 영수증 파일도 삭제 |
 
 - `submitted`, `approved`, `paid` 상태의 소명서와 그 항목은 청구자가 수정할 수 없다.
@@ -38,12 +39,13 @@
 **항목마다**: `category`, `payment_method`, `expense_date`, `amount`(>0), 활성 양식의 필수 항목 필드(해당 카테고리 적용분), 그리고 카테고리별 필수:
 | 카테고리 | 추가 필수 |
 |---|---|
-| `meal` | `receipt_path`, `headcount`(≥1) |
+| `meal` | `receipt_path`, `headcount`(≥1, 기본 1) |
 | `meeting` | `receipt_path`, `purpose` |
 | `trip` / `own_car` | `start_location`, `end_location`, `distance_km`(>0) — 영수증 선택 |
 | `trip` / `lodging` | `receipt_path`, `trip_start_date`, `trip_end_date` |
 | `trip` / `other` | `receipt_path`, `purpose` |
-| `trip` / 그 외 유형(`meal`, `public_transport`, `taxi`, `toll_parking`) | `receipt_path`, `trip_type` |
+| `trip` / `meal` | `receipt_path`, `headcount`(≥1, 기본 1) |
+| `trip` / 그 외 유형(`public_transport`, `taxi`, `toll_parking`) | `receipt_path`, `trip_type` |
 
 - 검증 실패 시 상신하지 않고, 실패한 항목과 누락 필드를 모두 돌려준다.
 - 파싱 중(`parse_status='parsing'`)인 항목이 있으면 상신할 수 없다.
@@ -51,38 +53,47 @@
 - 상신 시점에 모든 항목의 금액 계산(§5)을 서버에서 다시 수행해 저장하고, 소명서 합계 컬럼을 갱신한다.
 - 결재 생략·재상신을 포함한 모든 상신에서 계정과목 스냅샷(§7)을 다시 수행한다. 단, 관리자가 개별 조정한 항목(`account_title_overridden`)은 유지한다.
 
-## 3. 결재 진행 규칙 (D-011, D-012)
-1. **결재라인 선택**: 청구자의 `department_id`와 일치하는 결재라인이 있으면 그것을, 없으면 회사 기본 결재라인(`department_id is null`)을 쓴다. 둘 다 없으면 상신을 막고 "관리자에게 결재라인 설정을 요청하세요"를 안내한다.
-2. **스냅샷**: 선택된 결재라인의 단계를 `claim_approvals`에 `round = current_round`로 복사한다. 첫 단계는 `pending`, 나머지는 `waiting`.
-3. **청구자가 결재라인에 포함된 경우**(D-026): 1단계부터 청구자 본인 단계까지를 모두 `skipped`로 만들고, 그다음 단계부터 결재를 진행한다(자기보다 윗선에게만 결재를 받는다).
-   - 남은 단계가 없으면(예: 대표가 최종 결재자인 결재라인에서 대표가 상신) **결재 절차 없이 즉시 `approved`** 로 전이하고 `self_approved = true`로 기록한다. 반려될 수 없으며 알림톡도 보내지 않는다.
-   - 예) 결재라인 `김팀장 → 이대표`: 김팀장이 상신하면 이대표만 결재 / 이대표가 상신하면 결재 생략, 바로 승인.
+## 3. 결재 진행 규칙 (D-012, D-039)
+결재 단계 = **사전 검토 단계 0~n개(결재라인, 선택)** + **관리자 최종 승인 단계 1개(고정)**.
+1. **결재라인 선택**: 청구자의 `department_id`와 일치하는 결재라인이 있으면 그것을, 없으면 회사 기본 결재라인(`department_id is null`)을 쓴다. 기본 결재라인은 회사 생성 시 사전 검토 0단계로 만들어지므로 항상 존재한다.
+2. **스냅샷**: 사전 검토 단계를 `claim_approvals`에 `step_kind='review'`, 검토자 지정으로 복사하고, 마지막에 `step_kind='final'`, `approver_member_id = null`(관리자 이상 누구나) 단계를 추가한다. `round = current_round`. 첫 단계는 `pending`, 나머지는 `waiting`.
+3. **청구자 본인 처리**(D-026):
+   - 청구자가 사전 검토 단계에 있으면 1단계부터 본인 단계까지 `skipped`.
+   - 청구자가 **최고 관리자**면 모든 단계를 `skipped`로 하고 **결재 절차 없이 즉시 `approved`**, `self_approved = true`. 반려될 수 없으며 알림톡도 보내지 않는다.
+   - 청구자가 관리자(`admin`)면 관리자 최종 승인 단계는 **본인을 제외한** 관리자 이상이 처리한다(최고 관리자가 항상 있으므로 처리자가 없어지지 않는다).
    - 결재 생략 소명서도 상신 검증(§2)과 금액 계산(§5)은 똑같이 적용하고, 월말 출력에 포함한다.
-4. **비활성 결재자**: 결재자가 `inactive`면 상신을 막고 관리자에게 결재라인 수정을 요청하도록 안내한다.
-5. **승인**: 현재 `pending` 단계의 결재자만 승인할 수 있다. 승인하면 해당 단계 `approved` → 다음 `waiting` 단계를 `pending`으로 바꾸고 그 결재자에게 알림톡. 다음 단계가 없으면 소명서를 `approved`로 전이.
-6. **반려**: 현재 `pending` 단계의 결재자만 반려할 수 있고, 사유는 필수다.
-7. **동시성**: 승인/반려는 "해당 단계가 아직 `pending`인지"를 조건으로 원자적으로 갱신한다. 이미 처리된 단계면 "이미 처리된 결재입니다"를 안내한다.
-8. 관리자(admin)라도 결재라인의 현재 결재자가 아니면 승인/반려할 수 없다.
+4. **비활성 검토자**: 사전 검토자가 `inactive`면 상신을 막고 관리자에게 결재라인 수정을 요청하도록 안내한다.
+5. **사전 검토 승인**: 현재 `pending`인 review 단계의 지정 검토자만 승인할 수 있다. 승인하면 다음 단계를 `pending`으로 바꾸고 그 대상자에게 알림톡.
+6. **관리자 최종 승인**: `final` 단계가 `pending`일 때 **청구자 본인을 제외한 관리자 이상 누구나** [일괄 승인]할 수 있다. 처리한 사람을 `acted_by_member_id`에 기록하고 소명서를 `approved`로 전이한다. 사전 검토가 남아 있는 동안에는 관리자도 승인할 수 없다(읽기 전용).
+7. **반려**: 현재 `pending` 단계의 처리 권한자(review: 지정 검토자, final: 본인 제외 관리자 이상)만 반려할 수 있고, 사유는 필수다.
+8. **동시성**: 승인/반려는 "해당 단계가 아직 `pending`인지"를 조건으로 원자적으로 갱신한다. 이미 처리된 단계면 "이미 처리된 결재입니다"를 안내한다.
 
 ## 4. 결재 이력
 - `claim_approvals`의 모든 회차를 보존한다. 소명서 상세 화면은 회차별 타임라인(상신 → 단계별 승인/반려/스킵 → 결과, 반려 시 지목된 항목)을 보여 준다.
 
 ## 5. 금액 계산 규칙 (항목 단위)
-### 5.1 일반 식대 (`meal`) — D-009
+### 5.1 식대 한도 적용 — 일반 식대(`meal`)와 출장 식비(`trip`/`meal`) (D-009, D-040, D-041, D-044)
 ```
-limit = applied_meal_limit_per_person × headcount
-company_supported_amount = min(amount, limit)
-personal_burden_amount   = max(amount - limit, 0)
+per_person = members.meal_limit_override ?? companies.meal_limit_per_person   // 개인별 예외 한도 우선 (D-044)
+limit      = per_person × headcount
+over       = max(amount - limit, 0)
+
+절사 모드(meal_limit_mode = 'split', 기본):
+  company_supported_amount = min(amount, limit)
+  personal_burden_amount   = over
+알림 모드(meal_limit_mode = 'notify'):
+  company_supported_amount = amount
+  personal_burden_amount   = 0            // 초과분(over)은 "한도 초과" 배지로만 표시
 ```
-- `applied_meal_limit_per_person`는 계산 시점의 `companies.meal_limit_per_person` 값이다(D-018). 상신 시 서버 재계산으로 확정.
+- `applied_meal_limit_per_person`에 계산 시점의 `per_person` 값을, `applied_meal_limit_mode`에 계산 시점 모드를 스냅샷한다(D-018). 상신 시 서버 재계산으로 확정.
+- 출장 식비도 같은 1식 한도를 적용한다(D-040). 계정과목은 여비교통비 그대로다(D-036).
 - 한도는 항목(영수증) 단위로 적용한다. 같은 소명서 안 여러 식대 항목의 한도를 합산·이월하지 않는다.
 
-### 5.2 외부 미팅비 (`meeting`), 출장비 중 `own_car` 외 유형 (출장 식비 포함, D-035)
+### 5.2 외부 미팅비 (`meeting`), 출장비 중 `own_car`·`meal` 외 유형
 ```
 company_supported_amount = amount
 personal_burden_amount   = 0
 ```
-- 출장 식비(`trip` / `meal`)에는 일반 식대의 1인 한도 분할을 적용하지 않는다.
 
 ### 5.3 자차 출장비 (`trip` / `own_car`)
 ```
@@ -116,4 +127,10 @@ total_personal_burden   = Σ item.personal_burden_amount
 ## 7. 계정과목 (D-036, 항목 단위)
 - 상신 시 항목의 내부 분류(`category`, `trip_type`)로 `account_title_mappings`를 찾아 `account_title_id`, `account_title_name`, `account_title_code`를 저장한다.
 - 매핑이 없는 분류가 있으면 상신은 막지 않고 계정과목을 비운 채 저장하며, 관리자 대시보드 할 일에 "계정과목 미지정 항목 n건"을 표시한다.
-- 관리자는 상태와 무관하게 항목별 계정과목을 바꿀 수 있다(`account_title_overridden = true`). 금액 등 다른 값은 바꿀 수 없다.
+- 관리자는 항목별 계정과목을 바꿀 수 있다(`account_title_overridden = true`). 금액 등 다른 값은 바꿀 수 없다. 세무 마감된 항목은 바꿀 수 없다(D-045).
+
+## 8. 세무 마감 잠금 (D-045)
+- 세무 마감 패키지를 다운로드하면 해당 월(`monthly_closings`)이 마감 완료가 되고, 포함된 항목의 `closed_month`가 기록된다(`spec/screens/tax-closing.md` §4.C).
+- 마감된 항목: 계정과목 조정 불가, 소속 소명서 삭제 불가. 승인·정산완료 처리는 가능하다.
+- 마감 완료 월의 사용일자를 가진 항목이 이후 승인되면 다음 마감 대기 월의 패키지에 "전월 추가분"으로 포함된다.
+- 최고 관리자만 마감 해제할 수 있다. 해제하면 그 월에 기록된 `closed_month`를 지우고 다음 다운로드 때 다시 집계한다.

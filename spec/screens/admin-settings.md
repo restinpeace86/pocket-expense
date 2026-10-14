@@ -9,7 +9,8 @@
 ## 2. 정산 정책
 | 항목 | 컬럼 | 기본값 | 효과 |
 |---|---|---|---|
-| 1인당 식대 지원 한도 | `meal_limit_per_person` | 10,000원 | 식대는 1인 한도 × 인원수까지 회사 지원, 초과분은 개인 부담으로 자동 분할(`spec/features/smart-meal.md`) |
+| 1식 1인당 식대 한도 | `meal_limit_per_person` | 10,000원 | 일반 식대·출장 식비 모두 1인 한도 × 인원수 기준(D-040). 멤버별 예외 한도 가능(D-044, `admin-team-members.md` §4.C) |
+| 한도 초과 처리 방식 | `meal_limit_mode` | 절사 | **절사**: 초과분을 개인 부담으로 잘라 지급 / **알림(자율 승인)**: 영수증 금액 그대로 지원하고 "한도 초과" 배지만 표시 (D-041) |
 | 자차 km당 유류비 단가 | `fuel_rate_per_km` | 200원 | 자차 청구액 = 주행거리 × 단가(`spec/features/trip-expense.md`) |
 | 청구 기한 | `claim_deadline_type`, `claim_deadline_days` | 사용 안 함 | 아래 §2.1 |
 

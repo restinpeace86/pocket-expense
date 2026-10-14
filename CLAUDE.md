@@ -122,7 +122,8 @@ Spec이 명확하지 않으면 임의로 판단해 구현하지 않는다. `proj
 ### 제3조. 서비스 내 역할
 - **최고 관리자(super_admin)**: 회사를 등록한 계정, 회사당 1명. 관리자의 모든 권한 + 관리자 지정·해제 + 최고 관리자 넘기기.
 - **관리자(admin)**: 회사 설정, 멤버 승인, 결재라인·양식·계정과목 설정, 정산완료 처리, 월말 출력을 담당한다.
-- **결재자(approver)**: 결재라인에 지정된 멤버. 역할(role)이 아니라 결재라인 지정으로 결정된다.
+- **최종 승인**: 관리자 이상이 지출소명서를 일괄 승인·반려한다(본인 것 제외).
+- **사전 검토자**: 결재라인(선택 기능)에 지정된 멤버. 관리자 승인 전에 검토한다.
 - **직원(employee)**: 경비를 청구하고 결재 결과를 받는다.
 
 ### 제4조. 역할 침범 금지
@@ -203,16 +204,19 @@ Vision LLM, Kakao Mobility, 알림톡은 각각 어댑터 모듈 뒤에 둔다. 
 | `spec/features/expense-claim-flow.md` | 지출소명서 작성 흐름 (영수증 N장 → 소명서 1건 → 일괄 결재) |
 | `spec/features/form-template.md` | 사내 지출결의서 양식 분석·노코드 보정·자동 채움 |
 | `spec/features/receipt-parser.md` | Vision LLM 영수증 파싱 |
-| `spec/features/smart-meal.md` | 일반 식대 인원수 기반 분할 |
+| `spec/features/smart-meal.md` | 식대·출장 식비 1식 한도 분할(절사/알림 모드, 개인별 한도) |
 | `spec/features/trip-expense.md` | 출장 소명서, 출장비 세부 유형(출장 식비·교통·통행료·숙박·자차), 자차 거리·유류비 |
-| `spec/features/approval-workflow.md` | 결재라인 설정, 상신, 순차 결재 |
+| `spec/features/approval-workflow.md` | 결재 흐름: 선택형 사전 검토 결재라인 + 관리자 최종 승인 |
 | `spec/features/kakao-alimtalk.md` | 알림톡 발송 시점·템플릿·실패 처리 |
 | `spec/features/account-titles.md` | 내부 분류 → 회계 계정과목 매핑 (여비교통비 등) |
 | `spec/features/tax-export.md` | 월말 엑셀·영수증 ZIP·PDF 출력 |
 | `spec/screens/landing-page.md` | 랜딩 페이지 |
 | `spec/screens/admin-onboarding.md` | 회사 생성 위저드 |
 | `spec/screens/employee-mobile.md` | 직원 화면 |
-| `spec/screens/approver.md` | 결재자 화면 (알림톡 링크 진입) |
-| `spec/screens/admin-dashboard.md` | 관리자 PC 화면 (사이드바, 홈, 경비, 멤버, 부서, 결재라인, 세무 마감, 알림 이력) |
+| `spec/screens/approver.md` | 결재 화면 (알림톡 링크 진입, 사전 검토자·관리자 모바일) |
+| `spec/screens/admin-dashboard.md` | 관리자 PC 화면 공통(사이드바, 홈, 부서, 결재라인, 알림 이력, 계정과목) |
+| `spec/screens/admin-expense-approvals.md` | 지출 승인 관리 (소명서 묶음 일괄 승인·반려, 정산완료) |
+| `spec/screens/admin-team-members.md` | 멤버 관리 (개별 초대, 권한, 개인별 한도, 퇴사 처리, 독촉 알림) |
+| `spec/screens/tax-closing.md` | 세무 마감 (낱개 영수증 미리보기, 1:1 파일명 매칭, 마감 잠금) |
 | `spec/screens/admin-settings.md` | 관리자 설정: 회사 정보, 정산 정책, 청구 기한, 초대 |
 | `spec/screens/template-configuration.md` | 사내 양식 설정 화면 (기본 양식 + AI 맞춤 양식) |

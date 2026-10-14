@@ -16,6 +16,9 @@
 | `payment_method` | `personal_card`(개인카드), `corporate_card`(법인카드) |
 | `trip_type` | `meal`(출장 식비), `public_transport`(대중교통), `taxi`(택시), `toll_parking`(통행료·주차), `lodging`(숙박), `own_car`(자차 유류비), `other`(기타) |
 | `distance_source` | `api`(카카오 길찾기 산출), `manual`(직접 입력) |
+| `approval_step_kind` | `review`(사전 검토, 결재라인), `final`(관리자 최종 승인) (D-039) |
+| `meal_limit_mode` | `split`(절사: 초과분 개인 부담), `notify`(알림: 전액 지원 + 한도 초과 배지) (D-041) |
+| `invitation_status` | `invited`(초대 대기), `accepted`, `canceled` (D-042) |
 | `approval_step_status` | `waiting`(앞 단계 대기), `pending`(내 차례), `approved`, `rejected`, `skipped`, `canceled` |
 | `parse_status` | `none`, `parsing`, `success`, `failed` |
 | `notification_status` | `queued`, `sent`, `failed` |
@@ -29,7 +32,8 @@
 | name | text | not null | 회사명 |
 | business_number | text | null | 사업자등록번호 |
 | invite_code | text | not null, unique | 직원 초대 코드 (재발급 가능) |
-| meal_limit_per_person | integer | not null, default 10000 | 1인당 식대 지원 한도 |
+| meal_limit_per_person | integer | not null, default 10000 | 1식 1인당 지원 한도 (일반 식대·출장 식비 공통, D-040) |
+| meal_limit_mode | meal_limit_mode | not null, default 'split' | 한도 초과 처리 방식 (D-041) |
 | fuel_rate_per_km | integer | not null, default 200 | 자차 km당 유류비 단가 |
 | claim_deadline_type | claim_deadline_type | not null, default 'none' | 청구 기한 방식 (D-031) |
 | claim_deadline_days | integer | null, 1~90 | `days_after`일 때 N |
@@ -53,10 +57,27 @@
 | position | text | null | 직급/직책 (선택) |
 | employee_number | text | null | 사번 (선택) |
 | vehicle_number | text | null | 차량번호 (선택, 자차 출장비용) |
+| meal_limit_override | integer | null | 개인별 예외 1식 한도. null이면 회사 공통 (D-044) |
+| joined_via | text | not null, default 'shared_link' | `shared_link`(공용 링크/QR → 승인 대기) / `invitation`(개별 초대 → 즉시 활성) / `company_creation` |
+| last_reminded_at | timestamptz | null | 마지막 독촉 알림 발송 시각 (하루 1회 제한, D-043) |
 | role | member_role | not null, default 'employee' | `super_admin`은 회사당 정확히 1명 (partial unique: company_id where role='super_admin') |
 | status | member_status | not null, default 'pending' | |
 | privacy_agreed_at | timestamptz | not null | 개인정보 수집·이용 동의 시각 |
 | approved_at | timestamptz | null | 관리자 가입 승인 시각 |
+
+### 2.3a `member_invitations` — 개별 초대 (D-042)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| company_id | uuid | FK companies, not null | |
+| name | text | not null | 초대 대상 이름 |
+| phone | text | null | 휴대폰(알림톡 초대 시 필수) |
+| department_id | uuid | FK departments, null | |
+| position | text | null | 직급 |
+| token | text | not null, unique | 개인 초대 링크 토큰(추측 불가 난수) |
+| status | invitation_status | not null, default 'invited' | |
+| invited_by_member_id | uuid | FK members, not null | |
+| accepted_member_id | uuid | FK members, null | 가입 완료 시 연결 |
+| last_sent_at | timestamptz | null | 마지막 알림톡 발송 시각 |
 
 ### 2.4 `member_bank_accounts` — 정산 계좌 (선택, 민감정보 분리)
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -91,7 +112,7 @@
 |---|---|---|---|
 | approval_line_id | uuid | FK approval_lines, cascade | |
 | step_order | integer | not null, unique(approval_line_id, step_order) | 1부터 |
-| approver_member_id | uuid | FK members, not null | `approved` 상태 멤버만 지정 가능 |
+| approver_member_id | uuid | FK members, not null | 사전 검토자. `approved` 상태 멤버(역할 무관) (D-039) |
 
 ### 2.6a `account_titles` / `account_title_mappings` — 계정과목 (D-036, `spec/features/account-titles.md`)
 `account_titles`
@@ -148,8 +169,9 @@
 | amount | integer | null (상신 시 필수) | 총 결제금액 |
 | supply_amount | integer | null | 공급가액 (D-017) |
 | vat_amount | integer | null | 부가세 (D-017) |
-| headcount | integer | null, ≥1 | 인원수. 일반 식대 `meal` 필수, `meeting`·출장 식비 선택 (D-009) |
-| applied_meal_limit_per_person | integer | null | 계산 시점 1인 한도 스냅샷 (D-018) |
+| headcount | integer | null, ≥1 | 인원수. 일반 식대·출장 식비 필수(기본 1), `meeting` 선택 (D-009, D-040) |
+| applied_meal_limit_per_person | integer | null | 계산 시점 1인 한도 스냅샷(개인 예외 한도 반영) (D-018, D-044) |
+| applied_meal_limit_mode | meal_limit_mode | null | 계산 시점 한도 처리 방식 스냅샷 (D-041) |
 | company_supported_amount | integer | null | 회사 지원금 |
 | personal_burden_amount | integer | not null, default 0 | 개인 부담금 |
 | purpose | text | null | 항목 적요. `meeting` 필수 |
@@ -173,6 +195,7 @@
 | account_title_id | uuid | FK account_titles, null | 상신 시 매핑으로 결정 (D-036) |
 | account_title_name / account_title_code | text | null | 상신 시점 계정과목명·코드 스냅샷 |
 | account_title_overridden | boolean | not null, default false | 관리자가 개별 조정했는지 |
+| closed_month | text | null | 세무 마감에 포함된 마감월 `YYYY-MM` (D-045) |
 
 - 소명서 1건의 항목은 1~30건이다.
 
@@ -183,11 +206,22 @@
 | company_id | uuid | FK companies | RLS용 |
 | round | integer | not null | 결재 회차 |
 | step_order | integer | not null, unique(claim_id, round, step_order) | |
-| approver_member_id | uuid | FK members | |
+| step_kind | approval_step_kind | not null | `review` / `final` (D-039) |
+| approver_member_id | uuid | FK members, null | review: 지정 검토자 / final: null(청구자 제외 관리자 이상 누구나) |
+| acted_by_member_id | uuid | FK members, null | 실제 처리자 |
 | status | approval_step_status | not null | |
 | comment | text | null | 반려 사유(반려 시 필수) / 승인 코멘트 |
 | flagged_item_ids | uuid[] | not null, default '{}' | 반려 시 결재자가 지목한 문제 항목(선택) |
 | acted_at | timestamptz | null | |
+
+### 2.9a `monthly_closings` — 세무 마감 (D-045)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| company_id | uuid | FK companies, not null | |
+| year_month | text | not null, unique(company_id, year_month) | `YYYY-MM` |
+| status | text | not null | `closed` (해제 시 행 삭제 대신 `reopened`) |
+| closed_at / closed_by_member_id | timestamptz / uuid | | 마감 처리 시각·처리자 |
+| reopened_at / reopened_by_member_id / reopen_reason | | null | 마감 해제(최고 관리자) |
 
 ### 2.10 `notification_logs` — 알림톡 발송 이력
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -216,7 +250,9 @@
 | form_templates | 자기 회사 | admin |
 | approval_lines, approval_line_steps | 자기 회사 | admin |
 | account_titles, account_title_mappings | 자기 회사 admin | admin |
-| expense_claims | 본인 소명서 / 해당 소명서의 결재자(claim_approvals에 있는 멤버) / 자기 회사 admin | 본인: `draft`·`rejected` 상태에서만 수정, `draft`만 삭제. 상태·합계 컬럼은 서버 액션(RPC)으로만 |
+| member_invitations | 자기 회사 admin | admin. 토큰으로 가입하는 경로는 서버 액션 |
+| monthly_closings | 자기 회사 admin | 서버 액션(다운로드 시 마감, 해제는 `super_admin`) |
+| expense_claims | 본인 소명서 / 해당 소명서의 사전 검토자(claim_approvals에 지정된 멤버) / 자기 회사 admin | 본인: `draft`·`rejected` 상태에서만 수정, `draft`만 삭제. 상태·합계 컬럼은 서버 액션(RPC)으로만 |
 | expense_items | 소속 소명서 열람 가능자 (계정과목 컬럼은 admin 화면에서만 표시) | 본인: 소속 소명서가 `draft`·`rejected`일 때만 추가·수정·삭제. 계정과목 컬럼은 서버 액션(상신 스냅샷, admin 개별 조정)으로만 |
 | claim_approvals | 해당 소명서 열람 가능자 | 서버 액션(RPC)으로만 |
 | notification_logs | 자기 회사 admin | 서버 전용 |
