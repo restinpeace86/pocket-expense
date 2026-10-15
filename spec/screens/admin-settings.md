@@ -32,3 +32,9 @@
 - 결재라인: `/admin/approval-lines` (`admin-dashboard.md` ⑥)
 - 사내 양식: `/admin/form-template` (`template-configuration.md`)
 - 알림 이력: `/admin/notifications` (`admin-dashboard.md` ⑩)
+
+
+[⚙️ 설정] (Admin Settings Hub)
+ ├── 1. 💳 법인카드 관리 (카드 등록, 담당자 지정)
+ ├── 2. 🎛️ 사내 지출 한도 및 정책 설정 (식대 한도, 출장비 규정 등)
+ └── 3. 📄 사내 지출결의서 양식 설정 [✨ AI 맞춤 양식 & 기본 양식 이원화 세팅]
