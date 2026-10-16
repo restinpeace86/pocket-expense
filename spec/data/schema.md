@@ -3,6 +3,7 @@
 > 이 문서가 테이블·컬럼·enum의 유일한 기준이다. 다른 문서와 다르면 이 문서를 따른다. (D-001)
 > 모든 테이블은 `id uuid PK default gen_random_uuid()`, `created_at`, `updated_at timestamptz`(updated_at 트리거)를 가진다. 아래 표에서는 생략한다.
 > 금액은 모두 원 단위 정수(`integer`)다.
+> **격리 구현(T1)**: 회사 데이터 테이블은 모두 `company_id NOT NULL`이고, 회사 데이터끼리의 참조는 `(id, company_id)` 복합 외래키로 묶어 다른 회사 행을 가리킬 수 없다. 실제 정의는 `supabase/migrations/001~005`, 검증은 `supabase/tests/001_tenant_isolation.sql`.
 > **경비 구조 (D-034)**: 지출소명서 1건(`expense_claims`, 헤더) 안에 영수증 항목 N건(`expense_items`, 행). 결재·상태·정산완료는 소명서 단위, 카테고리·금액 계산·영수증은 항목 단위다.
 
 ## 1. Enum
@@ -139,6 +140,7 @@
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | approval_line_id | uuid | FK approval_lines, cascade | |
+| company_id | uuid | FK companies, not null | 격리·RLS용 (복합 FK) |
 | step_order | integer | not null, unique(approval_line_id, step_order) | 1부터 |
 | approver_member_id | uuid | FK members, not null | 사전 검토자. `approved` 상태 멤버(역할 무관) (D-039) |
 
@@ -271,7 +273,8 @@
 |---|---|---|---|
 | company_id | uuid | FK companies | |
 | claim_id | uuid | FK expense_claims, null | |
-| recipient_member_id | uuid | FK members | |
+| recipient_member_id | uuid | FK members, null | 초대(`INVITE`)는 비회원이라 null |
+| invitation_id | uuid | FK member_invitations, null | `INVITE` 발송 대상 |
 | recipient_phone | text | not null | 발송 시점 번호 |
 | template_code | text | not null | `spec/features/kakao-alimtalk.md` §3 |
 | payload | jsonb | not null | 템플릿 변수 |

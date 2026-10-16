@@ -20,13 +20,13 @@
 - [x] T0-6 검증 루프(tsc → test → build) 1회 통과 확인
 
 ## T1. DB 스키마 — 기준: `spec/data/schema.md`, `spec/data/expense-lifecycle.md`
-- [ ] T1-1 `supabase/migrations/001_initial_schema.sql` 재작성 (enum, 테이블, updated_at 트리거, 제약)
-- [ ] T1-2 RLS 정책 + `current_member()`·`is_admin()` 헬퍼 + 최고 관리자 1명 제약
-- [ ] T1-3 Storage 버킷(`receipts`, `form-templates`) 및 정책
-- [ ] T1-7 `billing_plans` 시드(3종, 결제 불가), `credit_ledger`, 크레딧 원자적 차감 + 0장 시 이벤트 추가 지급 함수 + 단위 테스트 (D-046, D-054)
-- [ ] T1-4 상태 전이 RPC/서버 함수 골격 (상신, 승인, 반려, 정산완료)
-- [ ] T1-5 Supabase 적용 및 TypeScript 타입 생성
-- [ ] T1-6 RLS 격리 테스트 (타사 데이터 접근 불가 확인)
+- [x] T1-1 `supabase/migrations/001_initial_schema.sql` 재작성 (enum, 테이블, updated_at 트리거, 제약)
+- [x] T1-2 RLS 정책 + `current_member()`·`is_admin()` 헬퍼 + 최고 관리자 1명 제약
+- [x] T1-3 Storage 버킷(`receipts`, `form-templates`) 및 정책
+- [x] T1-7 `billing_plans` 시드(3종, 결제 불가), `credit_ledger`, 크레딧 원자적 차감 + 0장 시 이벤트 추가 지급 함수 + 단위 테스트 (D-046, D-054)
+- [x] T1-4 상태 전이 RPC/서버 함수 골격 (상신, 승인, 반려, 정산완료) — 권한·회사 검사·결재 단계 스냅샷·결재 생략·정산 판정까지. 상세 항목 검증·금액 재계산·계정과목 스냅샷은 T9-1에서 보강
+- [x] T1-5 Supabase 적용 및 TypeScript 타입 생성
+- [x] T1-6 RLS 격리 테스트 (타사 데이터 접근 불가 확인)
 
 ## T2. 인증·온보딩 — 기준: `spec/features/auth-onboarding.md`, `spec/common/routes.md`
 - [ ] T2-0 랜딩 페이지 (`spec/screens/landing-page.md`: 소개 동영상 또는 목업 애니메이션)

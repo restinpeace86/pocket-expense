@@ -9,7 +9,10 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "postinstall": "next typegen"
+    "postinstall": "next typegen",
+    "db:migrate": "node scripts/supabase-sql.mjs --migrate",
+    "test:db": "node scripts/supabase-sql.mjs --file supabase/tests/001_tenant_isolation.sql",
+    "db:types": "node scripts/supabase-sql.mjs --types src/lib/supabase/database.types.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
