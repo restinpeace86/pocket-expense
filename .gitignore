@@ -38,3 +38,11 @@ yarn-error.log*
 # OS misc
 .DS_Store
 *.pem
+# extra (from create-next-app)
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+.pnpm-debug.log*

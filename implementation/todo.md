@@ -12,12 +12,12 @@
 - [x] `scripts/notify-discord.mjs` 추가
 
 ## T0. 프로젝트 스캐폴딩 — 기준: CLAUDE.md Tech Stack
-- [ ] T0-1 Next.js(App Router, TS, Tailwind, ESLint) 초기화 (현재 디렉터리, 기존 문서 보존)
-- [ ] T0-2 lucide-react, @supabase/ssr, @supabase/supabase-js 설치 및 서버/브라우저 클라이언트 유틸
-- [ ] T0-3 Vitest 설치, `npm run test` 스크립트 추가, 샘플 테스트 1개
-- [ ] T0-4 `.env.example`에 필요한 키 이름 정리 (값 없이): Supabase, `GEMINI_API_KEY`, `KAKAO_REST_API_KEY`, Kakao OAuth, `ALIMTALK_DRIVER`, `CREDIT_EVENT_BONUS_ENABLED`, `CREDIT_EVENT_BONUS_AMOUNT`, `NEXT_PUBLIC_SITE_URL`, `DISCORD_WEBHOOK_URL`
-- [ ] T0-5 `.env.local`에서 이 프로젝트와 무관한 키(T맵, 네이버 등) 제거 여부 확인 후 기록 (값을 커밋하지 말 것)
-- [ ] T0-6 검증 루프(tsc → test → build) 1회 통과 확인
+- [x] T0-1 Next.js(App Router, TS, Tailwind, ESLint) 초기화 (현재 디렉터리, 기존 문서 보존)
+- [x] T0-2 lucide-react, @supabase/ssr, @supabase/supabase-js 설치 및 서버/브라우저 클라이언트 유틸
+- [x] T0-3 Vitest 설치, `npm run test` 스크립트 추가, 샘플 테스트 1개
+- [x] T0-4 `.env.example`에 필요한 키 이름 정리 (값 없이): Supabase, `GEMINI_API_KEY`, `KAKAO_REST_API_KEY`, Kakao OAuth, `ALIMTALK_DRIVER`, `CREDIT_EVENT_BONUS_ENABLED`, `CREDIT_EVENT_BONUS_AMOUNT`, `NEXT_PUBLIC_SITE_URL`, `DISCORD_WEBHOOK_URL`
+- [x] T0-5 `.env.local`에서 이 프로젝트와 무관한 키(T맵, 네이버 등) 제거 여부 확인 후 기록 (값을 커밋하지 말 것) → 무관 키 4개 확인, 사용자 확인 대기(기록: implementation/2026-10-16_T0-scaffolding.md)
+- [x] T0-6 검증 루프(tsc → test → build) 1회 통과 확인
 
 ## T1. DB 스키마 — 기준: `spec/data/schema.md`, `spec/data/expense-lifecycle.md`
 - [ ] T1-1 `supabase/migrations/001_initial_schema.sql` 재작성 (enum, 테이블, updated_at 트리거, 제약)
