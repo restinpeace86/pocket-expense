@@ -13,7 +13,8 @@
     "db:migrate": "node scripts/supabase-sql.mjs --migrate",
     "test:db": "node scripts/supabase-sql.mjs --file supabase/tests/001_tenant_isolation.sql && node scripts/supabase-sql.mjs --file supabase/tests/002_onboarding_isolation.sql",
     "db:types": "node scripts/supabase-sql.mjs --types src/lib/supabase/database.types.ts",
-    "bench:db": "node scripts/supabase-sql.mjs --file supabase/tests/bench_rls.sql"
+    "bench:db": "node scripts/supabase-sql.mjs --file supabase/tests/bench_rls.sql",
+    "check:responsive": "node scripts/check-responsive.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -31,6 +32,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "playwright": "^1.64.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.0.5"

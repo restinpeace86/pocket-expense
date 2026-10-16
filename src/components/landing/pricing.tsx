@@ -20,18 +20,18 @@ export async function Pricing() {
   return (
     <section id="pricing" className="mx-auto w-full max-w-5xl px-4 py-20">
       <div className="text-center">
-        <span className="inline-block rounded-full bg-emerald-400/15 px-3 py-1 text-sm font-medium text-emerald-300">
+        <span className="inline-block text-balance rounded-full bg-emerald-400/15 px-3 py-1 text-sm font-medium text-emerald-300">
           지금 가입하면 영수증 100장 무료 · 이벤트 기간 동안 다 쓰면 100장씩 추가 무료
         </span>
-        <h2 className="mt-4 text-3xl font-bold tracking-tight text-white">인원이 아니라 영수증 장수로</h2>
+        <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-white">인원이 아니라 영수증 장수로</h2>
         <p className="mt-2 text-zinc-400">인당 과금 없는 고정 월 구독. 도입비 0원.</p>
       </div>
-      <ul className="mt-10 grid gap-4 md:grid-cols-3">
+      <ul className="mx-auto mt-10 grid max-w-md gap-4 lg:max-w-none lg:grid-cols-3">
         {plans.map((plan) => (
           <li key={plan.code} className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
             <p className="text-sm text-zinc-400">{plan.recommended_size}</p>
             <h3 className="mt-1 text-xl font-semibold text-white">{plan.name}</h3>
-            <p className="mt-4 text-3xl font-bold text-white">
+            <p className="mt-4 whitespace-nowrap text-3xl font-bold text-white">
               {formatWon(plan.monthly_price)}
               <span className="text-base font-normal text-zinc-400"> / 월</span>
             </p>

@@ -55,22 +55,18 @@ export function OAuthButtons({ next }: { next?: string }) {
         type="button"
         onClick={() => signIn("kakao")}
         disabled={pending !== null}
-        className="relative inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#FEE500] px-12 text-base font-semibold text-black/85 hover:brightness-95 disabled:opacity-60"
+        className="inline-flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#FEE500] px-4 text-[15px] font-semibold text-black/85 hover:brightness-95 disabled:opacity-60 sm:text-base"
       >
-        <span className="absolute left-4">
-          <KakaoSymbol />
-        </span>
+        <KakaoSymbol />
         {pending === "kakao" ? "카카오로 이동 중..." : "카카오로 3초 만에 시작하기"}
       </button>
       <button
         type="button"
         onClick={() => signIn("google")}
         disabled={pending !== null}
-        className="relative inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-zinc-300 bg-white px-12 text-base font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-60"
+        className="inline-flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-zinc-300 bg-white px-4 text-[15px] font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-60 sm:text-base"
       >
-        <span className="absolute left-4">
-          <GoogleLogo />
-        </span>
+        <GoogleLogo />
         {pending === "google" ? "Google로 이동 중..." : "Google로 로그인"}
       </button>
       {error && (

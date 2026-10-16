@@ -19,6 +19,7 @@
 - DB 마이그레이션 적용: `npm run db:migrate` (`supabase/migrations/` 중 미적용분만, `private.applied_migrations`로 추적)
 - **회사 간 격리 테스트: `npm run test:db`** (`supabase/tests/001_tenant_isolation.sql`, 트랜잭션 후 ROLLBACK)
 - DB 타입 생성: `npm run db:types` → `src/lib/supabase/database.types.ts`
+- **반응형 점검: `npm run check:responsive -- <주소> [경로...]`** (360·390·768·1280px에서 가로 넘침 검사 + 스크린샷 `.responsive/`, 최초 1회 `npx playwright install chromium`)
 - RLS 성능 측정: `npm run bench:db` (회사 50·소명서 21,000·항목 63,000 생성 후 ROLLBACK, 쿼리별 ms)
 
 > 위 명령은 `implementation/todo.md`의 "T0. 프로젝트 스캐폴딩" 완료 후 사용 가능하다. T0 완료 전에는 검증 루프 대신 T0을 먼저 수행한다.
@@ -47,6 +48,7 @@
    - 2단계: `npm run test` (테스트 실행)
    - **2-1단계 (DB·RLS·저장소·서버 함수를 바꾼 경우 필수)**: 변경 마이그레이션을 먼저 드라이런(마이그레이션 + 격리 테스트를 한 트랜잭션에서 실행 후 ROLLBACK)으로 검증 → `npm run db:migrate` → `npm run test:db` → `npm run db:types`. **격리 테스트 실패는 릴리스 차단이다.** 새 회사 데이터 테이블·정책·함수를 추가하면 격리 테스트에도 해당 케이스를 추가한다. 정책을 바꾸면 `npm run bench:db`도 실행해 목록·집계 쿼리가 **50ms 이하**인지 확인한다.
    - 3단계: `npm run build` (프로덕션 빌드 검증)
+   - **3-1단계 (화면을 추가·변경한 경우 필수)**: `npm run build` 후 `npx next start`로 띄우고 `npm run check:responsive -- http://localhost:3000 <바꾼 화면 경로들>` 실행. **가로 넘침이 있으면 실패**이며, 스크린샷을 직접 열어 글자 줄바꿈 깨짐·겹침도 확인한다. 직원·결재 화면은 모바일이 기본, 관리자·랜딩은 PC가 기본이지만 **모든 화면은 모바일에서도 깨지지 않아야 한다.**
    *(에러 발생 시 스스로 원인을 분석·수정한 뒤 1단계부터 다시 수행할 것)*
 
 2. **자동 커밋 & 원격 푸시 (Commit & Push):**

@@ -8,7 +8,7 @@ const ROWS = [
 
 export function HeroMockup() {
   return (
-    <div className="relative mx-auto w-full max-w-sm" aria-hidden>
+    <div className="relative mx-auto w-full max-w-sm lg:mb-20" aria-hidden>
       <div className="rounded-[2rem] border border-white/15 bg-zinc-950/80 p-4 shadow-2xl shadow-blue-900/40 backdrop-blur">
         <div className="rounded-2xl bg-white p-4 text-zinc-900">
           <p className="text-xs text-zinc-500">지출소명서</p>
@@ -20,11 +20,11 @@ export function HeroMockup() {
                 className="landing-row flex items-center justify-between rounded-xl bg-zinc-50 px-3 py-2 text-sm"
                 style={{ animationDelay: `${0.6 + i * 0.7}s` }}
               >
-                <span>
+                <span className="min-w-0 truncate">
                   {row.place}
                   <span className="ml-1.5 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] text-blue-700">{row.tag}</span>
                 </span>
-                <span className="font-medium">{row.amount}</span>
+                <span className="shrink-0 pl-2 font-medium">{row.amount}</span>
               </li>
             ))}
           </ul>
@@ -33,8 +33,9 @@ export function HeroMockup() {
           </p>
         </div>
       </div>
+      {/* 모바일·태블릿: 카드 아래에 배치 / 넓은 화면(lg): 카드 오른쪽 아래에 겹쳐 배치 — 화면 밖으로 나가지 않게 */}
       <div
-        className="landing-bubble absolute -bottom-10 -right-2 w-60 rounded-2xl bg-[#FEE500] p-3 text-sm text-black/85 shadow-xl sm:-right-10"
+        className="landing-bubble ml-auto mt-4 w-full max-w-60 rounded-2xl bg-[#FEE500] p-3 text-sm text-black/85 shadow-xl lg:absolute lg:-bottom-24 lg:-right-8 lg:mt-0 lg:w-60"
         style={{ animationDelay: "3.6s" }}
       >
         <p className="font-semibold">[PocketExpense] 결재 요청</p>
