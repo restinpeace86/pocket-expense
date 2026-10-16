@@ -15,7 +15,7 @@
 - [ ] T0-1 Next.js(App Router, TS, Tailwind, ESLint) 초기화 (현재 디렉터리, 기존 문서 보존)
 - [ ] T0-2 lucide-react, @supabase/ssr, @supabase/supabase-js 설치 및 서버/브라우저 클라이언트 유틸
 - [ ] T0-3 Vitest 설치, `npm run test` 스크립트 추가, 샘플 테스트 1개
-- [ ] T0-4 `.env.example`에 필요한 키 이름 정리 (값 없이): Supabase, `GEMINI_API_KEY`, `KAKAO_REST_API_KEY`, Kakao OAuth, `ALIMTALK_DRIVER`, `NEXT_PUBLIC_SITE_URL`, `DISCORD_WEBHOOK_URL`
+- [ ] T0-4 `.env.example`에 필요한 키 이름 정리 (값 없이): Supabase, `GEMINI_API_KEY`, `KAKAO_REST_API_KEY`, Kakao OAuth, `ALIMTALK_DRIVER`, `CREDIT_EVENT_BONUS_ENABLED`, `CREDIT_EVENT_BONUS_AMOUNT`, `NEXT_PUBLIC_SITE_URL`, `DISCORD_WEBHOOK_URL`
 - [ ] T0-5 `.env.local`에서 이 프로젝트와 무관한 키(T맵, 네이버 등) 제거 여부 확인 후 기록 (값을 커밋하지 말 것)
 - [ ] T0-6 검증 루프(tsc → test → build) 1회 통과 확인
 
@@ -23,7 +23,7 @@
 - [ ] T1-1 `supabase/migrations/001_initial_schema.sql` 재작성 (enum, 테이블, updated_at 트리거, 제약)
 - [ ] T1-2 RLS 정책 + `current_member()`·`is_admin()` 헬퍼 + 최고 관리자 1명 제약
 - [ ] T1-3 Storage 버킷(`receipts`, `form-templates`) 및 정책
-- [ ] T1-7 `billing_plans` 시드(3종, 결제 불가), `credit_ledger`, 크레딧 원자적 차감 함수 + 단위 테스트 (D-046)
+- [ ] T1-7 `billing_plans` 시드(3종, 결제 불가), `credit_ledger`, 크레딧 원자적 차감 + 0장 시 이벤트 추가 지급 함수 + 단위 테스트 (D-046, D-054)
 - [ ] T1-4 상태 전이 RPC/서버 함수 골격 (상신, 승인, 반려, 정산완료)
 - [ ] T1-5 Supabase 적용 및 TypeScript 타입 생성
 - [ ] T1-6 RLS 격리 테스트 (타사 데이터 접근 불가 확인)
@@ -37,7 +37,7 @@
 
 ## T3. 관리자 기본 — 기준: `spec/screens/admin-dashboard.md` 0·⑤, `spec/screens/admin-team-members.md`, `spec/screens/admin-settings.md`, `spec/features/roles-and-permissions.md`
 - [ ] T3-1 관리자 레이아웃(사이드바, Split View, 모바일 반응형) + 워크스페이스 스위처(D-049)
-- [ ] T3-9 요금제 화면 A-05 (사용량, 플랜 3종, 결제 폼·버튼 비활성) (`admin-billing.md`)
+- [ ] T3-9 요금제 화면 A-05 (사용량, 이벤트 지급 횟수, 플랜 3종, 결제 폼·버튼 비활성) + 이벤트 지급 배너 (`admin-billing.md`, D-054)
 - [ ] T3-2 회사·정책 설정 (1식 한도, 한도 초과 처리 방식 D-041, 유류비 단가, 청구 기한 D-031, 공용 초대 링크·QR·재발급)
 - [ ] T3-3 부서 관리
 - [ ] T3-4 멤버 관리 (승인/거절, 부서, 비활성화 규칙, 역할 변경·관리자 비활성화는 최고 관리자만, 최고 관리자 넘기기 — D-038) + 권한 단위 테스트

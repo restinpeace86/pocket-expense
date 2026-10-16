@@ -42,6 +42,8 @@
 | billing_status | billing_status | not null, default 'free_trial' | 과금 상태 (D-046) |
 | receipt_credits_granted | integer | not null, default 100 | 지급된 무료 크레딧(회사 생성 시 100) |
 | receipt_credits_used | integer | not null, default 0 | 사용한 크레딧. `used ≤ granted` 체크 제약 |
+| last_event_bonus_at | timestamptz | null | 마지막 이벤트 추가 지급 시각 (D-054) |
+| event_bonus_acknowledged_at | timestamptz | null | 관리자가 이벤트 지급 배너를 확인한 시각 |
 
 ### 2.1a `billing_plans` — 요금제 (D-046, 표시용)
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -59,8 +61,8 @@
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | company_id | uuid | FK companies, not null | |
-| delta | integer | not null | +100(무료 지급) / -1(영수증 업로드) |
-| reason | text | not null | `free_trial_grant` / `receipt_upload` |
+| delta | integer | not null | +100(무료 지급·이벤트 추가 지급) / -1(영수증 업로드) |
+| reason | text | not null | `free_trial_grant` / `receipt_upload` / `event_bonus` (D-054) |
 | item_id | uuid | FK expense_items, null | 차감 대상 항목 |
 | member_id | uuid | FK members, null | 업로드한 사람 |
 
