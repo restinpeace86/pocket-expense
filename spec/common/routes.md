@@ -20,11 +20,12 @@
 ## 2. 직원 (모바일)
 | 경로 | 화면 |
 |---|---|
-| `/workspace/[id]/employee` | 홈 / 내 소명서 리스트 |
+| `/workspace/[id]/employee` | E-01 직원 메인 대시보드 (`worker-dashboard.md`) |
 | `/workspace/[id]/employee/claims/new` | `draft` 소명서 생성 후 편집 화면으로 리다이렉트 |
 | `/workspace/[id]/employee/claims/[claimId]` | 소명서 상세 (결재 타임라인, 반려 정보) |
-| `/workspace/[id]/employee/claims/[claimId]/edit` | `draft`·`rejected` 소명서 편집 (헤더 + 영수증 항목 표, 영수증 추가) |
+| `/workspace/[id]/employee/claims/[claimId]/edit` | E-02 소명서 작성·편집 (`worker-tax-processing.md`) |
 | `/workspace/[id]/employee/claims/[claimId]/items/[itemId]` | 영수증 항목 편집 |
+| `/workspace/[id]/employee/settlements` | E-03 정산 내역 · 입금 타임라인 (`worker-timeline.md`) |
 | `/workspace/[id]/employee/profile` | 내 정보 수정, 정산 계좌, 로그아웃 |
 
 ## 3. 결재자 (모바일 우선)
@@ -45,6 +46,8 @@
 | `/workspace/[id]/admin/form-template` | 사내 양식 설정 (`spec/screens/template-configuration.md`) |
 | `/workspace/[id]/admin/settings` | 회사 정보, 식대 한도, 유류비 단가, 청구 기한, 초대 링크/QR (`spec/screens/admin-settings.md`) |
 | `/workspace/[id]/admin/account-titles` | 계정과목 목록·내부 분류 매핑 (`spec/features/account-titles.md`) |
+| `/workspace/[id]/admin/payouts` | A-02 정산 지급 관리 (`spec/screens/admin-payouts.md`) |
+| `/workspace/[id]/admin/billing` | A-05 요금제 (`spec/screens/admin-billing.md`) |
 | `/workspace/[id]/admin/export` | 세무 마감 (`spec/screens/tax-closing.md`) |
 | `/workspace/[id]/admin/notifications` | 알림톡 발송 이력 |
 

@@ -199,6 +199,9 @@ Vision LLM, Kakao Mobility, 알림톡은 각각 어댑터 모듈 뒤에 둔다. 
 | `spec/data/expense-lifecycle.md` | 지출소명서 상태 전이, 결재 진행, 금액 계산, 정산 방향 (규칙 단일 출처) |
 | `spec/common/ui-rules.md` | 반응형, 디자인 시스템, 상태 배지, 로딩·에러 |
 | `spec/common/routes.md` | 전체 라우트 맵과 접근 권한 |
+| `spec/common/workspace-architecture.md` | 듀얼 워크스페이스·스위처·반응형 원칙 |
+| `spec/common/app-architecture.md` | 화면 목록(E-01~03, A-01~05) 인덱스 |
+| `spec/common/pricing-policy.md` | 요금제, 무료 100장, 결제 비활성, 크레딧 차감 |
 | `spec/features/auth-onboarding.md` | 소셜 로그인, 회사 생성, 직원 가입, 멤버 승인 |
 | `spec/features/roles-and-permissions.md` | 역할(super_admin/admin/employee)·결재자·권한 매트릭스·최고 관리자 넘기기 |
 | `spec/features/expense-claim-flow.md` | 지출소명서 작성 흐름 (영수증 N장 → 소명서 1건 → 일괄 결재) |
@@ -207,16 +210,23 @@ Vision LLM, Kakao Mobility, 알림톡은 각각 어댑터 모듈 뒤에 둔다. 
 | `spec/features/smart-meal.md` | 식대·출장 식비 1식 한도 분할(절사/알림 모드, 개인별 한도) |
 | `spec/features/trip-expense.md` | 출장 소명서, 출장비 세부 유형(출장 식비·교통·통행료·숙박·자차), 자차 거리·유류비 |
 | `spec/features/approval-workflow.md` | 결재 흐름: 선택형 사전 검토 결재라인 + 관리자 최종 승인 |
-| `spec/features/kakao-alimtalk.md` | 알림톡 발송 시점·템플릿·실패 처리 |
+| `spec/features/kakao-alimtalk.md` | 알림톡 발송 구조·링크 보안·실패 처리 |
 | `spec/features/account-titles.md` | 내부 분류 → 회계 계정과목 매핑 (여비교통비 등) |
 | `spec/features/tax-export.md` | 월말 엑셀·영수증 ZIP·PDF 출력 |
+| `spec/features/tax-upload-format.md` | 세무 업로드 엑셀 포맷 초안 + 세무사무소 확인 질문 (O-02) |
 | `spec/screens/landing-page.md` | 랜딩 페이지 |
 | `spec/screens/admin-onboarding.md` | 회사 생성 위저드 |
-| `spec/screens/employee-mobile.md` | 직원 화면 |
+| `spec/screens/worker-dashboard.md` | E-01 직원 메인 대시보드 |
+| `spec/screens/worker-tax-processing.md` | E-02 영수증 스냅샷 & 지출소명서 작성 |
+| `spec/screens/worker-timeline.md` | E-03 직원 정산 타임라인 |
+| `spec/screens/employee-mobile.md` | 직원 화면 목록, 소명서 상세, 내 정보 |
+| `spec/screens/notification-rule.md` | 알림톡 트리거·템플릿 6종 (단일 기준) |
 | `spec/screens/approver.md` | 결재 화면 (알림톡 링크 진입, 사전 검토자·관리자 모바일) |
 | `spec/screens/admin-dashboard.md` | 관리자 PC 화면 공통(사이드바, 홈, 부서, 결재라인, 알림 이력, 계정과목) |
 | `spec/screens/admin-expense-approvals.md` | 지출 승인 관리 (소명서 묶음 일괄 승인·반려, 정산완료) |
 | `spec/screens/admin-team-members.md` | 멤버 관리 (개별 초대, 권한, 개인별 한도, 퇴사 처리, 독촉 알림) |
 | `spec/screens/tax-closing.md` | 세무 마감 (낱개 영수증 미리보기, 1:1 파일명 매칭, 마감 잠금) |
+| `spec/screens/admin-payouts.md` | A-02 정산 지급 관리 |
+| `spec/screens/admin-billing.md` | A-05 요금제 (결제 비활성) |
 | `spec/screens/admin-settings.md` | 관리자 설정: 회사 정보, 정산 정책, 청구 기한, 초대 |
 | `spec/screens/template-configuration.md` | 사내 양식 설정 화면 (기본 양식 + AI 맞춤 양식) |

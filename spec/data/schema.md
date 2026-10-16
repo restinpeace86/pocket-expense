@@ -13,11 +13,13 @@
 | `member_status` | `pending`(승인 대기), `approved`(활성), `inactive`(비활성/퇴사) |
 | `claim_status` | `draft`, `submitted`, `approved`, `rejected`, `paid` (소명서 상태) |
 | `expense_category` | `meal`(일반 식대), `trip`(출장비), `meeting`(외부 미팅비) (항목 카테고리. 출장 중 비용은 모두 `trip`, D-035) |
-| `payment_method` | `personal_card`(개인카드), `corporate_card`(법인카드) |
+| `payment_method` | `corporate_card`(법인카드, 기본값), `personal_card`(개인(사비): 개인카드·현금 등 직원 돈) (D-048) |
 | `trip_type` | `meal`(출장 식비), `public_transport`(대중교통), `taxi`(택시), `toll_parking`(통행료·주차), `lodging`(숙박), `own_car`(자차 유류비), `other`(기타) |
 | `distance_source` | `api`(카카오 길찾기 산출), `manual`(직접 입력) |
 | `approval_step_kind` | `review`(사전 검토, 결재라인), `final`(관리자 최종 승인) (D-039) |
 | `meal_limit_mode` | `split`(절사: 초과분 개인 부담), `notify`(알림: 전액 지원 + 한도 초과 배지) (D-041) |
+| `evidence_type` | `card_slip`(카드매출전표), `cash_receipt`(현금영수증), `tax_invoice`(세금계산서), `simple_receipt`(간이영수증), `other`(기타·증빙 없음) (D-051) |
+| `billing_status` | `free_trial`(한시 무료 제공), `active`(유료 구독 — 결제 연동 후) (D-046) |
 | `invitation_status` | `invited`(초대 대기), `accepted`, `canceled` (D-042) |
 | `approval_step_status` | `waiting`(앞 단계 대기), `pending`(내 차례), `approved`, `rejected`, `skipped`, `canceled` |
 | `parse_status` | `none`, `parsing`, `success`, `failed` |
@@ -37,6 +39,30 @@
 | fuel_rate_per_km | integer | not null, default 200 | 자차 km당 유류비 단가 |
 | claim_deadline_type | claim_deadline_type | not null, default 'none' | 청구 기한 방식 (D-031) |
 | claim_deadline_days | integer | null, 1~90 | `days_after`일 때 N |
+| billing_status | billing_status | not null, default 'free_trial' | 과금 상태 (D-046) |
+| receipt_credits_granted | integer | not null, default 100 | 지급된 무료 크레딧(회사 생성 시 100) |
+| receipt_credits_used | integer | not null, default 0 | 사용한 크레딧. `used ≤ granted` 체크 제약 |
+
+### 2.1a `billing_plans` — 요금제 (D-046, 표시용)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| code | text | not null, unique | `basic` / `standard` / `pro` |
+| name | text | not null | 베이직 / 스탠다드 / 프로 |
+| monthly_price | integer | not null | 40000 / 70000 / 100000 |
+| monthly_receipts | integer | not null | 300 / 600 / 1000 |
+| recommended_size | text | null | 5~10인 / 10~20인 / 20~30인 |
+| sort_order | integer | default 0 | |
+| is_purchasable | boolean | not null, default false | 결제 가능 여부. 결제 연동 전까지 false (D-046) |
+- `id`·`created_at` 외 회사와 무관한 공용 데이터. 시드 마이그레이션으로 넣는다.
+
+### 2.1b `credit_ledger` — 크레딧 이력 (D-046)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| company_id | uuid | FK companies, not null | |
+| delta | integer | not null | +100(무료 지급) / -1(영수증 업로드) |
+| reason | text | not null | `free_trial_grant` / `receipt_upload` |
+| item_id | uuid | FK expense_items, null | 차감 대상 항목 |
+| member_id | uuid | FK members, null | 업로드한 사람 |
 
 ### 2.2 `departments` — 부서
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -151,6 +177,7 @@
 | total_company_supported | integer | not null, default 0 | 항목 회사지원금 합계 (서버 갱신) |
 | total_personal_burden | integer | not null, default 0 | 항목 개인부담금 합계 (서버 갱신) |
 | self_approved | boolean | not null, default false | 본인 최종 결재로 결재 생략 승인 여부 (D-026) |
+| settlement_required | boolean | null | 승인 시 결정: 지급·납부할 금액이 있으면 true(정산 대기), 없으면 false(바로 `paid`) (D-047) |
 | current_round | integer | not null, default 0 | 결재 회차 (상신마다 +1) |
 | rejection_reason | text | null | 최근 반려 사유 |
 | submitted_at / approved_at / rejected_at / paid_at | timestamptz | null | 상태 전이 시각 |
@@ -163,9 +190,12 @@
 | company_id | uuid | FK companies, not null | RLS용 |
 | sort_order | integer | not null, default 0 | 소명서 안 표시 순서 |
 | category | expense_category | null (상신 시 필수) | |
-| payment_method | payment_method | null (상신 시 필수) | (D-010) |
+| payment_method | payment_method | not null, default 'corporate_card' | (D-010, D-048) |
 | expense_date | date | null (상신 시 필수) | 결제/사용 일자. 출력 기준월 (D-016) |
 | merchant_name | text | null | 가맹점명 (자차는 null 허용) |
+| merchant_business_number | text | null | 가맹점 사업자등록번호(숫자 10자리 저장, 표시 `000-00-00000`). AI 추출 후 직원 확인 (D-050) |
+| evidence_type | evidence_type | null (상신 시 필수) | 증빙구분. AI 추정 후 직원 확인 (D-051) |
+| credit_charged | boolean | not null, default false | 이 항목 영수증 업로드로 크레딧을 차감했는지(교체 시 추가 차감 방지) |
 | amount | integer | null (상신 시 필수) | 총 결제금액 |
 | supply_amount | integer | null | 공급가액 (D-017) |
 | vat_amount | integer | null | 부가세 (D-017) |
@@ -250,6 +280,8 @@
 | form_templates | 자기 회사 | admin |
 | approval_lines, approval_line_steps | 자기 회사 | admin |
 | account_titles, account_title_mappings | 자기 회사 admin | admin |
+| billing_plans | 로그인 사용자 전체 | 서버 전용(시드) |
+| credit_ledger | 자기 회사 admin | 서버 액션(업로드 차감, 회사 생성 지급)으로만 |
 | member_invitations | 자기 회사 admin | admin. 토큰으로 가입하는 경로는 서버 액션 |
 | monthly_closings | 자기 회사 admin | 서버 액션(다운로드 시 마감, 해제는 `super_admin`) |
 | expense_claims | 본인 소명서 / 해당 소명서의 사전 검토자(claim_approvals에 지정된 멤버) / 자기 회사 admin | 본인: `draft`·`rejected` 상태에서만 수정, `draft`만 삭제. 상태·합계 컬럼은 서버 액션(RPC)으로만 |

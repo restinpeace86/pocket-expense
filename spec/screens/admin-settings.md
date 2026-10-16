@@ -26,11 +26,15 @@
 ## 3. 직원 초대
 - 초대 링크 복사, QR 보기/다운로드(PNG), [초대 코드 재발급](이전 링크 즉시 무효). 멤버 관리 화면과 같은 기능.
 
-## 4. 같은 [설정] 그룹의 다른 화면
-- 계정과목: `/admin/account-titles` (`admin-dashboard.md` ⑪)
-- 부서: `/admin/departments` (`admin-dashboard.md` ⑤)
-- 결재라인: `/admin/approval-lines` (`admin-dashboard.md` ⑥)
-- 사내 양식: `/admin/form-template` (`template-configuration.md`)
-- 알림 이력: `/admin/notifications` (`admin-dashboard.md` ⑩)
-
-
+## 4. [⚙️ 설정] 허브 구성 (Admin Settings Hub)
+```
+[⚙️ 설정]
+ ├── 🎛️ 사내 지출 한도 및 정책 설정   /admin/settings (이 화면: 회사 정보, 1식 한도·초과 처리 방식, 유류비 단가, 청구 기한, 공용 초대 링크)
+ ├── 📄 사내 지출소명서 양식 설정      /admin/form-template (`template-configuration.md`) [✨ AI 맞춤 양식 & 기본 양식]
+ ├── 🏢 부서                         /admin/departments (`admin-dashboard.md` ⑤)
+ ├── 🧭 사전 검토 결재라인(선택)       /admin/approval-lines (`admin-dashboard.md` ⑥)
+ ├── 📚 계정과목                      /admin/account-titles (`admin-dashboard.md` ⑪)
+ ├── 💳 요금제                        /admin/billing (`admin-billing.md`)
+ └── 🔔 알림 이력                     /admin/notifications (`admin-dashboard.md` ⑩)
+```
+- **법인카드 관리(카드 등록·담당자 지정)는 현재 넣지 않는다.** 직원이 영수증을 올릴 때 법인카드/개인(사비)만 선택한다(D-048). 카드 식별 정보 등록은 미결 O-06.

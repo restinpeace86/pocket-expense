@@ -1,6 +1,6 @@
 # [Spec] 카카오 알림톡 결재 알림
 
-관련: D-007, D-013, D-034, O-01 / 데이터: `notification_logs` / 알림 단위: 지출소명서 1건
+관련: D-007, D-013, D-034, O-01 / 데이터: `notification_logs` / 알림 단위: 지출소명서 1건 / 트리거·템플릿: `spec/screens/notification-rule.md`
 
 ## 1. 개요
 결재 요청과 결과를 카카오 알림톡으로 보내, 결재자와 직원이 앱 설치 없이 카카오톡 링크로 바로 처리·확인하게 한다.
@@ -13,18 +13,8 @@
 - 수신 번호는 `members.phone`. 번호가 비었거나 형식이 틀리면 `failed`로 기록한다.
 
 ## 3. 템플릿
-링크 기준 URL은 `NEXT_PUBLIC_SITE_URL`. (알림톡 버튼 링크 도메인은 템플릿 심사 시 등록 필요)
-| 코드 | 수신자 | 시점 | 내용 | 버튼 링크 |
-|---|---|---|---|---|
-| `APPROVAL_REQUEST` | 현재 단계 대상자: 사전 검토자, 또는 관리자 단계면 청구자를 제외한 관리자 이상 전원 (D-039) | 상신 직후, 이전 단계 승인 직후 | `[PocketExpense] #{청구자}님의 지출소명서 결재 요청` / 제목, 건수, 합계, 기간, 결재 단계(1/2) | [결재하기] `/workspace/{companyId}/approvals/{claimId}` |
-| `APPROVAL_COMPLETED` | 청구자 | 최종 승인 직후 | `지출소명서가 최종 승인되었습니다. 정산 대기 중입니다.` / 제목, 건수, 합계, 지급·납부 금액 | [내역 보기] `/workspace/{companyId}/employee/claims/{claimId}` |
-| `APPROVAL_REJECTED` | 청구자 | 반려 직후 | `지출소명서가 반려되었습니다.` / 제목, 반려자, 반려 사유, 지목 항목 수 | [수정하기] `/workspace/{companyId}/employee/claims/{claimId}` |
-
-| `INVITE` | 개별 초대 대상(비회원) | 관리자가 [알림톡으로 초대] 시 | `[PocketExpense] #{회사명}에서 #{이름}님을 경비 정산 서비스에 초대했습니다` | [가입하기] `/join/i/{token}` |
-| `REMINDER` | 활성 멤버 | 관리자가 [독촉 알림] 시 (같은 멤버 하루 1회) | `#{회사명} 이번 달 경비 소명서 제출을 확인해 주세요` / 작성중·반려 소명서 수 | [제출하러 가기] `/workspace/{companyId}/employee` |
-
-- 위 5개 외의 알림(가입 승인, 정산완료 등)은 현재 범위가 아니다.
-- `INVITE`는 수신자가 아직 회원이 아니므로 알림톡 템플릿 심사에서 정보성 메시지로 인정받도록 문구를 구성한다. 심사에서 반려되면 [초대 링크 복사]만 제공한다(O-01과 함께 확인).
+- 템플릿 목록(6종: `APPROVAL_REQUEST`, `APPROVAL_COMPLETED`, `APPROVAL_REJECTED`, `PAYOUT_COMPLETED`, `INVITE`, `REMINDER`), 발송 시점, 수신자, 문구, 버튼 링크는 **`spec/screens/notification-rule.md`가 단일 기준**이다.
+- 링크 기준 URL은 `NEXT_PUBLIC_SITE_URL`. 알림톡 버튼 링크 도메인은 템플릿 심사 시 등록한다.
 
 ## 4. 링크 진입 보안 (D-013)
 - 링크에는 비밀 토큰을 넣지 않는다. 진입 시 로그인 여부를 확인하고, 미로그인이면 `/login?next=<링크 경로>`로 보낸 뒤 원래 화면으로 돌아온다.

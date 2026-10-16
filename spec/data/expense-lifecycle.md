@@ -7,8 +7,9 @@
 ## 1. 소명서 상태 전이
 
 ```
-          저장              상신                최종 승인            정산완료(관리자)
- (신규) ──────▶ draft ──────────▶ submitted ──────────▶ approved ──────────▶ paid
+          저장              상신                최종 승인            정산 지급 완료(관리자)
+ (신규) ──────▶ draft ──────────▶ submitted ──────────▶ approved(정산 대기) ──▶ paid
+                                            └─(정산할 금액 없음)──────────────────▶ paid
                   ▲                    │
                   │                    │ 어느 단계든 반려 (소명서 전체)
                   │   수정 후 재상신    ▼
@@ -23,9 +24,9 @@
 | `draft` → `submitted` | 청구자 | §2 상신 검증 통과 | 금액 재계산·합계 갱신, 항목별 계정과목 스냅샷(§7), `current_round += 1`, 결재라인 스냅샷 생성(§3), `submitted_at` 기록, 첫 결재자에게 알림톡 |
 | `rejected` → `submitted` | 청구자 | §2 상신 검증 통과 | 위와 동일(새 회차). `rejection_reason`은 새 반려 시 덮어씀 |
 | `draft`/`rejected` → `approved` | 청구자(최고 관리자) | §2 통과 + §3-3 결재 생략 | 결재 생략. `current_round += 1`, 스냅샷 단계 전부 `skipped`, `self_approved = true`, `submitted_at`·`approved_at` 동시 기록. 알림톡 없음 |
-| `submitted` → `approved` | 관리자 이상(청구자 제외) | `final` 단계 `pending`에서 [일괄 승인] | 소명서 안 **모든 항목을 한 번에 승인**. `approved_at` 기록, 청구자에게 최종 승인 알림톡 |
+| `submitted` → `approved` / `paid` | 관리자 이상(청구자 제외) | `final` 단계 `pending`에서 [일괄 승인] | 정산할 금액(§5.5 지급액·납부액)이 있으면 `approved`(정산 대기, `settlement_required=true`), 없으면 바로 `paid`(정산 없음, `paid_at = approved_at`, `paid_by_member_id = null`). 이어서 | 소명서 안 **모든 항목을 한 번에 승인**. `approved_at` 기록, 청구자에게 최종 승인 알림톡 |
 | `submitted` → `rejected` | 현재 단계 처리 권한자 | 반려 사유 필수 | 소명서 전체 반려. 문제 항목 지목(`flagged_item_ids`)은 선택. 현재 단계 `rejected`, 이후 `waiting` 단계는 `canceled`, `rejection_reason`·`rejected_at` 기록, 청구자에게 반려 알림톡 |
-| `approved` → `paid` | 관리자 이상 | — | `paid_at`, `paid_by_member_id` 기록. 여러 소명서 일괄 처리 가능 |
+| `approved` → `paid` | 관리자 이상 | [정산 지급 관리]에서 [정산 지급 완료 처리] | `paid_at`, `paid_by_member_id` 기록. 여러 소명서 일괄 처리 가능. 지급액 > 0이면 직원에게 `PAYOUT_COMPLETED` 알림톡 (D-047) |
 | `draft` 삭제 제한 | — | — | 세무 마감된 항목(`closed_month` 있음)이 든 소명서는 삭제 불가(D-045) |
 | `draft` 삭제 | 청구자 | `draft`만 | 항목과 영수증 파일도 삭제 |
 
@@ -35,8 +36,8 @@
 - `rejected` 상태에서 수정하면 상태는 `rejected` 그대로 유지되고, 재상신할 때 `submitted`로 바뀐다.
 
 ## 2. 상신 검증 (서버에서 재검증)
-**소명서**: `title` 필수, 항목 1건 이상(최대 30건), 활성 양식의 필수 헤더 필드. 출장 소명서(`is_business_trip`)면 `trip_destination`, `trip_start_date`, `trip_end_date`(≥ 시작일), `trip_purpose` 필수.
-**항목마다**: `category`, `payment_method`, `expense_date`, `amount`(>0), 활성 양식의 필수 항목 필드(해당 카테고리 적용분), 그리고 카테고리별 필수:
+**소명서**: `title` 필수, `description`(적요/소명 내용) 필수(D-048), 항목 1건 이상(최대 30건), 활성 양식의 필수 헤더 필드. 출장 소명서(`is_business_trip`)면 `trip_destination`, `trip_start_date`, `trip_end_date`(≥ 시작일), `trip_purpose` 필수.
+**항목마다**: `category`, `payment_method`(기본 법인카드), `evidence_type`(AI 추정 후 직원 확인), `expense_date`, `amount`(>0), 활성 양식의 필수 항목 필드(해당 카테고리 적용분), 그리고 카테고리별 필수:
 | 카테고리 | 추가 필수 |
 |---|---|
 | `meal` | `receipt_path`, `headcount`(≥1, 기본 1) |
@@ -118,7 +119,9 @@ total_personal_burden   = Σ item.personal_burden_amount
 | `corporate_card` | 회사 카드로 결제 | 직원 → 회사 납부액 = `personal_burden_amount` (0이면 정산할 금액 없음) |
 - 한 소명서에 개인카드·법인카드 항목이 섞일 수 있다. 소명서 정산 요약은 "지급 n원 / 납부 m원"을 따로 표시하며 서로 상계하지 않는다.
 - 자차 출장비 항목은 `personal_card`로 고정한다(직원이 유류비를 부담했으므로 회사가 지급).
-- 정산 금액은 저장하지 않고 위 규칙으로 계산해 화면·엑셀에 표시한다.
+- 정산 금액은 저장하지 않고 위 규칙으로 계산해 화면·엑셀에 표시한다. 다만 승인 시 정산 필요 여부(`settlement_required`)는 저장한다.
+- **정산은 소명서 단위**다(D-047). 한 소명서에 법인카드·사비가 섞여도 지급액·납부액을 소명서별로 합산해 한 번에 처리하며, 항목별 부분 지급은 하지 않는다.
+- `payment_method = personal_card`는 "개인(사비)" 전체(개인카드·현금 등 직원 돈)를 뜻한다(D-048).
 
 ## 6. 청구 기한 (D-031, 항목 단위 판정)
 - 출장 소명서의 출장비 항목 중 결제일자가 출장 기간 밖이면 "출장 기간 밖" 경고를 표시한다(상신 가능).
@@ -134,3 +137,7 @@ total_personal_burden   = Σ item.personal_burden_amount
 - 마감된 항목: 계정과목 조정 불가, 소속 소명서 삭제 불가. 승인·정산완료 처리는 가능하다.
 - 마감 완료 월의 사용일자를 가진 항목이 이후 승인되면 다음 마감 대기 월의 패키지에 "전월 추가분"으로 포함된다.
 - 최고 관리자만 마감 해제할 수 있다. 해제하면 그 월에 기록된 `closed_month`를 지우고 다음 다운로드 때 다시 집계한다.
+
+## 9. 무료 크레딧 (D-046)
+- 영수증 파일 업로드가 성공할 때마다 회사 크레딧 1장을 원자적으로 차감한다(`spec/common/pricing-policy.md` §4). 소명서 상태 전이와는 무관하다.
+- 크레딧이 0이면 영수증 업로드만 막고, 작성·상신·결재·정산·세무 마감은 계속 허용한다.

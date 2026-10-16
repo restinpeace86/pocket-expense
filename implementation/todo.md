@@ -23,6 +23,7 @@
 - [ ] T1-1 `supabase/migrations/001_initial_schema.sql` 재작성 (enum, 테이블, updated_at 트리거, 제약)
 - [ ] T1-2 RLS 정책 + `current_member()`·`is_admin()` 헬퍼 + 최고 관리자 1명 제약
 - [ ] T1-3 Storage 버킷(`receipts`, `form-templates`) 및 정책
+- [ ] T1-7 `billing_plans` 시드(3종, 결제 불가), `credit_ledger`, 크레딧 원자적 차감 함수 + 단위 테스트 (D-046)
 - [ ] T1-4 상태 전이 RPC/서버 함수 골격 (상신, 승인, 반려, 정산완료)
 - [ ] T1-5 Supabase 적용 및 TypeScript 타입 생성
 - [ ] T1-6 RLS 격리 테스트 (타사 데이터 접근 불가 확인)
@@ -30,12 +31,13 @@
 ## T2. 인증·온보딩 — 기준: `spec/features/auth-onboarding.md`, `spec/common/routes.md`
 - [ ] T2-0 랜딩 페이지 (`spec/screens/landing-page.md`: 소개 동영상 또는 목업 애니메이션)
 - [ ] T2-1 카카오/Google 로그인, `/auth/callback`, 로그인 후 분기 미들웨어(역할별 워크스페이스)
-- [ ] T2-2 회사 생성 위저드 (`spec/screens/admin-onboarding.md`: 부서 태그, invite_code, 기본 결재라인=생성자, 대시보드 이동)
+- [ ] T2-2 회사 생성 위저드 (무료 크레딧 100장 지급 포함) (`spec/screens/admin-onboarding.md`: 부서 태그, invite_code, 기본 결재라인=생성자, 대시보드 이동)
 - [ ] T2-3 `/join/[inviteCode]` 진입 + 직원 정보 입력 + 개인정보 동의
 - [ ] T2-4 승인 대기 화면
 
 ## T3. 관리자 기본 — 기준: `spec/screens/admin-dashboard.md` 0·⑤, `spec/screens/admin-team-members.md`, `spec/screens/admin-settings.md`, `spec/features/roles-and-permissions.md`
-- [ ] T3-1 관리자 레이아웃(사이드바, Split View, 모바일 접힘)
+- [ ] T3-1 관리자 레이아웃(사이드바, Split View, 모바일 반응형) + 워크스페이스 스위처(D-049)
+- [ ] T3-9 요금제 화면 A-05 (사용량, 플랜 3종, 결제 폼·버튼 비활성) (`admin-billing.md`)
 - [ ] T3-2 회사·정책 설정 (1식 한도, 한도 초과 처리 방식 D-041, 유류비 단가, 청구 기한 D-031, 공용 초대 링크·QR·재발급)
 - [ ] T3-3 부서 관리
 - [ ] T3-4 멤버 관리 (승인/거절, 부서, 비활성화 규칙, 역할 변경·관리자 비활성화는 최고 관리자만, 최고 관리자 넘기기 — D-038) + 권한 단위 테스트
@@ -54,16 +56,17 @@
 - [ ] T5-3 지출결의서 렌더러(공용) + 기본 양식(template-configuration §2) + 미리보기 + 기본 양식으로 되돌리기
 - [ ] T5-4 버전 저장/활성화
 
-## T6. 지출소명서 작성 — 기준: `spec/features/expense-claim-flow.md`, `spec/screens/employee-mobile.md` ①②③⑤, `spec/features/receipt-parser.md`, `spec/features/smart-meal.md`
-- [ ] T6-1 직원 홈 / 내 소명서 리스트
+## T6. 지출소명서 작성 — 기준: `spec/features/expense-claim-flow.md`, `spec/screens/worker-dashboard.md`(E-01), `spec/screens/worker-tax-processing.md`(E-02), `spec/screens/employee-mobile.md` ④⑤, `spec/features/receipt-parser.md`, `spec/features/smart-meal.md`
+- [ ] T6-1 E-01 직원 메인 대시보드 (사비 정산 대기금, 상태 뱃지 5종, 반려 바텀시트, 크레딧 0 안내)
 - [ ] T6-2 소명서 편집 골격 (헤더: 제목 자동 제안·소명 내용·결제수단 기본값·[출장 경비] 스위치와 출장지·기간·목적, 항목 표, 임시저장, 삭제) + 합계 서버 갱신 + 단위 테스트
-- [ ] T6-3 영수증 다중 업로드(연속 촬영·다중 선택·PDF, 최대 30장) → 항목 생성 + Gemini 파싱 어댑터(동시 3건) + 빈 필드 자동 채움 + 카테고리·출장 세부 유형 추천(D-032, D-035: 출장 소명서는 출장비 고정) + 실패 Fallback
+- [ ] T6-3 영수증 다중 업로드(연속 촬영·다중 선택·PDF, 최대 30장) → 항목 생성 + Gemini 파싱 어댑터(동시 3건) + 빈 필드 자동 채움 + 사업자등록번호·증빙구분 추정(D-050, D-051) + 업로드 시 크레딧 차감(D-046) + 카테고리·출장 세부 유형 추천(D-032, D-035: 출장 소명서는 출장비 고정) + 실패 Fallback
 - [ ] T6-4 항목 편집 화면 (카테고리, 결제수단, 이전/다음 항목, 영수증 없이 항목 추가)
 - [ ] T6-5 식대·출장 식비 1식 한도 분할(개인별 한도, 절사/알림 모드) + 실시간 안내 + 단위 테스트 (D-040, D-041, D-044)
 - [ ] T6-6 외부 미팅비 입력
 - [ ] T6-7 회사 양식 헤더·항목 고유 필드 동적 렌더링 + 지출소명서 미리보기
 - [ ] T6-8 청구 기한 초과 경고 (항목 단위, D-031)
 - [ ] T6-9 내 정보 (프로필, 정산 계좌, 차량번호)
+- [ ] T6-10 E-03 정산 내역 · 입금 타임라인 (`worker-timeline.md`)
 
 ## T7. 출장비 — 기준: `spec/features/trip-expense.md` (D-035)
 - [ ] T7-1 출장 세부 유형별 입력·검증 (출장 식비·대중교통·택시·통행료·주차·숙박·자차·기타, 출장 기간 밖 경고)
@@ -73,7 +76,7 @@
 
 ## T8. 알림톡 — 기준: `spec/features/kakao-alimtalk.md`
 - [ ] T8-1 `NotificationSender` 어댑터 + `log` 드라이버 + `notification_logs` 기록
-- [ ] T8-2 템플릿 5종(결재 요청·승인·반려·초대·독촉) 메시지 빌더 + 1회 자동 재시도
+- [ ] T8-2 템플릿 6종(`notification-rule.md`: 결재 요청·승인·반려·지급 완료·초대·독촉) 메시지 빌더 + 1회 자동 재시도
 - [ ] T8-3 ⛔ 보류(O-01) 실제 발송대행사 드라이버 — 대행사·템플릿 심사 미결. 임의로 구현 가능으로 바꾸지 말 것
 
 ## T9. 상신·결재 (소명서 단위) — 기준: `spec/data/expense-lifecycle.md`, `spec/features/approval-workflow.md`, `spec/screens/approver.md`, `spec/screens/admin-expense-approvals.md`
@@ -83,15 +86,16 @@
 - [ ] T9-4 내 결재함 (사전 검토자·관리자)
 - [ ] T9-7 [지출 승인 관리] PC 화면: 상태 탭, 25/75 분할, 법인/개인 배지, 계정과목, 한도 초과 배지, 정산 안내 열, 마감 요약, 정산완료 처리 (`admin-expense-approvals.md`)
 - [ ] T9-5 직원 소명서 상세 (결재 타임라인, 반려 사유·지목 항목, 재상신)
-- [ ] T9-6 알림톡 발송 연결 (상신, 단계 승인, 최종 승인, 반려)
+- [ ] T9-6 알림톡 발송 연결 (상신, 단계 승인, 최종 승인, 반려, 지급 완료)
+- [ ] T9-8 승인 시 정산 필요 여부 판정(정산 없음 → 바로 paid) + A-02 정산 지급 관리 화면·일괄 지급 완료 처리 (`admin-payouts.md`, D-047) + 단위 테스트
 
 ## T10. 세무 마감 — 기준: `spec/screens/tax-closing.md`, `spec/features/tax-export.md`
 - [ ] T10-1 대상 조회(항목 결제일자 기준, 소명서 상태) + 미포함 경고
-- [ ] T10-2 엑셀(전체 데이터 시트1: 영수증 1행 + 계정과목·계정코드·내부 분류, 합계, 요약 시트2: 계정과목별 합계·내부 분류 소계)
-- [ ] T10-3 ZIP 패키지 (`[순번]_[사용일자]_[가맹점명]_[금액]` 파일명 1:1 매칭, 소명서별 PDF, 한글 폰트)
+- [ ] T10-2 엑셀(시트1 지출내역: 영수증 1행 + 계정과목·사업자번호·증빙구분·확인 필요, 시트2 요약, 시트3 세무 업로드 초안 15컬럼 `tax-upload-format.md`)
+- [ ] T10-3 ZIP 패키지 (`2026-10-003_20261015_가맹점_금액` 파일명 1:1 매칭 D-052, 소명서별 PDF, 한글 폰트)
 - [ ] T10-5 마감 잠금(다운로드 시 마감 완료, closed_month, 전월 추가분, 최고 관리자 마감 해제) + 단위 테스트 (D-045)
 - [ ] T10-6 세무 마감 화면 (요약 칩, 낱개 미리보기, 미포함 경고)
-- [ ] T10-4 ⛔ 보류(O-02) 더존/세무사랑 업로드 호환 매핑 — 업로드 템플릿 미확보. 임의로 구현 가능으로 바꾸지 말 것
+- [ ] T10-4 ⛔ 보류(O-02) 세무사무소 확인 결과에 따른 시트3 컬럼 변경 — 세무사무소 답변 대기. 임의로 구현 가능으로 바꾸지 말 것
 
 ## T11. 관리자 운영 화면 — 기준: `spec/screens/admin-dashboard.md` ①②③⑩
 - [ ] T11-1 대시보드 홈 (체크리스트, 초대 카드, KPI 3종·전월 대비, 할 일, 카테고리 차트)

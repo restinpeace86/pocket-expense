@@ -1,13 +1,14 @@
 # [Spec] 지출소명서 작성 흐름 (영수증 여러 장 → 소명서 1건 → 일괄 결재)
 
-관련: D-034, D-035 / 데이터: `expense_claims`, `expense_items` / 규칙: `spec/data/expense-lifecycle.md` / 화면: `spec/screens/employee-mobile.md` ②③
+관련: D-034, D-035 / 데이터: `expense_claims`, `expense_items` / 규칙: `spec/data/expense-lifecycle.md` / 화면: `spec/screens/worker-tax-processing.md`(E-02)
 
 ## 1. 개요 및 목적
 - 출장이나 여러 건의 지출이 생겼을 때 직원이 영수증마다 따로 결재를 올리지 않도록, **지출소명서 1건(헤더) 안에 영수증 항목 N건(행)** 을 담아 한 번에 상신한다.
 - 직원: 영수증 여러 장을 연속 촬영·다중 선택으로 한 번에 올리고, AI가 채운 표를 확인만 하고 상신.
 - 결재자: "10/15 부산 출장 (3건, 72,000원)" 같은 소명서 1건을 보고 한 번에 승인/반려.
 - 세무사무소: 월말 엑셀은 영수증 1장 = 1행으로 쪼개져 나간다(`tax-export.md`).
-- 영수증이 한 장뿐이면 항목 1건짜리 소명서다. 단건과 다건은 같은 흐름이다.
+- 영수증이 한 장뿐이면 항목 1건짜리 소명서다. 단건과 다건은 같은 흐름이다. 화면: E-02(`spec/screens/worker-tax-processing.md`).
+- 결제수단 기본값은 법인카드(D-048), 소명서 적요(소명 내용)는 필수다.
 
 ## 2. 구조: 1 Header + N Line Items
 | 구분 | 내용 |

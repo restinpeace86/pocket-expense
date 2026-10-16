@@ -15,6 +15,7 @@
    - `departments`에 입력한 부서들 생성
    - `members` 생성 (`role='super_admin'` 최고 관리자, `status='approved'`, `approved_at=now()`) (D-038)
    - 기본 결재라인 생성: `approval_lines`(`department_id=null`), 사전 검토 0단계(= 관리자 직통 결재, D-039)
+   - 무료 크레딧 100장 지급(`receipt_credits_granted = 100`, `credit_ledger` +100 `free_trial_grant`, D-046)
    - 기본 계정과목 3개(복리후생비, 여비교통비, 기업업무추진비)와 기본 매핑 생성 (D-036, `spec/features/account-titles.md` §2~§3)
 4. 완료 후 관리자 대시보드(`/workspace/[id]/admin`)로 이동해 초기 설정 체크리스트와 직원 초대 카드를 보여 준다(D-033).
 
