@@ -1,0 +1,52 @@
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { OAuthButtons } from "@/components/auth/oauth-buttons";
+import { Card, PageShell } from "@/components/ui/page-shell";
+import { destinationAfterLogin } from "@/lib/auth/paths";
+import { getCurrentUserId, getMembership } from "@/lib/auth/session";
+
+export const metadata = { title: "로그인 · PocketExpense" };
+
+const ERRORS: Record<string, string> = {
+  missing_code: "로그인 정보가 없어요. 다시 시도해 주세요.",
+  exchange_failed: "로그인을 완료하지 못했어요. 다시 시도해 주세요.",
+};
+
+export default function LoginPage({ searchParams }: PageProps<"/login">) {
+  return (
+    <PageShell>
+      <div className="flex flex-col gap-2 pt-8 text-center">
+        <h1 className="text-2xl font-bold tracking-tight">PocketExpense 시작하기</h1>
+        <p className="text-zinc-600">영수증 한 장으로 경비 청구부터 결재까지</p>
+      </div>
+      <Card>
+        <Suspense fallback={<div className="h-28 animate-pulse rounded-xl bg-zinc-100" />}>
+          <LoginContent searchParams={searchParams} />
+        </Suspense>
+      </Card>
+      <p className="text-center text-xs text-zinc-500">휴대폰 인증 없이 카카오 또는 Google 계정으로 로그인합니다.</p>
+    </PageShell>
+  );
+}
+
+async function LoginContent({ searchParams }: { searchParams: PageProps<"/login">["searchParams"] }) {
+  const params = await searchParams;
+  const next = typeof params.next === "string" ? params.next : undefined;
+  const errorKey = typeof params.error === "string" ? params.error : undefined;
+
+  // 이미 로그인했다면 소속에 맞는 화면으로
+  if (await getCurrentUserId()) {
+    redirect(destinationAfterLogin(await getMembership(), next));
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {errorKey && ERRORS[errorKey] && (
+        <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+          {ERRORS[errorKey]}
+        </p>
+      )}
+      <OAuthButtons next={next} />
+    </div>
+  );
+}

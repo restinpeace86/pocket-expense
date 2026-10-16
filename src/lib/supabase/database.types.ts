@@ -1218,6 +1218,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: {
+        Args: {
+          p_account_holder: string
+          p_account_number: string
+          p_bank_name: string
+          p_department_id: string
+          p_employee_number: string
+          p_name: string
+          p_phone: string
+          p_position: string
+          p_privacy_agreed: boolean
+          p_token: string
+          p_vehicle_number: string
+        }
+        Returns: string
+      }
       approve_claim: {
         Args: { p_claim_id: string; p_comment?: string }
         Returns: Database["public"]["Enums"]["claim_status"]
@@ -1231,7 +1247,47 @@ export type Database = {
         }
         Returns: Json
       }
+      create_company: {
+        Args: {
+          p_business_number: string
+          p_company_name: string
+          p_departments: string[]
+          p_my_department: string
+          p_my_name: string
+          p_my_phone: string
+          p_my_position: string
+          p_privacy_agreed: boolean
+        }
+        Returns: string
+      }
+      get_invitation_detail: { Args: { p_token: string }; Returns: Json }
+      get_invitation_public: { Args: { p_token: string }; Returns: Json }
+      get_invite_company: { Args: { p_code: string }; Returns: string }
+      get_invite_departments: {
+        Args: { p_code: string }
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
+      join_company: {
+        Args: {
+          p_account_holder: string
+          p_account_number: string
+          p_bank_name: string
+          p_code: string
+          p_department_id: string
+          p_employee_number: string
+          p_name: string
+          p_phone: string
+          p_position: string
+          p_privacy_agreed: boolean
+          p_vehicle_number: string
+        }
+        Returns: string
+      }
       mark_claims_paid: { Args: { p_claim_ids: string[] }; Returns: number }
+      my_membership: { Args: never; Returns: Json }
       reject_claim: {
         Args: {
           p_claim_id: string

@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
+/* 서비스 화면은 라이트 톤(spec/common/ui-rules.md §3). 랜딩만 자체 그라데이션 배경을 쓴다. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #18181b;
 }
 
 @theme inline {
@@ -12,15 +13,34 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 랜딩 목업 애니메이션 */
+@keyframes landing-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes landing-bubble-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.landing-row {
+  opacity: 0;
+  animation: landing-row-in 0.5s ease-out forwards;
+}
+.landing-bubble {
+  opacity: 0;
+  animation: landing-bubble-in 0.6s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-row,
+  .landing-bubble {
+    opacity: 1;
+    animation: none;
+  }
 }

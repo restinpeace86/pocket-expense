@@ -29,11 +29,11 @@
 - [x] T1-6 RLS 격리 테스트 (타사 데이터 접근 불가 확인)
 
 ## T2. 인증·온보딩 — 기준: `spec/features/auth-onboarding.md`, `spec/common/routes.md`
-- [ ] T2-0 랜딩 페이지 (`spec/screens/landing-page.md`: 소개 동영상 또는 목업 애니메이션)
-- [ ] T2-1 카카오/Google 로그인, `/auth/callback`, 로그인 후 분기 미들웨어(역할별 워크스페이스)
-- [ ] T2-2 회사 생성 위저드 (무료 크레딧 100장 지급 포함) (`spec/screens/admin-onboarding.md`: 부서 태그, invite_code, 기본 결재라인=생성자, 대시보드 이동)
-- [ ] T2-3 `/join/[inviteCode]` 진입 + 직원 정보 입력 + 개인정보 동의
-- [ ] T2-4 승인 대기 화면
+- [x] T2-0 랜딩 페이지 (`spec/screens/landing-page.md`: 소개 동영상 또는 목업 애니메이션)
+- [x] T2-1 카카오/Google 로그인, `/auth/callback`, 로그인 후 분기 미들웨어(역할별 워크스페이스) — 실제 카카오·Google 로그인은 사용자 브라우저 확인 대기
+- [x] T2-2 회사 생성 위저드 (무료 크레딧 100장 지급 포함) (`spec/screens/admin-onboarding.md`: 부서 태그, invite_code, 기본 결재라인=생성자, 대시보드 이동)
+- [x] T2-3 `/join/[inviteCode]` 진입 + 직원 정보 입력 + 개인정보 동의
+- [x] T2-4 승인 대기 화면
 
 ## T3. 관리자 기본 — 기준: `spec/screens/admin-dashboard.md` 0·⑤, `spec/screens/admin-team-members.md`, `spec/screens/admin-settings.md`, `spec/features/roles-and-permissions.md`
 - [ ] T3-1 관리자 레이아웃(사이드바, Split View, 모바일 반응형) + 워크스페이스 스위처(D-049)

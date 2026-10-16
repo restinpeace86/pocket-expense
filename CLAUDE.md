@@ -13,7 +13,7 @@
 
 ## Agent Commands
 - 개발 서버 실행: `npm run dev`
-- 타입 체크: `npx tsc --noEmit`
+- 타입 체크: `npx next typegen && npx tsc --noEmit` (라우트를 추가·변경하면 라우트 타입을 다시 만들어야 하므로 typegen을 먼저 실행)
 - 테스트 실행: `npm run test`
 - 빌드: `npm run build`
 - DB 마이그레이션 적용: `npm run db:migrate` (`supabase/migrations/` 중 미적용분만, `private.applied_migrations`로 추적)
@@ -43,7 +43,7 @@
 
 1. **검증 순서 (Validation Loop):**
    코드 수정이 완료되면 아래 순서로 검증을 스스로 연속 수행하라.
-   - 1단계: `npx tsc --noEmit` (타입 체크)
+   - 1단계: `npx next typegen && npx tsc --noEmit` (타입 체크)
    - 2단계: `npm run test` (테스트 실행)
    - **2-1단계 (DB·RLS·저장소·서버 함수를 바꾼 경우 필수)**: 변경 마이그레이션을 먼저 드라이런(마이그레이션 + 격리 테스트를 한 트랜잭션에서 실행 후 ROLLBACK)으로 검증 → `npm run db:migrate` → `npm run test:db` → `npm run db:types`. **격리 테스트 실패는 릴리스 차단이다.** 새 회사 데이터 테이블·정책·함수를 추가하면 격리 테스트에도 해당 케이스를 추가한다. 정책을 바꾸면 `npm run bench:db`도 실행해 목록·집계 쿼리가 **50ms 이하**인지 확인한다.
    - 3단계: `npm run build` (프로덕션 빌드 검증)
