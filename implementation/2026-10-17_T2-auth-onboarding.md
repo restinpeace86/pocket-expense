@@ -35,3 +35,8 @@
 1. **카카오·Google 실제 로그인은 사람이 브라우저에서 한 번 확인해야 한다**(외부 계정 로그인 필요). 확인 순서: `npm run dev` → `http://localhost:3000` → [무료로 시작하기] → 카카오 로그인 → 회사 등록 → 관리자 도착 화면 → 초대 코드로 다른 계정 가입 → 승인 대기 화면.
 2. 초대 링크·QR 화면, 멤버 승인 화면은 T3(관리자 기본)에서 구현한다. 지금은 관리자 도착 화면에 초대 코드만 보여 준다.
 3. 랜딩 소개 동영상은 파일이 준비되면 `HeroMockup`을 교체한다.
+
+## 추가 수정 (2026-10-17, 사용자 피드백)
+- **사업자등록번호 필수**(D-056): `008_business_number_required.sql`(`companies.business_number` NOT NULL, `create_company`에서 10자리 필수), 회사 등록 폼 필수·형식 검사, 격리 테스트 002에 번호 없음·형식 오류 거부 케이스 추가, 테스트 001·벤치 데이터에 번호 추가. 드라이런 → 적용 → `test:db` ✅ → `bench:db` ✅(목록 1.17ms).
+- **로그인 버튼 아이콘**: 카카오 말풍선 심볼, Google 4색 "G" 로고 추가.
+- **배포**: Vercel 프로젝트 프레임워크가 비어 있어(문서만 있던 시점 생성) 404 → Next.js로 지정·재배포. `NEXT_PUBLIC_SITE_URL`을 `https://pocket-expense-ruby.vercel.app`으로 수정, `ALIMTALK_DRIVER`·`CREDIT_EVENT_BONUS_*` 추가, Supabase 리디렉션 허용 목록에 배포 도메인 추가. 불필요·위험 환경변수(`SUPABASE_ACCESS_TOKEN`, `KAKAO_ACCESS_TOKEN`)는 사용자가 삭제.

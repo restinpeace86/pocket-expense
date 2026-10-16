@@ -15,9 +15,9 @@ insert into auth.users (id, instance_id, aud, role, email) values
   ('bbbbbbbb-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'b_emp@test.local'),
   ('cccccccc-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'outsider@test.local');
 
-insert into public.companies (id, name, invite_code) values
-  ('1a000000-0000-0000-0000-000000000000', '테스트회사A', 'AAAAAAAA'),
-  ('1b000000-0000-0000-0000-000000000000', '테스트회사B', 'BBBBBBBB');
+insert into public.companies (id, name, invite_code, business_number) values
+  ('1a000000-0000-0000-0000-000000000000', '테스트회사A', 'AAAAAAAA', '1000000001'),
+  ('1b000000-0000-0000-0000-000000000000', '테스트회사B', 'BBBBBBBB', '1000000002');
 insert into public.departments (id, company_id, name) values
   ('da000000-0000-0000-0000-000000000000', '1a000000-0000-0000-0000-000000000000', '경영지원'),
   ('db000000-0000-0000-0000-000000000000', '1b000000-0000-0000-0000-000000000000', '경영지원');

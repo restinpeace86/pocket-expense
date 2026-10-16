@@ -10,8 +10,8 @@ insert into auth.users (id, instance_id, aud, role, email)
 select gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u' || lpad(g::text, 5, '0') || '@bench.local'
 from generate_series(1, 1500) g;
 
-insert into public.companies (name, invite_code)
-select 'BENCH' || lpad(g::text, 3, '0'), translate(upper(substr(md5('bench' || g), 1, 8)), '01', '23')
+insert into public.companies (name, invite_code, business_number)
+select 'BENCH' || lpad(g::text, 3, '0'), translate(upper(substr(md5('bench' || g), 1, 8)), '01', '23'), lpad(g::text, 10, '9')
 from generate_series(1, 50) g;
 
 with u as (select id, row_number() over (order by email) rn from auth.users where email like '%@bench.local'),

@@ -39,8 +39,16 @@ export function CreateCompanyForm() {
       <Field label="회사명" required>
         <input name="companyName" required maxLength={100} className={inputClass} placeholder="예: 포켓컴퍼니" />
       </Field>
-      <Field label="사업자등록번호" hint="선택 · 나중에 설정에서 입력할 수 있어요">
-        <input name="businessNumber" inputMode="numeric" className={inputClass} placeholder="000-00-00000" />
+      <Field label="사업자등록번호" required hint="숫자 10자리 (하이픈은 있어도 없어도 됩니다)">
+        <input
+          name="businessNumber"
+          required
+          inputMode="numeric"
+          pattern="[0-9]{3}-?[0-9]{2}-?[0-9]{5}"
+          title="사업자등록번호 10자리를 입력해 주세요 (예: 123-45-67890)"
+          className={inputClass}
+          placeholder="123-45-67890"
+        />
       </Field>
       <Field label="부서 목록" required hint="입력 후 Enter 또는 쉼표(,)로 추가 · 직원 가입 시 선택지가 됩니다">
         <div className="flex flex-col gap-2">

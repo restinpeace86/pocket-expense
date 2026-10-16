@@ -313,7 +313,7 @@ export type Database = {
       companies: {
         Row: {
           billing_status: Database["public"]["Enums"]["billing_status"]
-          business_number: string | null
+          business_number: string
           claim_deadline_days: number | null
           claim_deadline_type: Database["public"]["Enums"]["claim_deadline_type"]
           created_at: string
@@ -331,7 +331,7 @@ export type Database = {
         }
         Insert: {
           billing_status?: Database["public"]["Enums"]["billing_status"]
-          business_number?: string | null
+          business_number: string
           claim_deadline_days?: number | null
           claim_deadline_type?: Database["public"]["Enums"]["claim_deadline_type"]
           created_at?: string
@@ -349,7 +349,7 @@ export type Database = {
         }
         Update: {
           billing_status?: Database["public"]["Enums"]["billing_status"]
-          business_number?: string | null
+          business_number?: string
           claim_deadline_days?: number | null
           claim_deadline_type?: Database["public"]["Enums"]["claim_deadline_type"]
           created_at?: string

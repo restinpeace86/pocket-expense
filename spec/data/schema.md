@@ -33,7 +33,7 @@
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | name | text | not null | 회사명 |
-| business_number | text | null | 사업자등록번호 |
+| business_number | text | not null, 숫자 10자리 | 사업자등록번호 (회사 등록 시 필수, D-056) |
 | invite_code | text | not null, unique | 직원 초대 코드 (재발급 가능) |
 | meal_limit_per_person | integer | not null, default 10000 | 1식 1인당 지원 한도 (일반 식대·출장 식비 공통, D-040) |
 | meal_limit_mode | meal_limit_mode | not null, default 'split' | 한도 초과 처리 방식 (D-041) |

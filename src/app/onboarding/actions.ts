@@ -16,7 +16,7 @@ export async function createCompanyAction(_prev: FormState, formData: FormData):
 
   const { data: companyId, error } = await supabase.rpc("create_company", {
     p_company_name: text(formData, "companyName"),
-    p_business_number: optional(formData, "businessNumber") ?? "",
+    p_business_number: text(formData, "businessNumber"),
     p_departments: departments,
     p_my_name: text(formData, "name"),
     p_my_phone: text(formData, "phone"),

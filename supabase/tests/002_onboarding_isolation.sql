@@ -38,19 +38,44 @@ begin
 
   -- 이미 회사가 있는 계정은 회사를 또 만들 수 없다 (1계정 1회사)
   begin
-    perform public.create_company('두번째회사', null, array['팀'], 'A대표', '01012345678', '팀', null, true);
+    perform public.create_company('두번째회사', '1112223334', array['팀'], 'A대표', '01012345678', '팀', null, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'ALREADY_MEMBER';
   end;
   if not v_ok then raise exception 'FAIL [U_A] created a second company'; end if;
 end $$;
 reset role;
+
+-- ---------- 사업자등록번호 필수 (D-056): 외부인 계정으로 번호 없이 생성 시도 ----------
+select set_config('request.jwt.claims', '{"sub":"c1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare v_ok boolean;
+begin
+  begin
+    perform public.create_company('번호없는회사', null, array['팀'], '외부인', '01011119999', '팀', null, true);
+    v_ok := false;
+  exception when others then v_ok := sqlerrm = 'INVALID_BUSINESS_NUMBER';
+  end;
+  if not v_ok then raise exception 'FAIL [BIZNO] created company without business number'; end if;
+  begin
+    perform public.create_company('짧은번호회사', '12345', array['팀'], '외부인', '01011119999', '팀', null, true);
+    v_ok := false;
+  exception when others then v_ok := sqlerrm = 'INVALID_BUSINESS_NUMBER';
+  end;
+  if not v_ok then raise exception 'FAIL [BIZNO] accepted malformed business number'; end if;
+end $$;
+reset role;
+select set_config('request.jwt.claims', '{"sub":"a1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+set local role authenticated;
+do $$ begin null; end $$;
+reset role;
 select set_config('t.code_a', (select invite_code from public.companies where id = current_setting('t.company_a')::uuid), true);
 
 -- ---------- u_b: 회사 B 생성 + 개별 초대 발행 ----------
 select set_config('request.jwt.claims', '{"sub":"b1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
 set local role authenticated;
-select set_config('t.company_b', public.create_company('온보딩회사B', null, array['영업팀'], 'B대표', '01098765432', '영업팀', null, true)::text, true);
+select set_config('t.company_b', public.create_company('온보딩회사B', '2223344445', array['영업팀'], 'B대표', '01098765432', '영업팀', null, true)::text, true);
 insert into public.member_invitations (company_id, name, phone, department_id, invited_by_member_id)
 select current_setting('t.company_b')::uuid, 'B초대직원', '01055556666',
        (select id from public.departments where name = '영업팀'),
