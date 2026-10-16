@@ -34,6 +34,8 @@
 |---|---|---|---|
 | name | text | not null | 회사명 |
 | business_number | text | not null, 숫자 10자리 | 사업자등록번호 (회사 등록 시 필수, D-056) |
+| business_status | text | not null, default 'skipped' | 국세청 조회 판정: skipped / bypass / active / suspended / unverified (D-057) |
+| business_verified_at | timestamptz | null | 국세청 확인 시각 |
 | invite_code | text | not null, unique | 직원 초대 코드 (재발급 가능) |
 | meal_limit_per_person | integer | not null, default 10000 | 1식 1인당 지원 한도 (일반 식대·출장 식비 공통, D-040) |
 | meal_limit_mode | meal_limit_mode | not null, default 'split' | 한도 초과 처리 방식 (D-041) |
@@ -66,6 +68,17 @@
 | reason | text | not null | `free_trial_grant` / `receipt_upload` / `event_bonus` (D-054) |
 | item_id | uuid | FK expense_items, null | 차감 대상 항목 |
 | member_id | uuid | FK members, null | 업로드한 사람 |
+
+### 2.1c `business_verifications` — 사업자번호 조회 기록 (D-057, 서버 service role 전용)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| b_no | text | not null, 숫자 10자리 | |
+| auth_user_id | uuid | FK auth.users | 조회한 사용자 (본인 조회 결과만 인정) |
+| status | text | active / suspended / closed / not_registered / unverified | |
+| status_label | text | null | 국세청 상태 문구 |
+| raw | jsonb | null | 원본 응답 |
+| checked_at | timestamptz | not null | |
+- 앱 사용자(anon·authenticated) 권한 없음. 설정은 `private.app_settings`(`business_verify_mode`, `business_verify_bypass_numbers`).
 
 ### 2.2 `departments` — 부서
 | 컬럼 | 타입 | 제약 | 설명 |

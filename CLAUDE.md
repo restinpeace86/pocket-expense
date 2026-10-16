@@ -7,7 +7,7 @@
 - Authentication: Supabase Auth (Kakao OAuth, Google OAuth) — 휴대폰 번호 인증은 사용하지 않는다
 - Storage: Supabase Storage (비공개 버킷)
 - AI: Google Gemini API (Vision — 영수증 파싱, 사내 양식 분석)
-- 외부 API: Kakao Local API(주소→좌표), Kakao Mobility 길찾기 API(주행거리), 카카오 알림톡(발송대행사 경유)
+- 외부 API: 국세청 사업자등록 상태조회(공공데이터포털), Kakao Local API(주소→좌표), Kakao Mobility 길찾기 API(주행거리), 카카오 알림톡(발송대행사 경유)
 - Test: Vitest
 - Deployment: Vercel
 
@@ -102,6 +102,11 @@ AI(Vision LLM) 결과는 초안이다. 사람이 확인·수정한 값이 최종
 - 저장소 경로의 첫 폴더는 `company_id`이며 정책으로 막는다. 공개 버킷 금지.
 - service role 키는 서버 코드에서만 쓰고, 쓰기 전에 세션 사용자의 회사를 확인한다.
 - **RLS 정책 작성 규칙(성능)**: 헬퍼 호출은 항상 `(select private.current_company_id())`처럼 감싸 쿼리당 1회만 평가한다. 정책 첫 조건은 인덱스가 있는 `company_id = (select ...)`로 둔다. 행마다 SECURITY DEFINER 함수를 부르는 조건(예: `private.can_view_claim(id)`)은 열람 정책에 쓰지 않는다(쓰기 정책은 허용). 하위 테이블은 `claim_id in (select id from 상위 테이블)`로 상위 정책을 상속한다.
+
+### 제4조의2. 반응형 웹앱 (절대 원칙)
+모든 화면은 반응형 웹앱이 기본이다. 휴대폰·태블릿·PC 어느 폭에서도 깨지면 안 된다(가로 스크롤, 버튼 글자 줄바꿈, 요소 겹침·가림 금지).
+- 화면을 새로 만들거나 바꿀 때마다 검증 루프 3-1단계(`npm run check:responsive`)를 반드시 수행하고 스크린샷을 직접 열어 확인한다. 점검 없이 "반응형이다"라고 보고하지 않는다.
+- 로그인해야 보이는 화면도 점검 대상이다. 점검 스크립트에 해당 경로를 추가하고, 로그인 세션이 필요한 화면은 점검 방법을 마련해 빠뜨리지 않는다.
 
 ### 제5조. 단순함과 신뢰성
 화면과 흐름은 단순하게 유지하고, 외부 연동(파싱, 거리 계산, 알림톡)이 실패해도 서비스가 멈추지 않게 한다.
@@ -224,6 +229,7 @@ Vision LLM, Kakao Mobility, 알림톡은 각각 어댑터 모듈 뒤에 둔다. 
 | `spec/features/trip-expense.md` | 출장 소명서, 출장비 세부 유형(출장 식비·교통·통행료·숙박·자차), 자차 거리·유류비 |
 | `spec/features/approval-workflow.md` | 결재 흐름: 선택형 사전 검토 결재라인 + 관리자 최종 승인 |
 | `spec/features/kakao-alimtalk.md` | 알림톡 발송 구조·링크 보안·실패 처리 |
+| `spec/features/business-verification.md` | 사업자등록번호 국세청 상태조회 (모드·통과 구멍) |
 | `spec/features/corporate-cards.md` | 법인카드 등록(선택) · 끝 4자리 자동 판별 |
 | `spec/features/account-titles.md` | 내부 분류 → 회계 계정과목 매핑 (여비교통비 등) |
 | `spec/features/tax-export.md` | 월말 엑셀·영수증 ZIP·PDF 출력 |

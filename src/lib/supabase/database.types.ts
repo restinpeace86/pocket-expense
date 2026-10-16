@@ -230,6 +230,36 @@ export type Database = {
         }
         Relationships: []
       }
+      business_verifications: {
+        Row: {
+          auth_user_id: string
+          b_no: string
+          checked_at: string
+          id: string
+          raw: Json | null
+          status: string
+          status_label: string | null
+        }
+        Insert: {
+          auth_user_id: string
+          b_no: string
+          checked_at?: string
+          id?: string
+          raw?: Json | null
+          status: string
+          status_label?: string | null
+        }
+        Update: {
+          auth_user_id?: string
+          b_no?: string
+          checked_at?: string
+          id?: string
+          raw?: Json | null
+          status?: string
+          status_label?: string | null
+        }
+        Relationships: []
+      }
       claim_approvals: {
         Row: {
           acted_at: string | null
@@ -314,6 +344,8 @@ export type Database = {
         Row: {
           billing_status: Database["public"]["Enums"]["billing_status"]
           business_number: string
+          business_status: string
+          business_verified_at: string | null
           claim_deadline_days: number | null
           claim_deadline_type: Database["public"]["Enums"]["claim_deadline_type"]
           created_at: string
@@ -332,6 +364,8 @@ export type Database = {
         Insert: {
           billing_status?: Database["public"]["Enums"]["billing_status"]
           business_number: string
+          business_status?: string
+          business_verified_at?: string | null
           claim_deadline_days?: number | null
           claim_deadline_type?: Database["public"]["Enums"]["claim_deadline_type"]
           created_at?: string
@@ -350,6 +384,8 @@ export type Database = {
         Update: {
           billing_status?: Database["public"]["Enums"]["billing_status"]
           business_number?: string
+          business_status?: string
+          business_verified_at?: string | null
           claim_deadline_days?: number | null
           claim_deadline_type?: Database["public"]["Enums"]["claim_deadline_type"]
           created_at?: string
@@ -1238,6 +1274,7 @@ export type Database = {
         Args: { p_claim_id: string; p_comment?: string }
         Returns: Database["public"]["Enums"]["claim_status"]
       }
+      business_verify_mode: { Args: never; Returns: string }
       consume_receipt_credit: {
         Args: {
           p_event_amount: number

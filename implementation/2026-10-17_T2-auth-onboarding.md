@@ -40,3 +40,10 @@
 - **사업자등록번호 필수**(D-056): `008_business_number_required.sql`(`companies.business_number` NOT NULL, `create_company`에서 10자리 필수), 회사 등록 폼 필수·형식 검사, 격리 테스트 002에 번호 없음·형식 오류 거부 케이스 추가, 테스트 001·벤치 데이터에 번호 추가. 드라이런 → 적용 → `test:db` ✅ → `bench:db` ✅(목록 1.17ms).
 - **로그인 버튼 아이콘**: 카카오 말풍선 심볼, Google 4색 "G" 로고 추가.
 - **배포**: Vercel 프로젝트 프레임워크가 비어 있어(문서만 있던 시점 생성) 404 → Next.js로 지정·재배포. `NEXT_PUBLIC_SITE_URL`을 `https://pocket-expense-ruby.vercel.app`으로 수정, `ALIMTALK_DRIVER`·`CREDIT_EVENT_BONUS_*` 추가, Supabase 리디렉션 허용 목록에 배포 도메인 추가. 불필요·위험 환경변수(`SUPABASE_ACCESS_TOKEN`, `KAKAO_ACCESS_TOKEN`)는 사용자가 삭제.
+
+## 추가 — 사업자등록번호 국세청 상태조회 (D-057)
+- `009_business_verification.sql`: `private.app_settings`(모드 `off` 기본, 통과 허용 번호), `private.valid_business_number`(체크섬), `public.business_verifications`(service role 전용), `companies.business_status·business_verified_at`, `create_company` 안에서 판정.
+- 서버: `src/lib/business/nts.ts`(상태조회·코드 변환, 실패 시 확인 대기), `src/lib/supabase/admin.ts`(service role, 서버 전용), 회사 생성 액션에서 모드가 `off`가 아닐 때만 조회·기록.
+- API 키 실제 동작 확인: 실제 기업 번호 → 계속사업자, `1234567890` → 국세청 미등록 (2026-10-17).
+- 테스트: `003_business_verification.sql` ✅, `nts.test.ts` ✅. 현재 운영 모드 `off` — 아무 번호나 통과.
+- 반응형 원칙: CLAUDE.md 헌법 제2장 제4조의2(반응형 웹앱 절대 원칙) 추가.
