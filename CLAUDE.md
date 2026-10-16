@@ -19,6 +19,7 @@
 - DB 마이그레이션 적용: `npm run db:migrate` (`supabase/migrations/` 중 미적용분만, `private.applied_migrations`로 추적)
 - **회사 간 격리 테스트: `npm run test:db`** (`supabase/tests/001_tenant_isolation.sql`, 트랜잭션 후 ROLLBACK)
 - DB 타입 생성: `npm run db:types` → `src/lib/supabase/database.types.ts`
+- RLS 성능 측정: `npm run bench:db` (회사 50·소명서 21,000·항목 63,000 생성 후 ROLLBACK, 쿼리별 ms)
 
 > 위 명령은 `implementation/todo.md`의 "T0. 프로젝트 스캐폴딩" 완료 후 사용 가능하다. T0 완료 전에는 검증 루프 대신 T0을 먼저 수행한다.
 
@@ -44,7 +45,7 @@
    코드 수정이 완료되면 아래 순서로 검증을 스스로 연속 수행하라.
    - 1단계: `npx tsc --noEmit` (타입 체크)
    - 2단계: `npm run test` (테스트 실행)
-   - **2-1단계 (DB·RLS·저장소·서버 함수를 바꾼 경우 필수)**: 변경 마이그레이션을 먼저 드라이런(마이그레이션 + 격리 테스트를 한 트랜잭션에서 실행 후 ROLLBACK)으로 검증 → `npm run db:migrate` → `npm run test:db` → `npm run db:types`. **격리 테스트 실패는 릴리스 차단이다.** 새 회사 데이터 테이블·정책·함수를 추가하면 격리 테스트에도 해당 케이스를 추가한다.
+   - **2-1단계 (DB·RLS·저장소·서버 함수를 바꾼 경우 필수)**: 변경 마이그레이션을 먼저 드라이런(마이그레이션 + 격리 테스트를 한 트랜잭션에서 실행 후 ROLLBACK)으로 검증 → `npm run db:migrate` → `npm run test:db` → `npm run db:types`. **격리 테스트 실패는 릴리스 차단이다.** 새 회사 데이터 테이블·정책·함수를 추가하면 격리 테스트에도 해당 케이스를 추가한다. 정책을 바꾸면 `npm run bench:db`도 실행해 목록·집계 쿼리가 **50ms 이하**인지 확인한다.
    - 3단계: `npm run build` (프로덕션 빌드 검증)
    *(에러 발생 시 스스로 원인을 분석·수정한 뒤 1단계부터 다시 수행할 것)*
 
@@ -98,6 +99,7 @@ AI(Vision LLM) 결과는 초안이다. 사람이 확인·수정한 값이 최종
 - 상태·금액·영수증 경로·크레딧·역할 같은 민감 칸은 컬럼 권한에서 제외하고 SECURITY DEFINER 함수로만 바꾼다. 함수는 호출자 회사와 대상 행 회사를 반드시 다시 비교한다.
 - 저장소 경로의 첫 폴더는 `company_id`이며 정책으로 막는다. 공개 버킷 금지.
 - service role 키는 서버 코드에서만 쓰고, 쓰기 전에 세션 사용자의 회사를 확인한다.
+- **RLS 정책 작성 규칙(성능)**: 헬퍼 호출은 항상 `(select private.current_company_id())`처럼 감싸 쿼리당 1회만 평가한다. 정책 첫 조건은 인덱스가 있는 `company_id = (select ...)`로 둔다. 행마다 SECURITY DEFINER 함수를 부르는 조건(예: `private.can_view_claim(id)`)은 열람 정책에 쓰지 않는다(쓰기 정책은 허용). 하위 테이블은 `claim_id in (select id from 상위 테이블)`로 상위 정책을 상속한다.
 
 ### 제5조. 단순함과 신뢰성
 화면과 흐름은 단순하게 유지하고, 외부 연동(파싱, 거리 계산, 알림톡)이 실패해도 서비스가 멈추지 않게 한다.

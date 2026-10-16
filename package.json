@@ -12,7 +12,8 @@
     "postinstall": "next typegen",
     "db:migrate": "node scripts/supabase-sql.mjs --migrate",
     "test:db": "node scripts/supabase-sql.mjs --file supabase/tests/001_tenant_isolation.sql",
-    "db:types": "node scripts/supabase-sql.mjs --types src/lib/supabase/database.types.ts"
+    "db:types": "node scripts/supabase-sql.mjs --types src/lib/supabase/database.types.ts",
+    "bench:db": "node scripts/supabase-sql.mjs --file supabase/tests/bench_rls.sql"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
