@@ -37,7 +37,7 @@
 
 ## 2. 상신 검증 (서버에서 재검증)
 **소명서**: `title` 필수, `description`(적요/소명 내용) 필수(D-048), 항목 1건 이상(최대 30건), 활성 양식의 필수 헤더 필드. 출장 소명서(`is_business_trip`)면 `trip_destination`, `trip_start_date`, `trip_end_date`(≥ 시작일), `trip_purpose` 필수.
-**항목마다**: `category`, `payment_method`(기본 법인카드), `evidence_type`(AI 추정 후 직원 확인), `expense_date`, `amount`(>0), 활성 양식의 필수 항목 필드(해당 카테고리 적용분), 그리고 카테고리별 필수:
+**항목마다**: `category`, `payment_method`(기본 법인카드), 법인카드이고 회사에 활성 법인카드가 있으면 `corporate_card_id`(D-055), `evidence_type`(AI 추정 후 직원 확인), `expense_date`, `amount`(>0), 활성 양식의 필수 항목 필드(해당 카테고리 적용분), 그리고 카테고리별 필수:
 | 카테고리 | 추가 필수 |
 |---|---|
 | `meal` | `receipt_path`, `headcount`(≥1, 기본 1) |

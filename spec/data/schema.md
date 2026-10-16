@@ -142,6 +142,15 @@
 | step_order | integer | not null, unique(approval_line_id, step_order) | 1부터 |
 | approver_member_id | uuid | FK members, not null | 사전 검토자. `approved` 상태 멤버(역할 무관) (D-039) |
 
+### 2.5a `corporate_cards` — 법인카드 (선택 기능, D-055, `spec/features/corporate-cards.md`)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| company_id | uuid | FK companies, not null | |
+| nickname | text | not null | 별칭 (예: 대표 법인카드) |
+| last4 | text | not null, 숫자 4자리, unique(company_id, last4) where is_active | 카드 끝 4자리. **카드번호 전체·유효기간·CVC는 저장하지 않는다** |
+| holder_member_id | uuid | FK members, null | 담당자(표시용) |
+| is_active | boolean | not null, default true | 해지 시 false (삭제 대신) |
+
 ### 2.6a `account_titles` / `account_title_mappings` — 계정과목 (D-036, `spec/features/account-titles.md`)
 `account_titles`
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -197,6 +206,8 @@
 | merchant_name | text | null | 가맹점명 (자차는 null 허용) |
 | merchant_business_number | text | null | 가맹점 사업자등록번호(숫자 10자리 저장, 표시 `000-00-00000`). AI 추출 후 직원 확인 (D-050) |
 | evidence_type | evidence_type | null (상신 시 필수) | 증빙구분. AI 추정 후 직원 확인 (D-051) |
+| card_last4 | text | null | AI가 영수증에서 읽은 카드 끝 4자리 (D-055) |
+| corporate_card_id | uuid | FK corporate_cards, null | 사용한 법인카드. 등록 카드가 있고 결제수단이 법인카드면 상신 시 필수 |
 | credit_charged | boolean | not null, default false | 이 항목 영수증 업로드로 크레딧을 차감했는지(교체 시 추가 차감 방지) |
 | amount | integer | null (상신 시 필수) | 총 결제금액 |
 | supply_amount | integer | null | 공급가액 (D-017) |
@@ -283,6 +294,7 @@
 | approval_lines, approval_line_steps | 자기 회사 | admin |
 | account_titles, account_title_mappings | 자기 회사 admin | admin |
 | billing_plans | 로그인 사용자 전체 | 서버 전용(시드) |
+| corporate_cards | 자기 회사 멤버(별칭·끝 4자리·담당자만) | admin |
 | credit_ledger | 자기 회사 admin | 서버 액션(업로드 차감, 회사 생성 지급)으로만 |
 | member_invitations | 자기 회사 admin | admin. 토큰으로 가입하는 경로는 서버 액션 |
 | monthly_closings | 자기 회사 admin | 서버 액션(다운로드 시 마감, 해제는 `super_admin`) |

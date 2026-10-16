@@ -211,6 +211,7 @@ Vision LLM, Kakao Mobility, 알림톡은 각각 어댑터 모듈 뒤에 둔다. 
 | `spec/features/trip-expense.md` | 출장 소명서, 출장비 세부 유형(출장 식비·교통·통행료·숙박·자차), 자차 거리·유류비 |
 | `spec/features/approval-workflow.md` | 결재 흐름: 선택형 사전 검토 결재라인 + 관리자 최종 승인 |
 | `spec/features/kakao-alimtalk.md` | 알림톡 발송 구조·링크 보안·실패 처리 |
+| `spec/features/corporate-cards.md` | 법인카드 등록(선택) · 끝 4자리 자동 판별 |
 | `spec/features/account-titles.md` | 내부 분류 → 회계 계정과목 매핑 (여비교통비 등) |
 | `spec/features/tax-export.md` | 월말 엑셀·영수증 ZIP·PDF 출력 |
 | `spec/features/tax-upload-format.md` | 세무 업로드 엑셀 포맷 초안 + 세무사무소 확인 질문 (O-02) |

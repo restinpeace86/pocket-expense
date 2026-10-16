@@ -30,6 +30,7 @@
 ```
 [⚙️ 설정]
  ├── 🎛️ 사내 지출 한도 및 정책 설정   /admin/settings (이 화면: 회사 정보, 1식 한도·초과 처리 방식, 유류비 단가, 청구 기한, 공용 초대 링크)
+ ├── 💳 법인카드 (선택)               /admin/corporate-cards (`admin-dashboard.md` ⑫) — 별칭 + 끝 4자리 등록, 자동 판별
  ├── 📄 사내 지출소명서 양식 설정      /admin/form-template (`template-configuration.md`) [✨ AI 맞춤 양식 & 기본 양식]
  ├── 🏢 부서                         /admin/departments (`admin-dashboard.md` ⑤)
  ├── 🧭 사전 검토 결재라인(선택)       /admin/approval-lines (`admin-dashboard.md` ⑥)
@@ -37,4 +38,4 @@
  ├── 💳 요금제                        /admin/billing (`admin-billing.md`)
  └── 🔔 알림 이력                     /admin/notifications (`admin-dashboard.md` ⑩)
 ```
-- **법인카드 관리(카드 등록·담당자 지정)는 현재 넣지 않는다.** 직원이 영수증을 올릴 때 법인카드/개인(사비)만 선택한다(D-048). 카드 식별 정보 등록은 미결 O-06.
+- **법인카드는 선택 기능**이다. 등록하지 않으면 직원은 법인카드/개인(사비)만 고르고, 등록하면 영수증 끝 4자리로 자동 판별한다(D-055, `spec/features/corporate-cards.md`).

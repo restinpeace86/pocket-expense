@@ -45,6 +45,7 @@
 | `/workspace/[id]/admin/approval-lines` | 사전 검토 결재라인 설정 (선택 기능, D-039) |
 | `/workspace/[id]/admin/form-template` | 사내 양식 설정 (`spec/screens/template-configuration.md`) |
 | `/workspace/[id]/admin/settings` | 회사 정보, 식대 한도, 유류비 단가, 청구 기한, 초대 링크/QR (`spec/screens/admin-settings.md`) |
+| `/workspace/[id]/admin/corporate-cards` | 법인카드 등록 (선택 기능, `spec/features/corporate-cards.md`) |
 | `/workspace/[id]/admin/account-titles` | 계정과목 목록·내부 분류 매핑 (`spec/features/account-titles.md`) |
 | `/workspace/[id]/admin/payouts` | A-02 정산 지급 관리 (`spec/screens/admin-payouts.md`) |
 | `/workspace/[id]/admin/billing` | A-05 요금제 (`spec/screens/admin-billing.md`) |
