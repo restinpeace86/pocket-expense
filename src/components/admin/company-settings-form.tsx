@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { saveCompanySettingsAction } from "@/app/workspace/[id]/admin/settings/actions";
 import { ClaimDeadlineSection, DEADLINE_DAYS, type DeadlineType } from "./claim-deadline-section";
 import { Field, FormError } from "@/components/onboarding/field";
+import { AmountInput } from "@/components/ui/amount-input";
 import { ChoiceCards } from "@/components/ui/choice-cards";
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
@@ -101,15 +102,8 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
           }
         />
         <div className="mt-4 grid gap-4 sm:max-w-xs">
-          <Field label="1식 1인당 식대 한도 (원)" required>
-            <input
-              name="mealLimit"
-              value={mealLimit}
-              onChange={(e) => setMealLimit(digits(e.target.value))}
-              className={inputClass}
-              inputMode="numeric"
-              required
-            />
+          <Field label="1식 1인당 식대 한도" required>
+            <AmountInput name="mealLimit" value={mealLimit} onChange={setMealLimit} required />
           </Field>
         </div>
         <p className="mb-2 mt-5 text-sm font-medium text-zinc-800">한도를 넘으면</p>
@@ -150,8 +144,8 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
           }
         />
         <div className="mt-4 grid gap-4 sm:max-w-xs">
-          <Field label="km당 유류비 단가 (원)" required hint={`예: 120km × ${formatWon(rate)} = ${formatWon(120 * rate)}`}>
-            <input name="fuelRate" value={fuelRate} onChange={(e) => setFuelRate(digits(e.target.value))} className={inputClass} inputMode="numeric" required />
+          <Field label="km당 유류비 단가" required hint={`예: 120km × ${formatWon(rate)} = ${formatWon(120 * rate)}`}>
+            <AmountInput name="fuelRate" value={fuelRate} onChange={setFuelRate} required />
           </Field>
         </div>
       </section>
