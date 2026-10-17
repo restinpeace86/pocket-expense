@@ -119,6 +119,10 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
 
       <section className={card}>
         <h2 className="font-semibold">청구 기한</h2>
+        <p className="mt-1 text-sm text-zinc-600">
+          직원이 개인카드·법인카드로 쓴 경비를 <b>영수증과 함께 지출소명서로 올려 회사에 청구해야 하는 기한</b>이에요. 오래된 영수증이 한꺼번에
+          들어와 지난달 정산·세무 마감을 다시 손보는 일을 줄여 줘요.
+        </p>
         <p className="mb-3 mt-1 text-sm text-zinc-600">기한이 지나도 청구는 막지 않아요. 직원 화면과 결재 화면에 &lsquo;기한 초과&rsquo; 표시만 붙어요.</p>
         <RadioCards
           name="claimDeadlineType"
