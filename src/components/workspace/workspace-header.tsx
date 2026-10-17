@@ -1,9 +1,10 @@
 import { ArrowLeftRight } from "lucide-react";
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ThemeSwitcher } from "@/components/workspace/theme-switcher";
 import { isAdminRole, type Membership } from "@/lib/auth/paths";
 
-// 워크스페이스 공통 헤더: 회사명, 모드 전환(관리자 이상만, D-049), 로그아웃
+// 워크스페이스 공통 헤더: 회사명, 모드 전환(관리자 이상만, D-049), 화면 색상(D-066), 로그아웃
 export function WorkspaceHeader({ membership, mode }: { membership: Membership; mode: "admin" | "employee" }) {
   const base = `/workspace/${membership.company_id}`;
   return (
@@ -23,6 +24,10 @@ export function WorkspaceHeader({ membership, mode }: { membership: Membership; 
             <span className="hidden sm:inline">{mode === "admin" ? "직원 모드로 전환" : "관리자 모드로 전환"}</span>
           </Link>
         )}
+        {/* 모바일에서 관리자 이상은 헤더가 좁아 관리자 메뉴(햄버거) 안에서 고른다 */}
+        <div className={isAdminRole(membership.role) ? "hidden sm:block" : undefined}>
+          <ThemeSwitcher />
+        </div>
         <SignOutButton />
       </div>
     </header>

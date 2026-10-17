@@ -13,31 +13,31 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* 브랜드(포인트) 색과 워크스페이스 셸 색. 기본값은 기존 파란 톤이라 다른 화면은 그대로다.
-   관리자 워크스페이스는 [data-theme]로 시안을 바꿔 볼 수 있다(디자인 시안 비교용, 확정 후 하나만 남긴다). */
+/* 브랜드(포인트) 색과 워크스페이스 셸 색 (D-066).
+   기본값 = A · 딥 네이비 + 인디고. 사용자가 헤더의 [색상]에서 B·C를 고르면 <html data-theme>로 바뀐다. */
 @theme {
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-300: #93c5fd;
-  --color-brand-400: #60a5fa;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-brand-800: #1e40af;
-  --color-brand-900: #1e3a8a;
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
 
-  --color-sidebar: #ffffff;
-  --color-sidebar-fg: #3f3f46;
-  --color-sidebar-muted: #a1a1aa;
-  --color-sidebar-hover: #f4f4f5;
-  --color-sidebar-active: #eff6ff;
-  --color-sidebar-active-fg: #1d4ed8;
-  --color-sidebar-border: #e4e4e7;
-  --color-page: #f8fafc;
+  --color-sidebar: #0f172a;
+  --color-sidebar-fg: #cbd5e1;
+  --color-sidebar-muted: #64748b;
+  --color-sidebar-hover: #1e293b;
+  --color-sidebar-active: #1e2a4a;
+  --color-sidebar-active-fg: #ffffff;
+  --color-sidebar-border: #1e293b;
+  --color-page: #f3f5fa;
 }
 
-/* 시안 A: 딥 네이비 사이드바 + 인디고 (Linear·Stripe 대시보드 느낌) */
+/* A: 딥 네이비 사이드바 + 인디고 (기본값과 같음, 명시적으로 고른 경우) */
 [data-theme="navy"] {
   --color-brand-50: #eef2ff;
   --color-brand-100: #e0e7ff;
@@ -59,7 +59,7 @@
   --color-page: #f3f5fa;
 }
 
-/* 시안 B: 화이트 + 인디고 (Notion·Toss 비즈니스 느낌) */
+/* B: 화이트 + 인디고 */
 [data-theme="light"] {
   --color-brand-50: #eef2ff;
   --color-brand-100: #e0e7ff;
@@ -81,7 +81,7 @@
   --color-page: #ffffff;
 }
 
-/* 시안 C: 차콜 사이드바 + 에메랄드 (재무·회계 서비스 느낌) */
+/* C: 차콜 사이드바 + 에메랄드 */
 [data-theme="emerald"] {
   --color-brand-50: #ecfdf5;
   --color-brand-100: #d1fae5;

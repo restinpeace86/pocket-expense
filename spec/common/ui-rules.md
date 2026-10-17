@@ -16,6 +16,9 @@
 - TailwindCSS 기본, 일관된 색상 팔레트, `rounded-xl`, `shadow-sm`의 깔끔한 SaaS 톤.
 - 아이콘: `lucide-react` (카테고리: 일반 식대 `Utensils`, 출장비 `Briefcase`, 미팅비 `Users` / 출장 세부 유형: 출장 식비 `UtensilsCrossed`, 대중교통 `TrainFront`, 택시 `CarTaxiFront`, 통행료·주차 `ParkingSquare`, 숙박 `BedDouble`, 자차 `Car`, 기타 `Receipt`).
 
+- **색상 토큰 (D-066)**: 포인트 색은 `brand-*`(Tailwind `bg-brand-600` 등), 워크스페이스 셸은 `sidebar*`·`page` 토큰만 쓴다(`src/app/globals.css`). 화면 코드에 `blue-*` 같은 색 이름을 직접 쓰지 않는다(상태 배지·경고 같은 의미 색은 예외).
+- **화면 색상 선택 (D-066)**: A 딥 네이비+인디고(기본) / B 화이트+인디고 / C 차콜+에메랄드. 헤더 [색상](로그아웃 왼쪽), 모바일 관리자는 햄버거 메뉴 아래. 브라우저별 저장.
+
 ## 4. 상태 배지 표준 (D-022) — 지출소명서 상태
 | 상태 | 표시명 | 클래스 |
 |---|---|---|

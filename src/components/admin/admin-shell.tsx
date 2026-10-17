@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { ThemeOptionsInline } from "@/components/workspace/theme-switcher";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import type { Membership } from "@/lib/auth/paths";
 
@@ -108,7 +109,7 @@ function Brand() {
   );
 }
 
-// theme: 디자인 시안 비교용(globals.css [data-theme]). 지정하지 않으면 기본 톤.
+// theme: 미리보기(/dev/preview?theme=)에서 색상을 고정해 보기 위한 값. 실제 화면은 헤더의 [색상]이 <html data-theme>로 정한다(D-066).
 export type ShellTheme = "navy" | "light" | "emerald";
 
 // previewPath: 미리보기(/dev/preview)에서 선택된 메뉴를 보여 주기 위한 값. 실제 화면에서는 쓰지 않는다.
@@ -146,6 +147,9 @@ export function AdminShell({
               </button>
             </div>
             <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} />
+            <div className="mt-auto sm:hidden">
+              <ThemeOptionsInline />
+            </div>
           </div>
         </div>
       )}
