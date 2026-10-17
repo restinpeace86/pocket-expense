@@ -13,6 +13,7 @@ const DEFAULT_PATHS = [
   "/dev/preview/workspace-admin", "/dev/preview/workspace-employee",
   "/dev/preview/admin-home", "/dev/preview/admin-home-team", "/dev/preview/admin-members",
   "/dev/preview/admin-members-all", "/dev/preview/admin-member-detail", "/dev/preview/admin-member-readonly", "/dev/preview/admin-member-inactive", "/dev/preview/admin-departments", "/dev/preview/admin-settings", "/dev/preview/admin-settings?theme=wine",
+  "/dev/preview/admin-account-titles", "/dev/preview/admin-corporate-cards", "/dev/preview/admin-corporate-cards-empty",
 ];
 const [baseArg, ...pathArgs] = process.argv.slice(2);
 const base = (baseArg ?? "http://localhost:3000").replace(/\/$/, "");

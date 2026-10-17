@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminHomeView } from "@/components/admin/admin-home-view";
+import { AccountTitlesHeading, AccountTitlesView } from "@/components/admin/account-titles-view";
 import { AdminShell, type ShellTheme } from "@/components/admin/admin-shell";
+import { CorporateCardsHeading, CorporateCardsView } from "@/components/admin/corporate-cards-view";
 import { CompanySettingsForm } from "@/components/admin/company-settings-form";
 import { DepartmentsHeading, DepartmentsView } from "@/components/admin/departments-view";
 import { MemberDetailView } from "@/components/admin/member-detail";
@@ -51,6 +53,7 @@ const SAMPLE_DETAIL = {
   department_id: SAMPLE_DEPARTMENTS[0].id,
   employee_number: "PK-2024-007",
   receives_car_allowance: false,
+  meal_limit_override: 15000,
 };
 const SAMPLE_DEPT_ROWS = [
   { id: "d1", name: "경영지원", sort_order: 1, memberCount: 2, hasApprovalLine: false },
@@ -206,6 +209,48 @@ async function Preview({
           <MembersView members={SAMPLE_MEMBERS} tab="all" basePath="#" preview />
         </AdminShell>
       );
+    case "admin-account-titles":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/account-titles">
+          <AccountTitlesHeading />
+          <AccountTitlesView
+            titles={[
+              { id: "t1", name: "복리후생비", code: "811", sort_order: 1, used: true },
+              { id: "t2", name: "여비교통비", code: "812", sort_order: 2, used: true },
+              { id: "t3", name: "기업업무추진비", code: null, sort_order: 3, used: true },
+              { id: "t4", name: "회의비(외부 손님 응대 아닌 내부 회의 다과)", code: "830", sort_order: 4, used: false },
+            ]}
+            mappings={[
+              { id: "m1", category: "meal", trip_type: null, account_title_id: "t1" },
+              ...["meal", "public_transport", "taxi", "toll_parking", "lodging", "own_car", "other"].map((t, i) => ({ id: `m${i + 2}`, category: "trip" as const, trip_type: t, account_title_id: "t2" })),
+              { id: "m9", category: "meeting", trip_type: null, account_title_id: "t3" },
+            ]}
+            preview
+          />
+        </AdminShell>
+      );
+    case "admin-corporate-cards":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/corporate-cards">
+          <CorporateCardsHeading />
+          <CorporateCardsView
+            cards={[
+              { id: "c1", nickname: "대표 법인카드", last4: "7890", is_active: true, holder_member_id: "p1", holder_name: "김대표", month_total: 1284000 },
+              { id: "c2", nickname: "영업팀 공용카드 (서울·부산 지사 함께 사용)", last4: "1234", is_active: true, holder_member_id: null, holder_name: null, month_total: 0 },
+              { id: "c3", nickname: "해지한 예전 카드", last4: "5555", is_active: false, holder_member_id: null, holder_name: null, month_total: 0 },
+            ]}
+            members={[{ id: "p1", name: "김대표" }, { id: "p2", name: "박관리" }]}
+            preview
+          />
+        </AdminShell>
+      );
+    case "admin-corporate-cards-empty":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/corporate-cards">
+          <CorporateCardsHeading />
+          <CorporateCardsView cards={[]} members={[{ id: "p1", name: "김대표" }]} preview />
+        </AdminShell>
+      );
     case "admin-member-detail":
       // 최고 관리자가 관리자를 볼 때: 편집·권한·넘기기·퇴사 처리 모두 보임 + 비활성화 점검 결과(경고)
       return (
@@ -216,6 +261,7 @@ async function Preview({
             can={capabilitiesFor({ member_id: "p1", role: "super_admin" }, SAMPLE_DETAIL)}
             backHref="#"
             preview
+            companyMealLimit={10000}
             initialCheck={{ unpaid_claims: 2, payout_amount: 128000, payback_amount: 6000, open_claims: 1, approval_line_steps: 0, pending_reviews: 0, blocked: false }}
           />
         </AdminShell>

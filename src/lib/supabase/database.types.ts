@@ -1460,6 +1460,7 @@ export type Database = {
         Args: {
           p_department_id: string
           p_employee_number: string
+          p_meal_limit_override?: number
           p_member_id: string
           p_name: string
           p_phone: string

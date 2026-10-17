@@ -40,11 +40,11 @@ const NAV: NavItem[] = [
 ];
 const SETTINGS_NAV: NavItem[] = [
   { href: "/settings", label: "지출 한도·정책", icon: SlidersHorizontal, ready: true },
-  { href: "/corporate-cards", label: "법인카드", icon: CreditCard, ready: false },
+  { href: "/corporate-cards", label: "법인카드", icon: CreditCard, ready: true },
   { href: "/form-template", label: "사내 양식", icon: FileText, ready: false },
   { href: "/departments", label: "부서", icon: Building2, ready: true },
   { href: "/approval-lines", label: "사전 검토 결재라인", icon: Route, ready: false },
-  { href: "/account-titles", label: "계정과목", icon: BookOpen, ready: false },
+  { href: "/account-titles", label: "계정과목", icon: BookOpen, ready: true },
   { href: "/billing", label: "요금제", icon: Wallet, ready: false },
   { href: "/notifications", label: "알림 이력", icon: Bell, ready: false },
 ];

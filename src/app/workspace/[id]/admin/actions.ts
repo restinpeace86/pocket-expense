@@ -40,6 +40,7 @@ export type MemberEditInput = {
   position: string;
   employeeNumber: string;
   receivesCarAllowance: boolean;
+  mealLimitOverride?: number | null; // undefined = 바꾸지 않음, null = 회사 기본 한도
 };
 
 export async function updateMemberAction(input: MemberEditInput): Promise<ActionResult> {
@@ -52,6 +53,7 @@ export async function updateMemberAction(input: MemberEditInput): Promise<Action
     p_position: input.position,
     p_employee_number: input.employeeNumber,
     p_receives_car_allowance: input.receivesCarAllowance,
+    p_meal_limit_override: (input.mealLimitOverride === undefined ? -1 : input.mealLimitOverride) as number,
   });
   if (error) return { error: messageForDbError(error) };
   refresh();

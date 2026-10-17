@@ -17,7 +17,8 @@ import { HelpDetails, SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { MemberCapabilities } from "@/lib/admin/capabilities";
 import type { MemberDetail } from "@/lib/admin/queries";
-import { formatPhone } from "@/lib/format";
+import { formatPhone, formatWon } from "@/lib/format";
+import { AmountInput } from "@/components/ui/amount-input";
 import { measureAction } from "@/lib/perf/client";
 
 const ROLE_LABEL = { super_admin: "최고 관리자", admin: "관리자", employee: "일반 멤버" } as const;
@@ -35,6 +36,7 @@ export function MemberDetailView({
   backHref,
   preview = false,
   initialCheck = null,
+  companyMealLimit = null,
 }: {
   member: MemberDetail;
   departments: { id: string; name: string }[];
@@ -42,11 +44,13 @@ export function MemberDetailView({
   backHref: string;
   preview?: boolean;
   initialCheck?: DeactivationCheck | null; // 미리보기에서 비활성화 점검 결과 화면을 그리기 위한 값
+  companyMealLimit?: number | null; // 회사 1인 식대 한도. null이면 식대 한도를 쓰지 않는 회사라 개인별 한도 입력란을 숨김
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [check, setCheck] = useState<DeactivationCheck | null>(initialCheck);
+  const [mealOverride, setMealOverride] = useState(m.meal_limit_override === null ? "" : String(m.meal_limit_override));
 
   function run(action: () => Promise<{ error: string | null }>, success: string, after?: () => void) {
     if (preview) return;
@@ -77,6 +81,7 @@ export function MemberDetailView({
           position: String(form.get("position") ?? ""),
           employeeNumber: String(form.get("employeeNumber") ?? ""),
           receivesCarAllowance: form.get("receivesCarAllowance") === "on",
+          mealLimitOverride: companyMealLimit === null ? undefined : mealOverride === "" ? null : Number(mealOverride),
         }),
       "저장했어요.",
     );
@@ -161,6 +166,21 @@ export function MemberDetailView({
             <Field label="로그인 이메일" hint="카카오·Google 계정 이메일이라 여기서 바꿀 수 없어요.">
               <input value={m.email ?? "—"} className={`${inputClass} bg-zinc-50 text-zinc-500`} readOnly />
             </Field>
+            {companyMealLimit !== null && (
+              <div className="rounded-xl border border-zinc-200 p-4 sm:col-span-2">
+                <div className="sm:max-w-xs">
+                  <Field label="개인별 1식 식대 한도 (선택)" hint={`비우면 회사 기본 한도(1인 ${formatWon(companyMealLimit)})를 써요.`}>
+                    <AmountInput name="mealLimitOverride" value={mealOverride} onChange={setMealOverride} />
+                  </Field>
+                </div>
+                <HelpDetails id="admin.member.meal-override">
+                  <p>
+                    외근이 잦은 영업직처럼 회사 기본 한도로는 자주 넘치는 사람에게만 다른 한도를 정해요. 일반 식대와 출장 식비 모두에 적용되고, 이후 상신되는
+                    소명서부터 적용돼요.
+                  </p>
+                </HelpDetails>
+              </div>
+            )}
             <div className="rounded-xl border border-zinc-200 p-4 sm:col-span-2">
               <label className="flex cursor-pointer items-start gap-3">
                 <input
@@ -201,6 +221,9 @@ export function MemberDetailView({
                 ["이메일", m.email ?? "—"],
                 ["사번", m.employee_number ?? "—"],
                 ["자가운전보조금", m.receives_car_allowance ? "받음 (자차 유류비 청구 불가)" : "안 받음"],
+                ...(companyMealLimit !== null
+                  ? [["개인별 식대 한도", m.meal_limit_override === null ? `회사 기본 (${formatWon(companyMealLimit)})` : formatWon(m.meal_limit_override)]]
+                  : []),
               ].map(([k, v]) => (
                 <div key={k}>
                   <dt className="text-zinc-500">{k}</dt>
