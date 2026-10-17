@@ -5,6 +5,7 @@ export type MemberCapabilities = {
   canChangeRole: boolean; // 최고 관리자만, 대상이 최고 관리자가 아닌 활성 멤버
   canTransfer: boolean; // 최고 관리자만, 본인 외 활성 멤버
   canDeactivate: boolean; // 관리자: 일반 멤버 / 최고 관리자: 관리자까지. 최고 관리자·본인 제외
+  canReactivate: boolean; // 비활성 멤버만. 권한 기준은 비활성화와 같다 (D-062)
 };
 
 // 멤버 상세 화면의 버튼 노출 기준 (spec/features/roles-and-permissions.md §3·§5).
@@ -21,5 +22,6 @@ export function capabilitiesFor(
     canChangeRole: isSuper && target.role !== "super_admin" && active,
     canTransfer: isSuper && !isSelf && active,
     canDeactivate: active && !isSelf && target.role !== "super_admin" && (isSuper || target.role === "employee"),
+    canReactivate: target.status === "inactive" && (isSuper || target.role === "employee"),
   };
 }

@@ -16,7 +16,7 @@ export default function AdminHomePage({ params }: PageProps<"/workspace/[id]/adm
 async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin">["params"] }) {
   const { id } = await params;
   const membership = await requireWorkspace(id, { admin: true });
-  const { company, pendingCount } = await getCompanySummary(membership.company_id);
+  const { company, pendingCount, approvedCount } = await getCompanySummary(membership.company_id);
   if (!company) return null;
   return (
     <AdminHomeView
@@ -24,6 +24,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
       companyName={company.name}
       inviteCode={company.invite_code}
       pendingCount={pendingCount}
+      approvedCount={approvedCount}
       creditsLeft={company.receipt_credits_granted - company.receipt_credits_used}
       creditsGranted={company.receipt_credits_granted}
       basePath={`/workspace/${membership.company_id}/admin`}

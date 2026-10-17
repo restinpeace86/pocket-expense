@@ -1348,6 +1348,7 @@ export type Database = {
         Returns: Json
       }
       my_membership: { Args: never; Returns: Json }
+      reactivate_member: { Args: { p_member_id: string }; Returns: undefined }
       regenerate_invite_code: { Args: never; Returns: string }
       reject_claim: {
         Args: {

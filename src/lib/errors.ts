@@ -20,6 +20,7 @@ const MESSAGES: Record<string, string> = {
   NOT_A_MEMBER: "회사 멤버로 승인된 계정만 이용할 수 있어요.",
   NOT_FOUND: "대상을 찾을 수 없어요. 화면을 새로고침해 주세요.",
   NOT_PENDING: "이미 처리된 가입 신청입니다. 화면을 새로고침해 주세요.",
+  NOT_INACTIVE: "비활성 상태인 멤버만 다시 활성화할 수 있어요. 화면을 새로고침해 주세요.",
   NOT_APPROVED: "활성 상태인 멤버에게만 할 수 있어요.",
   INVALID_ROLE: "역할을 다시 선택해 주세요.",
   INVALID_TARGET: "본인에게는 할 수 없는 작업이에요.",

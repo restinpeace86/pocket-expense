@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowLeft, Crown, ShieldCheck, UserMinus } from "lucide-react";
+import { ArrowLeft, Crown, ShieldCheck, UserCheck, UserMinus } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import {
   deactivateMemberAction,
   deactivationCheckAction,
+  reactivateMemberAction,
   setMemberRoleAction,
   transferSuperAdminAction,
   updateMemberAction,
@@ -206,6 +207,26 @@ export function MemberDetailView({
               </button>
             )}
           </div>
+        </section>
+      )}
+
+      {can.canReactivate && (
+        <section className={card}>
+          <h2 className="font-semibold">다시 활성화</h2>
+          <p className="mt-1 text-sm text-zinc-600">
+            실수로 비활성화했거나 다시 입사한 경우에 쓰세요. 역할·부서는 비활성화 전 그대로 돌아오고, 바로 로그인해서 경비를 올릴 수 있어요.
+          </p>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => {
+              if (!confirm(`${m.name}님을 다시 활성화할까요?`)) return;
+              run(() => reactivateMemberAction(m.id), `${m.name}님을 다시 활성화했어요.`);
+            }}
+            className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
+          >
+            <UserCheck className="size-4" /> 다시 활성화
+          </button>
         </section>
       )}
 

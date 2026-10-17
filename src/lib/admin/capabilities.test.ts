@@ -7,12 +7,13 @@ const emp = (id = "e", status: "approved" | "pending" | "inactive" = "approved")
 
 describe("capabilitiesFor", () => {
   it("관리자는 일반 멤버만 편집·비활성화하고 역할·넘기기는 못 한다", () => {
-    expect(capabilitiesFor(adm, emp())).toEqual({ canEdit: true, canChangeRole: false, canTransfer: false, canDeactivate: true });
+    expect(capabilitiesFor(adm, emp())).toEqual({ canEdit: true, canChangeRole: false, canTransfer: false, canDeactivate: true, canReactivate: false });
     expect(capabilitiesFor(adm, { id: "a2", role: "admin", status: "approved" })).toEqual({
       canEdit: false,
       canChangeRole: false,
       canTransfer: false,
       canDeactivate: false,
+      canReactivate: false,
     });
     expect(capabilitiesFor(adm, { id: "s", role: "super_admin", status: "approved" }).canEdit).toBe(false);
   });
@@ -29,12 +30,14 @@ describe("capabilitiesFor", () => {
       canChangeRole: true,
       canTransfer: true,
       canDeactivate: true,
+      canReactivate: false,
     });
     expect(capabilitiesFor(sup, { id: "s", role: "super_admin", status: "approved" })).toEqual({
       canEdit: true,
       canChangeRole: false,
       canTransfer: false,
       canDeactivate: false,
+      canReactivate: false,
     });
   });
 
@@ -44,5 +47,12 @@ describe("capabilitiesFor", () => {
       expect([c.canChangeRole, c.canTransfer, c.canDeactivate]).toEqual([false, false, false]);
       expect(c.canEdit).toBe(true);
     }
+  });
+
+  it("비활성 멤버 다시 활성화: 관리자는 일반 멤버만, 최고 관리자는 관리자까지", () => {
+    expect(capabilitiesFor(adm, emp("e", "inactive")).canReactivate).toBe(true);
+    expect(capabilitiesFor(adm, { id: "a2", role: "admin", status: "inactive" }).canReactivate).toBe(false);
+    expect(capabilitiesFor(sup, { id: "a2", role: "admin", status: "inactive" }).canReactivate).toBe(true);
+    expect(capabilitiesFor(sup, emp("e", "approved")).canReactivate).toBe(false);
   });
 });

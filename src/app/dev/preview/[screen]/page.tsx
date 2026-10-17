@@ -150,7 +150,25 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
             companyName="포켓컴퍼니 주식회사"
             inviteCode="ABCD2345"
             pendingCount={2}
+            approvedCount={1}
             creditsLeft={100}
+            creditsGranted={100}
+            basePath="#"
+            preview
+          />
+        </AdminShell>
+      );
+    case "admin-home-team":
+      // 직원이 들어온 뒤: 초대 카드는 아래로, 간단히
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+          <AdminHomeView
+            adminName="김대표"
+            companyName="포켓컴퍼니 주식회사"
+            inviteCode="ABCD2345"
+            pendingCount={0}
+            approvedCount={8}
+            creditsLeft={73}
             creditsGranted={100}
             basePath="#"
             preview
@@ -183,6 +201,18 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
             backHref="#"
             preview
             initialCheck={{ unpaid_claims: 2, payout_amount: 128000, payback_amount: 6000, open_claims: 1, approval_line_steps: 0, pending_reviews: 0, blocked: false }}
+          />
+        </AdminShell>
+      );
+    case "admin-member-inactive":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+          <MemberDetailView
+            member={{ ...SAMPLE_DETAIL, role: "employee", status: "inactive" }}
+            departments={SAMPLE_DEPARTMENTS}
+            can={capabilitiesFor({ member_id: "p1", role: "super_admin" }, { id: SAMPLE_DETAIL.id, role: "employee", status: "inactive" })}
+            backHref="#"
+            preview
           />
         </AdminShell>
       );

@@ -96,3 +96,12 @@ export async function deactivateMemberAction(memberId: string): Promise<ActionRe
   refresh();
   return { error: null };
 }
+
+// 비활성 멤버 다시 활성화 (014, D-062)
+export async function reactivateMemberAction(memberId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reactivate_member", { p_member_id: memberId });
+  if (error) return { error: messageForDbError(error) };
+  refresh();
+  return { error: null };
+}

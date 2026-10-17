@@ -25,11 +25,12 @@ export async function getMembers(companyId: string): Promise<MemberRow[]> {
 
 export async function getCompanySummary(companyId: string) {
   const supabase = await createClient();
-  const [{ data: company }, { count: pendingCount }] = await Promise.all([
+  const [{ data: company }, { count: pendingCount }, { count: approvedCount }] = await Promise.all([
     supabase.from("companies").select("name, invite_code, receipt_credits_granted, receipt_credits_used").eq("id", companyId).single(),
     supabase.from("members").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("status", "pending"),
+    supabase.from("members").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("status", "approved"),
   ]);
-  return { company, pendingCount: pendingCount ?? 0 };
+  return { company, pendingCount: pendingCount ?? 0, approvedCount: approvedCount ?? 0 };
 }
 
 export type MemberDetail = MemberRow & { department_id: string | null; employee_number: string | null };

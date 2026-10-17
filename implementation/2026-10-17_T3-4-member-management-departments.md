@@ -28,5 +28,11 @@
 - 반응형: 새 미리보기 4개 포함 전 화면 360/390/768/1280 가로 넘침 없음, 스크린샷 직접 확인(모바일 메뉴의 설정 하위 메뉴 펼침, 긴 부서명 줄바꿈 포함)
 
 ## 특이 사항
-- 재활성화는 spec에 없어 구현하지 않음(O-08)
 - 개인별 식대 예외 한도는 T3-7, 개별 초대는 T3-6
+
+## 추가 (2026-10-17): 다시 활성화 + 관리자 홈 배치
+- 사용자 결정으로 O-08 해소 → D-062. `reactivate_member`(migration 014): 비활성 → 활성, 역할·부서 유지, 권한은 비활성화와 같음
+- 테스트 `supabase/tests/006_member_reactivation.sql`: 다른 회사 NOT_FOUND, 직원 NOT_ALLOWED, 비활성 본인 NOT_A_MEMBER, 관리자는 관리자 복구 불가, 활성 멤버 NOT_INACTIVE, 복구 후 회사 데이터 다시 조회 가능. 권한 검사 제거 변이 → FAIL로 잡음
+- 멤버 상세(비활성): [다시 활성화] 섹션. 버튼 노출 `canReactivate`(단위 테스트)
+- 관리자 홈: 승인된 멤버가 본인뿐이면 초대 카드를 맨 위에 안내 포함, 직원이 들어온 뒤에는 무료 영수증 아래로 간단히(admin-dashboard.md ①-2). D-061 사용자 확정
+- 검증: tsc·test 22·lint·build, test:db 6종, 반응형 전 화면 4폭 + 새 미리보기(admin-home-team, admin-member-inactive) 스크린샷 확인
