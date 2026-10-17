@@ -13,7 +13,7 @@ import {
   type DeactivationCheck,
 } from "@/app/workspace/[id]/admin/actions";
 import { Field, FormError } from "@/components/onboarding/field";
-import { SectionHeading } from "@/components/ui/help";
+import { HelpDetails, SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { MemberCapabilities } from "@/lib/admin/capabilities";
 import type { MemberDetail } from "@/lib/admin/queries";
@@ -75,6 +75,7 @@ export function MemberDetailView({
           departmentId: dept || null,
           position: String(form.get("position") ?? ""),
           employeeNumber: String(form.get("employeeNumber") ?? ""),
+          receivesCarAllowance: form.get("receivesCarAllowance") === "on",
         }),
       "저장했어요.",
     );
@@ -159,6 +160,26 @@ export function MemberDetailView({
             <Field label="로그인 이메일" hint="카카오·Google 계정 이메일이라 여기서 바꿀 수 없어요.">
               <input value={m.email ?? "—"} className={`${inputClass} bg-zinc-50 text-zinc-500`} readOnly />
             </Field>
+            <div className="rounded-xl border border-zinc-200 p-4 sm:col-span-2">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  name="receivesCarAllowance"
+                  defaultChecked={m.receives_car_allowance}
+                  className="mt-0.5 size-5 shrink-0 accent-brand-600"
+                />
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-zinc-900">자가운전보조금 받음</span>
+                  <span className="block text-sm text-zinc-600">체크하면 이 직원은 자차 유류비를 청구할 수 없어요. 통행료·주차비는 그대로 올릴 수 있어요.</span>
+                </span>
+              </label>
+              <HelpDetails id="admin.member.car-allowance">
+                <p>
+                  매달 정해진 금액을 주는 자가운전보조금(월 20만 원까지 비과세)을 받는 직원에게 자차 유류비를 또 정산해 주면, 보조금 비과세가 인정되지 않을 수
+                  있어요. 급여 기준으로 보조금을 받는 직원만 체크해 두면 중복 정산을 막아 줘요.
+                </p>
+              </HelpDetails>
+            </div>
             <div className="sm:col-span-2">
               <button
                 type="submit"
@@ -178,6 +199,7 @@ export function MemberDetailView({
                 ["휴대폰", formatPhone(m.phone)],
                 ["이메일", m.email ?? "—"],
                 ["사번", m.employee_number ?? "—"],
+                ["자가운전보조금", m.receives_car_allowance ? "받음 (자차 유류비 청구 불가)" : "안 받음"],
               ].map(([k, v]) => (
                 <div key={k}>
                   <dt className="text-zinc-500">{k}</dt>

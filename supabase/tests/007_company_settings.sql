@@ -178,5 +178,21 @@ begin
   end if;
 end $$;
 
+-- ── 계기판 사진 받기 (D-070) ─────────────────────────────────────────────────────
+select set_config('request.jwt.claims', '{"sub":"a7000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+set local role authenticated;
+select public.update_company_settings('설정회사A', '1248100998', 12000, 'split', 250, 'none', null, true, true, true);
+select public.update_company_settings('설정회사A', '1248100998', 12000, 'split', 250, 'none', null, true, true);
+reset role;
+do $$
+begin
+  if (select odometer_photo_required from public.companies where id = 'c7000000-0000-0000-0000-00000000000a') is not true then
+    raise exception 'FAIL [ODOMETER] not stored or reset by save without it';
+  end if;
+  if (select odometer_photo_required from public.companies where id = 'c7000000-0000-0000-0000-00000000000c') is not false then
+    raise exception 'FAIL [ODOMETER] default should be off';
+  end if;
+end $$;
+
 select 'COMPANY_SETTINGS_OK' as result;
 rollback;

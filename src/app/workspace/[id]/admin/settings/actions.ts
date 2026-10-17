@@ -14,6 +14,7 @@ export type CompanySettingsInput = {
   mealLimitMode: "split" | "notify";
   fuelEnabled: boolean;
   fuelRatePerKm: number;
+  odometerPhotoRequired: boolean;
   claimDeadlineType: "none" | "end_of_month" | "days_after" | "next_month_day";
   claimDeadlineDays: number | null;
 };
@@ -33,6 +34,7 @@ export async function saveCompanySettingsAction(input: CompanySettingsInput): Pr
     p_claim_deadline_days: input.claimDeadlineDays as number,
     p_meal_limit_enabled: input.mealLimitEnabled,
     p_fuel_enabled: input.fuelEnabled,
+    p_odometer_photo_required: input.odometerPhotoRequired,
   });
   if (error) return { error: messageForDbError(error) };
   refresh();

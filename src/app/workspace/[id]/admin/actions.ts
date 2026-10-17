@@ -39,6 +39,7 @@ export type MemberEditInput = {
   departmentId: string | null;
   position: string;
   employeeNumber: string;
+  receivesCarAllowance: boolean;
 };
 
 export async function updateMemberAction(input: MemberEditInput): Promise<ActionResult> {
@@ -50,6 +51,7 @@ export async function updateMemberAction(input: MemberEditInput): Promise<Action
     p_department_id: input.departmentId as string,
     p_position: input.position,
     p_employee_number: input.employeeNumber,
+    p_receives_car_allowance: input.receivesCarAllowance,
   });
   if (error) return { error: messageForDbError(error) };
   refresh();

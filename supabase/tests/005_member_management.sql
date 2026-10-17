@@ -179,5 +179,31 @@ begin
   end if;
 end $$;
 
+-- ── 자가운전보조금 수령 표시 (D-070) ──────────────────────────────────────────────
+select set_config('request.jwt.claims', '{"sub":"ae000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+set local role authenticated;
+-- 관리자(A관리, 넘기기 후 최고 관리자)가 직원 표시, 인자 없이 편집하면 값 유지
+select public.update_member('ac000000-0000-0000-0000-000000000005', 'A직원2', '01030001004', null, null, null, true);
+select public.update_member('ac000000-0000-0000-0000-000000000005', 'A직원2', '01030001004', null, '사원', null);
+select public._t_expect($q$update public.members set receives_car_allowance = false where id = 'ac000000-0000-0000-0000-000000000005'$q$,
+  'permission denied for table members', 'A_ADM direct car allowance');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"be000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+set local role authenticated;
+select public._t_expect($q$select public.update_member('ac000000-0000-0000-0000-000000000005', 'x', '01030001004', null, null, null, false)$q$, 'NOT_FOUND', 'B_SUP car allowance A');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"ae000000-0000-0000-0000-000000000005","role":"authenticated"}', true);
+set local role authenticated;
+select public._t_expect($q$update public.members set receives_car_allowance = false where auth_user_id = 'ae000000-0000-0000-0000-000000000005'$q$,
+  'permission denied for table members', 'A_EMP self car allowance');
+reset role;
+do $$
+begin
+  if (select row(receives_car_allowance, position)::text from public.members where id = 'ac000000-0000-0000-0000-000000000005')
+     <> row(true, '사원')::text then
+    raise exception 'FAIL [CAR] car allowance not stored or reset by edit without it';
+  end if;
+end $$;
+
 select 'MEMBER_MANAGEMENT_OK' as result;
 rollback;

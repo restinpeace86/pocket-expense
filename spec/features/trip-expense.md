@@ -40,6 +40,8 @@
 
 ## 4. 자차 유류비 (`own_car`)
 - 회사 설정이 자차 유류비 **사용 안 함**(`fuel_enabled=false`, D-068)이면 세부 유형 선택지에 `own_car`를 보여 주지 않고, 서버도 새 `own_car` 항목을 받지 않는다(이미 있는 항목은 그대로).
+- 청구자가 **자가운전보조금 받음**(`members.receives_car_allowance=true`, D-070)이면 같은 방식으로 `own_car`를 막고 "자가운전보조금을 받고 있어 자차 유류비는 청구할 수 없어요. 통행료·주차비는 영수증으로 올려 주세요" 안내.
+- 회사 설정 **계기판 사진 받기**(`companies.odometer_photo_required=true`, D-070)면 자차 항목에 출발·도착 계기판 사진 2장이 필수(영수증 첨부와 같은 Storage 규칙). 꺼져 있으면 첨부란을 보이지 않는다.
 ### 4.1 입력
 - 출발지·도착지: 주소 검색(Kakao Local API, `KAKAO_REST_API_KEY` 서버 호출)으로 선택 → `start_location`/`end_location`, 좌표 저장. 출장 소명서면 도착지 기본값으로 출장지를 제안한다.
 - [거리 계산] 버튼 → 서버에서 Kakao Mobility 길찾기 API 호출 → `distance_km`(소수 첫째 자리 반올림), `distance_source='api'`.

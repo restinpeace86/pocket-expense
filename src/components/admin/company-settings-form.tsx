@@ -27,6 +27,7 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
   const [mealEnabled, setMealEnabled] = useState(s.meal_limit_enabled);
   const [mealLimit, setMealLimit] = useState(String(s.meal_limit_per_person));
   const [fuelEnabled, setFuelEnabled] = useState(s.fuel_enabled);
+  const [odometer, setOdometer] = useState(s.odometer_photo_required);
   const [mode, setMode] = useState(s.meal_limit_mode);
   const [fuelRate, setFuelRate] = useState(String(s.fuel_rate_per_km));
   const [deadline, setDeadline] = useState<DeadlineType>(s.claim_deadline_type);
@@ -53,6 +54,7 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
         mealLimitMode: mode,
         fuelEnabled,
         fuelRatePerKm: toInt(fuelRate),
+        odometerPhotoRequired: odometer,
         claimDeadlineType: deadline,
         claimDeadlineDays: deadline === "days_after" || deadline === "next_month_day" ? toInt(deadlineDays) : null,
       });
@@ -175,7 +177,11 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
                 <b>어떻게 계산하나요?</b> 청구 금액 = 주행거리(km) × 이 단가예요. 자차 출장은 주유 영수증 없이 출발지·도착지와 거리로 청구해요.
               </p>
               <p>유가가 크게 바뀌면 단가를 조정하세요. 바꾼 단가는 이후 상신되는 경비부터 적용돼요.</p>
-              <p>자차 출장비를 지원하지 않는 회사라면 &lsquo;사용 안 함&rsquo;을 고르세요. 주유 영수증은 일반 출장비처럼 올릴 수 있어요.</p>
+              <p>
+                <b>증빙은 어떻게 하나요?</b> 주유 영수증 대신 직원이 입력한 출발지·도착지·거리·출장 목적이 기록으로 남고, 세무 마감 자료에 함께 나가요. 더 확실한
+                증빙이 필요하면 계기판 사진 받기를 켜세요.
+              </p>
+              <p>자차 출장비를 지원하지 않는 회사라면 &lsquo;사용 안 함&rsquo;을 고르세요. 자가운전보조금을 받는 직원은 멤버 관리에서 따로 막을 수 있어요.</p>
             </>
           }
         />
@@ -191,10 +197,24 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
                 label: "km당 단가로 지원",
                 description: "주행거리 × 단가로 계산해요.",
                 extra: (
-                  <div className="sm:max-w-xs">
-                    <Field label="km당 유류비 단가" required hint={`예: 120km × ${formatWon(rate)} = ${formatWon(120 * rate)}`}>
-                      <AmountInput name="fuelRate" value={fuelRate} onChange={setFuelRate} required />
-                    </Field>
+                  <div className="flex flex-col gap-4">
+                    <div className="sm:max-w-xs">
+                      <Field label="km당 유류비 단가" required hint={`예: 120km × ${formatWon(rate)} = ${formatWon(120 * rate)}`}>
+                        <AmountInput name="fuelRate" value={fuelRate} onChange={setFuelRate} required />
+                      </Field>
+                    </div>
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={odometer}
+                        onChange={(e) => setOdometer(e.target.checked)}
+                        className="mt-0.5 size-5 shrink-0 accent-brand-600"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-zinc-900">출발·도착 계기판 사진 받기 (선택)</span>
+                        <span className="block text-sm text-zinc-600">거리 증빙이 더 확실해지지만 직원이 사진 2장을 더 찍어야 해요.</span>
+                      </span>
+                    </label>
                   </div>
                 ),
               },

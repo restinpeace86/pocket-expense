@@ -359,6 +359,7 @@ export type Database = {
           meal_limit_mode: Database["public"]["Enums"]["meal_limit_mode"]
           meal_limit_per_person: number
           name: string
+          odometer_photo_required: boolean
           policy_confirmed_at: string | null
           receipt_credits_granted: number
           receipt_credits_used: number
@@ -382,6 +383,7 @@ export type Database = {
           meal_limit_mode?: Database["public"]["Enums"]["meal_limit_mode"]
           meal_limit_per_person?: number
           name: string
+          odometer_photo_required?: boolean
           policy_confirmed_at?: string | null
           receipt_credits_granted?: number
           receipt_credits_used?: number
@@ -405,6 +407,7 @@ export type Database = {
           meal_limit_mode?: Database["public"]["Enums"]["meal_limit_mode"]
           meal_limit_per_person?: number
           name?: string
+          odometer_photo_required?: boolean
           policy_confirmed_at?: string | null
           receipt_credits_granted?: number
           receipt_credits_used?: number
@@ -1049,6 +1052,7 @@ export type Database = {
           position: string | null
           privacy_agreed_at: string
           privacy_version: string | null
+          receives_car_allowance: boolean
           role: Database["public"]["Enums"]["member_role"]
           status: Database["public"]["Enums"]["member_status"]
           terms_agreed_at: string | null
@@ -1075,6 +1079,7 @@ export type Database = {
           position?: string | null
           privacy_agreed_at: string
           privacy_version?: string | null
+          receives_car_allowance?: boolean
           role?: Database["public"]["Enums"]["member_role"]
           status?: Database["public"]["Enums"]["member_status"]
           terms_agreed_at?: string | null
@@ -1101,6 +1106,7 @@ export type Database = {
           position?: string | null
           privacy_agreed_at?: string
           privacy_version?: string | null
+          receives_car_allowance?: boolean
           role?: Database["public"]["Enums"]["member_role"]
           status?: Database["public"]["Enums"]["member_status"]
           terms_agreed_at?: string | null
@@ -1397,6 +1403,7 @@ export type Database = {
           p_meal_limit_mode: Database["public"]["Enums"]["meal_limit_mode"]
           p_meal_limit_per_person: number
           p_name: string
+          p_odometer_photo_required?: boolean
         }
         Returns: undefined
       }
@@ -1408,6 +1415,7 @@ export type Database = {
           p_name: string
           p_phone: string
           p_position: string
+          p_receives_car_allowance?: boolean
         }
         Returns: undefined
       }

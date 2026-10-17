@@ -39,13 +39,13 @@ export async function getCompanySummary(companyId: string) {
   return { company, pendingCount: pendingCount ?? 0, approvedCount: approvedCount ?? 0 };
 }
 
-export type MemberDetail = MemberRow & { department_id: string | null; employee_number: string | null };
+export type MemberDetail = MemberRow & { department_id: string | null; employee_number: string | null; receives_car_allowance: boolean };
 
 export async function getMember(companyId: string, memberId: string): Promise<MemberDetail | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("members")
-    .select("id, name, phone, email, position, role, status, created_at, department_id, employee_number, department:departments(name)")
+    .select("id, name, phone, email, position, role, status, created_at, department_id, employee_number, receives_car_allowance, department:departments(name)")
     .eq("company_id", companyId)
     .eq("id", memberId)
     .maybeSingle();
@@ -77,6 +77,7 @@ export type CompanySettings = {
   meal_limit_mode: "split" | "notify";
   fuel_enabled: boolean;
   fuel_rate_per_km: number;
+  odometer_photo_required: boolean;
   claim_deadline_type: "none" | "end_of_month" | "days_after" | "next_month_day";
   claim_deadline_days: number | null;
 };
@@ -86,7 +87,7 @@ export async function getCompanySettings(companyId: string): Promise<CompanySett
   const { data } = await supabase
     .from("companies")
     .select(
-      "name, business_number, invite_code, meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, claim_deadline_type, claim_deadline_days",
+      "name, business_number, invite_code, meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, odometer_photo_required, claim_deadline_type, claim_deadline_days",
     )
     .eq("id", companyId)
     .maybeSingle();

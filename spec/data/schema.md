@@ -41,6 +41,7 @@
 | meal_limit_per_person | integer | not null, default 10000 | 1식 1인당 지원 한도 (일반 식대·출장 식비 공통, D-040) |
 | meal_limit_mode | meal_limit_mode | not null, default 'split' | 한도 초과 처리 방식 (D-041) |
 | fuel_enabled | boolean | not null, default true | false면 자차 유류비(own_car) 항목을 받지 않음 (D-068) |
+| odometer_photo_required | boolean | not null, default false | 자차 유류비에 계기판 사진 2장 필수 (D-070) |
 | fuel_rate_per_km | integer | not null, default 200 | 자차 km당 유류비 단가 |
 | claim_deadline_type | claim_deadline_type | not null, default 'next_month_day' | 청구 기한 방식 (D-031, D-064) |
 | claim_deadline_days | integer | default 5, 1~90 | `days_after`: 결제일로부터 N일(1~90) / `next_month_day`: 다음 달 N일(1~28). 그 외 방식이면 null |
@@ -112,6 +113,7 @@
 | terms_version / privacy_version | text | null | 동의한 문서 버전 (`private.app_settings`) |
 | optional_consent_at | timestamptz | null | 선택 항목(정산 계좌·차량번호) 동의 시각. 없으면 선택 항목 저장 불가 |
 | approved_at | timestamptz | null | 관리자 가입 승인 시각 |
+| receives_car_allowance | boolean | not null, default false | 자가운전보조금 수령 직원. true면 자차 유류비 청구 불가 (D-070) |
 | ui_theme | text | null, 영문 소문자 2~20자 | 화면 색상(팔레트 이름, D-067). 본인만 수정. 모르는 값·null이면 기본(A) |
 
 ### 2.3a `member_invitations` — 개별 초대 (D-042)

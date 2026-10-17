@@ -48,6 +48,7 @@ const SAMPLE_DETAIL = {
   ...SAMPLE_MEMBERS[1],
   department_id: SAMPLE_DEPARTMENTS[0].id,
   employee_number: "PK-2024-007",
+  receives_car_allowance: false,
 };
 const SAMPLE_DEPT_ROWS = [
   { id: "d1", name: "경영지원", sort_order: 1, memberCount: 2, hasApprovalLine: false },
@@ -256,6 +257,7 @@ async function Preview({
               meal_limit_mode: "split",
               fuel_enabled: true,
               fuel_rate_per_km: 200,
+              odometer_photo_required: false,
               claim_deadline_type: "next_month_day",
               claim_deadline_days: 5,
             }}
