@@ -9,7 +9,8 @@ insert into auth.users (id, instance_id, aud, role, email) values
   ('b1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_b@test.local'),
   ('a1000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_join@test.local'),
   ('b1000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_inv@test.local'),
-  ('c1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_out@test.local');
+  ('c1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_out@test.local'),
+  ('e1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_ceo@test.local');
 
 -- ---------- u_a: 회사 A 생성 ----------
 select set_config('request.jwt.claims', '{"sub":"a1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
@@ -217,6 +218,46 @@ begin
   exception when insufficient_privilege then v_ok := true;
   end;
   if not v_ok then raise exception 'FAIL [ANON] listed departments'; end if;
+end $$;
+reset role;
+
+-- ---------- u_ceo: 본인 부서 없이 회사 등록 (D-058) ----------
+select set_config('request.jwt.claims', '{"sub":"e1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare v_ok boolean; m jsonb;
+begin
+  -- 목록에 없는 부서는 여전히 거부
+  begin
+    perform public.create_company('부서없음회사', '3334445556', array['영업팀'], '대표', '01077778888', '없는부서', null, true);
+    v_ok := false;
+  exception when others then v_ok := sqlerrm = 'INVALID_MY_DEPARTMENT';
+  end;
+  if not v_ok then raise exception 'FAIL [CEO] accepted department not in list'; end if;
+
+  perform public.create_company('부서없음회사', '3334445556', array['영업팀'], '대표', '01077778888', '', '대표이사', true);
+  m := public.my_membership();
+  if m->>'role' <> 'super_admin' or m->>'status' <> 'approved' then raise exception 'FAIL [CEO] membership %', m; end if;
+  if (select department_id from public.members where auth_user_id = 'e1000000-0000-0000-0000-000000000001') is not null then
+    raise exception 'FAIL [CEO] department should be empty';
+  end if;
+  if (select count(*) from public.departments) <> 1 then raise exception 'FAIL [CEO] departments not created'; end if;
+end $$;
+reset role;
+select set_config('t.code_ceo', (select invite_code from public.companies where name = '부서없음회사'), true);
+
+-- 직원 가입은 부서 필수 그대로
+select set_config('request.jwt.claims', '{"sub":"c1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare v_ok boolean;
+begin
+  begin
+    perform public.join_company(current_setting('t.code_ceo'), '직원', '01011115555', null, null, null, null, null, null, null, true);
+    v_ok := false;
+  exception when others then v_ok := sqlerrm = 'INVALID_DEPARTMENT';
+  end;
+  if not v_ok then raise exception 'FAIL [CEO] employee joined without department'; end if;
 end $$;
 reset role;
 

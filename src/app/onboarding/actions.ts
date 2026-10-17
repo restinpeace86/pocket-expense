@@ -42,7 +42,8 @@ export async function createCompanyAction(_prev: FormState, formData: FormData):
     p_departments: departments,
     p_my_name: text(formData, "name"),
     p_my_phone: text(formData, "phone"),
-    p_my_department: text(formData, "myDepartment"),
+    // "부서 없음"(대표·임원)은 빈 값으로 보낸다 (D-058)
+    p_my_department: text(formData, "myDepartment") === "__none__" ? "" : text(formData, "myDepartment"),
     p_my_position: optional(formData, "position") ?? "",
     p_privacy_agreed: formData.get("privacy") === "on",
   });

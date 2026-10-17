@@ -95,7 +95,7 @@
 | name | text | not null | 실명 |
 | phone | text | not null | 휴대폰 번호(숫자만 저장). 알림톡 수신 번호. 인증 수단 아님 (D-002) |
 | email | text | null | OAuth 계정 이메일 |
-| department_id | uuid | FK departments, null | 온보딩 필수 입력. 부서 삭제 시 null |
+| department_id | uuid | FK departments, null | 직원 가입 시 필수. 회사 등록자는 null(부서 없음) 가능, 부서 삭제 시 null. **null은 모든 기능에서 정상 상태**(결재라인=회사 기본, 표시="부서 없음") (D-058) |
 | position | text | null | 직급/직책 (선택) |
 | employee_number | text | null | 사번 (선택) |
 | vehicle_number | text | null | 차량번호 (선택, 자차 출장비용) |

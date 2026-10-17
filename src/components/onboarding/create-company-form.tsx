@@ -8,6 +8,8 @@ import { Field, FormError } from "./field";
 import { PrivacyConsent } from "./privacy-consent";
 
 const initial: FormState = { error: null };
+// 본인 부서 "부서 없음"(대표·임원) 선택값 — 서버에서 빈 값으로 바꿔 보낸다 (D-058)
+export const NO_DEPARTMENT = "__none__";
 
 // 회사 생성 위저드 Step 2 (spec/screens/admin-onboarding.md)
 export function CreateCompanyForm() {
@@ -58,7 +60,7 @@ export function CreateCompanyForm() {
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={onKeyDown}
               className={inputClass}
-              placeholder="예: 개발팀, 마케팅팀, 경영지원팀"
+              placeholder="예: 개발팀"
             />
             <button type="button" onClick={addDraft} className="min-h-11 shrink-0 rounded-xl border border-zinc-300 px-4 text-sm font-medium">
               추가
@@ -87,7 +89,7 @@ export function CreateCompanyForm() {
       <Field label="휴대폰 번호" required hint="결재 요청 알림톡을 받을 번호입니다">
         <input name="phone" required inputMode="tel" className={inputClass} placeholder="010-1234-5678" autoComplete="tel" />
       </Field>
-      <Field label="본인 부서" required>
+      <Field label="본인 부서" required hint="대표·임원처럼 부서에 속하지 않으면 '부서 없음'을 고르세요">
         <select
           name="myDepartment"
           required
@@ -97,6 +99,7 @@ export function CreateCompanyForm() {
           disabled={departments.length === 0}
         >
           <option value="">{departments.length === 0 ? "먼저 부서를 추가하세요" : "선택하세요"}</option>
+          <option value={NO_DEPARTMENT}>부서 없음 (대표·임원)</option>
           {departments.map((d) => (
             <option key={d} value={d}>
               {d}

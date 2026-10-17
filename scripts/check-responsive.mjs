@@ -6,7 +6,12 @@
 import { chromium } from "playwright";
 import fs from "node:fs";
 
-const DEFAULT_PATHS = ["/", "/login", "/join/ZZZZZZZZ", "/join/i/invalid-token"];
+// 로그인 후 화면은 /dev/preview/* 로 점검한다 (서버를 ENABLE_UI_PREVIEW=1로 띄워야 함). 새 화면을 만들면 여기에 추가한다.
+const DEFAULT_PATHS = [
+  "/", "/login", "/join/ZZZZZZZZ", "/join/i/invalid-token",
+  "/dev/preview/onboarding", "/dev/preview/create-company", "/dev/preview/join", "/dev/preview/join-invite",
+  "/dev/preview/workspace-admin", "/dev/preview/workspace-employee",
+];
 const [baseArg, ...pathArgs] = process.argv.slice(2);
 const base = (baseArg ?? "http://localhost:3000").replace(/\/$/, "");
 const paths = pathArgs.length ? pathArgs : DEFAULT_PATHS;
@@ -31,7 +36,13 @@ for (const p of paths) {
       reducedMotion: "reduce",
     });
     const page = await ctx.newPage();
-    await page.goto(base + p, { waitUntil: "networkidle" });
+    const res = await page.goto(base + p, { waitUntil: "networkidle" });
+    if (!res || res.status() >= 400) {
+      failures++;
+      console.log(`FAIL ${p.padEnd(24)} ${v.name.padEnd(7)} HTTP ${res?.status()} (미리보기는 ENABLE_UI_PREVIEW=1로 서버를 띄워야 함)`);
+      await ctx.close();
+      continue;
+    }
     const m = await page.evaluate(() => {
       const doc = document.documentElement;
       const offenders = [];

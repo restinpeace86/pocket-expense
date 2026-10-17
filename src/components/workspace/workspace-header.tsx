@@ -12,14 +12,15 @@ export function WorkspaceHeader({ membership, mode }: { membership: Membership; 
         <p className="truncate text-xs text-zinc-500">{mode === "admin" ? "관리자 모드" : "직원 모드"}</p>
         <p className="truncate font-semibold">{membership.company_name}</p>
       </div>
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         {isAdminRole(membership.role) && (
           <Link
             href={mode === "admin" ? `${base}/employee` : `${base}/admin`}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50"
+            className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50"
           >
             <ArrowLeftRight className="size-4" />
-            {mode === "admin" ? "직원 모드로 전환" : "관리자 모드로 전환"}
+            <span className="sm:hidden">{mode === "admin" ? "직원 모드" : "관리자 모드"}</span>
+            <span className="hidden sm:inline">{mode === "admin" ? "직원 모드로 전환" : "관리자 모드로 전환"}</span>
           </Link>
         )}
         <SignOutButton />
