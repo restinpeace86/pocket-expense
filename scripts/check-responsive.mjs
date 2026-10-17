@@ -11,6 +11,7 @@ const DEFAULT_PATHS = [
   "/", "/login", "/terms", "/privacy", "/join/ZZZZZZZZ", "/join/i/invalid-token",
   "/dev/preview/onboarding", "/dev/preview/create-company", "/dev/preview/join", "/dev/preview/join-invite", "/dev/preview/consent-dialog",
   "/dev/preview/workspace-admin", "/dev/preview/workspace-employee",
+  "/dev/preview/admin-home", "/dev/preview/admin-members",
 ];
 const [baseArg, ...pathArgs] = process.argv.slice(2);
 const base = (baseArg ?? "http://localhost:3000").replace(/\/$/, "");

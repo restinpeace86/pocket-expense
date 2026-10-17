@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { AdminHomeView } from "@/components/admin/admin-home-view";
+import { AdminShell } from "@/components/admin/admin-shell";
+import { MembersView, type MemberRow } from "@/components/admin/members-view";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ConsentSection } from "@/components/legal/consent-section";
 import { CreateCompanyForm } from "@/components/onboarding/create-company-form";
@@ -26,6 +29,13 @@ const SAMPLE_MEMBERSHIP: Membership = {
   role: "super_admin",
   status: "approved",
 };
+
+const SAMPLE_MEMBERS: MemberRow[] = [
+  { id: "p1", name: "김대표", phone: "01011112222", email: "ceo@pocket.co.kr", position: "대표", role: "super_admin", status: "approved", department: null, created_at: "2026-10-01T00:00:00Z" },
+  { id: "p2", name: "박관리", phone: "01022223333", email: null, position: "과장", role: "admin", status: "approved", department: "경영지원", created_at: "2026-10-02T00:00:00Z" },
+  { id: "p3", name: "이직원", phone: "01033334444", email: "lee.employee.long-address@pocketcompany.co.kr", position: "대리", role: "employee", status: "pending", department: "개발팀", created_at: "2026-10-16T00:00:00Z" },
+  { id: "p4", name: "최신입", phone: "0103335555", email: null, position: null, role: "employee", status: "pending", department: "영업팀", created_at: "2026-10-17T00:00:00Z" },
+];
 
 export default function PreviewPage({ params }: PageProps<"/dev/preview/[screen]">) {
   return (
@@ -116,6 +126,28 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
         <div className="flex flex-1 flex-col">
           <WorkspaceHeader membership={SAMPLE_MEMBERSHIP} mode="employee" />
         </div>
+      );
+    case "admin-home":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+          <AdminHomeView
+            adminName="김대표"
+            companyName="포켓컴퍼니 주식회사"
+            inviteCode="ABCD2345"
+            pendingCount={2}
+            creditsLeft={100}
+            creditsGranted={100}
+            basePath="#"
+            preview
+          />
+        </AdminShell>
+      );
+    case "admin-members":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+          <h1 className="text-2xl font-bold tracking-tight">멤버 관리</h1>
+          <MembersView members={SAMPLE_MEMBERS} tab="pending" basePath="#" preview />
+        </AdminShell>
       );
     default:
       notFound();

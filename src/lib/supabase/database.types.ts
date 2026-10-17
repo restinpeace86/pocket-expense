@@ -1288,6 +1288,7 @@ export type Database = {
         Args: { p_claim_id: string; p_comment?: string }
         Returns: Database["public"]["Enums"]["claim_status"]
       }
+      approve_member: { Args: { p_member_id: string }; Returns: undefined }
       business_verify_mode: { Args: never; Returns: string }
       consume_receipt_credit: {
         Args: {
@@ -1342,6 +1343,7 @@ export type Database = {
       }
       mark_claims_paid: { Args: { p_claim_ids: string[] }; Returns: number }
       my_membership: { Args: never; Returns: Json }
+      regenerate_invite_code: { Args: never; Returns: string }
       reject_claim: {
         Args: {
           p_claim_id: string
@@ -1350,6 +1352,7 @@ export type Database = {
         }
         Returns: Database["public"]["Enums"]["claim_status"]
       }
+      reject_member: { Args: { p_member_id: string }; Returns: undefined }
       submit_claim: {
         Args: { p_claim_id: string }
         Returns: Database["public"]["Enums"]["claim_status"]
