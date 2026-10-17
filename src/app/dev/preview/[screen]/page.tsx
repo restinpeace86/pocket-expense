@@ -53,18 +53,26 @@ const SAMPLE_DEPT_ROWS = [
   { id: "d3", name: "영업·마케팅 본부 (서울·부산 지사 통합)", sort_order: 3, memberCount: 0, hasApprovalLine: false },
 ];
 
-export default function PreviewPage({ params }: PageProps<"/dev/preview/[screen]">) {
+export default function PreviewPage({ params, searchParams }: PageProps<"/dev/preview/[screen]">) {
   return (
     <Suspense fallback={null}>
-      <Preview params={params} />
+      <Preview params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">["params"] }) {
+async function Preview({
+  params,
+  searchParams,
+}: {
+  params: PageProps<"/dev/preview/[screen]">["params"];
+  searchParams: PageProps<"/dev/preview/[screen]">["searchParams"];
+}) {
   await connection();
   if (process.env.ENABLE_UI_PREVIEW !== "1") notFound();
-  const { screen } = await params;
+  const [{ screen }, sp] = await Promise.all([params, searchParams]);
+  // 디자인 시안 비교: ?theme=navy|light|emerald
+  const theme = sp.theme === "navy" || sp.theme === "light" || sp.theme === "emerald" ? sp.theme : undefined;
 
   switch (screen) {
     case "onboarding":
@@ -145,7 +153,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
       );
     case "admin-home":
       return (
-        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="">
           <AdminHomeView
             adminName="김대표"
             companyName="포켓컴퍼니 주식회사"
@@ -162,7 +170,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
     case "admin-home-team":
       // 직원이 들어온 뒤: 초대 카드는 아래로, 간단히
       return (
-        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="">
           <AdminHomeView
             adminName="김대표"
             companyName="포켓컴퍼니 주식회사"
@@ -178,7 +186,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
       );
     case "admin-members":
       return (
-        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/members">
           <MembersHeading />
           <InviteLinkCard inviteCode="ABCD2345" companyName="포켓컴퍼니 주식회사" preview compact />
           <MembersView members={SAMPLE_MEMBERS} tab="pending" basePath="#" preview />
@@ -186,7 +194,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
       );
     case "admin-members-all":
       return (
-        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/members">
           <MembersHeading />
           <MembersView members={SAMPLE_MEMBERS} tab="all" basePath="#" preview />
         </AdminShell>
@@ -194,7 +202,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
     case "admin-member-detail":
       // 최고 관리자가 관리자를 볼 때: 편집·권한·넘기기·퇴사 처리 모두 보임 + 비활성화 점검 결과(경고)
       return (
-        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/members">
           <MemberDetailView
             member={SAMPLE_DETAIL}
             departments={SAMPLE_DEPARTMENTS}
@@ -207,7 +215,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
       );
     case "admin-member-inactive":
       return (
-        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/members">
           <MemberDetailView
             member={{ ...SAMPLE_DETAIL, role: "employee", status: "inactive" }}
             departments={SAMPLE_DEPARTMENTS}
@@ -220,7 +228,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
     case "admin-member-readonly":
       // 관리자가 다른 관리자를 볼 때: 읽기 전용
       return (
-        <AdminShell membership={{ ...SAMPLE_MEMBERSHIP, role: "admin" }}>
+        <AdminShell membership={{ ...SAMPLE_MEMBERSHIP, role: "admin" }} theme={theme} previewPath="/members">
           <MemberDetailView
             member={SAMPLE_DETAIL}
             departments={SAMPLE_DEPARTMENTS}
@@ -232,7 +240,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
       );
     case "admin-settings":
       return (
-        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/settings">
           <h1 className="text-2xl font-bold tracking-tight">지출 한도·정책</h1>
           <CompanySettingsForm
             settings={{
@@ -252,7 +260,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
       );
     case "admin-departments":
       return (
-        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/departments">
           <DepartmentsHeading />
           <DepartmentsView departments={SAMPLE_DEPT_ROWS} preview />
         </AdminShell>

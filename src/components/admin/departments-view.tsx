@@ -88,7 +88,7 @@ export function DepartmentsView({ departments, preview = false }: { departments:
         <button
           type="submit"
           disabled={pending || !newName.trim()}
-          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
         >
           <Plus className="size-4" /> 추가
         </button>
@@ -144,7 +144,7 @@ function DepartmentItem({
 
   if (editing) {
     return (
-      <li className="rounded-xl border border-blue-200 bg-white p-3">
+      <li className="rounded-xl border border-brand-200 bg-white p-3">
         <form
           className="flex items-center gap-1"
           onSubmit={(e) => {
@@ -154,7 +154,7 @@ function DepartmentItem({
         >
           <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} maxLength={50} aria-label="부서 이름" autoFocus />
           <button type="submit" disabled={busy || !name.trim()} className={iconButton} aria-label="저장">
-            <Check className="size-5 text-blue-600" />
+            <Check className="size-5 text-brand-600" />
           </button>
           <button
             type="button"

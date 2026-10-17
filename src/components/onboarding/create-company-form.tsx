@@ -69,10 +69,10 @@ export function CreateCompanyForm() {
           {departments.length > 0 && (
             <ul className="flex flex-wrap gap-2">
               {departments.map((d) => (
-                <li key={d} className="flex items-center gap-1 rounded-full bg-blue-50 py-1 pl-3 pr-1 text-sm text-blue-800">
+                <li key={d} className="flex items-center gap-1 rounded-full bg-brand-50 py-1 pl-3 pr-1 text-sm text-brand-800">
                   {d}
                   <input type="hidden" name="departments" value={d} />
-                  <button type="button" onClick={() => remove(d)} aria-label={`${d} 삭제`} className="rounded-full p-1 hover:bg-blue-100">
+                  <button type="button" onClick={() => remove(d)} aria-label={`${d} 삭제`} className="rounded-full p-1 hover:bg-brand-100">
                     <X className="size-3.5" />
                   </button>
                 </li>

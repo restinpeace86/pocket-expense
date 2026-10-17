@@ -54,10 +54,10 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
   const cls = "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm";
   if (!ready) {
     return (
-      <span className={`${cls} cursor-not-allowed text-zinc-400`} aria-disabled>
+      <span className={`${cls} cursor-not-allowed text-sidebar-muted`} aria-disabled>
         <Icon className="size-5 shrink-0" />
         <span className="flex-1">{label}</span>
-        <span className="whitespace-nowrap rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-500">준비 중</span>
+        <span className="whitespace-nowrap rounded-full bg-sidebar-hover px-2 py-0.5 text-[11px] text-sidebar-muted">준비 중</span>
       </span>
     );
   }
@@ -66,7 +66,7 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
       href={to}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={`${cls} ${active ? "bg-blue-50 font-semibold text-blue-700" : "text-zinc-700 hover:bg-zinc-100"}`}
+      className={`${cls} ${active ? "bg-sidebar-active font-semibold text-sidebar-active-fg" : "text-sidebar-fg hover:bg-sidebar-hover"}`}
     >
       <Icon className="size-5 shrink-0" />
       {label}
@@ -74,16 +74,17 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
   );
 }
 
-function NavList({ base, onNavigate }: { base: string; onNavigate?: () => void }) {
-  const pathname = usePathname();
+function NavList({ base, onNavigate, previewPath }: { base: string; onNavigate?: () => void; previewPath?: string }) {
+  const realPath = usePathname();
+  const pathname = previewPath ? `${base}${previewPath}` : realPath;
   const settingsActive = SETTINGS_NAV.some((i) => pathname.startsWith(`${base}${i.href}`));
   return (
     <nav className="flex flex-col gap-1 p-3" aria-label="관리자 메뉴">
       {NAV.map((item) => (
         <NavLink key={item.label} item={item} base={base} pathname={pathname} onNavigate={onNavigate} />
       ))}
-      <details className="group mt-3 border-t border-zinc-100 pt-3" open={settingsActive || undefined}>
-        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-xl px-3 text-sm text-zinc-700 hover:bg-zinc-100 [&::-webkit-details-marker]:hidden">
+      <details className="group mt-3 border-t border-sidebar-border pt-3" open={settingsActive || undefined}>
+        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-xl px-3 text-sm text-sidebar-fg hover:bg-sidebar-hover [&::-webkit-details-marker]:hidden">
           <Settings className="size-5 shrink-0" />
           <span className="flex-1">설정</span>
           <ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" />
@@ -98,28 +99,53 @@ function NavList({ base, onNavigate }: { base: string; onNavigate?: () => void }
   );
 }
 
-export function AdminShell({ membership, children }: { membership: Membership; children: ReactNode }) {
+function Brand() {
+  return (
+    <span className="flex items-center gap-2.5">
+      <span className="inline-flex size-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm">P</span>
+      <span className="text-[15px] font-bold tracking-tight">PocketExpense</span>
+    </span>
+  );
+}
+
+// theme: 디자인 시안 비교용(globals.css [data-theme]). 지정하지 않으면 기본 톤.
+export type ShellTheme = "navy" | "light" | "emerald";
+
+// previewPath: 미리보기(/dev/preview)에서 선택된 메뉴를 보여 주기 위한 값. 실제 화면에서는 쓰지 않는다.
+export function AdminShell({
+  membership,
+  children,
+  theme,
+  previewPath,
+}: {
+  membership: Membership;
+  children: ReactNode;
+  theme?: ShellTheme;
+  previewPath?: string;
+}) {
   const base = `/workspace/${membership.company_id}/admin`;
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex min-h-dvh flex-1">
-      <aside className="hidden w-64 shrink-0 border-r border-zinc-200 bg-white md:block">
-        <p className="px-6 pb-2 pt-5 text-lg font-bold">PocketExpense</p>
-        <NavList base={base} />
+    <div className="flex min-h-dvh flex-1 bg-page" data-theme={theme}>
+      <aside className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-fg md:block">
+        <p className="px-6 pb-3 pt-5">
+          <Brand />
+        </p>
+        <NavList base={base} previewPath={previewPath} />
       </aside>
 
       {open && (
         <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal aria-label="관리자 메뉴">
           <button type="button" className="absolute inset-0 bg-black/40" aria-label="메뉴 닫기" onClick={() => setOpen(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto bg-white shadow-xl">
+          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto bg-sidebar text-sidebar-fg shadow-xl">
             <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-lg font-bold">PocketExpense</span>
-              <button type="button" onClick={() => setOpen(false)} aria-label="메뉴 닫기" className="inline-flex size-11 items-center justify-center rounded-xl hover:bg-zinc-100">
+              <Brand />
+              <button type="button" onClick={() => setOpen(false)} aria-label="메뉴 닫기" className="inline-flex size-11 items-center justify-center rounded-xl hover:bg-sidebar-hover">
                 <X className="size-5" />
               </button>
             </div>
-            <NavList base={base} onNavigate={() => setOpen(false)} />
+            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} />
           </div>
         </div>
       )}

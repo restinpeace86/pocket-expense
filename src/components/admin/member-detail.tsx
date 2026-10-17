@@ -117,7 +117,7 @@ export function MemberDetailView({
 
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="text-2xl font-bold tracking-tight">{m.name}</h1>
-        <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs ${m.role === "employee" ? "bg-zinc-100 text-zinc-600" : "bg-blue-50 text-blue-700"}`}>
+        <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs ${m.role === "employee" ? "bg-zinc-100 text-zinc-600" : "bg-brand-50 text-brand-700"}`}>
           {ROLE_LABEL[m.role]}
         </span>
         <span
@@ -163,7 +163,7 @@ export function MemberDetailView({
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-6 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 sm:w-auto"
               >
                 {pending ? "저장 중..." : "저장"}
               </button>
@@ -236,7 +236,7 @@ export function MemberDetailView({
               if (!confirm(`${m.name}님을 다시 활성화할까요?`)) return;
               run(() => reactivateMemberAction(m.id), `${m.name}님을 다시 활성화했어요.`);
             }}
-            className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
+            className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 sm:w-auto"
           >
             <UserCheck className="size-4" /> 다시 활성화
           </button>

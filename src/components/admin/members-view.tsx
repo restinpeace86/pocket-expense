@@ -170,13 +170,13 @@ function MemberItem({ member: m, preview, href }: { member: MemberRow; preview: 
             <button type="button" onClick={() => run("reject")} disabled={pending} className="inline-flex min-h-11 items-center whitespace-nowrap rounded-xl border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50 disabled:opacity-50">
               거절
             </button>
-            <button type="button" onClick={() => run("approve")} disabled={pending} className="inline-flex min-h-11 items-center whitespace-nowrap rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+            <button type="button" onClick={() => run("approve")} disabled={pending} className="inline-flex min-h-11 items-center whitespace-nowrap rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50">
               {pending ? "처리 중..." : "승인"}
             </button>
           </>
         ) : (
           <>
-            <span className={`mr-auto whitespace-nowrap rounded-full px-2.5 py-1 text-xs md:mr-0 ${m.role === "employee" ? "bg-zinc-100 text-zinc-600" : "bg-blue-50 text-blue-700"}`}>
+            <span className={`mr-auto whitespace-nowrap rounded-full px-2.5 py-1 text-xs md:mr-0 ${m.role === "employee" ? "bg-zinc-100 text-zinc-600" : "bg-brand-50 text-brand-700"}`}>
               {ROLE_LABEL[m.role]}
             </span>
             <Link

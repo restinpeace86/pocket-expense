@@ -176,7 +176,7 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex min-h-11 w-full shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
+          className="inline-flex min-h-11 w-full shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-brand-600 px-6 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 sm:w-auto"
         >
           {pending ? "저장 중..." : "저장"}
         </button>

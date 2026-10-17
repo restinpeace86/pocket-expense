@@ -32,7 +32,7 @@ export function JoinForm({
       {code && <input type="hidden" name="code" value={code} />}
       {token && <input type="hidden" name="token" value={token} />}
 
-      <div className="rounded-xl bg-blue-50 px-4 py-3 text-blue-900">
+      <div className="rounded-xl bg-brand-50 px-4 py-3 text-brand-900">
         <p className="text-sm">가입할 회사</p>
         <p className="text-lg font-semibold">{companyName}</p>
       </div>
