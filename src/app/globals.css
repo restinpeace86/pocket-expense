@@ -73,7 +73,7 @@
   --color-brand-900: #312e81;
   --color-sidebar: #f7f7f9;
   --color-sidebar-fg: #3f3f46;
-  --color-sidebar-muted: #a1a1aa;
+  --color-sidebar-muted: #80808a;
   --color-sidebar-hover: #ededf1;
   --color-sidebar-active: #e8eafd;
   --color-sidebar-active-fg: #3730a3;
@@ -88,11 +88,11 @@
   --color-brand-200: #a7f3d0;
   --color-brand-300: #6ee7b7;
   --color-brand-400: #34d399;
-  --color-brand-500: #10b981;
-  --color-brand-600: #059669;
-  --color-brand-700: #047857;
-  --color-brand-800: #065f46;
-  --color-brand-900: #064e3b;
+  --color-brand-500: #059669;
+  --color-brand-600: #047857;
+  --color-brand-700: #065f46;
+  --color-brand-800: #064e3b;
+  --color-brand-900: #022c22;
   --color-sidebar: #1c1f24;
   --color-sidebar-fg: #d4d4d8;
   --color-sidebar-muted: #71717a;
@@ -108,6 +108,97 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* 색상 대비 기준(모든 팔레트 공통): 흰 글자/brand-600 ≥ 4.5, brand-700/page ≥ 4.5, 사이드바 글자 ≥ 7,
+   '준비 중' 같은 흐린 글자 ≥ 3, 선택 메뉴 글자 ≥ 4.5. 새 팔레트도 이 기준을 통과해야 추가한다. */
+
+/* D: 와인 사이드바 + 로즈 */
+[data-theme="wine"] {
+  --color-brand-50: #fff1f2;
+  --color-brand-100: #ffe4e6;
+  --color-brand-200: #fecdd3;
+  --color-brand-300: #fda4af;
+  --color-brand-400: #fb7185;
+  --color-brand-500: #e11d48;
+  --color-brand-600: #be123c;
+  --color-brand-700: #9f1239;
+  --color-brand-800: #881337;
+  --color-brand-900: #4c0519;
+  --color-sidebar: #2b0f17;
+  --color-sidebar-fg: #f1d5db;
+  --color-sidebar-muted: #a07882;
+  --color-sidebar-hover: #3d1722;
+  --color-sidebar-active: #4a1b29;
+  --color-sidebar-active-fg: #ffffff;
+  --color-sidebar-border: #3d1722;
+  --color-page: #faf6f6;
+}
+
+/* E: 웜 화이트 + 오렌지 */
+[data-theme="amber"] {
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-200: #fed7aa;
+  --color-brand-300: #fdba74;
+  --color-brand-400: #fb923c;
+  --color-brand-500: #ea580c;
+  --color-brand-600: #c2410c;
+  --color-brand-700: #9a3412;
+  --color-brand-800: #7c2d12;
+  --color-brand-900: #431407;
+  --color-sidebar: #fbf7f2;
+  --color-sidebar-fg: #44403c;
+  --color-sidebar-muted: #8a837c;
+  --color-sidebar-hover: #f3ece3;
+  --color-sidebar-active: #ffedd5;
+  --color-sidebar-active-fg: #9a3412;
+  --color-sidebar-border: #eee6dc;
+  --color-page: #ffffff;
+}
+
+/* F: 딥 오션 사이드바 + 블루 */
+[data-theme="ocean"] {
+  --color-brand-50: #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-200: #bae6fd;
+  --color-brand-300: #7dd3fc;
+  --color-brand-400: #38bdf8;
+  --color-brand-500: #0284c7;
+  --color-brand-600: #0369a1;
+  --color-brand-700: #075985;
+  --color-brand-800: #0c4a6e;
+  --color-brand-900: #082f49;
+  --color-sidebar: #0b2530;
+  --color-sidebar-fg: #cfe3ea;
+  --color-sidebar-muted: #6b8a96;
+  --color-sidebar-hover: #12333f;
+  --color-sidebar-active: #163f4d;
+  --color-sidebar-active-fg: #ffffff;
+  --color-sidebar-border: #12333f;
+  --color-page: #f3f7f9;
+}
+
+/* G: 화이트 + 바이올렛 */
+[data-theme="violet"] {
+  --color-brand-50: #f5f3ff;
+  --color-brand-100: #ede9fe;
+  --color-brand-200: #ddd6fe;
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #8b5cf6;
+  --color-brand-600: #7c3aed;
+  --color-brand-700: #6d28d9;
+  --color-brand-800: #5b21b6;
+  --color-brand-900: #4c1d95;
+  --color-sidebar: #f8f6fc;
+  --color-sidebar-fg: #3f3a4a;
+  --color-sidebar-muted: #857d96;
+  --color-sidebar-hover: #efeaf8;
+  --color-sidebar-active: #ede9fe;
+  --color-sidebar-active-fg: #5b21b6;
+  --color-sidebar-border: #ece7f5;
+  --color-page: #ffffff;
 }
 
 /* 랜딩 목업 애니메이션 */

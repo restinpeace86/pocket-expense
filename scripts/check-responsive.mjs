@@ -12,7 +12,7 @@ const DEFAULT_PATHS = [
   "/dev/preview/onboarding", "/dev/preview/create-company", "/dev/preview/join", "/dev/preview/join-invite", "/dev/preview/consent-dialog",
   "/dev/preview/workspace-admin", "/dev/preview/workspace-employee",
   "/dev/preview/admin-home", "/dev/preview/admin-home-team", "/dev/preview/admin-members",
-  "/dev/preview/admin-members-all", "/dev/preview/admin-member-detail", "/dev/preview/admin-member-readonly", "/dev/preview/admin-member-inactive", "/dev/preview/admin-departments", "/dev/preview/admin-settings",
+  "/dev/preview/admin-members-all", "/dev/preview/admin-member-detail", "/dev/preview/admin-member-readonly", "/dev/preview/admin-member-inactive", "/dev/preview/admin-departments", "/dev/preview/admin-settings", "/dev/preview/admin-settings?theme=wine",
 ];
 const [baseArg, ...pathArgs] = process.argv.slice(2);
 const base = (baseArg ?? "http://localhost:3000").replace(/\/$/, "");
@@ -38,10 +38,20 @@ for (const p of paths) {
       reducedMotion: "reduce",
     });
     const page = await ctx.newPage();
+    const pageErrors = [];
+    page.on("pageerror", (e) => pageErrors.push(e.message));
     const res = await page.goto(base + p, { waitUntil: "networkidle" });
     if (!res || res.status() >= 400) {
       failures++;
       console.log(`FAIL ${p.padEnd(24)} ${v.name.padEnd(7)} HTTP ${res?.status()} (미리보기는 ENABLE_UI_PREVIEW=1로 서버를 띄워야 함)`);
+      await ctx.close();
+      continue;
+    }
+    // 오류 화면도 가로 넘침은 없으므로 따로 잡는다 (서버 오류 화면·스크립트 오류)
+    const errorScreen = await page.evaluate(() => /This page couldn.t load|Application error|Internal Server Error/.test(document.body.innerText));
+    if (errorScreen || pageErrors.length) {
+      failures++;
+      console.log(`FAIL ${p.padEnd(24)} ${v.name.padEnd(7)} 오류 화면 ${errorScreen ? "표시" : ""} ${pageErrors.slice(0, 2).join(" | ")}`);
       await ctx.close();
       continue;
     }

@@ -1044,6 +1044,7 @@ export type Database = {
           status: Database["public"]["Enums"]["member_status"]
           terms_agreed_at: string | null
           terms_version: string | null
+          ui_theme: string | null
           updated_at: string
           vehicle_number: string | null
         }
@@ -1069,6 +1070,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["member_status"]
           terms_agreed_at?: string | null
           terms_version?: string | null
+          ui_theme?: string | null
           updated_at?: string
           vehicle_number?: string | null
         }
@@ -1094,6 +1096,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["member_status"]
           terms_agreed_at?: string | null
           terms_version?: string | null
+          ui_theme?: string | null
           updated_at?: string
           vehicle_number?: string | null
         }

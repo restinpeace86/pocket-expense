@@ -26,7 +26,7 @@ export function WorkspaceHeader({ membership, mode }: { membership: Membership; 
         )}
         {/* 모바일에서 관리자 이상은 헤더가 좁아 관리자 메뉴(햄버거) 안에서 고른다 */}
         <div className={isAdminRole(membership.role) ? "hidden sm:block" : undefined}>
-          <ThemeSwitcher />
+          <ThemeSwitcher saved={membership.ui_theme} />
         </div>
         <SignOutButton />
       </div>

@@ -1,16 +1,12 @@
 "use client";
 
 import { Check, Palette } from "lucide-react";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { saveUiThemeAction } from "@/app/workspace/theme-actions";
+import { DEFAULT_THEME, isThemeKey, THEME_STORAGE_KEY, THEMES, type ThemeKey } from "@/lib/theme";
 
-// 화면 색상 고르기 (D-066). 고른 값은 이 브라우저에만 저장되고, 첫 화면을 그리기 전에 app/layout.tsx의 스크립트가 적용한다.
-export const THEME_STORAGE_KEY = "pe-theme";
-const THEMES = [
-  { key: "navy", label: "A · 딥 네이비", hint: "기본", swatch: ["#0f172a", "#4f46e5"] },
-  { key: "light", label: "B · 화이트", hint: "밝고 깔끔하게", swatch: ["#f7f7f9", "#4f46e5"] },
-  { key: "emerald", label: "C · 차콜·에메랄드", hint: "차분하게", swatch: ["#1c1f24", "#059669"] },
-] as const;
-type ThemeKey = (typeof THEMES)[number]["key"];
+// 화면 색상 고르기 (D-066). 고른 값은 계정에 저장되고(어느 기기에서나 같은 색), 이 브라우저에도 저장해
+// 첫 화면을 그리기 전에 app/layout.tsx의 스크립트가 바로 적용한다(깜빡임 방지).
 const EVENT = "pe-theme-change";
 
 const subscribe = (cb: () => void) => {
@@ -19,8 +15,9 @@ const subscribe = (cb: () => void) => {
 };
 const current = (): ThemeKey => {
   const t = document.documentElement.dataset.theme;
-  return t === "light" || t === "emerald" ? t : "navy";
+  return isThemeKey(t) ? t : DEFAULT_THEME;
 };
+const useTheme = () => useSyncExternalStore(subscribe, current, () => DEFAULT_THEME);
 
 function applyTheme(key: ThemeKey) {
   document.documentElement.setAttribute("data-theme", key);
@@ -32,7 +29,28 @@ function applyTheme(key: ThemeKey) {
   window.dispatchEvent(new Event(EVENT));
 }
 
-const useTheme = () => useSyncExternalStore(subscribe, current, () => "navy" as ThemeKey);
+function chooseTheme(key: ThemeKey) {
+  applyTheme(key);
+  // 저장에 실패해도 화면 색은 이미 바뀌었으므로 조용히 넘어간다(다음 선택 때 다시 저장)
+  saveUiThemeAction(key).catch(() => {});
+}
+
+// 계정에 저장된 색과 이 브라우저의 색 맞추기:
+// 계정 값이 있으면 그 색으로, 계정 값이 없고 이 브라우저에서 고른 적이 있으면 그 색을 계정에 올린다.
+function useAccountThemeSync(saved: string | null | undefined) {
+  useEffect(() => {
+    if (isThemeKey(saved)) {
+      if (current() !== saved) applyTheme(saved);
+      return;
+    }
+    try {
+      const local = window.localStorage.getItem(THEME_STORAGE_KEY);
+      if (isThemeKey(local)) saveUiThemeAction(local).catch(() => {});
+    } catch {
+      // 저장소를 쓸 수 없으면 기본 색
+    }
+  }, [saved]);
+}
 
 function Swatch({ colors }: { colors: readonly string[] }) {
   return (
@@ -57,7 +75,7 @@ export function ThemeOptionsInline() {
             type="button"
             role="radio"
             aria-checked={theme === t.key}
-            onClick={() => applyTheme(t.key)}
+            onClick={() => chooseTheme(t.key)}
             className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-left text-sm ${theme === t.key ? "bg-sidebar-active font-semibold text-sidebar-active-fg" : "text-sidebar-fg hover:bg-sidebar-hover"}`}
           >
             <Swatch colors={t.swatch} />
@@ -70,14 +88,10 @@ export function ThemeOptionsInline() {
   );
 }
 
-export function ThemeSwitcher() {
+export function ThemeSwitcher({ saved }: { saved?: string | null }) {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
-
-  function choose(key: ThemeKey) {
-    applyTheme(key);
-    setOpen(false);
-  }
+  useAccountThemeSync(saved);
 
   return (
     <div className="relative">
@@ -98,17 +112,20 @@ export function ThemeSwitcher() {
           <div
             role="menu"
             aria-label="화면 색상"
-            className="absolute right-0 top-full z-50 mt-2 w-60 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg"
+            className="absolute right-0 top-full z-50 mt-2 max-h-[70vh] w-60 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg"
             onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
           >
-            <p className="px-2.5 pb-1 pt-1.5 text-xs text-zinc-500">화면 색상 (이 브라우저에 저장돼요)</p>
+            <p className="px-2.5 pb-1 pt-1.5 text-xs text-zinc-500">화면 색상 (내 계정에 저장돼요)</p>
             {THEMES.map((t) => (
               <button
                 key={t.key}
                 type="button"
                 role="menuitemradio"
                 aria-checked={theme === t.key}
-                onClick={() => choose(t.key)}
+                onClick={() => {
+                  chooseTheme(t.key);
+                  setOpen(false);
+                }}
                 className="flex min-h-11 w-full items-center gap-3 rounded-lg px-2.5 text-left text-sm hover:bg-zinc-50"
               >
                 <Swatch colors={t.swatch} />

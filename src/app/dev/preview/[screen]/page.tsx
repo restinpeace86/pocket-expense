@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminHomeView } from "@/components/admin/admin-home-view";
-import { AdminShell } from "@/components/admin/admin-shell";
+import { AdminShell, type ShellTheme } from "@/components/admin/admin-shell";
 import { CompanySettingsForm } from "@/components/admin/company-settings-form";
 import { DepartmentsHeading, DepartmentsView } from "@/components/admin/departments-view";
 import { MemberDetailView } from "@/components/admin/member-detail";
@@ -18,6 +18,7 @@ import { JoinForm } from "@/components/onboarding/join-form";
 import { buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import type { Membership } from "@/lib/auth/paths";
+import { isThemeKey } from "@/lib/theme";
 
 // 반응형 점검 전용 미리보기 (CLAUDE.md 헌법 제2장 제4조의2).
 // 로그인해야 보이는 화면을 실제 컴포넌트 그대로, 데이터 없이 그린다. ENABLE_UI_PREVIEW=1일 때만 열린다(배포 환경에서는 404).
@@ -33,6 +34,7 @@ const SAMPLE_MEMBERSHIP: Membership = {
   name: "김대표",
   role: "super_admin",
   status: "approved",
+  ui_theme: null,
 };
 
 const SAMPLE_MEMBERS: MemberRow[] = [
@@ -71,8 +73,9 @@ async function Preview({
   await connection();
   if (process.env.ENABLE_UI_PREVIEW !== "1") notFound();
   const [{ screen }, sp] = await Promise.all([params, searchParams]);
-  // 디자인 시안 비교: ?theme=navy|light|emerald
-  const theme = sp.theme === "navy" || sp.theme === "light" || sp.theme === "emerald" ? sp.theme : undefined;
+  // 색상 미리보기: ?theme=navy|light|emerald|wine|amber|ocean|violet
+  // 클라이언트 컴포넌트 파일의 값은 서버에서 쓸 수 없으므로 공용 목록(lib/theme)으로 판별
+  const theme: ShellTheme | undefined = isThemeKey(sp.theme) ? sp.theme : undefined;
 
   switch (screen) {
     case "onboarding":

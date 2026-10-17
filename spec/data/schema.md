@@ -109,6 +109,7 @@
 | terms_version / privacy_version | text | null | 동의한 문서 버전 (`private.app_settings`) |
 | optional_consent_at | timestamptz | null | 선택 항목(정산 계좌·차량번호) 동의 시각. 없으면 선택 항목 저장 불가 |
 | approved_at | timestamptz | null | 관리자 가입 승인 시각 |
+| ui_theme | text | null, 영문 소문자 2~20자 | 화면 색상(팔레트 이름, D-067). 본인만 수정. 모르는 값·null이면 기본(A) |
 
 ### 2.3a `member_invitations` — 개별 초대 (D-042)
 | 컬럼 | 타입 | 제약 | 설명 |

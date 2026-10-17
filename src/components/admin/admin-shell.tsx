@@ -24,6 +24,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { ThemeOptionsInline } from "@/components/workspace/theme-switcher";
+import type { ThemeKey } from "@/lib/theme";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import type { Membership } from "@/lib/auth/paths";
 
@@ -110,7 +111,7 @@ function Brand() {
 }
 
 // theme: 미리보기(/dev/preview?theme=)에서 색상을 고정해 보기 위한 값. 실제 화면은 헤더의 [색상]이 <html data-theme>로 정한다(D-066).
-export type ShellTheme = "navy" | "light" | "emerald";
+export type ShellTheme = ThemeKey;
 
 // previewPath: 미리보기(/dev/preview)에서 선택된 메뉴를 보여 주기 위한 값. 실제 화면에서는 쓰지 않는다.
 export function AdminShell({
