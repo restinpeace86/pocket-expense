@@ -95,7 +95,7 @@
 - [ ] T7-1 출장 세부 유형별 입력·검증 (출장 식비·대중교통·택시·통행료·주차·숙박·자차·기타, 출장 기간 밖 경고)
 - [ ] T7-2 자차: Kakao Local 주소 검색 + Kakao Mobility 거리 계산 어댑터
 - [ ] T7-3 자차 유류비 계산 + 수동 입력 Fallback + `distance_source` + 단위 테스트
-- [ ] T7-4 ⛔ 보류(O-04) 왕복 토글 및 왕복 거리 계산 — 편도/왕복 기준 미결. 임의로 구현 가능으로 바꾸지 말 것
+- [ ] T7-4 왕복 토글(기본 왕복) 및 왕복 거리 × 2 계산 + 승인 화면 "왕복 · n km × 2" 표시 (D-069, O-04 해소)
 
 ## T8. 알림톡 — 기준: `spec/features/kakao-alimtalk.md`
 - [ ] T8-1 `NotificationSender` 어댑터 + `log` 드라이버 + `notification_logs` 기록
