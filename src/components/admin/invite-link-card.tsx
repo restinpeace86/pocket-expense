@@ -2,13 +2,29 @@
 
 import { Check, Copy, Download, RefreshCw } from "lucide-react";
 import QRCode from "qrcode";
-import { useEffect, useState, useSyncExternalStore, useTransition } from "react";
+import {
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import { regenerateInviteCodeAction } from "@/app/workspace/[id]/admin/actions";
 
 const noop = () => () => {};
 
 // 공용 초대 링크·QR (spec/screens/admin-team-members.md §4.A). 직원은 이 링크로 가입 신청 → 승인 대기
-export function InviteLinkCard({ inviteCode, companyName, preview = false }: { inviteCode: string; companyName: string; preview?: boolean }) {
+// compact: 멤버 관리 화면용. 승인 목록이 모바일에서 밀려나지 않도록 안내 문구를 빼고 QR 미리보기는 태블릿 이상에서만 보인다.
+export function InviteLinkCard({
+  inviteCode,
+  companyName,
+  preview = false,
+  compact = false,
+}: {
+  inviteCode: string;
+  companyName: string;
+  preview?: boolean;
+  compact?: boolean;
+}) {
   // 서버 렌더에서는 배포 주소, 브라우저에서는 실제 접속 주소(로컬·프리뷰 배포 포함)
   const origin = useSyncExternalStore(
     noop,
@@ -43,7 +59,12 @@ export function InviteLinkCard({ inviteCode, companyName, preview = false }: { i
 
   function regenerate() {
     if (preview) return;
-    if (!confirm("초대 링크를 새로 만들까요? 이전 링크와 QR은 바로 사용할 수 없게 됩니다.")) return;
+    if (
+      !confirm(
+        "초대 링크를 새로 만들까요? 이전 링크와 QR은 바로 사용할 수 없게 됩니다.",
+      )
+    )
+      return;
     setError(null);
     startTransition(async () => {
       const r = await regenerateInviteCodeAction();
@@ -55,19 +76,30 @@ export function InviteLinkCard({ inviteCode, companyName, preview = false }: { i
     <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold">직원 초대 링크</h2>
       <p className="mt-1 text-sm text-zinc-600">
-        이 링크를 단톡방이나 개인 톡으로 보내 주세요. 직원이 링크로 가입 신청하면 아래 [가입 승인 대기]에서 승인합니다.
+        직원에게 이 링크만 보내면 돼요. 코드를 따로 알려 줄 필요는 없어요.
       </p>
 
       <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex min-w-0 items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
-            <span className="min-w-0 flex-1 truncate font-mono text-sm text-zinc-800" title={link}>
+            <span
+              className="min-w-0 flex-1 truncate font-mono text-sm text-zinc-800"
+              title={link}
+            >
               {link}
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={copy} className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 sm:flex-none">
-              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+            <button
+              type="button"
+              onClick={copy}
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 sm:flex-none"
+            >
+              {copied ? (
+                <Check className="size-4" />
+              ) : (
+                <Copy className="size-4" />
+              )}
               {copied ? "복사됐어요" : "링크 복사"}
             </button>
             {qr && (
@@ -85,25 +117,65 @@ export function InviteLinkCard({ inviteCode, companyName, preview = false }: { i
               disabled={pending}
               className="inline-flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-sm text-zinc-500 hover:bg-zinc-100 disabled:opacity-50"
             >
-              <RefreshCw className={`size-4 ${pending ? "animate-spin" : ""}`} /> 새 링크 만들기
+              <RefreshCw
+                className={`size-4 ${pending ? "animate-spin" : ""}`}
+              />{" "}
+              새 링크 만들기
             </button>
           </div>
-          <p className="text-xs text-zinc-500">초대 코드: <span className="font-mono">{inviteCode}</span></p>
+          <p className="text-xs text-zinc-500">
+            초대 코드: <span className="font-mono">{inviteCode}</span>
+          </p>
           {error && (
             <p role="alert" className="text-sm text-red-600">
               {error}
             </p>
           )}
         </div>
-        <div className="flex justify-center sm:block">
+        <div
+          className={
+            compact ? "hidden sm:block" : "flex justify-center sm:block"
+          }
+        >
           {qr ? (
             // eslint-disable-next-line @next/next/no-img-element -- data URL QR 이미지
-            <img src={qr} alt={`${companyName} 초대 QR 코드`} width={160} height={160} className="size-40 rounded-xl border border-zinc-200" />
+            <img
+              src={qr}
+              alt={`${companyName} 초대 QR 코드`}
+              width={160}
+              height={160}
+              className="size-40 rounded-xl border border-zinc-200"
+            />
           ) : (
             <div className="size-40 animate-pulse rounded-xl bg-zinc-100" />
           )}
         </div>
       </div>
+
+      {!compact && (
+        <div className="mt-5 rounded-xl bg-blue-50/70 p-4 text-sm text-zinc-700">
+          <p className="font-semibold text-zinc-900">직원 초대는 이렇게 해요</p>
+          <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-5">
+            <li>
+              <b>[링크 복사]</b>를 눌러 단톡방이나 개인 톡에 붙여 넣으세요.
+              사무실에 붙여 둘 땐 <b>[QR 이미지 저장]</b>이 편해요.
+            </li>
+            <li>
+              직원이 링크를 열어 로그인하고 이름·연락처를 입력하면 &lsquo;가입
+              승인 대기&rsquo;로 들어와요.
+            </li>
+            <li>
+              <b>멤버 관리</b>에서 우리 직원이 맞는지 확인하고 <b>[승인]</b>을
+              누르면 바로 경비를 올릴 수 있어요.
+            </li>
+          </ol>
+          <p className="mt-3 text-pretty text-xs text-zinc-500">
+            링크로 들어온 직원은 우리 회사에만 소속되고, 다른 회사 정보는 서로
+            볼 수 없어요. 링크가 외부로 퍼졌다면 <b>[새 링크 만들기]</b>를
+            누르세요. 이전 링크와 QR은 바로 막혀요.
+          </p>
+        </div>
+      )}
     </section>
   );
 }

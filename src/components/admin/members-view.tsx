@@ -50,9 +50,16 @@ export function MembersView({ members, tab, basePath, preview = false }: { membe
         ))}
       </div>
 
+      {tab === "pending" && pending.length > 0 && (
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          우리 회사 직원이 맞는지 이름·연락처를 확인해 주세요. <b>승인</b>하면 바로 직원 화면을 쓸 수 있고, <b>거절</b>하면 신청이 지워져요(다시
+          신청할 수 있어요).
+        </p>
+      )}
+
       {list.length === 0 ? (
         <p className="rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
-          {tab === "pending" ? "가입 승인을 기다리는 직원이 없어요." : tab === "inactive" ? "비활성 멤버가 없어요." : "멤버가 없어요."}
+          {tab === "pending" ? "가입 승인을 기다리는 직원이 없어요. 위 초대 링크를 직원에게 보내 주세요." : tab === "inactive" ? "비활성 멤버가 없어요." : "멤버가 없어요."}
         </p>
       ) : (
         <ul className="flex flex-col gap-2">

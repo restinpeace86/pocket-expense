@@ -33,7 +33,7 @@ async function Members({
 
   return (
     <>
-      {company && <InviteLinkCard inviteCode={company.invite_code} companyName={company.name} />}
+      {company && <InviteLinkCard inviteCode={company.invite_code} companyName={company.name} compact />}
       <MembersView members={members} tab={tab} basePath={`/workspace/${membership.company_id}/admin/members`} />
     </>
   );

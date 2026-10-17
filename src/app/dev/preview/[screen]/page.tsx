@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminHomeView } from "@/components/admin/admin-home-view";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { InviteLinkCard } from "@/components/admin/invite-link-card";
 import { MembersView, type MemberRow } from "@/components/admin/members-view";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ConsentSection } from "@/components/legal/consent-section";
@@ -146,6 +147,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
       return (
         <AdminShell membership={SAMPLE_MEMBERSHIP}>
           <h1 className="text-2xl font-bold tracking-tight">멤버 관리</h1>
+          <InviteLinkCard inviteCode="ABCD2345" companyName="포켓컴퍼니 주식회사" preview compact />
           <MembersView members={SAMPLE_MEMBERS} tab="pending" basePath="#" preview />
         </AdminShell>
       );
