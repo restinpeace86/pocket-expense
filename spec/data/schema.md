@@ -334,7 +334,8 @@
 ## 4. Storage
 | 버킷 | 공개 | 경로 규칙 | 접근 |
 |---|---|---|---|
-| `receipts` | 비공개 | `{company_id}/{member_id}/{claim_id}/{item_id}.{ext}` | 소속 소명서 열람 가능자. signed URL(유효 10분)로만 표시 |
+| `receipts` | 비공개 | `{company_id}/{member_id}/{claim_id}/{item_id}.{ext}` + 썸네일 `{item_id}_thumb.webp` (D-073) | 소속 소명서 열람 가능자. signed URL(유효 10분, 화면당 한 번에 묶어 발급)로만 표시 |
 | `form-templates` | 비공개 | `{company_id}/{uuid}.{ext}` | 자기 회사 admin |
 
 - 허용 형식: 영수증 jpg/png/webp/pdf, 양식 jpg/png/pdf. 최대 10MB.
+- 영수증 보관본은 긴 변 2000px JPEG, 썸네일은 320px WebP로 업로드 전에 브라우저에서 만든다(`spec/common/performance.md` §1).

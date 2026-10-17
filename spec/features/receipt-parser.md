@@ -7,8 +7,8 @@
 
 ## 2. 처리 흐름
 1. 직원이 영수증 선택(카메라/갤러리/PDF).
-2. 클라이언트에서 이미지 긴 변 2000px 이하로 리사이즈 후 업로드 → `receipts` 버킷에 원본 저장(`spec/data/schema.md` §4). 영수증마다 소명서 안에 항목 1건을 먼저 생성하고 `parse_status='parsing'`으로 둔다.
-3. 서버 액션이 Gemini Vision 호출 (`GEMINI_API_KEY`, 서버 전용).
+2. 클라이언트에서 이미지 긴 변 2000px 이하로 리사이즈하고 320px 썸네일(WebP)도 함께 만들어 업로드(`spec/common/performance.md` §1, D-073) → `receipts` 버킷에 원본 저장(`spec/data/schema.md` §4). 영수증마다 소명서 안에 항목 1건을 먼저 생성하고 `parse_status='parsing'`으로 둔다.
+3. 서버 액션이 Gemini Vision 호출 (`GEMINI_API_KEY`, 서버 전용). 보관본(2000px)을 그대로 보낸다(썸네일 사용 금지). 실패·시간 초과는 자동 1회 재시도(D-073).
 4. 결과를 `ai_parsed_payload`에 원본 그대로 저장하고 `parse_status` 갱신.
 5. 추출값을 폼의 **빈 필드에만** 채운다(직원이 이미 입력한 값은 덮어쓰지 않음).
 
