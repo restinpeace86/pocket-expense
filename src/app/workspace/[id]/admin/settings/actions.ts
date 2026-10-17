@@ -9,14 +9,16 @@ import type { ActionResult } from "../actions";
 export type CompanySettingsInput = {
   name: string;
   businessNumber: string;
+  mealLimitEnabled: boolean;
   mealLimitPerPerson: number;
   mealLimitMode: "split" | "notify";
+  fuelEnabled: boolean;
   fuelRatePerKm: number;
   claimDeadlineType: "none" | "end_of_month" | "days_after" | "next_month_day";
   claimDeadlineDays: number | null;
 };
 
-// 회사·정책 설정 저장 (spec/screens/admin-settings.md §1·§2). 검증·권한·사업자번호 재판정은 DB의 update_company_settings가 한다(015).
+// 회사·정책 설정 저장 (spec/screens/admin-settings.md §1·§2). 검증·권한·사업자번호 재판정·정책 확인 시각은 DB의 update_company_settings가 한다(015, 019).
 export async function saveCompanySettingsAction(input: CompanySettingsInput): Promise<ActionResult> {
   const supabase = await createClient();
   const businessNumber = input.businessNumber.replace(/\D/g, "");
@@ -29,6 +31,8 @@ export async function saveCompanySettingsAction(input: CompanySettingsInput): Pr
     p_fuel_rate_per_km: input.fuelRatePerKm,
     p_claim_deadline_type: input.claimDeadlineType,
     p_claim_deadline_days: input.claimDeadlineDays as number,
+    p_meal_limit_enabled: input.mealLimitEnabled,
+    p_fuel_enabled: input.fuelEnabled,
   });
   if (error) return { error: messageForDbError(error) };
   refresh();

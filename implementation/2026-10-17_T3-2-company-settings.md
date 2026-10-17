@@ -29,3 +29,10 @@
 - 화면: `claim-deadline-section.tsx` — 무엇의 기한인지 / 왜 정해 두나요? / 선택지(추천 먼저, 10월 30일 영수증 예시, 선택지별 자기 N으로 예시) / 기한이 지나면?
 - 진행 메모: `db:migrate`가 대기 중인 016·017을 함께 적용해 017의 dry-run이 적용 뒤에 실행됨. 적용 후 dry-run·`test:db` 7종 모두 통과
 - 검증: tsc·test 22·lint·build, test:db 7종, 반응형 4폭 + 청구 기한 영역 스크린샷(선택 전환 포함) 확인. 선택하지 않은 선택지 예시에 다른 선택지의 N이 나오던 문제 발견 → 수정
+
+## 추가 (2026-10-17): 정책 "사용 안 함" + 정책 확인 안내 + 금액 쉼표 (D-068)
+- DB `019_policy_toggles.sql`: `companies.meal_limit_enabled`, `fuel_enabled`, `policy_confirmed_at`. `update_company_settings`에 두 인자(기본값 true) 추가, 저장 시 `policy_confirmed_at = now()`. 새 컬럼도 직접 UPDATE 불가
+- 테스트 007 추가: 새 회사 미확인·기본 true, 사용 안 함 저장 시 기존 한도·단가 보존, null 거부, 직접 수정 차단, 저장한 회사는 확인됨
+- 화면: 식대 "1인 한도 적용 / 한도 없이 전액 지원", 자차 "km당 단가로 지원 / 사용 안 함"(선택한 쪽에만 입력칸·예시), 도움말에 점심·야근 모두 같은 한도 안내, 관리자 홈 "정산 정책을 확인해 주세요" 카드(`describePolicy` 단위 테스트), 설정 화면 초대 카드 제거
+- 금액 입력 `AmountInput`: 천 단위 쉼표 + "원" 표시, 숫자만 저장(15000 입력 → 15,000 표시 확인)
+- 검증: tsc·test 25·lint·build, test:db 8종, 반응형 전 화면 4폭, 사용 안 함 전환 시 입력칸 사라짐·다시 켜면 값 유지(10,000) 확인

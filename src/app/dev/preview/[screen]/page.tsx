@@ -166,6 +166,7 @@ async function Preview({
             creditsLeft={100}
             creditsGranted={100}
             basePath="#"
+            policyToConfirm={["식대 1인 10,000원", "자차 km당 200원", "청구 기한 결제한 다음 달 5일까지"]}
             preview
           />
         </AdminShell>
@@ -250,15 +251,16 @@ async function Preview({
               name: "포켓컴퍼니 주식회사",
               business_number: "1248100998",
               invite_code: "ABCD2345",
+              meal_limit_enabled: true,
               meal_limit_per_person: 10000,
               meal_limit_mode: "split",
+              fuel_enabled: true,
               fuel_rate_per_km: 200,
               claim_deadline_type: "next_month_day",
               claim_deadline_days: 5,
             }}
             preview
           />
-          <InviteLinkCard inviteCode="ABCD2345" companyName="포켓컴퍼니 주식회사" preview compact />
         </AdminShell>
       );
     case "admin-departments":

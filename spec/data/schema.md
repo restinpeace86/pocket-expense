@@ -37,11 +37,14 @@
 | business_status | text | not null, default 'skipped' | 국세청 조회 판정: skipped / bypass / active / suspended / unverified (D-057) |
 | business_verified_at | timestamptz | null | 국세청 확인 시각 |
 | invite_code | text | not null, unique | 직원 초대 코드 (재발급 가능) |
+| meal_limit_enabled | boolean | not null, default true | false면 식대 한도 없이 전액 지원 (D-068) |
 | meal_limit_per_person | integer | not null, default 10000 | 1식 1인당 지원 한도 (일반 식대·출장 식비 공통, D-040) |
 | meal_limit_mode | meal_limit_mode | not null, default 'split' | 한도 초과 처리 방식 (D-041) |
+| fuel_enabled | boolean | not null, default true | false면 자차 유류비(own_car) 항목을 받지 않음 (D-068) |
 | fuel_rate_per_km | integer | not null, default 200 | 자차 km당 유류비 단가 |
 | claim_deadline_type | claim_deadline_type | not null, default 'next_month_day' | 청구 기한 방식 (D-031, D-064) |
 | claim_deadline_days | integer | default 5, 1~90 | `days_after`: 결제일로부터 N일(1~90) / `next_month_day`: 다음 달 N일(1~28). 그 외 방식이면 null |
+| policy_confirmed_at | timestamptz | null | 관리자가 정산 정책을 처음 저장한 시각. null이면 홈에 정책 확인 안내 (D-068) |
 | billing_status | billing_status | not null, default 'free_trial' | 과금 상태 (D-046) |
 | receipt_credits_granted | integer | not null, default 100 | 지급된 무료 크레딧(회사 생성 시 100) |
 | receipt_credits_used | integer | not null, default 0 | 사용한 크레딧. `used ≤ granted` 체크 제약 |

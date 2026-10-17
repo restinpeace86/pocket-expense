@@ -24,7 +24,9 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [mealEnabled, setMealEnabled] = useState(s.meal_limit_enabled);
   const [mealLimit, setMealLimit] = useState(String(s.meal_limit_per_person));
+  const [fuelEnabled, setFuelEnabled] = useState(s.fuel_enabled);
   const [mode, setMode] = useState(s.meal_limit_mode);
   const [fuelRate, setFuelRate] = useState(String(s.fuel_rate_per_km));
   const [deadline, setDeadline] = useState<DeadlineType>(s.claim_deadline_type);
@@ -46,8 +48,10 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
       const r = await saveCompanySettingsAction({
         name: String(f.get("name") ?? ""),
         businessNumber: String(f.get("businessNumber") ?? ""),
+        mealLimitEnabled: mealEnabled,
         mealLimitPerPerson: toInt(mealLimit),
         mealLimitMode: mode,
+        fuelEnabled,
         fuelRatePerKm: toInt(fuelRate),
         claimDeadlineType: deadline,
         claimDeadlineDays: deadline === "days_after" || deadline === "next_month_day" ? toInt(deadlineDays) : null,
@@ -97,36 +101,67 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
                 <b>한도를 넘으면?</b> 두 가지 중 고를 수 있어요. 넘은 금액을 직원이 내게 하거나(절사), 일단 전부 지원하고 &lsquo;한도 초과&rsquo; 표시만 붙여
                 승인할 때 판단해요(자율 승인).
               </p>
+              <p>
+                <b>점심만인가요?</b> 아니에요. 평소 점심과 야근 식사 모두 같은 1식 한도가 적용돼요. 한도 없이 실비로 지원하는 회사라면 &lsquo;한도 없이 전액
+                지원&rsquo;을 고르세요.
+              </p>
               <p>직원별로 한도를 다르게 정하는 기능(예외 한도)은 준비 중이에요.</p>
             </>
           }
         />
-        <div className="mt-4 grid gap-4 sm:max-w-xs">
-          <Field label="1식 1인당 식대 한도" required>
-            <AmountInput name="mealLimit" value={mealLimit} onChange={setMealLimit} required />
-          </Field>
+        <div className="mt-4">
+          <ChoiceCards
+            name="mealLimitEnabled"
+            label="식대 지원 방식"
+            value={mealEnabled ? "limit" : "full"}
+            onChange={(v) => setMealEnabled(v === "limit")}
+            choices={[
+              {
+                value: "limit",
+                label: "1인 한도 적용",
+                description: "1인 한도 × 함께 먹은 인원수까지 지원해요.",
+                extra: (
+                  <div className="flex flex-col gap-4">
+                    <div className="sm:max-w-xs">
+                      <Field label="1식 1인당 식대 한도" required>
+                        <AmountInput name="mealLimit" value={mealLimit} onChange={setMealLimit} required />
+                      </Field>
+                    </div>
+                    <div>
+                      <p className="mb-2 text-sm font-medium text-zinc-800">한도를 넘으면</p>
+                      <ChoiceCards
+                        name="mealLimitMode"
+                        label="한도 초과 처리 방식"
+                        value={mode}
+                        onChange={setMode}
+                        choices={[
+                          {
+                            value: "split",
+                            label: "초과분은 개인 부담 (절사)",
+                            description: "한도까지만 회사가 지원해요.",
+                            example: `예: 2명이 ${formatWon(mealTotal)} 먹으면 회사 ${formatWon(limit * 2)} · 직원 부담 5,000원`,
+                          },
+                          {
+                            value: "notify",
+                            label: "그대로 지원하고 표시만 (자율 승인)",
+                            description: "전부 지원하고 '한도 초과'만 표시해요.",
+                            example: `예: 2명이 ${formatWon(mealTotal)} 먹으면 ${formatWon(mealTotal)} 모두 지원 + '한도 초과' 표시`,
+                          },
+                        ]}
+                      />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                value: "full",
+                label: "한도 없이 전액 지원",
+                description: "영수증 금액을 그대로 지원해요. 승인할 때 관리자가 판단해요.",
+                example: "예: 2명이 40,000원 먹으면 40,000원 모두 지원",
+              },
+            ]}
+          />
         </div>
-        <p className="mb-2 mt-5 text-sm font-medium text-zinc-800">한도를 넘으면</p>
-        <ChoiceCards
-          name="mealLimitMode"
-          label="한도 초과 처리 방식"
-          value={mode}
-          onChange={setMode}
-          choices={[
-            {
-              value: "split",
-              label: "초과분은 개인 부담 (절사)",
-              description: "한도까지만 회사가 지원해요.",
-              example: `예: 2명이 ${formatWon(mealTotal)} 먹으면 회사 ${formatWon(limit * 2)} · 직원 부담 5,000원`,
-            },
-            {
-              value: "notify",
-              label: "그대로 지원하고 표시만 (자율 승인)",
-              description: "전부 지원하고 '한도 초과'만 표시해요.",
-              example: `예: 2명이 ${formatWon(mealTotal)} 먹으면 ${formatWon(mealTotal)} 모두 지원 + '한도 초과' 표시`,
-            },
-          ]}
-        />
       </section>
 
       <section className={card}>
@@ -140,13 +175,36 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
                 <b>어떻게 계산하나요?</b> 청구 금액 = 주행거리(km) × 이 단가예요. 자차 출장은 주유 영수증 없이 출발지·도착지와 거리로 청구해요.
               </p>
               <p>유가가 크게 바뀌면 단가를 조정하세요. 바꾼 단가는 이후 상신되는 경비부터 적용돼요.</p>
+              <p>자차 출장비를 지원하지 않는 회사라면 &lsquo;사용 안 함&rsquo;을 고르세요. 주유 영수증은 일반 출장비처럼 올릴 수 있어요.</p>
             </>
           }
         />
-        <div className="mt-4 grid gap-4 sm:max-w-xs">
-          <Field label="km당 유류비 단가" required hint={`예: 120km × ${formatWon(rate)} = ${formatWon(120 * rate)}`}>
-            <AmountInput name="fuelRate" value={fuelRate} onChange={setFuelRate} required />
-          </Field>
+        <div className="mt-4">
+          <ChoiceCards
+            name="fuelEnabled"
+            label="자차 유류비 지원"
+            value={fuelEnabled ? "on" : "off"}
+            onChange={(v) => setFuelEnabled(v === "on")}
+            choices={[
+              {
+                value: "on",
+                label: "km당 단가로 지원",
+                description: "주행거리 × 단가로 계산해요.",
+                extra: (
+                  <div className="sm:max-w-xs">
+                    <Field label="km당 유류비 단가" required hint={`예: 120km × ${formatWon(rate)} = ${formatWon(120 * rate)}`}>
+                      <AmountInput name="fuelRate" value={fuelRate} onChange={setFuelRate} required />
+                    </Field>
+                  </div>
+                ),
+              },
+              {
+                value: "off",
+                label: "사용 안 함",
+                description: "직원 화면에 '자차 유류비' 항목이 보이지 않아요.",
+              },
+            ]}
+          />
         </div>
       </section>
 

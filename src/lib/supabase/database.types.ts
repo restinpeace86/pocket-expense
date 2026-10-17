@@ -350,13 +350,16 @@ export type Database = {
           claim_deadline_type: Database["public"]["Enums"]["claim_deadline_type"]
           created_at: string
           event_bonus_acknowledged_at: string | null
+          fuel_enabled: boolean
           fuel_rate_per_km: number
           id: string
           invite_code: string
           last_event_bonus_at: string | null
+          meal_limit_enabled: boolean
           meal_limit_mode: Database["public"]["Enums"]["meal_limit_mode"]
           meal_limit_per_person: number
           name: string
+          policy_confirmed_at: string | null
           receipt_credits_granted: number
           receipt_credits_used: number
           updated_at: string
@@ -370,13 +373,16 @@ export type Database = {
           claim_deadline_type?: Database["public"]["Enums"]["claim_deadline_type"]
           created_at?: string
           event_bonus_acknowledged_at?: string | null
+          fuel_enabled?: boolean
           fuel_rate_per_km?: number
           id?: string
           invite_code: string
           last_event_bonus_at?: string | null
+          meal_limit_enabled?: boolean
           meal_limit_mode?: Database["public"]["Enums"]["meal_limit_mode"]
           meal_limit_per_person?: number
           name: string
+          policy_confirmed_at?: string | null
           receipt_credits_granted?: number
           receipt_credits_used?: number
           updated_at?: string
@@ -390,13 +396,16 @@ export type Database = {
           claim_deadline_type?: Database["public"]["Enums"]["claim_deadline_type"]
           created_at?: string
           event_bonus_acknowledged_at?: string | null
+          fuel_enabled?: boolean
           fuel_rate_per_km?: number
           id?: string
           invite_code?: string
           last_event_bonus_at?: string | null
+          meal_limit_enabled?: boolean
           meal_limit_mode?: Database["public"]["Enums"]["meal_limit_mode"]
           meal_limit_per_person?: number
           name?: string
+          policy_confirmed_at?: string | null
           receipt_credits_granted?: number
           receipt_credits_used?: number
           updated_at?: string
@@ -1382,7 +1391,9 @@ export type Database = {
           p_business_number: string
           p_claim_deadline_days: number
           p_claim_deadline_type: Database["public"]["Enums"]["claim_deadline_type"]
+          p_fuel_enabled?: boolean
           p_fuel_rate_per_km: number
+          p_meal_limit_enabled?: boolean
           p_meal_limit_mode: Database["public"]["Enums"]["meal_limit_mode"]
           p_meal_limit_per_person: number
           p_name: string

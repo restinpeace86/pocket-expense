@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { AdminHomeView } from "@/components/admin/admin-home-view";
+import { describePolicy } from "@/lib/admin/policy";
 import { getCompanySummary } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 
@@ -27,6 +28,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
       approvedCount={approvedCount}
       creditsLeft={company.receipt_credits_granted - company.receipt_credits_used}
       creditsGranted={company.receipt_credits_granted}
+      policyToConfirm={company.policy_confirmed_at ? null : describePolicy(company)}
       basePath={`/workspace/${membership.company_id}/admin`}
     />
   );

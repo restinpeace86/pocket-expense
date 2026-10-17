@@ -39,6 +39,7 @@
 - 자차 항목은 영수증 없이 [영수증 없이 항목 추가]로 만든다.
 
 ## 4. 자차 유류비 (`own_car`)
+- 회사 설정이 자차 유류비 **사용 안 함**(`fuel_enabled=false`, D-068)이면 세부 유형 선택지에 `own_car`를 보여 주지 않고, 서버도 새 `own_car` 항목을 받지 않는다(이미 있는 항목은 그대로).
 ### 4.1 입력
 - 출발지·도착지: 주소 검색(Kakao Local API, `KAKAO_REST_API_KEY` 서버 호출)으로 선택 → `start_location`/`end_location`, 좌표 저장. 출장 소명서면 도착지 기본값으로 출장지를 제안한다.
 - [거리 계산] 버튼 → 서버에서 Kakao Mobility 길찾기 API 호출 → `distance_km`(소수 첫째 자리 반올림), `distance_source='api'`.

@@ -149,5 +149,34 @@ begin
   end if;
 end $$;
 
+-- ── 사용 안 함 + 정책 확인 시각 (D-068) ──────────────────────────────────────────
+do $$
+begin
+  if (select policy_confirmed_at from public.companies where id = 'c7000000-0000-0000-0000-00000000000c') is not null then
+    raise exception 'FAIL [POLICY] new company should not be confirmed';
+  end if;
+  if (select row(meal_limit_enabled, fuel_enabled)::text from public.companies where id = 'c7000000-0000-0000-0000-00000000000c') <> row(true, true)::text then
+    raise exception 'FAIL [POLICY] new company toggles default';
+  end if;
+end $$;
+select set_config('request.jwt.claims', '{"sub":"a7000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+set local role authenticated;
+select public.update_company_settings('설정회사A', '1248100998', 12000, 'split', 250, 'none', null, false, false);
+select public._t_expect($q$select public.update_company_settings('A', '1248100998', 12000, 'split', 250, 'none', null, null, true)$q$, 'INVALID_POLICY', 'A_ADM toggle null');
+select public._t_expect($q$update public.companies set meal_limit_enabled = true where id = 'c7000000-0000-0000-0000-00000000000a'$q$,
+  'permission denied for table companies', 'A_ADM direct toggle');
+reset role;
+do $$
+begin
+  if (select row(meal_limit_enabled, fuel_enabled, meal_limit_per_person, fuel_rate_per_km, policy_confirmed_at is not null)::text
+        from public.companies where id = 'c7000000-0000-0000-0000-00000000000a')
+     <> row(false, false, 12000, 250, true)::text then
+    raise exception 'FAIL [POLICY] toggles/confirmed not stored (values must be kept)';
+  end if;
+  if (select policy_confirmed_at from public.companies where id = 'c7000000-0000-0000-0000-00000000000b') is null then
+    raise exception 'FAIL [POLICY] B saved but not confirmed';
+  end if;
+end $$;
+
 select 'COMPANY_SETTINGS_OK' as result;
 rollback;
