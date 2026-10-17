@@ -5,11 +5,11 @@ import { Suspense } from "react";
 import { AdminHomeView } from "@/components/admin/admin-home-view";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CompanySettingsForm } from "@/components/admin/company-settings-form";
-import { DepartmentsView } from "@/components/admin/departments-view";
+import { DepartmentsHeading, DepartmentsView } from "@/components/admin/departments-view";
 import { MemberDetailView } from "@/components/admin/member-detail";
 import { capabilitiesFor } from "@/lib/admin/capabilities";
 import { InviteLinkCard } from "@/components/admin/invite-link-card";
-import { MembersView, type MemberRow } from "@/components/admin/members-view";
+import { MembersHeading, MembersView, type MemberRow } from "@/components/admin/members-view";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ConsentSection } from "@/components/legal/consent-section";
 import { CreateCompanyForm } from "@/components/onboarding/create-company-form";
@@ -179,7 +179,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
     case "admin-members":
       return (
         <AdminShell membership={SAMPLE_MEMBERSHIP}>
-          <h1 className="text-2xl font-bold tracking-tight">멤버 관리</h1>
+          <MembersHeading />
           <InviteLinkCard inviteCode="ABCD2345" companyName="포켓컴퍼니 주식회사" preview compact />
           <MembersView members={SAMPLE_MEMBERS} tab="pending" basePath="#" preview />
         </AdminShell>
@@ -187,7 +187,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
     case "admin-members-all":
       return (
         <AdminShell membership={SAMPLE_MEMBERSHIP}>
-          <h1 className="text-2xl font-bold tracking-tight">멤버 관리</h1>
+          <MembersHeading />
           <MembersView members={SAMPLE_MEMBERS} tab="all" basePath="#" preview />
         </AdminShell>
       );
@@ -253,10 +253,7 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
     case "admin-departments":
       return (
         <AdminShell membership={SAMPLE_MEMBERSHIP}>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">부서</h1>
-            <p className="mt-1 text-sm text-zinc-600">직원이 가입할 때 고르는 부서 목록이에요. 화살표로 보이는 순서를 바꿀 수 있어요.</p>
-          </div>
+          <DepartmentsHeading />
           <DepartmentsView departments={SAMPLE_DEPT_ROWS} preview />
         </AdminShell>
       );

@@ -4,6 +4,7 @@ import { ChevronRight, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { approveMemberAction, rejectMemberAction } from "@/app/workspace/[id]/admin/actions";
+import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import { formatPhone } from "@/lib/format";
 
@@ -23,6 +24,30 @@ const ROLE_LABEL = { super_admin: "관리자 (최고 관리자)", admin: "관리
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
 
 type Tab = "all" | "pending" | "inactive";
+
+export function MembersHeading() {
+  return (
+    <SectionHeading
+      as="h1"
+      title="멤버 관리"
+      summary="직원 가입을 승인하고, 정보·권한·퇴사를 관리해요."
+      helpId="admin.members"
+      helpLabel="권한과 상태 알아보기"
+      help={
+        <>
+          <p>
+            <b>권한</b> 관리자는 직원 지출소명서 승인·반려, 회사 설정, 멤버 관리를 할 수 있어요. 일반 멤버는 자기 경비만 올리고 확인해요. 회사를 등록한
+            사람은 &lsquo;최고 관리자&rsquo;로, 관리자 지정·해제와 최고 관리자 넘기기는 최고 관리자만 할 수 있어요.
+          </p>
+          <p>
+            <b>거절과 비활성화</b> 거절은 가입 신청을 지우는 것이라 그 사람이 다시 신청할 수 있어요. 비활성화(퇴사 처리)는 지난 경비 기록은 남기고 로그인만
+            막아요. 실수로 비활성화했다면 [편집]에서 다시 활성화할 수 있어요.
+          </p>
+        </>
+      }
+    />
+  );
+}
 
 // 멤버 관리 (spec/screens/admin-team-members.md): 탭, 이름/부서 검색·부서 필터, 가입 승인·거절, [편집]으로 상세 이동
 export function MembersView({ members, tab, basePath, preview = false }: { members: MemberRow[]; tab: Tab; basePath: string; preview?: boolean }) {

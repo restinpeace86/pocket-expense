@@ -9,11 +9,12 @@ import {
   useTransition,
 } from "react";
 import { regenerateInviteCodeAction } from "@/app/workspace/[id]/admin/actions";
+import { SectionHeading } from "@/components/ui/help";
 
 const noop = () => () => {};
 
 // 공용 초대 링크·QR (spec/screens/admin-team-members.md §4.A). 직원은 이 링크로 가입 신청 → 승인 대기
-// compact: 멤버 관리 화면용. 승인 목록이 모바일에서 밀려나지 않도록 안내 문구를 빼고 QR 미리보기는 태블릿 이상에서만 보인다.
+// compact: 멤버 관리·설정·직원이 생긴 뒤의 홈. 모바일에서 아래 내용이 밀리지 않도록 QR 미리보기는 태블릿 이상에서만 보인다.
 export function InviteLinkCard({
   inviteCode,
   companyName,
@@ -74,10 +75,29 @@ export function InviteLinkCard({
 
   return (
     <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold">직원 초대 링크</h2>
-      <p className="mt-1 text-sm text-zinc-600">
-        직원에게 이 링크만 보내면 돼요. 코드를 따로 알려 줄 필요는 없어요.
-      </p>
+      <SectionHeading
+        title="직원 초대 링크"
+        summary="직원에게 이 링크만 보내면 돼요. 코드를 따로 알려 줄 필요는 없어요."
+        helpId="admin.invite"
+        helpLabel="직원 초대는 이렇게 해요"
+        help={
+          <>
+            <ol className="flex list-decimal flex-col gap-1.5 pl-5">
+              <li>
+                <b>[링크 복사]</b>를 눌러 단톡방이나 개인 톡에 붙여 넣으세요. 사무실에 붙여 둘 땐 <b>[QR 이미지 저장]</b>이 편해요.
+              </li>
+              <li>직원이 링크를 열어 로그인하고 이름·연락처를 입력하면 &lsquo;가입 승인 대기&rsquo;로 들어와요.</li>
+              <li>
+                <b>멤버 관리</b>에서 우리 직원이 맞는지 확인하고 <b>[승인]</b>을 누르면 바로 경비를 올릴 수 있어요.
+              </li>
+            </ol>
+            <p className="text-zinc-500">
+              링크로 들어온 직원은 우리 회사에만 소속되고, 다른 회사 정보는 서로 볼 수 없어요. 링크가 외부로 퍼졌다면 <b>[새 링크 만들기]</b>를 누르세요.
+              이전 링크와 QR은 바로 막혀요.
+            </p>
+          </>
+        }
+      />
 
       <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -152,30 +172,6 @@ export function InviteLinkCard({
         </div>
       </div>
 
-      {!compact && (
-        <div className="mt-5 rounded-xl bg-blue-50/70 p-4 text-sm text-zinc-700">
-          <p className="font-semibold text-zinc-900">직원 초대는 이렇게 해요</p>
-          <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-5">
-            <li>
-              <b>[링크 복사]</b>를 눌러 단톡방이나 개인 톡에 붙여 넣으세요.
-              사무실에 붙여 둘 땐 <b>[QR 이미지 저장]</b>이 편해요.
-            </li>
-            <li>
-              직원이 링크를 열어 로그인하고 이름·연락처를 입력하면 &lsquo;가입
-              승인 대기&rsquo;로 들어와요.
-            </li>
-            <li>
-              <b>멤버 관리</b>에서 우리 직원이 맞는지 확인하고 <b>[승인]</b>을
-              누르면 바로 경비를 올릴 수 있어요.
-            </li>
-          </ol>
-          <p className="mt-3 text-pretty text-xs text-zinc-500">
-            링크로 들어온 직원은 우리 회사에만 소속되고, 다른 회사 정보는 서로
-            볼 수 없어요. 링크가 외부로 퍼졌다면 <b>[새 링크 만들기]</b>를
-            누르세요. 이전 링크와 QR은 바로 막혀요.
-          </p>
-        </div>
-      )}
     </section>
   );
 }

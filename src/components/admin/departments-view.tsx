@@ -9,10 +9,33 @@ import {
   reorderDepartmentsAction,
 } from "@/app/workspace/[id]/admin/departments/actions";
 import { FormError } from "@/components/onboarding/field";
+import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { DepartmentRow } from "@/lib/admin/queries";
 
 type Result = { error: string | null };
+
+export function DepartmentsHeading() {
+  return (
+    <SectionHeading
+      as="h1"
+      title="부서"
+      summary="직원이 가입할 때 고르는 부서 목록이에요."
+      helpId="admin.departments"
+      help={
+        <>
+          <p>
+            <b>어디에 쓰이나요?</b> 직원 가입 화면의 부서 선택지, 멤버 목록의 부서 필터, 부서별 사전 검토 결재라인(준비 중)에 쓰여요.
+          </p>
+          <p>
+            <b>순서</b> 화살표로 바꾼 순서대로 가입 화면에 보여요. <b>삭제</b>하면 그 부서 직원은 &lsquo;부서 없음&rsquo;이 되고, 그 부서의 결재라인도 함께
+            지워져요. 지난 경비 기록은 그대로예요.
+          </p>
+        </>
+      }
+    />
+  );
+}
 
 // 부서 관리 (spec/screens/admin-dashboard.md ⑤): 추가·이름 변경·순서 변경·삭제
 export function DepartmentsView({ departments, preview = false }: { departments: DepartmentRow[]; preview?: boolean }) {

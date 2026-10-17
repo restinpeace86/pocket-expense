@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { InviteLinkCard } from "@/components/admin/invite-link-card";
-import { MembersView } from "@/components/admin/members-view";
+import { MembersHeading, MembersView } from "@/components/admin/members-view";
 import { getCompanySummary, getMembers } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 
@@ -10,7 +10,7 @@ export const metadata = { title: "멤버 관리 · PocketExpense" };
 export default function MembersPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/members">) {
   return (
     <>
-      <h1 className="text-2xl font-bold tracking-tight">멤버 관리</h1>
+      <MembersHeading />
       <Suspense fallback={<div className="h-96 animate-pulse rounded-xl bg-zinc-100" />}>
         <Members params={params} searchParams={searchParams} />
       </Suspense>

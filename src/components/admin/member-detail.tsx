@@ -13,6 +13,7 @@ import {
   type DeactivationCheck,
 } from "@/app/workspace/[id]/admin/actions";
 import { Field, FormError } from "@/components/onboarding/field";
+import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { MemberCapabilities } from "@/lib/admin/capabilities";
 import type { MemberDetail } from "@/lib/admin/queries";
@@ -191,10 +192,22 @@ export function MemberDetailView({
 
       {(can.canChangeRole || can.canTransfer) && (
         <section className={card}>
-          <h2 className="font-semibold">권한</h2>
-          <p className="mt-1 text-sm text-zinc-600">
-            관리자는 직원 지출소명서 승인·반려, 회사 설정, 멤버 관리를 할 수 있어요. 권한 변경은 최고 관리자만 할 수 있어요.
-          </p>
+          <SectionHeading
+            title="권한"
+            summary="이 멤버가 관리자 화면을 쓸 수 있는지 정해요."
+            helpId="admin.member.role"
+            help={
+              <>
+                <p>
+                  <b>관리자</b>는 직원 지출소명서 승인·반려, 회사 설정, 멤버 관리를 할 수 있어요. 경리·총무 담당자에게 주면 대표 계정을 같이 쓰지 않아도 돼요.
+                </p>
+                <p>
+                  <b>최고 관리자 넘기기</b>는 대표가 바뀌거나, 담당자가 대신 회사를 등록한 뒤 대표에게 넘길 때 써요. 넘기면 나는 관리자가 되고, 되돌리려면 상대가
+                  다시 넘겨야 해요.
+                </p>
+              </>
+            }
+          />
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             {can.canChangeRole && (
               <button type="button" onClick={changeRole} disabled={pending} className={secondaryBtn}>
@@ -212,10 +225,10 @@ export function MemberDetailView({
 
       {can.canReactivate && (
         <section className={card}>
-          <h2 className="font-semibold">다시 활성화</h2>
-          <p className="mt-1 text-sm text-zinc-600">
-            실수로 비활성화했거나 다시 입사한 경우에 쓰세요. 역할·부서는 비활성화 전 그대로 돌아오고, 바로 로그인해서 경비를 올릴 수 있어요.
-          </p>
+          <SectionHeading
+            title="다시 활성화"
+            summary="실수로 비활성화했거나 다시 입사한 경우에 써요. 역할·부서는 그대로 돌아오고 바로 로그인할 수 있어요."
+          />
           <button
             type="button"
             disabled={pending}
@@ -232,10 +245,23 @@ export function MemberDetailView({
 
       {can.canDeactivate && (
         <section className={card}>
-          <h2 className="font-semibold">퇴사 처리</h2>
-          <p className="mt-1 text-sm text-zinc-600">
-            비활성화하면 더 이상 로그인해서 회사 경비를 볼 수 없고 새 청구도 못 해요. 지난 지출 내역은 세무 증빙을 위해 그대로 보관돼요.
-          </p>
+          <SectionHeading
+            title="퇴사 처리"
+            summary="비활성화하면 로그인과 새 청구가 막혀요. 지난 지출 내역은 남아요."
+            helpId="admin.member.deactivate"
+            help={
+              <>
+                <p>
+                  <b>왜 삭제가 아니라 비활성화인가요?</b> 지난 영수증과 지출소명서는 세무 증빙이라 지우면 안 돼요. 비활성화는 기록은 남기고 회사 데이터에 들어오는
+                  것만 막아요.
+                </p>
+                <p>
+                  <b>누르면 먼저 점검해요.</b> 아직 정산받지 못한 건이나 작성 중인 소명서가 있으면 알려 주고(그래도 진행 가능), 결재라인 검토자이거나 지금
+                  검토할 차례인 소명서가 있으면 먼저 처리하도록 막아요.
+                </p>
+              </>
+            }
+          />
           {!check ? (
             <button type="button" onClick={startDeactivate} disabled={pending} className={`${secondaryBtn} mt-4 w-full text-red-600 sm:w-auto`}>
               <UserMinus className="size-4" /> 비활성화
