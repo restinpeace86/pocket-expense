@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { saveCompanySettingsAction } from "@/app/workspace/[id]/admin/settings/actions";
+import { ClaimDeadlineSection, DEADLINE_DAYS, type DeadlineType } from "./claim-deadline-section";
 import { Field, FormError } from "@/components/onboarding/field";
 import { inputClass } from "@/components/ui/page-shell";
 import type { CompanySettings } from "@/lib/admin/queries";
@@ -50,7 +51,8 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [mode, setMode] = useState(s.meal_limit_mode);
-  const [deadline, setDeadline] = useState(s.claim_deadline_type);
+  const [deadline, setDeadline] = useState<DeadlineType>(s.claim_deadline_type);
+  const [deadlineDays, setDeadlineDays] = useState(String(s.claim_deadline_days ?? DEADLINE_DAYS.next_month_day.initial));
 
   // 저장 실패 시 입력값이 지워지지 않도록 onSubmit
   function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -67,7 +69,7 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
         mealLimitMode: mode,
         fuelRatePerKm: toInt(f.get("fuelRate")),
         claimDeadlineType: deadline,
-        claimDeadlineDays: deadline === "days_after" ? toInt(f.get("deadlineDays")) : null,
+        claimDeadlineDays: deadline === "days_after" || deadline === "next_month_day" ? toInt(deadlineDays) : null,
       });
       if (r.error) setError(r.error);
       else setSaved(true);
@@ -117,39 +119,19 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
         </div>
       </section>
 
-      <section className={card}>
-        <h2 className="font-semibold">청구 기한</h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          직원이 개인카드·법인카드로 쓴 경비를 <b>영수증과 함께 지출소명서로 올려 회사에 청구해야 하는 기한</b>이에요. 오래된 영수증이 한꺼번에
-          들어와 지난달 정산·세무 마감을 다시 손보는 일을 줄여 줘요.
-        </p>
-        <p className="mb-3 mt-1 text-sm text-zinc-600">기한이 지나도 청구는 막지 않아요. 직원 화면과 결재 화면에 &lsquo;기한 초과&rsquo; 표시만 붙어요.</p>
-        <RadioCards
-          name="claimDeadlineType"
-          value={deadline}
-          onChange={setDeadline}
-          choices={[
-            { value: "none", label: "사용 안 함", description: "기한 없이 언제든 청구해요." },
-            { value: "end_of_month", label: "결제한 달의 말일까지", description: "예: 10월 15일 결제 → 10월 31일까지" },
-            { value: "days_after", label: "결제일로부터 N일 이내", description: "예: 30일로 정하면 결제한 날부터 30일 안에 청구해야 해요." },
-          ]}
-        />
-        {deadline === "days_after" && (
-          <div className="mt-3 flex items-center gap-2">
-            <div className="w-24 shrink-0">
-              <input
-                name="deadlineDays"
-                defaultValue={s.claim_deadline_days ?? 30}
-                className={inputClass}
-                inputMode="numeric"
-                aria-label="결제일로부터 며칠 이내"
-                required
-              />
-            </div>
-            <span className="whitespace-nowrap text-sm text-zinc-700">일 이내 (1~90일)</span>
-          </div>
-        )}
-      </section>
+      <ClaimDeadlineSection
+        type={deadline}
+        days={deadlineDays}
+        onTypeChange={(t) => {
+          setDeadline(t);
+          // 선택지마다 N의 뜻(다음 달 며칠 / 결제 후 며칠)이 달라서, 저장된 선택지면 저장값, 아니면 그 선택지의 기본값을 보여 준다
+          if (t === "next_month_day" || t === "days_after") {
+            const saved = t === s.claim_deadline_type ? s.claim_deadline_days : null;
+            setDeadlineDays(String(saved ?? DEADLINE_DAYS[t].initial));
+          }
+        }}
+        onDaysChange={setDeadlineDays}
+      />
 
       <FormError message={error} />
       {saved && <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">저장했어요. 변경 내용은 이후 상신되는 경비부터 적용됩니다.</p>}

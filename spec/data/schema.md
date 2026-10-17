@@ -25,7 +25,7 @@
 | `approval_step_status` | `waiting`(앞 단계 대기), `pending`(내 차례), `approved`, `rejected`, `skipped`, `canceled` |
 | `parse_status` | `none`, `parsing`, `success`, `failed` |
 | `notification_status` | `queued`, `sent`, `failed` |
-| `claim_deadline_type` | `none`(사용 안 함), `end_of_month`(결제월 말일까지), `days_after`(결제일로부터 N일) |
+| `claim_deadline_type` | `none`(사용 안 함), `end_of_month`(결제월 말일까지), `days_after`(결제일로부터 N일), `next_month_day`(결제한 다음 달 N일까지, D-064) |
 
 ## 2. 테이블
 
@@ -40,8 +40,8 @@
 | meal_limit_per_person | integer | not null, default 10000 | 1식 1인당 지원 한도 (일반 식대·출장 식비 공통, D-040) |
 | meal_limit_mode | meal_limit_mode | not null, default 'split' | 한도 초과 처리 방식 (D-041) |
 | fuel_rate_per_km | integer | not null, default 200 | 자차 km당 유류비 단가 |
-| claim_deadline_type | claim_deadline_type | not null, default 'none' | 청구 기한 방식 (D-031) |
-| claim_deadline_days | integer | null, 1~90 | `days_after`일 때 N |
+| claim_deadline_type | claim_deadline_type | not null, default 'next_month_day' | 청구 기한 방식 (D-031, D-064) |
+| claim_deadline_days | integer | default 5, 1~90 | `days_after`: 결제일로부터 N일(1~90) / `next_month_day`: 다음 달 N일(1~28). 그 외 방식이면 null |
 | billing_status | billing_status | not null, default 'free_trial' | 과금 상태 (D-046) |
 | receipt_credits_granted | integer | not null, default 100 | 지급된 무료 크레딧(회사 생성 시 100) |
 | receipt_credits_used | integer | not null, default 0 | 사용한 크레딧. `used ≤ granted` 체크 제약 |

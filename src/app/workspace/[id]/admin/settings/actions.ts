@@ -12,7 +12,7 @@ export type CompanySettingsInput = {
   mealLimitPerPerson: number;
   mealLimitMode: "split" | "notify";
   fuelRatePerKm: number;
-  claimDeadlineType: "none" | "end_of_month" | "days_after";
+  claimDeadlineType: "none" | "end_of_month" | "days_after" | "next_month_day";
   claimDeadlineDays: number | null;
 };
 

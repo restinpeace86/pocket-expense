@@ -128,5 +128,26 @@ begin
   end if;
 end $$;
 
+-- ── 청구 기한 "결제한 다음 달 N일까지" (D-064) ──────────────────────────────────────
+update private.app_settings set value = 'off' where key = 'business_verify_mode';
+select set_config('request.jwt.claims', '{"sub":"a7000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+set local role authenticated;
+select public._t_expect($q$select public.update_company_settings('A', '1248100998', 10000, 'split', 200, 'next_month_day', 29)$q$, 'INVALID_CLAIM_DEADLINE', 'A_ADM next month 29');
+select public._t_expect($q$select public.update_company_settings('A', '1248100998', 10000, 'split', 200, 'next_month_day', null)$q$, 'INVALID_CLAIM_DEADLINE', 'A_ADM next month null');
+select public.update_company_settings('설정회사A', '1248100998', 15000, 'notify', 250, 'next_month_day', 5);
+reset role;
+insert into public.companies (id, name, invite_code, business_number) values ('c7000000-0000-0000-0000-00000000000c', '기본값회사', 'SETTCCCC', '1000000043');
+do $$
+begin
+  if (select row(claim_deadline_type, claim_deadline_days)::text from public.companies where id = 'c7000000-0000-0000-0000-00000000000a')
+     <> row('next_month_day'::public.claim_deadline_type, 5)::text then
+    raise exception 'FAIL [NEXT_MONTH] not stored';
+  end if;
+  if (select row(claim_deadline_type, claim_deadline_days)::text from public.companies where id = 'c7000000-0000-0000-0000-00000000000c')
+     <> row('next_month_day'::public.claim_deadline_type, 5)::text then
+    raise exception 'FAIL [DEFAULT] new company default is not next month 5th';
+  end if;
+end $$;
+
 select 'COMPANY_SETTINGS_OK' as result;
 rollback;

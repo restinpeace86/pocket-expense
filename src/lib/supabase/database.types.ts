@@ -1408,7 +1408,11 @@ export type Database = {
         | "skipped"
         | "canceled"
       billing_status: "free_trial" | "active"
-      claim_deadline_type: "none" | "end_of_month" | "days_after"
+      claim_deadline_type:
+        | "none"
+        | "end_of_month"
+        | "days_after"
+        | "next_month_day"
       claim_status: "draft" | "submitted" | "approved" | "rejected" | "paid"
       distance_source: "api" | "manual"
       evidence_type:
@@ -1570,7 +1574,12 @@ export const Constants = {
         "canceled",
       ],
       billing_status: ["free_trial", "active"],
-      claim_deadline_type: ["none", "end_of_month", "days_after"],
+      claim_deadline_type: [
+        "none",
+        "end_of_month",
+        "days_after",
+        "next_month_day",
+      ],
       claim_status: ["draft", "submitted", "approved", "rejected", "paid"],
       distance_source: ["api", "manual"],
       evidence_type: [

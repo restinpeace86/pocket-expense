@@ -23,7 +23,7 @@ const MESSAGES: Record<string, string> = {
   INVALID_MEAL_LIMIT: "1식 한도를 0원~1,000,000원 사이로 입력해 주세요.",
   INVALID_MEAL_LIMIT_MODE: "한도 초과 처리 방식을 선택해 주세요.",
   INVALID_FUEL_RATE: "유류비 단가를 0원~10,000원 사이로 입력해 주세요.",
-  INVALID_CLAIM_DEADLINE: "청구 기한을 확인해 주세요. (결제일로부터 1~90일)",
+  INVALID_CLAIM_DEADLINE: "청구 기한을 확인해 주세요. (다음 달 1~28일, 결제일로부터 1~90일)",
   NOT_INACTIVE: "비활성 상태인 멤버만 다시 활성화할 수 있어요. 화면을 새로고침해 주세요.",
   NOT_APPROVED: "활성 상태인 멤버에게만 할 수 있어요.",
   INVALID_ROLE: "역할을 다시 선택해 주세요.",

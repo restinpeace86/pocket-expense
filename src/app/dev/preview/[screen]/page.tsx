@@ -242,8 +242,8 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
               meal_limit_per_person: 10000,
               meal_limit_mode: "split",
               fuel_rate_per_km: 200,
-              claim_deadline_type: "days_after",
-              claim_deadline_days: 30,
+              claim_deadline_type: "next_month_day",
+              claim_deadline_days: 5,
             }}
             preview
           />
