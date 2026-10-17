@@ -1313,6 +1313,7 @@ export type Database = {
         }
         Returns: string
       }
+      deactivate_member: { Args: { p_member_id: string }; Returns: undefined }
       get_invitation_detail: { Args: { p_token: string }; Returns: Json }
       get_invitation_public: { Args: { p_token: string }; Returns: Json }
       get_invite_company: { Args: { p_code: string }; Returns: string }
@@ -1342,6 +1343,10 @@ export type Database = {
         Returns: string
       }
       mark_claims_paid: { Args: { p_claim_ids: string[] }; Returns: number }
+      member_deactivation_check: {
+        Args: { p_member_id: string }
+        Returns: Json
+      }
       my_membership: { Args: never; Returns: Json }
       regenerate_invite_code: { Args: never; Returns: string }
       reject_claim: {
@@ -1353,9 +1358,31 @@ export type Database = {
         Returns: Database["public"]["Enums"]["claim_status"]
       }
       reject_member: { Args: { p_member_id: string }; Returns: undefined }
+      set_member_role: {
+        Args: {
+          p_member_id: string
+          p_role: Database["public"]["Enums"]["member_role"]
+        }
+        Returns: undefined
+      }
       submit_claim: {
         Args: { p_claim_id: string }
         Returns: Database["public"]["Enums"]["claim_status"]
+      }
+      transfer_super_admin: {
+        Args: { p_member_id: string }
+        Returns: undefined
+      }
+      update_member: {
+        Args: {
+          p_department_id: string
+          p_employee_number: string
+          p_member_id: string
+          p_name: string
+          p_phone: string
+          p_position: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

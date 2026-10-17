@@ -1,8 +1,11 @@
 "use client";
 
+import { ChevronRight, Search } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { approveMemberAction, rejectMemberAction } from "@/app/workspace/[id]/admin/actions";
+import { inputClass } from "@/components/ui/page-shell";
+import { formatPhone } from "@/lib/format";
 
 export type MemberRow = {
   id: string;
@@ -17,12 +20,11 @@ export type MemberRow = {
 };
 
 const ROLE_LABEL = { super_admin: "관리자 (최고 관리자)", admin: "관리자", employee: "일반 멤버" } as const;
-const formatPhone = (p: string) => p.replace(/^(\d{3})(\d{3,4})(\d{4})$/, "$1-$2-$3");
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
 
 type Tab = "all" | "pending" | "inactive";
 
-// 멤버 관리 (spec/screens/admin-team-members.md). 이번 범위: 가입 승인·거절 + 목록 조회
+// 멤버 관리 (spec/screens/admin-team-members.md): 탭, 이름/부서 검색·부서 필터, 가입 승인·거절, [편집]으로 상세 이동
 export function MembersView({ members, tab, basePath, preview = false }: { members: MemberRow[]; tab: Tab; basePath: string; preview?: boolean }) {
   const pending = members.filter((m) => m.status === "pending");
   const active = members.filter((m) => m.status === "approved");
@@ -32,10 +34,25 @@ export function MembersView({ members, tab, basePath, preview = false }: { membe
     { key: "pending", label: `가입 승인 대기 (${pending.length})` },
     { key: "inactive", label: `비활성 (${inactive.length})` },
   ];
-  const list = tab === "pending" ? pending : tab === "inactive" ? inactive : active;
+  const [query, setQuery] = useState("");
+  const [dept, setDept] = useState("");
+  const NO_DEPT = "__none__";
+  const deptNames = useMemo(
+    () => [...new Set(members.map((m) => m.department).filter((d): d is string => !!d))].sort((a, b) => a.localeCompare(b, "ko")),
+    [members],
+  );
+  const q = query.trim().toLowerCase();
+  const list = (tab === "pending" ? pending : tab === "inactive" ? inactive : active).filter(
+    (m) =>
+      (!q || m.name.toLowerCase().includes(q) || (m.department ?? "").toLowerCase().includes(q)) &&
+      (!dept || (dept === NO_DEPT ? !m.department : m.department === dept)),
+  );
 
   return (
     <section className="flex flex-col gap-4">
+      <p className="text-sm text-zinc-600">
+        총 {members.filter((m) => m.status !== "pending").length}명 / 활성 {active.length}명
+      </p>
       <div className="flex gap-1 overflow-x-auto rounded-xl bg-zinc-100 p-1" role="tablist">
         {tabs.map((t) => (
           <Link
@@ -50,6 +67,23 @@ export function MembersView({ members, tab, basePath, preview = false }: { membe
         ))}
       </div>
 
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <label className="relative flex-1">
+          <span className="sr-only">이름·부서 검색</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+          <input className={`${inputClass} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="이름·부서 검색" />
+        </label>
+        <select className={`${inputClass} sm:w-48`} value={dept} onChange={(e) => setDept(e.target.value)} aria-label="부서 필터">
+          <option value="">전체 부서</option>
+          {deptNames.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+          <option value={NO_DEPT}>부서 없음</option>
+        </select>
+      </div>
+
       {tab === "pending" && pending.length > 0 && (
         <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
           우리 회사 직원이 맞는지 이름·연락처를 확인해 주세요. <b>승인</b>하면 바로 직원 화면을 쓸 수 있고, <b>거절</b>하면 신청이 지워져요(다시
@@ -59,12 +93,18 @@ export function MembersView({ members, tab, basePath, preview = false }: { membe
 
       {list.length === 0 ? (
         <p className="rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
-          {tab === "pending" ? "가입 승인을 기다리는 직원이 없어요. 위 초대 링크를 직원에게 보내 주세요." : tab === "inactive" ? "비활성 멤버가 없어요." : "멤버가 없어요."}
+          {q || dept
+            ? "조건에 맞는 멤버가 없어요."
+            : tab === "pending"
+              ? "가입 승인을 기다리는 직원이 없어요. 위 초대 링크를 직원에게 보내 주세요."
+              : tab === "inactive"
+                ? "비활성 멤버가 없어요."
+                : "멤버가 없어요."}
         </p>
       ) : (
         <ul className="flex flex-col gap-2">
           {list.map((m) => (
-            <MemberItem key={m.id} member={m} preview={preview} />
+            <MemberItem key={m.id} member={m} preview={preview} href={`${basePath}/${m.id}`} />
           ))}
         </ul>
       )}
@@ -72,7 +112,7 @@ export function MembersView({ members, tab, basePath, preview = false }: { membe
   );
 }
 
-function MemberItem({ member: m, preview }: { member: MemberRow; preview: boolean }) {
+function MemberItem({ member: m, preview, href }: { member: MemberRow; preview: boolean; href: string }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -110,9 +150,17 @@ function MemberItem({ member: m, preview }: { member: MemberRow; preview: boolea
             </button>
           </>
         ) : (
-          <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs ${m.role === "employee" ? "bg-zinc-100 text-zinc-600" : "bg-blue-50 text-blue-700"}`}>
-            {ROLE_LABEL[m.role]}
-          </span>
+          <>
+            <span className={`mr-auto whitespace-nowrap rounded-full px-2.5 py-1 text-xs md:mr-0 ${m.role === "employee" ? "bg-zinc-100 text-zinc-600" : "bg-blue-50 text-blue-700"}`}>
+              {ROLE_LABEL[m.role]}
+            </span>
+            <Link
+              href={href}
+              className="inline-flex min-h-11 items-center gap-0.5 whitespace-nowrap rounded-xl border border-zinc-300 pl-4 pr-2 text-sm font-medium hover:bg-zinc-50"
+            >
+              편집 <ChevronRight className="size-4" />
+            </Link>
+          </>
         )}
       </div>
       {error && (

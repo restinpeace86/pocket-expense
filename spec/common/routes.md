@@ -44,6 +44,7 @@
 | `/workspace/[id]/admin/claims` | 지출 승인 관리 (`spec/screens/admin-expense-approvals.md`) |
 | `/workspace/[id]/admin/claims/[claimId]` | 지출 승인 관리에서 소명서 선택 상태(딥링크) |
 | `/workspace/[id]/admin/members` | 멤버 관리 (`spec/screens/admin-team-members.md`) |
+| `/workspace/[id]/admin/members/[memberId]` | 멤버 상세·편집 (기본 정보, 권한, 퇴사 처리 — `admin-team-members.md` §4.B~D) |
 | `/workspace/[id]/admin/departments` | 부서 관리 |
 | `/workspace/[id]/admin/approval-lines` | 사전 검토 결재라인 설정 (선택 기능, D-039) |
 | `/workspace/[id]/admin/form-template` | 사내 양식 설정 (`spec/screens/template-configuration.md`) |

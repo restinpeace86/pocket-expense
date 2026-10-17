@@ -4,6 +4,9 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminHomeView } from "@/components/admin/admin-home-view";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { DepartmentsView } from "@/components/admin/departments-view";
+import { MemberDetailView } from "@/components/admin/member-detail";
+import { capabilitiesFor } from "@/lib/admin/capabilities";
 import { InviteLinkCard } from "@/components/admin/invite-link-card";
 import { MembersView, type MemberRow } from "@/components/admin/members-view";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -36,6 +39,17 @@ const SAMPLE_MEMBERS: MemberRow[] = [
   { id: "p2", name: "박관리", phone: "01022223333", email: null, position: "과장", role: "admin", status: "approved", department: "경영지원", created_at: "2026-10-02T00:00:00Z" },
   { id: "p3", name: "이직원", phone: "01033334444", email: "lee.employee.long-address@pocketcompany.co.kr", position: "대리", role: "employee", status: "pending", department: "개발팀", created_at: "2026-10-16T00:00:00Z" },
   { id: "p4", name: "최신입", phone: "0103335555", email: null, position: null, role: "employee", status: "pending", department: "영업팀", created_at: "2026-10-17T00:00:00Z" },
+];
+
+const SAMPLE_DETAIL = {
+  ...SAMPLE_MEMBERS[1],
+  department_id: SAMPLE_DEPARTMENTS[0].id,
+  employee_number: "PK-2024-007",
+};
+const SAMPLE_DEPT_ROWS = [
+  { id: "d1", name: "경영지원", sort_order: 1, memberCount: 2, hasApprovalLine: false },
+  { id: "d2", name: "개발팀", sort_order: 2, memberCount: 7, hasApprovalLine: true },
+  { id: "d3", name: "영업·마케팅 본부 (서울·부산 지사 통합)", sort_order: 3, memberCount: 0, hasApprovalLine: false },
 ];
 
 export default function PreviewPage({ params }: PageProps<"/dev/preview/[screen]">) {
@@ -149,6 +163,50 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
           <h1 className="text-2xl font-bold tracking-tight">멤버 관리</h1>
           <InviteLinkCard inviteCode="ABCD2345" companyName="포켓컴퍼니 주식회사" preview compact />
           <MembersView members={SAMPLE_MEMBERS} tab="pending" basePath="#" preview />
+        </AdminShell>
+      );
+    case "admin-members-all":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+          <h1 className="text-2xl font-bold tracking-tight">멤버 관리</h1>
+          <MembersView members={SAMPLE_MEMBERS} tab="all" basePath="#" preview />
+        </AdminShell>
+      );
+    case "admin-member-detail":
+      // 최고 관리자가 관리자를 볼 때: 편집·권한·넘기기·퇴사 처리 모두 보임 + 비활성화 점검 결과(경고)
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+          <MemberDetailView
+            member={SAMPLE_DETAIL}
+            departments={SAMPLE_DEPARTMENTS}
+            can={capabilitiesFor({ member_id: "p1", role: "super_admin" }, SAMPLE_DETAIL)}
+            backHref="#"
+            preview
+            initialCheck={{ unpaid_claims: 2, payout_amount: 128000, payback_amount: 6000, open_claims: 1, approval_line_steps: 0, pending_reviews: 0, blocked: false }}
+          />
+        </AdminShell>
+      );
+    case "admin-member-readonly":
+      // 관리자가 다른 관리자를 볼 때: 읽기 전용
+      return (
+        <AdminShell membership={{ ...SAMPLE_MEMBERSHIP, role: "admin" }}>
+          <MemberDetailView
+            member={SAMPLE_DETAIL}
+            departments={SAMPLE_DEPARTMENTS}
+            can={capabilitiesFor({ member_id: "p9", role: "admin" }, SAMPLE_DETAIL)}
+            backHref="#"
+            preview
+          />
+        </AdminShell>
+      );
+    case "admin-departments":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">부서</h1>
+            <p className="mt-1 text-sm text-zinc-600">직원이 가입할 때 고르는 부서 목록이에요. 화살표로 보이는 순서를 바꿀 수 있어요.</p>
+          </div>
+          <DepartmentsView departments={SAMPLE_DEPT_ROWS} preview />
         </AdminShell>
       );
     default:

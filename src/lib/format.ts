@@ -5,3 +5,8 @@ export function formatWon(amount: number): string {
   }
   return `${Math.round(amount).toLocaleString("ko-KR")}원`;
 }
+
+// 휴대폰 번호는 숫자만 저장한다(schema.md members.phone). 화면 표시는 010-1234-5678 형태.
+export function formatPhone(phone: string): string {
+  return phone.replace(/^(\d{3})(\d{3,4})(\d{4})$/, "$1-$2-$3");
+}

@@ -20,6 +20,13 @@ const MESSAGES: Record<string, string> = {
   NOT_A_MEMBER: "회사 멤버로 승인된 계정만 이용할 수 있어요.",
   NOT_FOUND: "대상을 찾을 수 없어요. 화면을 새로고침해 주세요.",
   NOT_PENDING: "이미 처리된 가입 신청입니다. 화면을 새로고침해 주세요.",
+  NOT_APPROVED: "활성 상태인 멤버에게만 할 수 있어요.",
+  INVALID_ROLE: "역할을 다시 선택해 주세요.",
+  INVALID_TARGET: "본인에게는 할 수 없는 작업이에요.",
+  INVALID_TEXT_LENGTH: "직급·사번은 50자 이내로 입력해 주세요.",
+  SUPER_ADMIN_LOCKED: "최고 관리자는 역할을 바꾸거나 비활성화할 수 없어요. 먼저 [최고 관리자 넘기기]를 해 주세요.",
+  MEMBER_IN_APPROVAL_LINE: "이 멤버가 사전 검토 결재라인에 들어 있어요. 결재라인에서 먼저 빼 주세요.",
+  MEMBER_HAS_PENDING_REVIEW: "이 멤버가 검토할 차례인 소명서가 있어요. 먼저 처리해 주세요.",
   INCOMPLETE_BANK_ACCOUNT: "정산 계좌는 은행·계좌번호·예금주를 모두 입력하거나 모두 비워 주세요.",
 };
 

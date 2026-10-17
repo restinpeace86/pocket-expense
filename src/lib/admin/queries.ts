@@ -31,3 +31,32 @@ export async function getCompanySummary(companyId: string) {
   ]);
   return { company, pendingCount: pendingCount ?? 0 };
 }
+
+export type MemberDetail = MemberRow & { department_id: string | null; employee_number: string | null };
+
+export async function getMember(companyId: string, memberId: string): Promise<MemberDetail | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("members")
+    .select("id, name, phone, email, position, role, status, created_at, department_id, employee_number, department:departments(name)")
+    .eq("company_id", companyId)
+    .eq("id", memberId)
+    .maybeSingle();
+  if (!data) return null;
+  return { ...data, department: (data.department as { name: string } | null)?.name ?? null };
+}
+
+export type DepartmentRow = { id: string; name: string; sort_order: number; memberCount: number; hasApprovalLine: boolean };
+
+export async function getDepartments(companyId: string): Promise<DepartmentRow[]> {
+  const supabase = await createClient();
+  const [{ data: departments }, { data: members }, { data: lines }] = await Promise.all([
+    supabase.from("departments").select("id, name, sort_order").eq("company_id", companyId).order("sort_order").order("name"),
+    supabase.from("members").select("department_id").eq("company_id", companyId).neq("status", "inactive"),
+    supabase.from("approval_lines").select("department_id").eq("company_id", companyId).not("department_id", "is", null),
+  ]);
+  const counts = new Map<string, number>();
+  for (const m of members ?? []) if (m.department_id) counts.set(m.department_id, (counts.get(m.department_id) ?? 0) + 1);
+  const withLine = new Set((lines ?? []).map((l) => l.department_id));
+  return (departments ?? []).map((d) => ({ ...d, memberCount: counts.get(d.id) ?? 0, hasApprovalLine: withLine.has(d.id) }));
+}

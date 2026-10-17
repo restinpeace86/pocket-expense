@@ -28,8 +28,18 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  // 토큰 검증·갱신. 결과는 쓰지 않는다(접근 제어는 각 화면과 DB RLS가 한다).
-  await supabase.auth.getClaims();
+  // 토큰 검증·갱신. 접근 제어는 각 화면과 DB RLS가 한다.
+  // 다만 로그인 안 한 워크스페이스 접근은 여기서 로그인으로 보낸다(로그인 후 원래 보던 화면으로 돌아오도록 경로 전체를 next로).
+  const { data } = await supabase.auth.getClaims();
+  const { pathname, search } = request.nextUrl;
+  if (!data?.claims && pathname.startsWith("/workspace/")) {
+    const to = new URL("/login", request.url);
+    to.searchParams.set("next", pathname + search);
+    const redirect = NextResponse.redirect(to);
+    response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+    redirect.headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
+    return redirect;
+  }
   return response;
 }
 
