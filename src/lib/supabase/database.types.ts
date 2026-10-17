@@ -714,6 +714,7 @@ export type Database = {
           personal_burden_amount: number
           purpose: string | null
           receipt_path: string | null
+          receipt_thumb_path: string | null
           sort_order: number
           start_lat: number | null
           start_lng: number | null
@@ -768,6 +769,7 @@ export type Database = {
           personal_burden_amount?: number
           purpose?: string | null
           receipt_path?: string | null
+          receipt_thumb_path?: string | null
           sort_order?: number
           start_lat?: number | null
           start_lng?: number | null
@@ -822,6 +824,7 @@ export type Database = {
           personal_burden_amount?: number
           purpose?: string | null
           receipt_path?: string | null
+          receipt_thumb_path?: string | null
           sort_order?: number
           start_lat?: number | null
           start_lng?: number | null

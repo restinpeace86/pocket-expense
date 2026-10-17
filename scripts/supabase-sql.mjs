@@ -56,6 +56,18 @@ async function migrate(cfg) {
   }
 }
 
+// 벤치마크처럼 대량 입력 후 롤백하면 지운 행의 공간이 남아 무료 요금제 디스크가 찬다(2026-10-17 실제 발생).
+// 벤치 뒤에는 반드시 표를 압축해 공간을 돌려준다. VACUUM은 트랜잭션 안에서 못 돌리므로 표마다 따로 실행한다.
+const VACUUM_TABLES = ["public.expense_items", "public.expense_claims", "public.claim_approvals", "public.members", "public.companies"];
+async function vacuum(cfg) {
+  for (const t of VACUUM_TABLES) {
+    await runSql(cfg, `vacuum full ${t};`);
+    console.log(`vacuum  ${t}`);
+  }
+  const [size] = await runSql(cfg, "select pg_size_pretty(pg_database_size(current_database())) as db_size");
+  console.log(`db size ${size.db_size}`);
+}
+
 async function generateTypes({ ref, token }, outFile) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/types/typescript?included_schemas=public`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -72,7 +84,12 @@ try {
   if (mode === "--migrate") await migrate(cfg);
   else if (mode === "--file" && arg) console.log(JSON.stringify(await runSql(cfg, fs.readFileSync(arg, "utf8"))));
   else if (mode === "--types" && arg) await generateTypes(cfg, arg);
-  else { console.error("usage: --migrate | --file <sql> | --types <out.ts>"); process.exitCode = 2; }
+  else if (mode === "--vacuum") await vacuum(cfg);
+  else if (mode === "--bench" && arg) {
+    // 측정이 실패해도 공간은 반드시 돌려준다
+    try { console.log(JSON.stringify(await runSql(cfg, fs.readFileSync(arg, "utf8")))); } finally { await vacuum(cfg); }
+  }
+  else { console.error("usage: --migrate | --file <sql> | --types <out.ts> | --vacuum | --bench <sql>"); process.exitCode = 2; }
 } catch (err) {
   console.error(`SQL 실행 실패: ${err.message}`);
   process.exitCode = 1;

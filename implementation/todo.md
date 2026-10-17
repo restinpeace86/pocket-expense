@@ -83,7 +83,8 @@
 - [ ] T5-4 버전 저장/활성화
 
 ## T6. 지출소명서 작성 — 기준: `spec/features/expense-claim-flow.md`, `spec/screens/worker-dashboard.md`(E-01), `spec/screens/worker-tax-processing.md`(E-02), `spec/screens/employee-mobile.md` ④⑤, `spec/features/receipt-parser.md`, `spec/features/smart-meal.md`
-- [ ] T6-0 성능 기반(D-073, `spec/common/performance.md`): 브라우저에서 보관본 2000px·썸네일 320px 만들기, 한 번에 10장·동시 3건 업로드, signed URL 묶음 발급, 목록 커서 페이지네이션 공용 함수, AI 인식 자동 1회 재시도, 착수 시 bench 규모 확대 재측정
+- [x] T6-0 성능 기반(D-073, D-074, `spec/common/performance.md` §9): 이미지 줄이기·썸네일, 동시 처리+재시도, 사진 링크 묶음, 커서 페이지네이션, 한국 시간 날짜, 썸네일 경로·열람 정책, 벤치 확대 재측정 (2026-10-17)
+  - 화면에서 연결(10장 제한, 업로드 진행률, AI 인식 재시도 적용)은 T6-2~ 각 화면에서
 - [ ] T6-1 E-01 직원 메인 대시보드 (사비 정산 대기금, 상태 뱃지 5종, 반려 바텀시트, 크레딧 0 안내)
 - [ ] T6-2 소명서 편집 골격 (헤더: 제목 자동 제안·소명 내용·결제수단 기본값·[출장 경비] 스위치와 출장지·기간·목적, 항목 표, 임시저장, 삭제) + 합계 서버 갱신 + 단위 테스트
 - [ ] T6-3 영수증 다중 업로드(연속 촬영·다중 선택·PDF, 최대 30장) → 항목 생성 + Gemini 파싱 어댑터(동시 3건) + 빈 필드 자동 채움 + 사업자등록번호·증빙구분·카드 끝 4자리 추정(D-050, D-051, D-055) + 법인카드 자동 판별 + 업로드 시 크레딧 차감(D-046) + 카테고리·출장 세부 유형 추천(D-032, D-035: 출장 소명서는 출장비 고정) + 실패 Fallback
