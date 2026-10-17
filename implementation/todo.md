@@ -72,6 +72,9 @@
 - [x] T3-14 자가운전보조금 받음(멤버 편집)·계기판 사진 받기(설정) 선택 기능 (D-070, migration 020) (2026-10-17)
   - 직원 쪽 반영(own_car 차단 안내, 계기판 사진 첨부)은 T7에서 — trip-expense.md §4
 
+- [x] T3-15 화면 체감 시간 측정 기반 (D-075, migration 022, `supabase/tests/010_perf_events.sql`): 웹 바이탈 자동 기록, 관리자 버튼(설정 저장·가입 승인/거절·멤버 변경·부서 변경) 결과 시간, `npm run perf:report` (2026-10-18)
+  - [ ] 실사용 데이터가 쌓이면 perf:report로 목표 초과 화면 확인·개선 (지속)
+
 ## T4. 사전 검토 결재라인 설정 (선택 기능) — 기준: `spec/features/approval-workflow.md` §2, admin ⑥
 - [ ] T4-1 기본(0단계)/부서별 결재라인 CRUD + 사전 검토 단계 편집 + 고정 "관리자 최종 승인" 표시
 - [ ] T4-2 청구자 기준 결재라인 선택 + 단계 스냅샷(review + final) 함수 + 단위 테스트

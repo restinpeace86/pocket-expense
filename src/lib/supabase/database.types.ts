@@ -1282,6 +1282,51 @@ export type Database = {
           },
         ]
       }
+      perf_events: {
+        Row: {
+          action: string | null
+          build: string | null
+          company_id: string | null
+          conn: string | null
+          created_at: string
+          created_by: string
+          device: string
+          id: number
+          metric: string
+          nav_type: string | null
+          route: string
+          value: number
+        }
+        Insert: {
+          action?: string | null
+          build?: string | null
+          company_id?: string | null
+          conn?: string | null
+          created_at?: string
+          created_by: string
+          device: string
+          id?: never
+          metric: string
+          nav_type?: string | null
+          route: string
+          value: number
+        }
+        Update: {
+          action?: string | null
+          build?: string | null
+          company_id?: string | null
+          conn?: string | null
+          created_at?: string
+          created_by?: string
+          device?: string
+          id?: never
+          metric?: string
+          nav_type?: string | null
+          route?: string
+          value?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1370,6 +1415,7 @@ export type Database = {
       }
       my_membership: { Args: never; Returns: Json }
       reactivate_member: { Args: { p_member_id: string }; Returns: undefined }
+      record_perf_events: { Args: { p_events: Json }; Returns: number }
       regenerate_invite_code: { Args: never; Returns: string }
       reject_claim: {
         Args: {

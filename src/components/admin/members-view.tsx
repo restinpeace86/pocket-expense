@@ -7,6 +7,7 @@ import { approveMemberAction, rejectMemberAction } from "@/app/workspace/[id]/ad
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import { formatPhone } from "@/lib/format";
+import { measureAction } from "@/lib/perf/client";
 
 export type MemberRow = {
   id: string;
@@ -146,7 +147,7 @@ function MemberItem({ member: m, preview, href }: { member: MemberRow; preview: 
     if (kind === "reject" && !confirm(`${m.name}님의 가입 신청을 거절할까요? 거절하면 다시 가입 신청해야 합니다.`)) return;
     setError(null);
     startTransition(async () => {
-      const r = kind === "approve" ? await approveMemberAction(m.id) : await rejectMemberAction(m.id);
+      const r = await measureAction(`members.${kind}`, () => (kind === "approve" ? approveMemberAction(m.id) : rejectMemberAction(m.id)));
       if (r.error) setError(r.error);
     });
   }

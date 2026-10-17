@@ -12,6 +12,7 @@ import { FormError } from "@/components/onboarding/field";
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { DepartmentRow } from "@/lib/admin/queries";
+import { measureAction } from "@/lib/perf/client";
 
 type Result = { error: string | null };
 
@@ -47,7 +48,7 @@ export function DepartmentsView({ departments, preview = false }: { departments:
     if (preview) return;
     setError(null);
     startTransition(async () => {
-      const r = await action();
+      const r = await measureAction("departments.change", action);
       if (r.error) setError(r.error);
       else onDone?.();
     });

@@ -10,6 +10,7 @@ import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { CompanySettings } from "@/lib/admin/queries";
 import { formatWon } from "@/lib/format";
+import { measureAction } from "@/lib/perf/client";
 
 const card = "rounded-xl border border-zinc-200 bg-white p-5 shadow-sm";
 const formatBizNo = (v: string) => v.replace(/^(\d{3})(\d{2})(\d{5})$/, "$1-$2-$3");
@@ -46,7 +47,8 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
     setError(null);
     setSaved(false);
     startTransition(async () => {
-      const r = await saveCompanySettingsAction({
+      const r = await measureAction("settings.save", () =>
+        saveCompanySettingsAction({
         name: String(f.get("name") ?? ""),
         businessNumber: String(f.get("businessNumber") ?? ""),
         mealLimitEnabled: mealEnabled,
@@ -57,7 +59,8 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
         odometerPhotoRequired: odometer,
         claimDeadlineType: deadline,
         claimDeadlineDays: deadline === "days_after" || deadline === "next_month_day" ? toInt(deadlineDays) : null,
-      });
+        }),
+      );
       if (r.error) setError(r.error);
       else setSaved(true);
     });

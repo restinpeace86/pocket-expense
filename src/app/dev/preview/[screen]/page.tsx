@@ -10,6 +10,7 @@ import { MemberDetailView } from "@/components/admin/member-detail";
 import { capabilitiesFor } from "@/lib/admin/capabilities";
 import { InviteLinkCard } from "@/components/admin/invite-link-card";
 import { MembersHeading, MembersView, type MemberRow } from "@/components/admin/members-view";
+import { PerfCheck } from "@/components/dev/perf-check";
 import { ReceiptImageCheck } from "@/components/dev/receipt-image-check";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ConsentSection } from "@/components/legal/consent-section";
@@ -273,6 +274,8 @@ async function Preview({
           <DepartmentsView departments={SAMPLE_DEPT_ROWS} preview />
         </AdminShell>
       );
+    case "perf-check":
+      return <PerfCheck />;
     case "receipt-image":
       return <ReceiptImageCheck />;
     default:

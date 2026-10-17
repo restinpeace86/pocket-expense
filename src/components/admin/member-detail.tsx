@@ -18,6 +18,7 @@ import { inputClass } from "@/components/ui/page-shell";
 import type { MemberCapabilities } from "@/lib/admin/capabilities";
 import type { MemberDetail } from "@/lib/admin/queries";
 import { formatPhone } from "@/lib/format";
+import { measureAction } from "@/lib/perf/client";
 
 const ROLE_LABEL = { super_admin: "최고 관리자", admin: "관리자", employee: "일반 멤버" } as const;
 const STATUS_LABEL = { pending: "가입 승인 대기", approved: "활성", inactive: "비활성(퇴사)" } as const;
@@ -52,7 +53,7 @@ export function MemberDetailView({
     setError(null);
     setNotice(null);
     startTransition(async () => {
-      const r = await action();
+      const r = await measureAction("member.change", action);
       if (r.error) setError(r.error);
       else {
         setNotice(success);
