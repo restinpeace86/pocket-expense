@@ -5,7 +5,7 @@ import { useActionState, useState, type KeyboardEvent } from "react";
 import { createCompanyAction, type FormState } from "@/app/onboarding/actions";
 import { buttonPrimary, inputClass } from "@/components/ui/page-shell";
 import { Field, FormError } from "./field";
-import { PrivacyConsent } from "./privacy-consent";
+import { ConsentSection } from "@/components/legal/consent-section";
 
 const initial: FormState = { error: null };
 // 본인 부서 "부서 없음"(대표·임원) 선택값 — 서버에서 빈 값으로 바꿔 보낸다 (D-058)
@@ -111,7 +111,7 @@ export function CreateCompanyForm() {
         <input name="position" maxLength={50} className={inputClass} placeholder="예: 대표" />
       </Field>
 
-      <PrivacyConsent />
+      <ConsentSection />
       <FormError message={state.error} />
       <button type="submit" disabled={pending || departments.length === 0} className={buttonPrimary}>
         {pending ? "회사를 만드는 중..." : "회사 만들고 시작하기"}

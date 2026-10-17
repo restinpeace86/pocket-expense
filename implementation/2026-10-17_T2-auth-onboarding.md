@@ -53,3 +53,9 @@
 - 회사 등록 폼: 본인 부서에 "부서 없음 (대표·임원)" 선택지.
 - **반응형 점검 확장**: `src/app/dev/preview/[screen]` — 로그인해야 보이는 화면(온보딩 선택, 회사 등록, 직원 가입, 초대 가입, 워크스페이스 헤더)을 실제 컴포넌트로 데이터 없이 렌더링. `ENABLE_UI_PREVIEW=1`일 때만 열리고, 아니면 proxy에서 렌더링 전에 404(배포 환경 차단 확인). `check:responsive` 기본 경로 10개 × 4개 폭 = 40건 가로 넘침 0.
 - 점검 중 발견·수정: 휴대폰 헤더에서 모드 전환 버튼이 회사명을 가림 → 좁은 화면은 "직원 모드"/"관리자 모드"로 축약, 로그아웃 터치 영역 44px. 부서 입력 placeholder 잘림 → 축약.
+
+## 추가 — 서버 지역 · 동의 구조 (D-059, D-060)
+- **서버 지역**: `vercel.json` `regions: ["hnd1"]`(도쿄). 배포 확인 `regions ["hnd1"]`. DB 조회 화면 응답 1.0~1.4초 → 0.27~0.49초(첫 요청은 콜드 스타트 1.5초).
+- **동의**: `011_consents.sql` — 멤버에 `terms_agreed_at`, `terms_version`, `privacy_version`, `optional_consent_at`. `create_company`·`join_company`·`accept_invitation`에 약관·선택 동의 인자 추가(서명 변경으로 기존 함수 삭제 후 재생성), 선택 동의 없이 정산 계좌·차량번호 입력 시 `OPTIONAL_CONSENT_REQUIRED`. 테스트 002에 약관 미동의·선택 동의 누락·동의 기록 케이스 추가. 드라이런 → 적용 → `test:db` 3종 ✅.
+- 화면: `src/components/legal/{documents,consent-section}.tsx` — 전체 동의 + 항목별 동의, [보기] 팝업(네이티브 dialog, 모바일 전체 화면·PC 가운데). `/terms`, `/privacy` 초안 페이지, 랜딩 하단·로그인 화면 링크. 본문은 초안(O-07).
+- 반응형: 점검 경로 13개(약관·처리방침·동의 팝업 추가) × 4개 폭 = 52건 가로 넘침 0, 스크린샷 확인.

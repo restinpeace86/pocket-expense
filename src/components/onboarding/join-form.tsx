@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { joinAction, type FormState } from "@/app/onboarding/actions";
 import { buttonPrimary, inputClass } from "@/components/ui/page-shell";
 import { Field, FormError } from "./field";
-import { PrivacyConsent } from "./privacy-consent";
+import { ConsentSection } from "@/components/legal/consent-section";
 
 const initial: FormState = { error: null };
 
@@ -65,7 +65,7 @@ export function JoinForm({
       <details className="rounded-xl border border-zinc-200 p-4">
         <summary className="min-h-6 cursor-pointer text-sm font-medium text-zinc-800">정산 계좌 · 차량번호 (선택, 나중에 입력 가능)</summary>
         <div className="mt-4 flex flex-col gap-4">
-          <p className="text-xs text-zinc-500">개인카드로 쓴 경비를 돌려받을 계좌입니다. 입력한다면 세 칸을 모두 채워 주세요.</p>
+          <p className="text-xs text-zinc-500">개인카드로 쓴 경비를 돌려받을 계좌입니다. 입력한다면 세 칸을 모두 채우고, 아래 [선택] 항목 동의에 체크해 주세요.</p>
           <Field label="은행">
             <input name="bankName" maxLength={30} className={inputClass} />
           </Field>
@@ -81,7 +81,7 @@ export function JoinForm({
         </div>
       </details>
 
-      <PrivacyConsent />
+      <ConsentSection withOptional />
       <FormError message={state.error} />
       <button type="submit" disabled={pending} className={buttonPrimary}>
         {pending ? "가입하는 중..." : token ? "가입 완료하고 시작하기" : "가입 신청하기"}

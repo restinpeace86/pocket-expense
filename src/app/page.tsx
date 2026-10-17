@@ -99,7 +99,13 @@ export default function LandingPage() {
         </Link>
       </section>
 
-      <footer className="border-t border-white/10 py-8 text-center text-xs text-zinc-500">© PocketExpense</footer>
+      <footer className="flex flex-col items-center gap-2 border-t border-white/10 py-8 text-xs text-zinc-500">
+        <nav className="flex gap-4">
+          <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-zinc-300">이용약관</Link>
+          <Link href="/privacy" className="inline-flex min-h-11 items-center font-semibold hover:text-zinc-300">개인정보 처리방침</Link>
+        </nav>
+        <p>© PocketExpense</p>
+      </footer>
     </div>
   );
 }

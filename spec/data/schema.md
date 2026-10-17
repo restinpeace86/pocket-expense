@@ -105,6 +105,9 @@
 | role | member_role | not null, default 'employee' | `super_admin`은 회사당 정확히 1명 (partial unique: company_id where role='super_admin') |
 | status | member_status | not null, default 'pending' | |
 | privacy_agreed_at | timestamptz | not null | 개인정보 수집·이용 동의 시각 |
+| terms_agreed_at | timestamptz | null | 서비스 이용약관 동의 시각 (D-059) |
+| terms_version / privacy_version | text | null | 동의한 문서 버전 (`private.app_settings`) |
+| optional_consent_at | timestamptz | null | 선택 항목(정산 계좌·차량번호) 동의 시각. 없으면 선택 항목 저장 불가 |
 | approved_at | timestamptz | null | 관리자 가입 승인 시각 |
 
 ### 2.3a `member_invitations` — 개별 초대 (D-042)

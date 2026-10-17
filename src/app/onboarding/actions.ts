@@ -46,6 +46,7 @@ export async function createCompanyAction(_prev: FormState, formData: FormData):
     p_my_department: text(formData, "myDepartment") === "__none__" ? "" : text(formData, "myDepartment"),
     p_my_position: optional(formData, "position") ?? "",
     p_privacy_agreed: formData.get("privacy") === "on",
+    p_terms_agreed: formData.get("terms") === "on",
   });
   if (error || !companyId) return { error: messageForDbError(error) };
   redirect(`/workspace/${companyId}/admin`);
@@ -67,6 +68,8 @@ export async function joinAction(_prev: FormState, formData: FormData): Promise<
     p_account_number: optional(formData, "accountNumber") ?? "",
     p_account_holder: optional(formData, "accountHolder") ?? "",
     p_privacy_agreed: formData.get("privacy") === "on",
+    p_terms_agreed: formData.get("terms") === "on",
+    p_optional_agreed: formData.get("optional") === "on",
   };
   if (!common.p_department_id) return { error: messageForDbError({ message: "INVALID_DEPARTMENT" }) };
 

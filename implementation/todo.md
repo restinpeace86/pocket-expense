@@ -34,6 +34,8 @@
 - [x] T2-2 회사 생성 위저드 (무료 크레딧 100장 지급 포함) (`spec/screens/admin-onboarding.md`: 부서 태그, invite_code, 기본 결재라인=생성자, 대시보드 이동)
 - [x] T2-3 `/join/[inviteCode]` 진입 + 직원 정보 입력 + 개인정보 동의
 - [x] T2-4 승인 대기 화면
+- [x] T2-5 이용약관·개인정보 동의 구조(전체/필수/선택, 팝업, 동의 기록), `/terms`·`/privacy` 초안 페이지 (D-059)
+- [ ] T2-6 ⛔ 보류(O-07) 이용약관·개인정보 처리방침 본문 확정 — 전문가 검토 대기. 임의로 구현 가능으로 바꾸지 말 것
 
 ## T3. 관리자 기본 — 기준: `spec/screens/admin-dashboard.md` 0·⑤, `spec/screens/admin-team-members.md`, `spec/screens/admin-settings.md`, `spec/features/roles-and-permissions.md`
 - [ ] T3-1 관리자 레이아웃(사이드바, Split View, 모바일 반응형) + 워크스페이스 스위처(D-049)

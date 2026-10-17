@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
@@ -25,6 +26,10 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
         </Suspense>
       </Card>
       <p className="text-center text-xs text-zinc-500">휴대폰 인증 없이 카카오 또는 Google 계정으로 로그인합니다.</p>
+      <nav className="flex justify-center gap-4 text-xs text-zinc-500">
+        <Link href="/terms" className="inline-flex min-h-11 items-center underline underline-offset-2">이용약관</Link>
+        <Link href="/privacy" className="inline-flex min-h-11 items-center font-semibold underline underline-offset-2">개인정보 처리방침</Link>
+      </nav>
     </PageShell>
   );
 }

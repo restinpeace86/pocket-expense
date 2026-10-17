@@ -41,7 +41,7 @@ begin
   if not v_ok then raise exception 'FAIL [TABLE] authenticated forged a verification'; end if;
 
   -- 계속사업자 → 통과, 상태 active
-  perform public.create_company('검증회사1', '124-81-00998', array['팀'], '대표1', '01010000001', '팀', null, true);
+  perform public.create_company('검증회사1', '124-81-00998', array['팀'], '대표1', '01010000001', '팀', null, true, true);
   if (select business_status from public.companies) <> 'active' then raise exception 'FAIL [ENFORCE] active not recorded'; end if;
 end $$;
 reset role;
@@ -53,7 +53,7 @@ do $$
 declare v_ok boolean;
 begin
   begin
-    perform public.create_company('검증회사2', '1248100998', array['팀'], '대표2', '01010000002', '팀', null, true);
+    perform public.create_company('검증회사2', '1248100998', array['팀'], '대표2', '01010000002', '팀', null, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'BUSINESS_CLOSED';
   end;
@@ -68,7 +68,7 @@ do $$
 declare v_ok boolean;
 begin
   begin
-    perform public.create_company('검증회사3', '1248100998', array['팀'], '대표3', '01010000003', '팀', null, true);
+    perform public.create_company('검증회사3', '1248100998', array['팀'], '대표3', '01010000003', '팀', null, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'BUSINESS_NOT_REGISTERED';
   end;
@@ -81,7 +81,7 @@ select set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-0000000
 set local role authenticated;
 do $$
 begin
-  perform public.create_company('검증회사4', '1248100998', array['팀'], '대표4', '01010000004', '팀', null, true);
+  perform public.create_company('검증회사4', '1248100998', array['팀'], '대표4', '01010000004', '팀', null, true, true);
   if (select business_status from public.companies) <> 'unverified' then raise exception 'FAIL [ENFORCE] borrowed another user''s verification'; end if;
 end $$;
 reset role;
@@ -91,7 +91,7 @@ select set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-0000000
 set local role authenticated;
 do $$
 begin
-  perform public.create_company('테스트회사', '123-45-67890', array['팀'], '대표5', '01010000005', '팀', null, true);
+  perform public.create_company('테스트회사', '123-45-67890', array['팀'], '대표5', '01010000005', '팀', null, true, true);
   if (select business_status from public.companies) <> 'bypass' then raise exception 'FAIL [BYPASS] bypass not applied'; end if;
 end $$;
 reset role;
@@ -103,7 +103,7 @@ do $$
 declare v_ok boolean;
 begin
   begin
-    perform public.create_company('오타회사', '1248100990', array['팀'], '대표6', '01010000006', '팀', null, true);
+    perform public.create_company('오타회사', '1248100990', array['팀'], '대표6', '01010000006', '팀', null, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'INVALID_BUSINESS_NUMBER';
   end;
@@ -117,7 +117,7 @@ select set_config('request.jwt.claims', '{"sub":"d1000000-0000-0000-0000-0000000
 set local role authenticated;
 do $$
 begin
-  perform public.create_company('경고회사', '1248100998', array['팀'], '대표7', '01010000007', '팀', null, true);
+  perform public.create_company('경고회사', '1248100998', array['팀'], '대표7', '01010000007', '팀', null, true, true);
   if (select business_status from public.companies) <> 'unverified' then raise exception 'FAIL [WARN] warn mode status'; end if;
 end $$;
 reset role;

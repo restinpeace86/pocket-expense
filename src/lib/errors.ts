@@ -3,6 +3,8 @@ const MESSAGES: Record<string, string> = {
   NOT_AUTHENTICATED: "로그인이 필요합니다. 다시 로그인해 주세요.",
   ALREADY_MEMBER: "이미 회사에 소속된 계정입니다. 한 계정은 한 회사에만 속할 수 있어요.",
   PRIVACY_REQUIRED: "개인정보 수집·이용에 동의해 주세요.",
+  TERMS_REQUIRED: "서비스 이용약관에 동의해 주세요.",
+  OPTIONAL_CONSENT_REQUIRED: "정산 계좌·차량번호를 입력하려면 [선택] 항목 수집·이용에 동의해 주세요. 동의하지 않으려면 해당 칸을 비워 주세요.",
   INVALID_COMPANY_NAME: "회사명을 1~100자로 입력해 주세요.",
   INVALID_NAME: "이름을 1~50자로 입력해 주세요.",
   INVALID_PHONE: "휴대폰 번호를 확인해 주세요. (예: 010-1234-5678)",

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ConsentSection } from "@/components/legal/consent-section";
 import { CreateCompanyForm } from "@/components/onboarding/create-company-form";
 import { InviteCodeForm } from "@/components/onboarding/invite-code-form";
 import { JoinForm } from "@/components/onboarding/join-form";
@@ -93,6 +94,14 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
               token="preview"
               prefill={{ name: "이직원", phone: "01012345678", departmentId: SAMPLE_DEPARTMENTS[1].id, position: "대리" }}
             />
+          </Card>
+        </PageShell>
+      );
+    case "consent-dialog":
+      return (
+        <PageShell>
+          <Card>
+            <ConsentSection withOptional initiallyOpen="privacy" />
           </Card>
         </PageShell>
       );

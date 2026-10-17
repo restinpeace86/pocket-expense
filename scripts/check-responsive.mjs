@@ -8,8 +8,8 @@ import fs from "node:fs";
 
 // 로그인 후 화면은 /dev/preview/* 로 점검한다 (서버를 ENABLE_UI_PREVIEW=1로 띄워야 함). 새 화면을 만들면 여기에 추가한다.
 const DEFAULT_PATHS = [
-  "/", "/login", "/join/ZZZZZZZZ", "/join/i/invalid-token",
-  "/dev/preview/onboarding", "/dev/preview/create-company", "/dev/preview/join", "/dev/preview/join-invite",
+  "/", "/login", "/terms", "/privacy", "/join/ZZZZZZZZ", "/join/i/invalid-token",
+  "/dev/preview/onboarding", "/dev/preview/create-company", "/dev/preview/join", "/dev/preview/join-invite", "/dev/preview/consent-dialog",
   "/dev/preview/workspace-admin", "/dev/preview/workspace-employee",
 ];
 const [baseArg, ...pathArgs] = process.argv.slice(2);

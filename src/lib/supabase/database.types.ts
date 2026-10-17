@@ -1035,11 +1035,15 @@ export type Database = {
           last_reminded_at: string | null
           meal_limit_override: number | null
           name: string
+          optional_consent_at: string | null
           phone: string
           position: string | null
           privacy_agreed_at: string
+          privacy_version: string | null
           role: Database["public"]["Enums"]["member_role"]
           status: Database["public"]["Enums"]["member_status"]
+          terms_agreed_at: string | null
+          terms_version: string | null
           updated_at: string
           vehicle_number: string | null
         }
@@ -1056,11 +1060,15 @@ export type Database = {
           last_reminded_at?: string | null
           meal_limit_override?: number | null
           name: string
+          optional_consent_at?: string | null
           phone: string
           position?: string | null
           privacy_agreed_at: string
+          privacy_version?: string | null
           role?: Database["public"]["Enums"]["member_role"]
           status?: Database["public"]["Enums"]["member_status"]
+          terms_agreed_at?: string | null
+          terms_version?: string | null
           updated_at?: string
           vehicle_number?: string | null
         }
@@ -1077,11 +1085,15 @@ export type Database = {
           last_reminded_at?: string | null
           meal_limit_override?: number | null
           name?: string
+          optional_consent_at?: string | null
           phone?: string
           position?: string | null
           privacy_agreed_at?: string
+          privacy_version?: string | null
           role?: Database["public"]["Enums"]["member_role"]
           status?: Database["public"]["Enums"]["member_status"]
+          terms_agreed_at?: string | null
+          terms_version?: string | null
           updated_at?: string
           vehicle_number?: string | null
         }
@@ -1262,9 +1274,11 @@ export type Database = {
           p_department_id: string
           p_employee_number: string
           p_name: string
+          p_optional_agreed: boolean
           p_phone: string
           p_position: string
           p_privacy_agreed: boolean
+          p_terms_agreed: boolean
           p_token: string
           p_vehicle_number: string
         }
@@ -1294,6 +1308,7 @@ export type Database = {
           p_my_phone: string
           p_my_position: string
           p_privacy_agreed: boolean
+          p_terms_agreed: boolean
         }
         Returns: string
       }
@@ -1316,9 +1331,11 @@ export type Database = {
           p_department_id: string
           p_employee_number: string
           p_name: string
+          p_optional_agreed: boolean
           p_phone: string
           p_position: string
           p_privacy_agreed: boolean
+          p_terms_agreed: boolean
           p_vehicle_number: string
         }
         Returns: string

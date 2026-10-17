@@ -10,12 +10,13 @@ insert into auth.users (id, instance_id, aud, role, email) values
   ('a1000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_join@test.local'),
   ('b1000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_inv@test.local'),
   ('c1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_out@test.local'),
-  ('e1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_ceo@test.local');
+  ('e1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_ceo@test.local'),
+  ('f1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_consent@test.local');
 
 -- ---------- u_a: 회사 A 생성 ----------
 select set_config('request.jwt.claims', '{"sub":"a1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
 set local role authenticated;
-select set_config('t.company_a', public.create_company('온보딩회사A', '123-45-67890', array['경영지원', '개발팀', ' 개발팀 ', ''], 'A대표', '010-1234-5678', '경영지원', '대표', true)::text, true);
+select set_config('t.company_a', public.create_company('온보딩회사A', '123-45-67890', array['경영지원', '개발팀', ' 개발팀 ', ''], 'A대표', '010-1234-5678', '경영지원', '대표', true, true)::text, true);
 do $$
 declare r record; v_ok boolean; m jsonb;
 begin
@@ -39,7 +40,7 @@ begin
 
   -- 이미 회사가 있는 계정은 회사를 또 만들 수 없다 (1계정 1회사)
   begin
-    perform public.create_company('두번째회사', '1112223334', array['팀'], 'A대표', '01012345678', '팀', null, true);
+    perform public.create_company('두번째회사', '1112223334', array['팀'], 'A대표', '01012345678', '팀', null, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'ALREADY_MEMBER';
   end;
@@ -54,13 +55,13 @@ do $$
 declare v_ok boolean;
 begin
   begin
-    perform public.create_company('번호없는회사', null, array['팀'], '외부인', '01011119999', '팀', null, true);
+    perform public.create_company('번호없는회사', null, array['팀'], '외부인', '01011119999', '팀', null, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'INVALID_BUSINESS_NUMBER';
   end;
   if not v_ok then raise exception 'FAIL [BIZNO] created company without business number'; end if;
   begin
-    perform public.create_company('짧은번호회사', '12345', array['팀'], '외부인', '01011119999', '팀', null, true);
+    perform public.create_company('짧은번호회사', '12345', array['팀'], '외부인', '01011119999', '팀', null, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'INVALID_BUSINESS_NUMBER';
   end;
@@ -76,7 +77,7 @@ select set_config('t.code_a', (select invite_code from public.companies where id
 -- ---------- u_b: 회사 B 생성 + 개별 초대 발행 ----------
 select set_config('request.jwt.claims', '{"sub":"b1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
 set local role authenticated;
-select set_config('t.company_b', public.create_company('온보딩회사B', '2223344445', array['영업팀'], 'B대표', '01098765432', '영업팀', null, true)::text, true);
+select set_config('t.company_b', public.create_company('온보딩회사B', '2223344445', array['영업팀'], 'B대표', '01098765432', '영업팀', null, true, true)::text, true);
 insert into public.member_invitations (company_id, name, phone, department_id, invited_by_member_id)
 select current_setting('t.company_b')::uuid, 'B초대직원', '01055556666',
        (select id from public.departments where name = '영업팀'),
@@ -107,20 +108,20 @@ begin
 
   -- 다른 회사(B)의 부서로 A에 가입 시도 → 거부
   begin
-    perform public.join_company(current_setting('t.code_a'), 'A가입자', '01011112222', current_setting('t.dept_b')::uuid, null, null, null, null, null, null, true);
+    perform public.join_company(current_setting('t.code_a'), 'A가입자', '01011112222', current_setting('t.dept_b')::uuid, null, null, null, null, null, null, true, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'INVALID_DEPARTMENT';
   end;
   if not v_ok then raise exception 'FAIL [U_JOIN] joined A with B department'; end if;
   -- 개인정보 동의 없이 가입 → 거부
   begin
-    perform public.join_company(current_setting('t.code_a'), 'A가입자', '01011112222', current_setting('t.dept_a')::uuid, null, null, null, null, null, null, false);
+    perform public.join_company(current_setting('t.code_a'), 'A가입자', '01011112222', current_setting('t.dept_a')::uuid, null, null, null, null, null, null, false, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'PRIVACY_REQUIRED';
   end;
   if not v_ok then raise exception 'FAIL [U_JOIN] joined without privacy consent'; end if;
 
-  perform public.join_company(current_setting('t.code_a'), 'A가입자', '010 1111 2222', current_setting('t.dept_a')::uuid, '사원', null, null, '테스트은행', '123-456', 'A가입자', true);
+  perform public.join_company(current_setting('t.code_a'), 'A가입자', '010 1111 2222', current_setting('t.dept_a')::uuid, '사원', null, null, '테스트은행', '123-456', 'A가입자', true, true, true);
   m := public.my_membership();
   if m->>'status' <> 'pending' or m->>'company_id' <> current_setting('t.company_a') or m->>'company_name' <> '온보딩회사A' then
     raise exception 'FAIL [U_JOIN] membership %', m;
@@ -132,7 +133,7 @@ begin
   end if;
   -- 이미 소속이 있으면 다른 회사 가입·초대 수락·회사 생성 불가
   begin
-    perform public.accept_invitation(current_setting('t.token_b'), 'x', '01011112222', current_setting('t.dept_b')::uuid, null, null, null, null, null, null, true);
+    perform public.accept_invitation(current_setting('t.token_b'), 'x', '01011112222', current_setting('t.dept_b')::uuid, null, null, null, null, null, null, true, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'ALREADY_MEMBER';
   end;
@@ -164,13 +165,13 @@ begin
   end if;
   -- A 부서로 B 초대 수락 시도 → 거부
   begin
-    perform public.accept_invitation(current_setting('t.token_b'), 'B초대직원', '01055556666', current_setting('t.dept_a')::uuid, null, null, null, null, null, null, true);
+    perform public.accept_invitation(current_setting('t.token_b'), 'B초대직원', '01055556666', current_setting('t.dept_a')::uuid, null, null, null, null, null, null, true, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'INVALID_DEPARTMENT';
   end;
   if not v_ok then raise exception 'FAIL [U_INV] accepted with A department'; end if;
 
-  perform public.accept_invitation(current_setting('t.token_b'), 'B초대직원', '01055556666', current_setting('t.dept_b')::uuid, null, null, null, null, null, null, true);
+  perform public.accept_invitation(current_setting('t.token_b'), 'B초대직원', '01055556666', current_setting('t.dept_b')::uuid, null, null, null, null, null, null, true, true, true);
   m := public.my_membership();
   if m->>'status' <> 'approved' or m->>'role' <> 'employee' or m->>'company_id' <> current_setting('t.company_b') then
     raise exception 'FAIL [U_INV] membership %', m;
@@ -189,7 +190,7 @@ declare v_ok boolean;
 begin
   if public.get_invitation_public(current_setting('t.token_b')) is not null then raise exception 'FAIL [U_OUT] used token still public'; end if;
   begin
-    perform public.accept_invitation(current_setting('t.token_b'), 'x', '01011113333', current_setting('t.dept_b')::uuid, null, null, null, null, null, null, true);
+    perform public.accept_invitation(current_setting('t.token_b'), 'x', '01011113333', current_setting('t.dept_b')::uuid, null, null, null, null, null, null, true, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'INVALID_INVITATION';
   end;
@@ -207,7 +208,7 @@ declare v_ok boolean;
 begin
   if public.get_invite_company(current_setting('t.code_a')) <> '온보딩회사A' then raise exception 'FAIL [ANON] invite company name'; end if;
   begin
-    perform public.create_company('익명회사', null, array['팀'], '익명', '01011114444', '팀', null, true);
+    perform public.create_company('익명회사', null, array['팀'], '익명', '01011114444', '팀', null, true, true);
     v_ok := false;
   exception when insufficient_privilege then v_ok := true;
   end;
@@ -229,13 +230,13 @@ declare v_ok boolean; m jsonb;
 begin
   -- 목록에 없는 부서는 여전히 거부
   begin
-    perform public.create_company('부서없음회사', '3334445556', array['영업팀'], '대표', '01077778888', '없는부서', null, true);
+    perform public.create_company('부서없음회사', '3334445556', array['영업팀'], '대표', '01077778888', '없는부서', null, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'INVALID_MY_DEPARTMENT';
   end;
   if not v_ok then raise exception 'FAIL [CEO] accepted department not in list'; end if;
 
-  perform public.create_company('부서없음회사', '3334445556', array['영업팀'], '대표', '01077778888', '', '대표이사', true);
+  perform public.create_company('부서없음회사', '3334445556', array['영업팀'], '대표', '01077778888', '', '대표이사', true, true);
   m := public.my_membership();
   if m->>'role' <> 'super_admin' or m->>'status' <> 'approved' then raise exception 'FAIL [CEO] membership %', m; end if;
   if (select department_id from public.members where auth_user_id = 'e1000000-0000-0000-0000-000000000001') is not null then
@@ -253,11 +254,45 @@ do $$
 declare v_ok boolean;
 begin
   begin
-    perform public.join_company(current_setting('t.code_ceo'), '직원', '01011115555', null, null, null, null, null, null, null, true);
+    perform public.join_company(current_setting('t.code_ceo'), '직원', '01011115555', null, null, null, null, null, null, null, true, true, true);
     v_ok := false;
   exception when others then v_ok := sqlerrm = 'INVALID_DEPARTMENT';
   end;
   if not v_ok then raise exception 'FAIL [CEO] employee joined without department'; end if;
+end $$;
+reset role;
+
+-- ---------- 동의 (D-059): 약관 필수, 선택 항목은 선택 동의 필요, 동의 기록 저장 ----------
+select set_config('request.jwt.claims', '{"sub":"f1000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare v_ok boolean; v_dept uuid;
+begin
+  select id into v_dept from public.get_invite_departments(current_setting('t.code_a')) limit 1;
+  begin
+    perform public.join_company(current_setting('t.code_a'), '동의자', '01033334444', v_dept, null, null, null, null, null, null, true, false, false);
+    v_ok := false;
+  exception when others then v_ok := sqlerrm = 'TERMS_REQUIRED';
+  end;
+  if not v_ok then raise exception 'FAIL [CONSENT] joined without terms consent'; end if;
+  begin
+    perform public.join_company(current_setting('t.code_a'), '동의자', '01033334444', v_dept, null, null, '12가3456', null, null, null, true, true, false);
+    v_ok := false;
+  exception when others then v_ok := sqlerrm = 'OPTIONAL_CONSENT_REQUIRED';
+  end;
+  if not v_ok then raise exception 'FAIL [CONSENT] stored optional data without optional consent'; end if;
+  begin
+    perform public.create_company('약관미동의회사', '4445556667', array['팀'], '대표', '01033334444', '팀', null, true, false);
+    v_ok := false;
+  exception when others then v_ok := sqlerrm = 'TERMS_REQUIRED';
+  end;
+  if not v_ok then raise exception 'FAIL [CONSENT] created company without terms consent'; end if;
+
+  perform public.join_company(current_setting('t.code_a'), '동의자', '01033334444', v_dept, null, null, null, null, null, null, true, true, false);
+  if (select terms_agreed_at is null or privacy_agreed_at is null or terms_version is null or privacy_version is null or optional_consent_at is not null
+        from public.members where auth_user_id = 'f1000000-0000-0000-0000-000000000001') then
+    raise exception 'FAIL [CONSENT] consent record not stored correctly';
+  end if;
 end $$;
 reset role;
 
