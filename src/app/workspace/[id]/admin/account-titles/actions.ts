@@ -5,6 +5,7 @@ import { getMembership } from "@/lib/auth/session";
 import { messageForDbError } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "../actions";
+import type { Classification } from "@/lib/expense/categories";
 
 // 계정과목·매핑 (spec/features/account-titles.md). 권한·회사 일치는 RLS(관리자 이상, 자기 회사), 값 검증은 DB 제약(023)이 강제한다.
 function errorMessage(error: { code?: string; message?: string }): string {
@@ -58,22 +59,19 @@ export async function deleteAccountTitleAction(id: string): Promise<ActionResult
 }
 
 // 분류 하나의 계정과목 바꾸기. 매핑이 없던 분류(옛 회사 등)는 새로 만든다.
-export async function setMappingAction(
-  category: "meal" | "trip" | "meeting",
-  tripType: "meal" | "public_transport" | "taxi" | "toll_parking" | "lodging" | "own_car" | "other" | null,
-  accountTitleId: string,
-): Promise<ActionResult> {
+export async function setMappingAction(c: Classification, accountTitleId: string): Promise<ActionResult> {
   const membership = await getMembership();
   if (!membership || membership.status !== "approved") return { error: messageForDbError({ message: "NOT_A_MEMBER" }) };
   const supabase = await createClient();
-  let q = supabase.from("account_title_mappings").update({ account_title_id: accountTitleId }).eq("company_id", membership.company_id).eq("category", category);
-  q = tripType ? q.eq("trip_type", tripType) : q.is("trip_type", null);
+  let q = supabase.from("account_title_mappings").update({ account_title_id: accountTitleId }).eq("company_id", membership.company_id).eq("category", c.category);
+  q = c.tripType ? q.eq("trip_type", c.tripType) : q.is("trip_type", null);
+  q = c.purchaseType ? q.eq("purchase_type", c.purchaseType) : q.is("purchase_type", null);
   const { data, error } = await q.select("id");
   if (error) return { error: errorMessage(error) };
   if (!data?.length) {
     const { error: insertError } = await supabase
       .from("account_title_mappings")
-      .insert({ company_id: membership.company_id, category, trip_type: tripType, account_title_id: accountTitleId });
+      .insert({ company_id: membership.company_id, category: c.category, trip_type: c.tripType, purchase_type: c.purchaseType, account_title_id: accountTitleId });
     if (insertError) return { error: errorMessage(insertError) };
   }
   refresh();

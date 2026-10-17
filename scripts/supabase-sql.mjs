@@ -84,12 +84,20 @@ try {
   if (mode === "--migrate") await migrate(cfg);
   else if (mode === "--file" && arg) console.log(JSON.stringify(await runSql(cfg, fs.readFileSync(arg, "utf8"))));
   else if (mode === "--types" && arg) await generateTypes(cfg, arg);
+  else if (mode === "--dry" && arg) {
+    // 적용 전 시험: 마이그레이션 1개 + 테스트 파일들을 한 트랜잭션에서 실행하고 되돌린다(DB에 흔적 없음).
+    // db:migrate는 대기 중인 마이그레이션을 모두 적용하므로, 반드시 이걸로 먼저 시험한다.
+    const strip = (sql) => sql.replace(/^\s*begin;\s*$/gim, "").replace(/^\s*rollback;\s*$/gim, "");
+    const tests = process.argv.slice(4).map((f) => strip(fs.readFileSync(f, "utf8"))).join("\n");
+    const sql = `begin;\n${fs.readFileSync(arg, "utf8")}\n${tests}\nrollback;`;
+    console.log(JSON.stringify(await runSql(cfg, sql)));
+  }
   else if (mode === "--vacuum") await vacuum(cfg);
   else if (mode === "--bench" && arg) {
     // 측정이 실패해도 공간은 반드시 돌려준다
     try { console.log(JSON.stringify(await runSql(cfg, fs.readFileSync(arg, "utf8")))); } finally { await vacuum(cfg); }
   }
-  else { console.error("usage: --migrate | --file <sql> | --types <out.ts> | --vacuum | --bench <sql>"); process.exitCode = 2; }
+  else { console.error("usage: --migrate | --dry <migration.sql> [test.sql...] | --file <sql> | --types <out.ts> | --vacuum | --bench <sql>"); process.exitCode = 2; }
 } catch (err) {
   console.error(`SQL 실행 실패: ${err.message}`);
   process.exitCode = 1;

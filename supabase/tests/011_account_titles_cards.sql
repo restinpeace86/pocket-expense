@@ -62,6 +62,11 @@ select public._t_expect_code($q$insert into public.account_titles (company_id, n
 select public._t_expect_code($q$update public.account_title_mappings set account_title_id = 'b0300000-0000-0000-0000-000000000001' where id = 'a0400000-0000-0000-0000-000000000001'$q$, '23503', 'A_SUP map to B title');
 select public._t_expect_code($q$delete from public.account_titles where id = 'a0300000-0000-0000-0000-000000000002'$q$, '23503', 'A_SUP delete mapped title');
 select public._t_expect_code($q$insert into public.account_titles (company_id, name) values ('c0100000-0000-0000-0000-00000000000a', '복리후생비')$q$, '23505', 'A_SUP duplicate title');
+-- 물품 구매 매핑은 세부 유형이 꼭 있어야 하고, 출장 세부 유형과 섞을 수 없다 (D-076)
+select public._t_expect_code($q$insert into public.account_title_mappings (company_id, category, account_title_id) values ('c0100000-0000-0000-0000-00000000000a', 'purchase', 'a0300000-0000-0000-0000-000000000001')$q$, '23514', 'A_SUP purchase without sub type');
+select public._t_expect_code($q$insert into public.account_title_mappings (company_id, category, trip_type, purchase_type, account_title_id) values ('c0100000-0000-0000-0000-00000000000a', 'purchase', 'taxi', 'pantry', 'a0300000-0000-0000-0000-000000000001')$q$, '23514', 'A_SUP purchase with trip type');
+insert into public.account_title_mappings (company_id, category, purchase_type, account_title_id) values ('c0100000-0000-0000-0000-00000000000a', 'purchase', 'pantry', 'a0300000-0000-0000-0000-000000000001');
+select public._t_expect_code($q$insert into public.account_title_mappings (company_id, category, purchase_type, account_title_id) values ('c0100000-0000-0000-0000-00000000000a', 'purchase', 'pantry', 'a0300000-0000-0000-0000-000000000002')$q$, '23505', 'A_SUP duplicate purchase mapping');
 select public._t_expect_code($q$insert into public.account_titles (company_id, name) values ('c0100000-0000-0000-0000-00000000000a', '   ')$q$, '23514', 'A_SUP blank title');
 select public._t_expect_code($q$insert into public.corporate_cards (company_id, nickname, last4) values ('c0100000-0000-0000-0000-00000000000a', '중복', '7890')$q$, '23505', 'A_SUP duplicate active last4');
 select public._t_expect_code($q$insert into public.corporate_cards (company_id, nickname, last4) values ('c0100000-0000-0000-0000-00000000000a', '이상', '12a4')$q$, '23514', 'A_SUP bad last4');

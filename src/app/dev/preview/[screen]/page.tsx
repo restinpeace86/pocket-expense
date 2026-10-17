@@ -218,12 +218,16 @@ async function Preview({
               { id: "t1", name: "복리후생비", code: "811", sort_order: 1, used: true },
               { id: "t2", name: "여비교통비", code: "812", sort_order: 2, used: true },
               { id: "t3", name: "기업업무추진비", code: null, sort_order: 3, used: true },
-              { id: "t4", name: "회의비(외부 손님 응대 아닌 내부 회의 다과)", code: "830", sort_order: 4, used: false },
+              { id: "t5", name: "소모품비", code: "830", sort_order: 4, used: true },
+              { id: "t4", name: "회의비(외부 손님 응대 아닌 내부 회의 다과)", code: "831", sort_order: 5, used: false },
             ]}
             mappings={[
-              { id: "m1", category: "meal", trip_type: null, account_title_id: "t1" },
-              ...["meal", "public_transport", "taxi", "toll_parking", "lodging", "own_car", "other"].map((t, i) => ({ id: `m${i + 2}`, category: "trip" as const, trip_type: t, account_title_id: "t2" })),
-              { id: "m9", category: "meeting", trip_type: null, account_title_id: "t3" },
+              { id: "m1", category: "meal", trip_type: null, purchase_type: null, account_title_id: "t1" },
+              ...["meal", "public_transport", "taxi", "toll_parking", "lodging", "own_car", "other"].map((t, i) => ({ id: `m${i + 2}`, category: "trip" as const, trip_type: t, purchase_type: null, account_title_id: "t2" })),
+              { id: "m9", category: "meeting", trip_type: null, purchase_type: null, account_title_id: "t3" },
+              { id: "m10", category: "purchase", trip_type: null, purchase_type: "pantry", account_title_id: "t1" },
+              { id: "m11", category: "purchase", trip_type: null, purchase_type: "office_supplies", account_title_id: "t5" },
+              { id: "m12", category: "purchase", trip_type: null, purchase_type: "small_equipment", account_title_id: "t5" },
             ]}
             preview
           />

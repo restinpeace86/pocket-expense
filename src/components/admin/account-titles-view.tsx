@@ -12,7 +12,7 @@ import { FormError } from "@/components/onboarding/field";
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { AccountTitleRow, MappingRow } from "@/lib/admin/queries";
-import { classificationLabel, MAPPING_ROWS, type TripType } from "@/lib/expense/categories";
+import { classificationLabel, MAPPING_ROWS } from "@/lib/expense/categories";
 import { measureAction } from "@/lib/perf/client";
 
 type Result = { error: string | null };
@@ -36,6 +36,10 @@ export function AccountTitlesHeading() {
           <p>
             <b>무엇을 바꾸면 되나요?</b> 처음에는 일반적인 기본값이 들어 있어요. 담당 세무사가 쓰는 계정과목 이름과 코드(회계 프로그램의 계정코드)가 다르면
             맞춰 주세요. 담당 세무사와 확인한 뒤 설정하는 걸 권장해요.
+          </p>
+          <p>
+            <b>회사 물품 구매는?</b> 탕비실 간식·커피는 복리후생비, 사무용품과 마우스·키보드 같은 소액 비품은 소모품비가 기본이에요. 노트북처럼 비싼 물건은
+            회사 자산으로 따로 처리하는 경우가 많으니 담당 세무사와 기준을 정해 주세요.
           </p>
           <p>
             <b>바꾸면?</b> 이후에 상신되는 소명서부터 적용돼요. 이미 상신된 영수증은 그대로이고, 필요하면 지출 승인 관리에서 하나씩 조정할 수 있어요.
@@ -67,8 +71,9 @@ export function AccountTitlesView({ titles, mappings, preview = false }: { title
     });
   }
 
-  const mappingFor = (category: string, tripType: string | null) =>
-    mappings.find((m) => m.category === category && (m.trip_type ?? null) === tripType)?.account_title_id ?? "";
+  const mappingFor = (category: string, tripType: string | null, purchaseType: string | null) =>
+    mappings.find((m) => m.category === category && (m.trip_type ?? null) === tripType && (m.purchase_type ?? null) === purchaseType)
+      ?.account_title_id ?? "";
 
   return (
     <div className="flex flex-col gap-4">
@@ -79,19 +84,20 @@ export function AccountTitlesView({ titles, mappings, preview = false }: { title
         <SectionHeading title="분류별 계정과목" summary="영수증 분류마다 어떤 계정과목으로 넘길지 골라요." />
         <ul className="mt-4 flex flex-col divide-y divide-zinc-100">
           {MAPPING_ROWS.map((r) => {
-            const value = mappingFor(r.category, r.tripType);
+            const value = mappingFor(r.category, r.tripType, r.purchaseType);
+            const label = classificationLabel(r);
             return (
-              <li key={`${r.category}-${r.tripType ?? ""}`} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-sm font-medium text-zinc-800">{classificationLabel(r.category, r.tripType as TripType | null)}</span>
+              <li key={`${r.category}-${r.tripType ?? ""}-${r.purchaseType ?? ""}`} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-sm font-medium text-zinc-800">{label}</span>
                 <select
                   className={`${inputClass} sm:w-56`}
                   value={value}
                   disabled={pending}
-                  aria-label={`${classificationLabel(r.category, r.tripType as TripType | null)} 계정과목`}
+                  aria-label={`${label} 계정과목`}
                   onChange={(e) =>
                     run(
                       "map",
-                      () => setMappingAction(r.category, r.tripType, e.target.value),
+                      () => setMappingAction(r, e.target.value),
                       undefined,
                       "저장했어요. 이후 상신되는 소명서부터 적용돼요.",
                     )

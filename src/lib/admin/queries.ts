@@ -100,13 +100,19 @@ export async function getCompanySettings(companyId: string): Promise<CompanySett
 }
 
 export type AccountTitleRow = { id: string; name: string; code: string | null; sort_order: number; used: boolean };
-export type MappingRow = { id: string; category: "meal" | "trip" | "meeting"; trip_type: string | null; account_title_id: string };
+export type MappingRow = {
+  id: string;
+  category: "meal" | "trip" | "meeting" | "purchase";
+  trip_type: string | null;
+  purchase_type: string | null;
+  account_title_id: string;
+};
 
 export async function getAccountTitles(companyId: string): Promise<{ titles: AccountTitleRow[]; mappings: MappingRow[] }> {
   const supabase = await createClient();
   const [{ data: titles }, { data: mappings }] = await Promise.all([
     supabase.from("account_titles").select("id, name, code, sort_order").eq("company_id", companyId).order("sort_order").order("name"),
-    supabase.from("account_title_mappings").select("id, category, trip_type, account_title_id").eq("company_id", companyId),
+    supabase.from("account_title_mappings").select("id, category, trip_type, purchase_type, account_title_id").eq("company_id", companyId),
   ]);
   const used = new Set((mappings ?? []).map((m) => m.account_title_id));
   return {

@@ -23,7 +23,7 @@
 | `supply_amount` | integer \| null | 공급가액. 표기 없으면 null |
 | `vat_amount` | integer \| null | 부가세. 표기 없으면 null (계산으로 추정하지 않음) |
 | `expense_date` | `YYYY-MM-DD` | 결제일자 |
-| `suggested_category` | `meal` / `trip` / `meeting` / null | 카테고리 추천(D-032). 카테고리가 비어 있을 때만 기본값으로 채우고 "AI 추천" 표시. 판단이 어려우면 null |
+| `suggested_category` | `meal` / `trip` / `meeting` / `purchase` / null (편의점·마트·문구점·전자제품 매장이면 `purchase`, D-076) | 카테고리 추천(D-032). 카테고리가 비어 있을 때만 기본값으로 채우고 "AI 추천" 표시. 판단이 어려우면 null |
 | `suggested_trip_type` | `trip_type` 값 / null | 출장비일 때 세부 유형 추천. 예: 식당 → `meal`, 톨게이트·하이패스·주차장 → `toll_parking`, 승차권·항공권 → `public_transport`, 택시 → `taxi`, 호텔·숙박 → `lodging` |
 
 - **출장 소명서**(`is_business_trip`)에 올린 영수증은 카테고리를 `trip`으로 고정해 추천하고 `suggested_trip_type`만 판단한다. 일반 소명서에서는 식당 영수증을 일반 식대(`meal`)로 추천한다(D-035). 파싱 요청에 소명서의 출장 여부를 함께 넘긴다.

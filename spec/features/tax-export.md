@@ -40,7 +40,7 @@ PocketExpense_{회사명}_{YYYY-MM}.zip
 | 거래 | 공급가액 / 부가세 / 합계금액 | `supply_amount` / `vat_amount` / `amount` |
 | 거래 | 결제수단 / 법인카드(끝 4자리) | 법인카드 / 개인(사비) (D-048) / 사용한 법인카드 별칭·끝 4자리(등록 회사만, D-055) |
 | 회계 | 계정과목 / 계정코드 | 항목의 `account_title_name` / `account_title_code` (D-036, `account-titles.md`). 관리자 조정 건은 그대로 반영 |
-| 분류 | 카테고리 / 출장 세부유형 | 일반 식대·출장비·외부 미팅비 / `trip_type` 표시명 (출장 식비, 대중교통, 택시, 통행료·주차, 숙박, 자차 유류비, 기타) |
+| 분류 | 카테고리 / 세부유형 | 일반 식대·출장비·외부 미팅비·회사 물품 구매 / `trip_type`·`purchase_type` 표시명 (출장 식비, 대중교통, 택시, 통행료·주차, 숙박, 자차 유류비, 기타) |
 | 청구자 | 부서 / 사용자 / 직급 / 사번 | `members`, `departments` |
 | 내용 | 지출목적(적요) | `purpose` |
 | 내용 | 인원수 / 참석자 / 거래처 | `headcount` / `attendees` / `client_name` |

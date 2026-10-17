@@ -90,7 +90,7 @@ over       = max(amount - limit, 0)
 - 출장 식비도 같은 1식 한도를 적용한다(D-040). 계정과목은 여비교통비 그대로다(D-036).
 - 한도는 항목(영수증) 단위로 적용한다. 같은 소명서 안 여러 식대 항목의 한도를 합산·이월하지 않는다.
 
-### 5.2 외부 미팅비 (`meeting`), 출장비 중 `own_car`·`meal` 외 유형
+### 5.2 외부 미팅비 (`meeting`), 회사 물품 구매 (`purchase`, D-076), 출장비 중 `own_car`·`meal` 외 유형
 ```
 company_supported_amount = amount
 personal_burden_amount   = 0

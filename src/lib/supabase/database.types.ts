@@ -21,6 +21,7 @@ export type Database = {
           company_id: string
           created_at: string
           id: string
+          purchase_type: Database["public"]["Enums"]["purchase_type"] | null
           trip_type: Database["public"]["Enums"]["trip_type"] | null
           updated_at: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           company_id: string
           created_at?: string
           id?: string
+          purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
           trip_type?: Database["public"]["Enums"]["trip_type"] | null
           updated_at?: string
         }
@@ -39,6 +41,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           id?: string
+          purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
           trip_type?: Database["public"]["Enums"]["trip_type"] | null
           updated_at?: string
         }
@@ -712,6 +715,7 @@ export type Database = {
           parse_status: Database["public"]["Enums"]["parse_status"]
           payment_method: Database["public"]["Enums"]["payment_method"]
           personal_burden_amount: number
+          purchase_type: Database["public"]["Enums"]["purchase_type"] | null
           purpose: string | null
           receipt_path: string | null
           receipt_thumb_path: string | null
@@ -767,6 +771,7 @@ export type Database = {
           parse_status?: Database["public"]["Enums"]["parse_status"]
           payment_method?: Database["public"]["Enums"]["payment_method"]
           personal_burden_amount?: number
+          purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
           purpose?: string | null
           receipt_path?: string | null
           receipt_thumb_path?: string | null
@@ -822,6 +827,7 @@ export type Database = {
           parse_status?: Database["public"]["Enums"]["parse_status"]
           payment_method?: Database["public"]["Enums"]["payment_method"]
           personal_burden_amount?: number
+          purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
           purpose?: string | null
           receipt_path?: string | null
           receipt_thumb_path?: string | null
@@ -1493,7 +1499,7 @@ export type Database = {
         | "tax_invoice"
         | "simple_receipt"
         | "other"
-      expense_category: "meal" | "trip" | "meeting"
+      expense_category: "meal" | "trip" | "meeting" | "purchase"
       invitation_status: "invited" | "accepted" | "canceled"
       meal_limit_mode: "split" | "notify"
       member_role: "super_admin" | "admin" | "employee"
@@ -1501,6 +1507,7 @@ export type Database = {
       notification_status: "queued" | "sent" | "failed"
       parse_status: "none" | "parsing" | "success" | "failed"
       payment_method: "corporate_card" | "personal_card"
+      purchase_type: "pantry" | "office_supplies" | "small_equipment"
       trip_type:
         | "meal"
         | "public_transport"
@@ -1661,7 +1668,7 @@ export const Constants = {
         "simple_receipt",
         "other",
       ],
-      expense_category: ["meal", "trip", "meeting"],
+      expense_category: ["meal", "trip", "meeting", "purchase"],
       invitation_status: ["invited", "accepted", "canceled"],
       meal_limit_mode: ["split", "notify"],
       member_role: ["super_admin", "admin", "employee"],
@@ -1669,6 +1676,7 @@ export const Constants = {
       notification_status: ["queued", "sent", "failed"],
       parse_status: ["none", "parsing", "success", "failed"],
       payment_method: ["corporate_card", "personal_card"],
+      purchase_type: ["pantry", "office_supplies", "small_equipment"],
       trip_type: [
         "meal",
         "public_transport",
