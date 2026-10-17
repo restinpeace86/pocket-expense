@@ -1374,6 +1374,18 @@ export type Database = {
         Args: { p_member_id: string }
         Returns: undefined
       }
+      update_company_settings: {
+        Args: {
+          p_business_number: string
+          p_claim_deadline_days: number
+          p_claim_deadline_type: Database["public"]["Enums"]["claim_deadline_type"]
+          p_fuel_rate_per_km: number
+          p_meal_limit_mode: Database["public"]["Enums"]["meal_limit_mode"]
+          p_meal_limit_per_person: number
+          p_name: string
+        }
+        Returns: undefined
+      }
       update_member: {
         Args: {
           p_department_id: string

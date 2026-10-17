@@ -61,3 +61,24 @@ export async function getDepartments(companyId: string): Promise<DepartmentRow[]
   const withLine = new Set((lines ?? []).map((l) => l.department_id));
   return (departments ?? []).map((d) => ({ ...d, memberCount: counts.get(d.id) ?? 0, hasApprovalLine: withLine.has(d.id) }));
 }
+
+export type CompanySettings = {
+  name: string;
+  business_number: string;
+  invite_code: string;
+  meal_limit_per_person: number;
+  meal_limit_mode: "split" | "notify";
+  fuel_rate_per_km: number;
+  claim_deadline_type: "none" | "end_of_month" | "days_after";
+  claim_deadline_days: number | null;
+};
+
+export async function getCompanySettings(companyId: string): Promise<CompanySettings | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("companies")
+    .select("name, business_number, invite_code, meal_limit_per_person, meal_limit_mode, fuel_rate_per_km, claim_deadline_type, claim_deadline_days")
+    .eq("id", companyId)
+    .maybeSingle();
+  return data;
+}

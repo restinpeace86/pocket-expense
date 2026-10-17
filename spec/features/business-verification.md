@@ -19,6 +19,7 @@
 
 - **통과 구멍**: `business_verify_bypass_numbers`(쉼표 구분)에 넣은 번호는 어떤 모드에서도 체크섬·조회 없이 통과(`bypass`). 테스트·데모용.
 - 판정은 `create_company`(DB) 안에서 한다. 화면을 거치지 않고 함수를 직접 불러도 피할 수 없다.
+- 회사 설정에서 번호를 바꿀 때도 `update_company_settings`(DB)가 같은 판정을 한다. `companies.business_number`는 직접 UPDATE할 수 없다(D-063).
 - 조회 결과는 서버가 service role로 `business_verifications`에 **사용자별로** 기록하고, DB는 **같은 사용자가 최근 30분 안에 조회한 결과**만 인정한다(다른 사람의 조회 결과를 빌려 쓸 수 없음). 앱 사용자는 이 테이블을 읽거나 쓸 수 없다.
 - 휴업자 처리(경고 후 통과)는 Claude 제안으로 잠정 결정했다. 바꾸려면 D-057을 수정한다.
 

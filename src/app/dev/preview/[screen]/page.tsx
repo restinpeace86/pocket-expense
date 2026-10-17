@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminHomeView } from "@/components/admin/admin-home-view";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { CompanySettingsForm } from "@/components/admin/company-settings-form";
 import { DepartmentsView } from "@/components/admin/departments-view";
 import { MemberDetailView } from "@/components/admin/member-detail";
 import { capabilitiesFor } from "@/lib/admin/capabilities";
@@ -227,6 +228,26 @@ async function Preview({ params }: { params: PageProps<"/dev/preview/[screen]">[
             backHref="#"
             preview
           />
+        </AdminShell>
+      );
+    case "admin-settings":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP}>
+          <h1 className="text-2xl font-bold tracking-tight">지출 한도·정책</h1>
+          <CompanySettingsForm
+            settings={{
+              name: "포켓컴퍼니 주식회사",
+              business_number: "1248100998",
+              invite_code: "ABCD2345",
+              meal_limit_per_person: 10000,
+              meal_limit_mode: "split",
+              fuel_rate_per_km: 200,
+              claim_deadline_type: "days_after",
+              claim_deadline_days: 30,
+            }}
+            preview
+          />
+          <InviteLinkCard inviteCode="ABCD2345" companyName="포켓컴퍼니 주식회사" preview compact />
         </AdminShell>
       );
     case "admin-departments":

@@ -37,7 +37,7 @@ const NAV: NavItem[] = [
   { href: "/export", label: "세무 마감", icon: FileDown, ready: false },
 ];
 const SETTINGS_NAV: NavItem[] = [
-  { href: "/settings", label: "지출 한도·정책", icon: SlidersHorizontal, ready: false },
+  { href: "/settings", label: "지출 한도·정책", icon: SlidersHorizontal, ready: true },
   { href: "/corporate-cards", label: "법인카드", icon: CreditCard, ready: false },
   { href: "/form-template", label: "사내 양식", icon: FileText, ready: false },
   { href: "/departments", label: "부서", icon: Building2, ready: true },

@@ -12,7 +12,7 @@ const DEFAULT_PATHS = [
   "/dev/preview/onboarding", "/dev/preview/create-company", "/dev/preview/join", "/dev/preview/join-invite", "/dev/preview/consent-dialog",
   "/dev/preview/workspace-admin", "/dev/preview/workspace-employee",
   "/dev/preview/admin-home", "/dev/preview/admin-home-team", "/dev/preview/admin-members",
-  "/dev/preview/admin-members-all", "/dev/preview/admin-member-detail", "/dev/preview/admin-member-readonly", "/dev/preview/admin-member-inactive", "/dev/preview/admin-departments",
+  "/dev/preview/admin-members-all", "/dev/preview/admin-member-detail", "/dev/preview/admin-member-readonly", "/dev/preview/admin-member-inactive", "/dev/preview/admin-departments", "/dev/preview/admin-settings",
 ];
 const [baseArg, ...pathArgs] = process.argv.slice(2);
 const base = (baseArg ?? "http://localhost:3000").replace(/\/$/, "");
