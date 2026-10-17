@@ -1,6 +1,6 @@
 # [Spec] 출장비 (출장 소명서 · 세부 유형 · 자차 거리/유류비)
 
-관련: D-008, D-018, D-034, D-035, D-040, O-04 / 데이터: `expense_claims`의 출장 정보, `expense_items`의 trip 관련 컬럼 / 계산 규칙 원본: `spec/data/expense-lifecycle.md` §5.2, §5.3
+관련: D-008, D-018, D-034, D-035, D-040, D-068, D-069 / 데이터: `expense_claims`의 출장 정보, `expense_items`의 trip 관련 컬럼 / 계산 규칙 원본: `spec/data/expense-lifecycle.md` §5.2, §5.3
 
 ## 1. 일반 경비와 출장비의 구분 (D-035)
 - **출장 중에 쓴 비용은 종류와 상관없이 모두 출장비(`trip`)** 로 분류한다. 출장 중 식비, 교통비, 톨게이트비, 주차비, 숙박비, 자차 유류비가 모두 출장비의 세부 유형이다.

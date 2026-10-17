@@ -252,7 +252,7 @@
 | start_lat / start_lng | numeric | null | 출발지 좌표 |
 | end_location | text | null | 도착지 주소 (`own_car`) |
 | end_lat / end_lng | numeric | null | 도착지 좌표 |
-| is_round_trip | boolean | null | 왕복 여부 (기준 미결 O-04) |
+| is_round_trip | boolean | null | 왕복 여부. true면 distance_km = 편도 × 2 (D-069, 기본 왕복) |
 | distance_km | numeric(8,1) | null | 주행거리 |
 | distance_source | distance_source | null | |
 | applied_fuel_rate_per_km | integer | null | 계산 시점 단가 스냅샷 (D-018) |

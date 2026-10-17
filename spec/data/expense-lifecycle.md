@@ -102,7 +102,7 @@ amount = round(distance_km × applied_fuel_rate_per_km)   // 원 단위 반올�
 company_supported_amount = amount
 personal_burden_amount   = 0
 ```
-- 왕복 처리 기준은 미결(O-04). 잠정: `distance_km`에 실제 총 주행거리를 넣고 그대로 계산한다.
+- 왕복 처리(D-069): [왕복] 체크 기본값. 체크하면 `distance_km` = 편도 거리 × 2, `is_round_trip=true`.
 
 ### 5.4 소명서 합계
 ```
