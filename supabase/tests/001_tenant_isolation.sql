@@ -352,7 +352,7 @@ set local role anon;
 do $$
 declare v_ok boolean;
 begin
-  if (select count(*) from public.billing_plans) <> 3 then raise exception 'FAIL [ANON] billing_plans not readable'; end if;
+  if (select count(*) from public.billing_plans) = 0 then raise exception 'FAIL [ANON] billing_plans not readable'; end if;
   begin
     perform count(*) from public.expense_claims;
     v_ok := false;

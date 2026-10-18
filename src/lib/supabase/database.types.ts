@@ -199,7 +199,9 @@ export type Database = {
           code: string
           created_at: string
           id: string
+          is_featured: boolean
           is_purchasable: boolean
+          is_unlimited: boolean
           monthly_price: number
           monthly_receipts: number
           name: string
@@ -211,7 +213,9 @@ export type Database = {
           code: string
           created_at?: string
           id?: string
+          is_featured?: boolean
           is_purchasable?: boolean
+          is_unlimited?: boolean
           monthly_price: number
           monthly_receipts: number
           name: string
@@ -223,7 +227,9 @@ export type Database = {
           code?: string
           created_at?: string
           id?: string
+          is_featured?: boolean
           is_purchasable?: boolean
+          is_unlimited?: boolean
           monthly_price?: number
           monthly_receipts?: number
           name?: string

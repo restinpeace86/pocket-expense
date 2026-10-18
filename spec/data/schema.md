@@ -56,13 +56,15 @@
 ### 2.1a `billing_plans` — 요금제 (D-046, 표시용)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
-| code | text | not null, unique | `basic` / `standard` / `pro` |
-| name | text | not null | 베이직 / 스탠다드 / 프로 |
-| monthly_price | integer | not null | 40000 / 70000 / 100000 |
-| monthly_receipts | integer | not null | 300 / 600 / 1000 |
-| recommended_size | text | null | 5~10인 / 10~20인 / 20~30인 |
+| code | text | not null, unique | `starter` / `standard` / `pro` / `enterprise` |
+| name | text | not null | 스타터 / 스탠다드 / 프로 / 엔터프라이즈 (D-077) |
+| monthly_price | integer | not null | 25000 / 50000 / 100000 / 200000 (부가세 별도) |
+| monthly_receipts | integer | not null | 150 / 400 / 1000 / 3000(무제한 요금제의 공정 사용 기준) |
+| recommended_size | text | null | 5~10인 / 10~25인 / 25~50인 / 50인 이상 |
 | sort_order | integer | default 0 | |
 | is_purchasable | boolean | not null, default false | 결제 가능 여부. 결제 연동 전까지 false (D-046) |
+| is_unlimited | boolean | not null, default false | 무제한 요금제(장수는 공정 사용 기준) (D-077) |
+| is_featured | boolean | not null, default false | 화면에 "추천" 표시 (D-077) |
 - `id`·`created_at` 외 회사와 무관한 공용 데이터. 시드 마이그레이션으로 넣는다.
 
 ### 2.1b `credit_ledger` — 크레딧 이력 (D-046)
