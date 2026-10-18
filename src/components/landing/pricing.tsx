@@ -1,4 +1,3 @@
-import { Lock } from "lucide-react";
 import { formatWon } from "@/lib/format";
 import { createPublicClient } from "@/lib/supabase/public";
 
@@ -31,10 +30,10 @@ export async function Pricing() {
     <section id="pricing" className="mx-auto w-full max-w-6xl px-4 py-20">
       <div className="text-center">
         <span className="inline-block text-balance rounded-full bg-emerald-400/15 px-3 py-1 text-sm font-medium text-emerald-300">
-          지금 가입하면 영수증 100장 무료 · 이벤트 기간 동안 다 쓰면 100장씩 추가 무료
+          지금 가입하면 영수증 100장 무료
         </span>
         <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-white">인원이 아니라 영수증 장수로</h2>
-        <p className="mt-2 text-zinc-400">인당 과금 없는 고정 월 구독. 도입비 0원. 가격은 부가세 별도.</p>
+        <p className="mt-2 text-zinc-400">인당 과금 없는 고정 월 구독. 도입비 0원.</p>
       </div>
       <ul className="mx-auto mt-10 grid max-w-md gap-4 sm:max-w-none sm:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => (
@@ -50,6 +49,7 @@ export async function Pricing() {
             <p className="mt-4 whitespace-nowrap text-3xl font-bold text-white">
               {formatWon(plan.monthly_price)}
               <span className="text-base font-normal text-zinc-400"> / 월</span>
+              <span className="ml-1 text-xs font-normal text-zinc-500">(VAT 별도)</span>
             </p>
             {plan.is_unlimited ? (
               <p className="mt-2 text-zinc-300">
@@ -62,9 +62,6 @@ export async function Pricing() {
                 <span className="block text-sm text-zinc-500">장당 약 {formatWon(Math.round(plan.monthly_price / plan.monthly_receipts))}</span>
               </p>
             )}
-            <p className="mt-auto inline-flex items-center gap-1.5 pt-6 text-sm text-zinc-500">
-              <Lock className="size-4" /> 유료 결제는 준비 중입니다
-            </p>
           </li>
         ))}
       </ul>
