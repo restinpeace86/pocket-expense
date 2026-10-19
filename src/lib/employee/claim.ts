@@ -8,7 +8,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: string) => UUID.test(v);
 
 const ITEM_COLUMNS =
-  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload";
+  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items";
 
 function aiFlags(payload: unknown): { aiCardLast4: string | null; aiIncomeDeduction: boolean } {
   const p = (payload && typeof payload === "object" ? payload : {}) as Record<string, unknown>;
@@ -29,7 +29,7 @@ export async function signOriginalUrl(path: string | null): Promise<string | nul
 export async function getMyClaimForEdit(membership: Membership, claimId: string): Promise<EditorData | null> {
   if (!isUuid(claimId)) return null;
   const supabase = await createClient();
-  const [claimRes, itemsRes, cardsRes, companyRes, meRes] = await Promise.all([
+  const [claimRes, itemsRes, cardsRes, companyRes, meRes, dupRes] = await Promise.all([
     supabase
       .from("expense_claims")
       .select("id, status, title, description, default_payment_method, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, rejection_reason")
@@ -41,13 +41,18 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
     supabase.from("corporate_cards").select("id, nickname, last4").eq("company_id", membership.company_id).eq("is_active", true).order("created_at"),
     supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person, meal_limit_mode").eq("id", membership.company_id).single(),
     supabase.from("members").select("meal_limit_override").eq("id", membership.member_id).single(),
+    supabase.rpc("claim_duplicate_receipts", { p_claim_id: claimId }),
   ]);
+  const dups = (dupRes.data ?? {}) as Record<string, EditorItem["duplicate"]>;
   const claim = claimRes.data;
   if (!claim) return null;
   const rows = itemsRes.data ?? [];
   const urls = await signReceiptUrls(supabase, rows.map((r) => r.receipt_thumb_path));
-  const items: EditorItem[] = rows.map(({ ai_parsed_payload, receipt_thumb_path, ...r }) => ({
+  const items: EditorItem[] = rows.map(({ ai_parsed_payload, receipt_thumb_path, line_items, paid_time, ...r }) => ({
     ...r,
+    paid_time: paid_time?.slice(0, 5) ?? null,
+    line_items: Array.isArray(line_items) ? (line_items as EditorItem["line_items"]) : [],
+    duplicate: dups[r.id] ?? null,
     thumbUrl: receipt_thumb_path ? (urls.get(receipt_thumb_path) ?? null) : null,
     isPdf: !!r.receipt_path?.endsWith(".pdf"),
     aiFilled: ai_parsed_payload !== null,

@@ -82,6 +82,7 @@ function ItemRow({ item, href, onOpen, onDelete }: { item: EditorItem; href: str
             <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${item.payment_method === "corporate_card" ? "bg-sky-100 text-sky-800" : "bg-orange-100 text-orange-800"}`}>
               {item.payment_method === "corporate_card" ? "💳 법인" : "🧾 사비"}
             </span>
+            {item.duplicate && <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900">중복 의심</span>}
             {parsing ? (
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-600">분석 중</span>
             ) : check ? (

@@ -697,6 +697,7 @@ export type Database = {
             | Database["public"]["Enums"]["meal_limit_mode"]
             | null
           applied_meal_limit_per_person: number | null
+          approval_number: string | null
           attendees: string | null
           card_last4: string | null
           category: Database["public"]["Enums"]["expense_category"] | null
@@ -719,8 +720,11 @@ export type Database = {
           id: string
           is_round_trip: boolean | null
           item_custom_payload: Json
+          line_items: Json
+          merchant_address: string | null
           merchant_business_number: string | null
           merchant_name: string | null
+          paid_time: string | null
           parse_status: Database["public"]["Enums"]["parse_status"]
           payment_method: Database["public"]["Enums"]["payment_method"]
           personal_burden_amount: number
@@ -751,6 +755,7 @@ export type Database = {
             | Database["public"]["Enums"]["meal_limit_mode"]
             | null
           applied_meal_limit_per_person?: number | null
+          approval_number?: string | null
           attendees?: string | null
           card_last4?: string | null
           category?: Database["public"]["Enums"]["expense_category"] | null
@@ -775,8 +780,11 @@ export type Database = {
           id?: string
           is_round_trip?: boolean | null
           item_custom_payload?: Json
+          line_items?: Json
+          merchant_address?: string | null
           merchant_business_number?: string | null
           merchant_name?: string | null
+          paid_time?: string | null
           parse_status?: Database["public"]["Enums"]["parse_status"]
           payment_method?: Database["public"]["Enums"]["payment_method"]
           personal_burden_amount?: number
@@ -807,6 +815,7 @@ export type Database = {
             | Database["public"]["Enums"]["meal_limit_mode"]
             | null
           applied_meal_limit_per_person?: number | null
+          approval_number?: string | null
           attendees?: string | null
           card_last4?: string | null
           category?: Database["public"]["Enums"]["expense_category"] | null
@@ -831,8 +840,11 @@ export type Database = {
           id?: string
           is_round_trip?: boolean | null
           item_custom_payload?: Json
+          line_items?: Json
+          merchant_address?: string | null
           merchant_business_number?: string | null
           merchant_name?: string | null
+          paid_time?: string | null
           parse_status?: Database["public"]["Enums"]["parse_status"]
           payment_method?: Database["public"]["Enums"]["payment_method"]
           personal_burden_amount?: number
@@ -1375,6 +1387,7 @@ export type Database = {
       }
       approve_member: { Args: { p_member_id: string }; Returns: undefined }
       business_verify_mode: { Args: never; Returns: string }
+      claim_duplicate_receipts: { Args: { p_claim_id: string }; Returns: Json }
       consume_receipt_credit: {
         Args: {
           p_event_amount: number

@@ -1,4 +1,6 @@
 // AI 영수증 인식 결과의 형식·범위 검사 (receipt-parser.md §3). 서버(apply_receipt_parse)도 한 번 더 검사한다.
+export type LineItem = { name: string; quantity: number | null; unit_price: number | null; amount: number | null };
+
 export type ParsedReceipt = {
   merchant_name: string | null;
   merchant_business_number: string | null; // 숫자 10자리
@@ -12,6 +14,11 @@ export type ParsedReceipt = {
   suggested_category: "meal" | "trip" | "meeting" | "purchase" | null;
   suggested_trip_type: "meal" | "public_transport" | "taxi" | "toll_parking" | "lodging" | "other" | null;
   suggested_purchase_type: "pantry" | "office_supplies" | "small_equipment" | null;
+  // 참고 정보(D-079): 지출소명서 양식에는 넣지 않고 화면에 보여 주기·중복 영수증 확인에 쓴다
+  paid_time: string | null; // HH:MM
+  approval_number: string | null;
+  merchant_address: string | null;
+  line_items: LineItem[];
 };
 
 const EVIDENCE = ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt"] as const;
@@ -34,6 +41,27 @@ function digits(v: unknown, len: number): string | null {
   return d.length === len ? d : null;
 }
 
+function lineItems(v: unknown): LineItem[] {
+  if (!Array.isArray(v)) return [];
+  const out: LineItem[] = [];
+  for (const e of v) {
+    if (out.length >= 50) break;
+    if (!e || typeof e !== "object") continue;
+    const r = e as Record<string, unknown>;
+    const name = typeof r.name === "string" ? r.name.trim().slice(0, 100) : "";
+    if (!name) continue;
+    const q = typeof r.quantity === "string" ? Number(r.quantity) : r.quantity;
+    const signed = typeof r.amount === "string" ? Number(r.amount.replace(/[^0-9-]/g, "")) : r.amount;
+    out.push({
+      name,
+      quantity: typeof q === "number" && Number.isFinite(q) && q > 0 && q < 10000 ? Math.round(q * 100) / 100 : null,
+      unit_price: won(r.unit_price),
+      amount: typeof signed === "number" && Number.isInteger(signed) && Math.abs(signed) <= 999_999_999 ? signed : null, // 할인은 음수
+    });
+  }
+  return out;
+}
+
 export function normalizeParsed(raw: unknown, today: string): ParsedReceipt {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const date = typeof r.expense_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.expense_date) && !Number.isNaN(Date.parse(r.expense_date)) ? r.expense_date : null;
@@ -51,5 +79,9 @@ export function normalizeParsed(raw: unknown, today: string): ParsedReceipt {
     suggested_category: oneOf(r.suggested_category, CATEGORY),
     suggested_trip_type: oneOf(r.suggested_trip_type, TRIP),
     suggested_purchase_type: oneOf(r.suggested_purchase_type, PURCHASE),
+    paid_time: typeof r.paid_time === "string" && /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(r.paid_time) ? r.paid_time.slice(0, 5) : null,
+    approval_number: typeof r.approval_number === "string" && /^[0-9A-Za-z]{4,20}$/.test(r.approval_number.replace(/[\s-]/g, "")) ? r.approval_number.replace(/[\s-]/g, "") : null,
+    merchant_address: typeof r.merchant_address === "string" && r.merchant_address.trim() ? r.merchant_address.trim().slice(0, 200) : null,
+    line_items: lineItems(r.line_items),
   };
 }

@@ -251,6 +251,10 @@
 | receipt_path | text | null | Storage `receipts` 경로. `own_car` 외 상신 시 필수 |
 | parse_status | parse_status | not null, default 'none' | |
 | ai_parsed_payload | jsonb | null | LLM 파싱 원본 결과 |
+| paid_time | time | null | 결제 시각 — AI 참고 정보, 서버 함수로만 (D-079) |
+| approval_number | text | null, `^[0-9A-Za-z]{4,20}$` | 승인번호 — 중복 영수증 확인용, 서버 함수로만 (D-079) |
+| merchant_address | text | null, 200자 | 가맹점 주소 — 보여 주기만, 서버 함수로만 (D-079) |
+| line_items | jsonb | not null, default `[]`, 최대 50줄 | 품목별 내역 `[{name, quantity, unit_price, amount}]` — 보여 주기만, 서버 함수로만 (D-079) |
 | trip_type | trip_type | null | `trip` 필수 |
 | purchase_type | purchase_type | null | `purchase` 필수 (D-076) |
 | trip_start_date | date | null | 숙박 체크인일 (`lodging`) |

@@ -1,6 +1,7 @@
 import type { MealPolicy } from "@/lib/expense/amounts";
 import type { ExpenseCategory, PurchaseType, TripType } from "@/lib/expense/categories";
 import type { ClaimStatus } from "@/lib/expense/status";
+import type { LineItem } from "@/lib/receipts/parse-result";
 
 // 소명서 편집 화면(E-02)이 주고받는 데이터
 export type PaymentMethod = "corporate_card" | "personal_card";
@@ -55,6 +56,12 @@ export type EditorItem = {
   aiFilled: boolean;
   aiCardLast4: string | null; // AI가 읽은 카드 끝 4자리(법인카드 판별 안내용)
   aiIncomeDeduction: boolean; // 현금영수증이 소득공제용으로 발행됨
+  // 참고 정보(D-079, AI가 읽음·보여 주기만)
+  paid_time: string | null;
+  approval_number: string | null;
+  merchant_address: string | null;
+  line_items: LineItem[];
+  duplicate: { mine: { claim_id: string; title: string; status: ClaimStatus }[]; others: number } | null; // 같은 영수증으로 보이는 다른 항목
 };
 
 export type EditorCard = { id: string; nickname: string; last4: string };

@@ -26,6 +26,17 @@ const RESPONSE_SCHEMA = {
     suggested_category: nullable("string", { enum: ["meal", "trip", "meeting", "purchase"] }),
     suggested_trip_type: nullable("string", { enum: ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other"] }),
     suggested_purchase_type: nullable("string", { enum: ["pantry", "office_supplies", "small_equipment"] }),
+    paid_time: nullable("string"),
+    approval_number: nullable("string"),
+    merchant_address: nullable("string"),
+    line_items: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: { name: { type: "string" }, quantity: nullable("number"), unit_price: nullable("integer"), amount: nullable("integer") },
+        required: ["name"],
+      },
+    },
   },
   required: ["merchant_name", "amount", "expense_date"],
 };
@@ -43,7 +54,11 @@ function prompt(isBusinessTrip: boolean, today: string) {
 - suggested_category: 식당·카페 식사는 meal, 교통·숙박·통행료는 trip, 거래처 접대로 보이면 meeting, 편의점·마트·문구점·전자제품 매장 구매는 purchase. 판단이 어려우면 null
 ${isBusinessTrip ? "- 이 영수증은 출장 소명서에 올라왔습니다. suggested_category는 trip으로 하고 suggested_trip_type을 판단하세요" : "- 식당 영수증은 suggested_category를 meal로 하세요"}
 - suggested_trip_type(출장비일 때): 식당 meal, 승차권·항공권 public_transport, 택시 taxi, 톨게이트·하이패스·주차장 toll_parking, 호텔·숙박 lodging, 그 밖 other
-- suggested_purchase_type(물품 구매일 때): 간식·음료·생수 pantry, 문구·소모품 office_supplies, 소형 전자기기·비품 small_equipment`;
+- suggested_purchase_type(물품 구매일 때): 간식·음료·생수 pantry, 문구·소모품 office_supplies, 소형 전자기기·비품 small_equipment
+- paid_time: 결제(거래) 시각 HH:MM (24시간)
+- approval_number: 카드·현금영수증 승인번호
+- merchant_address: 영수증에 적힌 가맹점 주소 그대로
+- line_items: 품목별 내역(이름, 수량, 단가, 금액). 영수증에 적힌 순서대로, 최대 50줄. 할인은 금액을 음수로. 단가·수량은 영수증에 적혀 있을 때만(나눠서 계산하지 말 것). 품목이 안 보이면 빈 배열`;
 }
 
 async function callOnce(model: string, apiKey: string, body: unknown): Promise<unknown> {

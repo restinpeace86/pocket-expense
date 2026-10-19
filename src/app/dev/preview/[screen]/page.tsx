@@ -62,6 +62,14 @@ const SAMPLE_ITEM: EditorItem = {
   amount: 31000, supply_amount: 28182, vat_amount: 2818, headcount: 2, purpose: null, attendees: null, client_name: null,
   trip_start_date: null, trip_end_date: null, parse_status: "success", receipt_path: "x/receipt.jpg", company_supported_amount: 20000,
   personal_burden_amount: 11000, thumbUrl: null, isPdf: false, aiFilled: true, aiCardLast4: "7890", aiIncomeDeduction: false,
+  paid_time: "12:41", approval_number: "30012345", merchant_address: "서울 강남구 테헤란로 123 강남역 지하상가 B1층 (아주 긴 주소 줄바꿈 확인)",
+  line_items: [
+    { name: "참치김밥", quantity: 2, unit_price: 4500, amount: 9000 },
+    { name: "라볶이 (치즈 추가, 아주 긴 품목 이름 줄바꿈 확인)", quantity: 2, unit_price: 6500, amount: 13000 },
+    { name: "돈까스", quantity: 1, unit_price: 9000, amount: 9000 },
+    { name: "쿠폰 할인", quantity: null, unit_price: null, amount: -1000 },
+  ],
+  duplicate: null,
 };
 const SAMPLE_EDITOR: EditorData = {
   claim: {
@@ -70,7 +78,7 @@ const SAMPLE_EDITOR: EditorData = {
     total_company_supported: 161000, total_personal_burden: 11000, rejection_reason: null,
   },
   items: [
-    SAMPLE_ITEM,
+    { ...SAMPLE_ITEM, duplicate: { mine: [], others: 1 } },
     { ...SAMPLE_ITEM, id: "i2", sort_order: 2, category: "trip", trip_type: "public_transport", merchant_name: "코레일 KTX 서울→부산 (아주 긴 가맹점 이름 테스트)", amount: 59800, payment_method: "personal_card", corporate_card_id: null, company_supported_amount: 59800, personal_burden_amount: 0, headcount: 1, aiCardLast4: null },
     { ...SAMPLE_ITEM, id: "i3", sort_order: 3, category: null, merchant_name: null, expense_date: null, amount: null, parse_status: "failed", evidence_type: null, isPdf: true, receipt_path: "x/a.pdf", company_supported_amount: null, personal_burden_amount: 0 },
     { ...SAMPLE_ITEM, id: "i4", sort_order: 4, category: "purchase", purchase_type: "pantry", merchant_name: "이마트24", amount: 81200, receipt_path: null, aiFilled: false, company_supported_amount: 81200, personal_burden_amount: 0 },
@@ -248,7 +256,7 @@ async function Preview({
                 ? { ...SAMPLE_ITEM, category: "trip", trip_type: "lodging", expense_date: "2026-10-18", merchant_name: "부산호텔", amount: 90000, supply_amount: 80000, vat_amount: 8182, parse_status: "failed" }
                 : screen === "employee-item-edit-manual"
                   ? { ...SAMPLE_ITEM, receipt_path: null, aiFilled: false, aiCardLast4: null, parse_status: "none", category: "meeting", merchant_name: "", amount: null, purpose: "", payment_method: "personal_card", corporate_card_id: null }
-                  : SAMPLE_ITEM
+                  : { ...SAMPLE_ITEM, duplicate: { mine: [{ claim_id: "c0", title: "10/16 팀 점심", status: "draft" }], others: 1 } }
             }
             index={0}
             total={4}

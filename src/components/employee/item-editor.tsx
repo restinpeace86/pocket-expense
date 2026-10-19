@@ -81,6 +81,77 @@ function Chips<T extends string>({ label, options, value, onChange }: { label: s
   );
 }
 
+// 중복 영수증 경고 (D-079): 막지 않고 알려만 준다. 다른 직원 것은 건수만
+function DuplicateWarning({ dup, base }: { dup: NonNullable<EditorItem["duplicate"]>; base: string }) {
+  return (
+    <div className="flex flex-col gap-1.5 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" role="status">
+      <p className="flex items-center gap-2 font-semibold">
+        <AlertTriangle className="size-4 shrink-0" />
+        이미 올린 영수증 같아요
+      </p>
+      <p>승인번호(또는 가맹점·날짜·시각)와 금액이 같은 영수증이 있어요. 같은 영수증이면 이 항목을 지워 주세요. 다른 결제라면 그대로 두셔도 돼요.</p>
+      {dup.mine.map((c) => (
+        <Link key={c.claim_id} href={`${base}/claims/${c.claim_id}/edit`} className="underline underline-offset-2">
+          내 소명서: {c.title || "제목 없는 소명서"}
+        </Link>
+      ))}
+      {dup.others > 0 && <p>회사의 다른 직원 소명서에도 {dup.others}건 있어요.</p>}
+    </div>
+  );
+}
+
+// AI가 읽은 참고 정보 (D-079): 지출소명서에는 들어가지 않고 확인용으로만 보여 준다
+function ReceiptDetails({ item }: { item: EditorItem }) {
+  const rows: [string, string][] = [];
+  if (item.paid_time) rows.push(["결제 시각", item.paid_time]);
+  if (item.approval_number) rows.push(["승인번호", item.approval_number]);
+  if (item.merchant_address) rows.push(["가맹점 주소", item.merchant_address]);
+  if (rows.length === 0 && item.line_items.length === 0) return null;
+  return (
+    <details className="group rounded-2xl border border-zinc-200 bg-white px-4 py-2">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 py-1 [&::-webkit-details-marker]:hidden">
+        <Sparkles className="size-4 shrink-0 text-brand-700" />
+        <span>
+          <span className="block font-semibold">AI가 읽은 참고 정보</span>
+          <span className="block text-xs text-zinc-500">결제 시각·승인번호·주소·품목 · 소명서에는 들어가지 않아요</span>
+        </span>
+      </summary>
+      <div className="flex flex-col gap-3 pb-3 pt-1 text-sm">
+        {rows.length > 0 && (
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+            {rows.map(([k, v]) => (
+              <div key={k} className="contents">
+                <dt className="text-zinc-500">{k}</dt>
+                <dd className="break-words">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+        {item.line_items.length > 0 && (
+          <table className="w-full table-fixed text-left">
+            <thead className="text-xs text-zinc-500">
+              <tr>
+                <th className="py-1 font-normal">품목</th>
+                <th className="w-12 py-1 text-right font-normal">수량</th>
+                <th className="w-24 py-1 text-right font-normal">금액</th>
+              </tr>
+            </thead>
+            <tbody>
+              {item.line_items.map((l, i) => (
+                <tr key={i} className="border-t border-zinc-100">
+                  <td className="break-words py-1.5 pr-2">{l.name}</td>
+                  <td className="py-1.5 text-right tabular-nums">{l.quantity ?? ""}</td>
+                  <td className={`py-1.5 text-right tabular-nums ${l.amount !== null && l.amount < 0 ? "text-red-600" : ""}`}>{l.amount !== null ? l.amount.toLocaleString("ko-KR") : ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </details>
+  );
+}
+
 function Warn({ children }: { children: React.ReactNode }) {
   return (
     <p className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -252,6 +323,8 @@ export function ItemEditor({
         <p className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-600">영수증 없이 추가한 항목이에요. 사용 내용을 직접 입력해 주세요.</p>
       )}
 
+      {item.duplicate && <DuplicateWarning dup={item.duplicate} base={base} />}
+
       {/* 2. 결제수단 (D-048, D-055) */}
       <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
         <h2 className="font-semibold">결제수단</h2>
@@ -335,6 +408,8 @@ export function ItemEditor({
         </Field>
         {item.aiIncomeDeduction && input.evidenceType === "cash_receipt" && <Warn>소득공제용 현금영수증이에요. 지출증빙용이 아니라 회사 경비 처리 시 불이익이 있을 수 있어요.</Warn>}
       </section>
+
+      <ReceiptDetails item={item} />
 
       {/* 4. 카테고리 + 조건부 항목 */}
       <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4">
