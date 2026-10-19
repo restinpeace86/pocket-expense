@@ -7,6 +7,9 @@ import { AccountTitlesHeading, AccountTitlesView } from "@/components/admin/acco
 import { AdminShell, type ShellTheme } from "@/components/admin/admin-shell";
 import { CorporateCardsHeading, CorporateCardsView } from "@/components/admin/corporate-cards-view";
 import { CompanySettingsForm } from "@/components/admin/company-settings-form";
+import { EmployeeHomeView } from "@/components/employee/employee-home-view";
+import { EmployeeShell } from "@/components/employee/employee-shell";
+import type { MyClaimRow } from "@/lib/employee/types";
 import { DepartmentsHeading, DepartmentsView } from "@/components/admin/departments-view";
 import { MemberDetailView } from "@/components/admin/member-detail";
 import { capabilitiesFor } from "@/lib/admin/capabilities";
@@ -40,6 +43,15 @@ const SAMPLE_MEMBERSHIP: Membership = {
   status: "approved",
   ui_theme: null,
 };
+
+const SAMPLE_CLAIMS: MyClaimRow[] = [
+  { id: "c1", title: "", status: "draft", is_business_trip: false, item_count: 0, total_amount: 0, settlement_required: null, created_at: "2026-10-20T01:00:00Z", rejection_reason: null, rejected_at: null, dateFrom: null, dateTo: null, corporateCount: 0, personalCount: 0, categories: [] },
+  { id: "c2", title: "거래처 미팅 식사 진행", status: "submitted", is_business_trip: false, item_count: 1, total_amount: 45000, settlement_required: true, created_at: "2026-10-16T01:00:00Z", rejection_reason: null, rejected_at: null, dateFrom: "2026-10-16", dateTo: "2026-10-16", corporateCount: 1, personalCount: 0, categories: ["meeting"] },
+  { id: "c3", title: "10/15 부산 출장 (KTX·숙박·식대 포함 긴 제목 테스트)", status: "approved", is_business_trip: true, item_count: 3, total_amount: 172000, settlement_required: true, created_at: "2026-10-15T01:00:00Z", rejection_reason: null, rejected_at: null, dateFrom: "2026-10-14", dateTo: "2026-10-15", corporateCount: 2, personalCount: 1, categories: ["trip"] },
+  { id: "c4", title: "팀 점심", status: "rejected", is_business_trip: false, item_count: 2, total_amount: 38000, settlement_required: true, created_at: "2026-10-10T01:00:00Z", rejection_reason: "영수증 2장 중 1장의 금액이 카드 내역과 달라요.\n카드 승인 내역 캡처를 함께 올려 주세요.", rejected_at: "2026-10-12T02:00:00Z", dateFrom: "2026-10-09", dateTo: "2026-10-10", corporateCount: 0, personalCount: 2, categories: ["meal"] },
+  { id: "c5", title: "탕비실 간식·사무용품", status: "paid", is_business_trip: false, item_count: 2, total_amount: 61200, settlement_required: false, created_at: "2026-10-02T01:00:00Z", rejection_reason: null, rejected_at: null, dateFrom: "2026-10-01", dateTo: "2026-10-02", corporateCount: 2, personalCount: 0, categories: ["purchase", "meal"] },
+];
+const EMPLOYEE_MEMBERSHIP: Membership = { ...SAMPLE_MEMBERSHIP, name: "김개발", role: "employee" };
 
 const SAMPLE_MEMBERS: MemberRow[] = [
   { id: "p1", name: "김대표", phone: "01011112222", email: "ceo@pocket.co.kr", position: "대표", role: "super_admin", status: "approved", department: null, created_at: "2026-10-01T00:00:00Z" },
@@ -159,6 +171,25 @@ async function Preview({
         <div className="flex flex-1 flex-col">
           <WorkspaceHeader membership={SAMPLE_MEMBERSHIP} mode="employee" />
         </div>
+      );
+    case "employee-home":
+    case "employee-home-empty":
+    case "employee-home-blocked":
+    case "employee-home-rejected":
+      return (
+        <EmployeeShell membership={screen === "employee-home" ? SAMPLE_MEMBERSHIP : EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="">
+          <EmployeeHomeView
+            name={screen === "employee-home" ? "김대표" : "김개발"}
+            base="#"
+            month="2026-10"
+            thisMonth="2026-10"
+            filter="all"
+            summary={{ pending_payout: screen === "employee-home" ? 142000 : 0, rejected_count: screen === "employee-home" ? 1 : 0, credits_left: screen === "employee-home-blocked" ? 0 : 80 }}
+            creditsBlocked={screen === "employee-home-blocked"}
+            initial={{ items: screen === "employee-home" ? SAMPLE_CLAIMS : [], nextCursor: screen === "employee-home" ? "x" : null }}
+            initialSheet={screen === "employee-home-rejected" ? SAMPLE_CLAIMS[3] : undefined}
+          />
+        </EmployeeShell>
       );
     case "admin-home":
       return (

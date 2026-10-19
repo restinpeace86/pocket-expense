@@ -565,6 +565,7 @@ export type Database = {
           company_id: string
           created_at: string
           current_round: number
+          default_payment_method: Database["public"]["Enums"]["payment_method"]
           description: string | null
           form_template_id: string | null
           header_custom_payload: Json
@@ -595,6 +596,7 @@ export type Database = {
           company_id: string
           created_at?: string
           current_round?: number
+          default_payment_method?: Database["public"]["Enums"]["payment_method"]
           description?: string | null
           form_template_id?: string | null
           header_custom_payload?: Json
@@ -625,6 +627,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           current_round?: number
+          default_payment_method?: Database["public"]["Enums"]["payment_method"]
           description?: string | null
           form_template_id?: string | null
           header_custom_payload?: Json
@@ -1362,6 +1365,10 @@ export type Database = {
         }
         Returns: string
       }
+      apply_receipt_parse: {
+        Args: { p_item_id: string; p_ok: boolean; p_payload?: Json }
+        Returns: undefined
+      }
       approve_claim: {
         Args: { p_claim_id: string; p_comment?: string }
         Returns: Database["public"]["Enums"]["claim_status"]
@@ -1390,6 +1397,10 @@ export type Database = {
           p_terms_agreed: boolean
         }
         Returns: string
+      }
+      create_receipt_item: {
+        Args: { p_claim_id: string; p_is_pdf?: boolean; p_thumb_ext?: string }
+        Returns: Json
       }
       deactivate_member: { Args: { p_member_id: string }; Returns: undefined }
       get_invitation_detail: { Args: { p_token: string }; Returns: Json }
@@ -1425,9 +1436,11 @@ export type Database = {
         Args: { p_member_id: string }
         Returns: Json
       }
+      my_employee_summary: { Args: never; Returns: Json }
       my_membership: { Args: never; Returns: Json }
       reactivate_member: { Args: { p_member_id: string }; Returns: undefined }
       record_perf_events: { Args: { p_events: Json }; Returns: number }
+      refresh_claim_totals: { Args: { p_claim_id: string }; Returns: Json }
       regenerate_invite_code: { Args: never; Returns: string }
       reject_claim: {
         Args: {

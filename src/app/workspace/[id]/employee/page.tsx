@@ -1,28 +1,45 @@
 import { Suspense } from "react";
-import { WorkspaceHeader } from "@/components/workspace/workspace-header";
+import { EmployeeHomeView } from "@/components/employee/employee-home-view";
 import { requireWorkspace } from "@/lib/auth/guards";
+import { creditEventEnabled } from "@/lib/credits";
+import { currentMonthKst } from "@/lib/dates";
+import { getMyClaims, getMySummary } from "@/lib/employee/queries";
+import { filterStatuses, parseFilter, parseMonth } from "@/lib/expense/status";
 
 export const metadata = { title: "내 경비 · PocketExpense" };
 
-// T2 범위: 가입 후 도착 화면. 본문(E-01)은 T6에서 구현.
-export default function EmployeeHomePage({ params }: PageProps<"/workspace/[id]/employee">) {
+// 화면 E-01 직원 메인 (spec/screens/worker-dashboard.md)
+export default function EmployeeHomePage({ params, searchParams }: PageProps<"/workspace/[id]/employee">) {
   return (
-    <Suspense fallback={<div className="m-4 h-64 animate-pulse rounded-xl bg-zinc-100" />}>
-      <EmployeeHome params={params} />
+    <Suspense fallback={<div className="mx-auto my-4 h-64 w-[calc(100%-2rem)] max-w-md animate-pulse rounded-2xl bg-zinc-100" />}>
+      <EmployeeHome params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function EmployeeHome({ params }: { params: PageProps<"/workspace/[id]/employee">["params"] }) {
+async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace/[id]/employee">, "params" | "searchParams">) {
   const { id } = await params;
+  const sp = await searchParams;
   const membership = await requireWorkspace(id);
+  const thisMonth = currentMonthKst();
+  const parsed = parseMonth(typeof sp.month === "string" ? sp.month : null, thisMonth);
+  const month = parsed > thisMonth ? thisMonth : parsed;
+  const filter = parseFilter(typeof sp.status === "string" ? sp.status : null);
+  const [summary, page] = await Promise.all([
+    getMySummary(),
+    getMyClaims(membership.company_id, membership.member_id, { month, statuses: filterStatuses(filter) }),
+  ]);
   return (
-    <div className="flex flex-1 flex-col">
-      <WorkspaceHeader membership={membership} mode="employee" />
-      <main className="mx-auto flex w-full max-w-md flex-col gap-2 px-4 py-8">
-        <h1 className="text-2xl font-bold tracking-tight">안녕하세요, {membership.name}님 👋</h1>
-        <p className="text-zinc-600">영수증 청구 화면은 준비 중입니다.</p>
-      </main>
-    </div>
+    <EmployeeHomeView
+      key={`${month}:${filter}`}
+      name={membership.name}
+      base={`/workspace/${id}/employee`}
+      month={month}
+      thisMonth={thisMonth}
+      filter={filter}
+      summary={summary}
+      creditsBlocked={summary.credits_left <= 0 && !creditEventEnabled()}
+      initial={page}
+    />
   );
 }
