@@ -9,6 +9,9 @@ import { CorporateCardsHeading, CorporateCardsView } from "@/components/admin/co
 import { CompanySettingsForm } from "@/components/admin/company-settings-form";
 import { EmployeeHomeView } from "@/components/employee/employee-home-view";
 import { EmployeeShell } from "@/components/employee/employee-shell";
+import { ClaimEditor } from "@/components/employee/claim-editor";
+import { ItemEditor } from "@/components/employee/item-editor";
+import type { EditorData, EditorItem } from "@/lib/employee/editor-types";
 import type { MyClaimRow } from "@/lib/employee/types";
 import { DepartmentsHeading, DepartmentsView } from "@/components/admin/departments-view";
 import { MemberDetailView } from "@/components/admin/member-detail";
@@ -52,6 +55,30 @@ const SAMPLE_CLAIMS: MyClaimRow[] = [
   { id: "c5", title: "탕비실 간식·사무용품", status: "paid", is_business_trip: false, item_count: 2, total_amount: 61200, settlement_required: false, created_at: "2026-10-02T01:00:00Z", rejection_reason: null, rejected_at: null, dateFrom: "2026-10-01", dateTo: "2026-10-02", corporateCount: 2, personalCount: 0, categories: ["purchase", "meal"] },
 ];
 const EMPLOYEE_MEMBERSHIP: Membership = { ...SAMPLE_MEMBERSHIP, name: "김개발", role: "employee" };
+
+const SAMPLE_ITEM: EditorItem = {
+  id: "i1", sort_order: 1, category: "meal", trip_type: null, purchase_type: null, payment_method: "corporate_card", corporate_card_id: "card1",
+  evidence_type: "card_slip", expense_date: "2026-10-16", merchant_name: "김밥천국 강남역점", merchant_business_number: "2208162517",
+  amount: 31000, supply_amount: 28182, vat_amount: 2818, headcount: 2, purpose: null, attendees: null, client_name: null,
+  trip_start_date: null, trip_end_date: null, parse_status: "success", receipt_path: "x/receipt.jpg", company_supported_amount: 20000,
+  personal_burden_amount: 11000, thumbUrl: null, isPdf: false, aiFilled: true, aiCardLast4: "7890", aiIncomeDeduction: false,
+};
+const SAMPLE_EDITOR: EditorData = {
+  claim: {
+    id: "claim1", status: "draft", title: "", description: "", default_payment_method: "corporate_card", is_business_trip: false,
+    trip_destination: null, trip_start_date: null, trip_end_date: null, trip_purpose: null, item_count: 4, total_amount: 172000,
+    total_company_supported: 161000, total_personal_burden: 11000, rejection_reason: null,
+  },
+  items: [
+    SAMPLE_ITEM,
+    { ...SAMPLE_ITEM, id: "i2", sort_order: 2, category: "trip", trip_type: "public_transport", merchant_name: "코레일 KTX 서울→부산 (아주 긴 가맹점 이름 테스트)", amount: 59800, payment_method: "personal_card", corporate_card_id: null, company_supported_amount: 59800, personal_burden_amount: 0, headcount: 1, aiCardLast4: null },
+    { ...SAMPLE_ITEM, id: "i3", sort_order: 3, category: null, merchant_name: null, expense_date: null, amount: null, parse_status: "failed", evidence_type: null, isPdf: true, receipt_path: "x/a.pdf", company_supported_amount: null, personal_burden_amount: 0 },
+    { ...SAMPLE_ITEM, id: "i4", sort_order: 4, category: "purchase", purchase_type: "pantry", merchant_name: "이마트24", amount: 81200, receipt_path: null, aiFilled: false, company_supported_amount: 81200, personal_burden_amount: 0 },
+  ],
+  cards: [{ id: "card1", nickname: "대표 법인카드", last4: "7890" }, { id: "card2", nickname: "영업팀 카드", last4: "1234" }],
+  mealPolicy: { enabled: true, perPerson: 10000, mode: "split" },
+  mealOverride: null,
+};
 
 const SAMPLE_MEMBERS: MemberRow[] = [
   { id: "p1", name: "김대표", phone: "01011112222", email: "ceo@pocket.co.kr", position: "대표", role: "super_admin", status: "approved", department: null, created_at: "2026-10-01T00:00:00Z" },
@@ -188,6 +215,50 @@ async function Preview({
             creditsBlocked={screen === "employee-home-blocked"}
             initial={{ items: screen === "employee-home" ? SAMPLE_CLAIMS : [], nextCursor: screen === "employee-home" ? "x" : null }}
             initialSheet={screen === "employee-home-rejected" ? SAMPLE_CLAIMS[3] : undefined}
+          />
+        </EmployeeShell>
+      );
+    case "employee-claim-edit":
+    case "employee-claim-edit-empty":
+    case "employee-claim-edit-trip":
+      return (
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/claims/claim1/edit">
+          <ClaimEditor
+            data={
+              screen === "employee-claim-edit-empty"
+                ? { ...SAMPLE_EDITOR, items: [], claim: { ...SAMPLE_EDITOR.claim, item_count: 0, total_amount: 0, total_company_supported: 0, total_personal_burden: 0 } }
+                : screen === "employee-claim-edit-trip"
+                  ? { ...SAMPLE_EDITOR, claim: { ...SAMPLE_EDITOR.claim, status: "rejected", rejection_reason: "KTX 영수증의 날짜가 출장 기간과 달라요.", is_business_trip: true, trip_destination: "부산", trip_start_date: "2026-10-15", trip_end_date: "2026-10-16", trip_purpose: "지사 점검", default_payment_method: "personal_card" } }
+                  : SAMPLE_EDITOR
+            }
+            base="#"
+            openAdd={screen === "employee-claim-edit-empty"}
+          />
+        </EmployeeShell>
+      );
+    case "employee-item-edit":
+    case "employee-item-edit-trip":
+    case "employee-item-edit-manual":
+      return (
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/claims/claim1/items/i1">
+          <ItemEditor
+            claim={screen === "employee-item-edit-trip" ? { ...SAMPLE_EDITOR.claim, is_business_trip: true, trip_start_date: "2026-10-15", trip_end_date: "2026-10-16" } : SAMPLE_EDITOR.claim}
+            item={
+              screen === "employee-item-edit-trip"
+                ? { ...SAMPLE_ITEM, category: "trip", trip_type: "lodging", expense_date: "2026-10-18", merchant_name: "부산호텔", amount: 90000, supply_amount: 80000, vat_amount: 8182, parse_status: "failed" }
+                : screen === "employee-item-edit-manual"
+                  ? { ...SAMPLE_ITEM, receipt_path: null, aiFilled: false, aiCardLast4: null, parse_status: "none", category: "meeting", merchant_name: "", amount: null, purpose: "", payment_method: "personal_card", corporate_card_id: null }
+                  : SAMPLE_ITEM
+            }
+            index={0}
+            total={4}
+            prevId={null}
+            nextId="i2"
+            cards={SAMPLE_EDITOR.cards}
+            mealPolicy={SAMPLE_EDITOR.mealPolicy}
+            mealOverride={null}
+            originalUrl={null}
+            base="#"
           />
         </EmployeeShell>
       );

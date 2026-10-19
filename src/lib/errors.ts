@@ -32,6 +32,16 @@ const MESSAGES: Record<string, string> = {
   SUPER_ADMIN_LOCKED: "최고 관리자는 역할을 바꾸거나 비활성화할 수 없어요. 먼저 [최고 관리자 넘기기]를 해 주세요.",
   MEMBER_IN_APPROVAL_LINE: "이 멤버가 사전 검토 결재라인에 들어 있어요. 결재라인에서 먼저 빼 주세요.",
   MEMBER_HAS_PENDING_REVIEW: "이 멤버가 검토할 차례인 소명서가 있어요. 먼저 처리해 주세요.",
+  NOT_EDITABLE: "이미 상신된 소명서는 고칠 수 없어요. 화면을 새로고침해 주세요.",
+  TOO_MANY_ITEMS: "소명서 한 건에는 영수증을 30장까지 담을 수 있어요. 새 소명서로 나눠 올려 주세요.",
+  NO_CREDITS: "회사 무료 사용량을 모두 사용했습니다. 관리자에게 문의하세요.",
+  INVALID_FILE: "올릴 수 없는 파일이에요. 사진(JPG·PNG·HEIC 등) 또는 PDF를 골라 주세요.",
+  INVALID_CLAIM_TEXT: "제목은 100자, 소명 내용은 1,000자, 출장지·출장 목적은 100자 이내로 입력해 주세요.",
+  INVALID_TRIP_PERIOD: "출장 기간을 확인해 주세요. 끝나는 날이 시작일보다 빠를 수 없어요.",
+  UNAVAILABLE: "잠시 서비스를 이용할 수 없어요. 잠시 후 다시 시도해 주세요.",
+  INVALID_EXPENSE_DATE: "사용일자가 오늘보다 뒤일 수 없어요. 날짜를 확인해 주세요.",
+  INVALID_ITEM_TEXT: "가맹점·거래처는 100자, 목적·참석자는 200자 이내로 입력해 주세요.",
+  INVALID_HEADCOUNT: "인원수는 1~99명 사이로 입력해 주세요.",
   INCOMPLETE_BANK_ACCOUNT: "정산 계좌는 은행·계좌번호·예금주를 모두 입력하거나 모두 비워 주세요.",
 };
 
