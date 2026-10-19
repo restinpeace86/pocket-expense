@@ -10,6 +10,10 @@ import { CompanySettingsForm } from "@/components/admin/company-settings-form";
 import { EmployeeHomeView } from "@/components/employee/employee-home-view";
 import { EmployeeShell } from "@/components/employee/employee-shell";
 import { ClaimEditor } from "@/components/employee/claim-editor";
+import { AppAdminShell } from "@/components/app-admin/app-admin-shell";
+import { CompaniesView } from "@/components/app-admin/companies-view";
+import { CompanyDetailView, type CompanyDetail } from "@/components/app-admin/company-detail-view";
+import { ReceiptRecordView, type ReceiptRecordData } from "@/components/app-admin/receipt-record-view";
 import { ItemEditor } from "@/components/employee/item-editor";
 import type { EditorData, EditorItem } from "@/lib/employee/editor-types";
 import type { MyClaimRow } from "@/lib/employee/types";
@@ -87,6 +91,44 @@ const SAMPLE_EDITOR: EditorData = {
   mealPolicy: { enabled: true, perPerson: 10000, mode: "split" },
   mealOverride: null,
 };
+
+const AA_PAYLOAD = {
+  merchant_name: "이마트 판교점", merchant_business_number: "2208162517", card_last4: "7890", suggested_evidence_type: "card_slip",
+  cash_receipt_income_deduction: null, amount: 48300, supply_amount: 43909, vat_amount: 4391, expense_date: "2026-10-16",
+  suggested_category: "purchase", suggested_trip_type: null, suggested_purchase_type: "pantry", paid_time: "18:22",
+  approval_number: "30012345", merchant_address: "경기 성남시 분당구 대왕판교로 606번길 10 (아주 긴 주소 줄바꿈 확인용 텍스트)",
+  line_items: [
+    { name: "제주삼다수 2L x6", quantity: 2, unit_price: 5980, amount: 11960 },
+    { name: "맥심 모카골드 커피믹스 180T (아주 긴 품목 이름 확인)", quantity: 1, unit_price: 27900, amount: 27900 },
+    { name: "종이컵 1000입", quantity: 1, unit_price: 9440, amount: 9440 },
+    { name: "행사 할인", quantity: null, unit_price: null, amount: -1000 },
+  ],
+};
+const AA_COMPANY_DETAIL: CompanyDetail = {
+  company: { id: "c1", name: "포켓컴퍼니 주식회사", business_number: "1234567890", business_status: "verified", created_at: "2026-10-01T01:00:00Z", billing_status: "free_trial", receipt_credits_granted: 200, receipt_credits_used: 112, last_event_bonus_at: "2026-10-15T01:00:00Z" },
+  members: [
+    { id: "m1", name: "김대표", role: "super_admin", status: "approved", created_at: "2026-10-01T01:00:00Z" },
+    { id: "m2", name: "이직원", role: "employee", status: "approved", created_at: "2026-10-02T01:00:00Z" },
+    { id: "m3", name: "최신입", role: "employee", status: "pending", created_at: "2026-10-18T01:00:00Z" },
+  ],
+  ledger: [
+    { id: "l2", delta: 100, reason: "event_bonus", created_at: "2026-10-15T01:00:00Z", member_id: null, item_id: null },
+    { id: "l1", delta: 100, reason: "free_trial_grant", created_at: "2026-10-01T01:00:00Z", member_id: null, item_id: null },
+  ],
+  records: [
+    { id: "r1", credited_at: "2026-10-16T09:22:00Z", member_name: "이직원", claim_title: "10/16 탕비실 물품", claim_status: "submitted", status: "in_claim", item_deleted_at: null, parse_status: "success", merchant_name: "이마트 판교점", amount: 48300, expense_date: "2026-10-16", line_item_count: 4, photo_state: "live", photo_purge_after: null },
+    { id: "r2", credited_at: "2026-10-15T03:10:00Z", member_name: "이직원", claim_title: "팀 점심", claim_status: "draft", status: "item_deleted", item_deleted_at: "2026-10-15T05:00:00Z", parse_status: "success", merchant_name: "김밥천국 강남역점", amount: 31000, expense_date: "2026-10-15", line_item_count: 3, photo_state: "archived", photo_purge_after: "2027-01-15T05:00:00Z" },
+    { id: "r3", credited_at: "2026-10-14T03:10:00Z", member_name: "김대표", claim_title: "", claim_status: "draft", status: "in_claim", item_deleted_at: null, parse_status: "failed", merchant_name: null, amount: null, expense_date: null, line_item_count: 0, photo_state: "live", photo_purge_after: null },
+  ],
+  truncated: false,
+};
+const AA_RECORD = {
+  id: "r2", company_id: "c1", item_id: "i9", claim_id: "cl9", member_id: "m2", member_name: "이직원", ledger_id: "l9",
+  credited_at: "2026-10-15T03:10:00Z", receipt_path: "c1/m2/cl9/i9.jpg", thumb_path: null, parse_status: "success", parsed_at: "2026-10-15T03:10:03Z",
+  ai_parsed_payload: AA_PAYLOAD, claim_title: "10/16 탕비실 물품", claim_status: "draft", item_deleted_at: "2026-10-15T05:00:00Z",
+  item_snapshot: { merchant_name: "이마트 판교점", expense_date: "2026-10-16", amount: 48300, supply_amount: 43909, vat_amount: 4391, category: "purchase", purchase_type: "pantry", payment_method: "corporate_card", evidence_type: "card_slip", headcount: 1, purpose: "탕비실 커피·생수", company_supported_amount: 48300, personal_burden_amount: 0 },
+  archived_receipt_path: "c1/i9.jpg", archived_thumb_path: null, photo_purge_after: "2027-01-15T05:00:00Z", photo_purged_at: null, created_at: "2026-10-15T03:10:00Z",
+} as unknown as ReceiptRecordData["record"];
 
 const SAMPLE_MEMBERS: MemberRow[] = [
   { id: "p1", name: "김대표", phone: "01011112222", email: "ceo@pocket.co.kr", position: "대표", role: "super_admin", status: "approved", department: null, created_at: "2026-10-01T00:00:00Z" },
@@ -269,6 +311,31 @@ async function Preview({
             base="#"
           />
         </EmployeeShell>
+      );
+    case "app-admin-companies":
+      return (
+        <AppAdminShell>
+          <CompaniesView
+            month="2026-10"
+            base="#"
+            rows={[
+              { company_id: "c1", name: "포켓컴퍼니 주식회사", business_number: "1234567890", created_at: "2026-10-01T01:00:00Z", billing_status: "free_trial", credits_granted: 200, credits_used: 112, members_approved: 12, members_pending: 1, receipts_total: 112, receipts_month: 64, receipts_deleted: 3, last_receipt_at: "2026-10-19T09:00:00Z" },
+              { company_id: "c2", name: "아주 긴 이름의 디자인 스튜디오 유한회사", business_number: "2208162517", created_at: "2026-10-10T01:00:00Z", billing_status: "free_trial", credits_granted: 100, credits_used: 0, members_approved: 1, members_pending: 0, receipts_total: 0, receipts_month: 0, receipts_deleted: 0, last_receipt_at: null },
+            ]}
+          />
+        </AppAdminShell>
+      );
+    case "app-admin-company":
+      return (
+        <AppAdminShell>
+          <CompanyDetailView data={AA_COMPANY_DETAIL} month="2026-10" base="#" />
+        </AppAdminShell>
+      );
+    case "app-admin-receipt":
+      return (
+        <AppAdminShell>
+          <ReceiptRecordView data={{ record: AA_RECORD, company: { id: "c1", name: "포켓컴퍼니 주식회사" }, item: null, claim: null, photoUrl: null, thumbUrl: null }} base="#" />
+        </AppAdminShell>
       );
     case "admin-home":
       return (

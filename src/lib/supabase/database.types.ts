@@ -100,6 +100,24 @@ export type Database = {
           },
         ]
       }
+      app_admins: {
+        Row: {
+          auth_user_id: string
+          created_at: string
+          note: string | null
+        }
+        Insert: {
+          auth_user_id: string
+          created_at?: string
+          note?: string | null
+        }
+        Update: {
+          auth_user_id?: string
+          created_at?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       approval_line_steps: {
         Row: {
           approval_line_id: string
@@ -1354,6 +1372,89 @@ export type Database = {
         }
         Relationships: []
       }
+      receipt_usage_records: {
+        Row: {
+          ai_parsed_payload: Json | null
+          archived_receipt_path: string | null
+          archived_thumb_path: string | null
+          claim_id: string
+          claim_status: string | null
+          claim_title: string | null
+          company_id: string
+          created_at: string
+          credited_at: string
+          id: string
+          item_deleted_at: string | null
+          item_id: string
+          item_snapshot: Json | null
+          ledger_id: string | null
+          member_id: string | null
+          member_name: string | null
+          parse_status: string | null
+          parsed_at: string | null
+          photo_purge_after: string | null
+          photo_purged_at: string | null
+          receipt_path: string | null
+          thumb_path: string | null
+        }
+        Insert: {
+          ai_parsed_payload?: Json | null
+          archived_receipt_path?: string | null
+          archived_thumb_path?: string | null
+          claim_id: string
+          claim_status?: string | null
+          claim_title?: string | null
+          company_id: string
+          created_at?: string
+          credited_at: string
+          id?: string
+          item_deleted_at?: string | null
+          item_id: string
+          item_snapshot?: Json | null
+          ledger_id?: string | null
+          member_id?: string | null
+          member_name?: string | null
+          parse_status?: string | null
+          parsed_at?: string | null
+          photo_purge_after?: string | null
+          photo_purged_at?: string | null
+          receipt_path?: string | null
+          thumb_path?: string | null
+        }
+        Update: {
+          ai_parsed_payload?: Json | null
+          archived_receipt_path?: string | null
+          archived_thumb_path?: string | null
+          claim_id?: string
+          claim_status?: string | null
+          claim_title?: string | null
+          company_id?: string
+          created_at?: string
+          credited_at?: string
+          id?: string
+          item_deleted_at?: string | null
+          item_id?: string
+          item_snapshot?: Json | null
+          ledger_id?: string | null
+          member_id?: string | null
+          member_name?: string | null
+          parse_status?: string | null
+          parsed_at?: string | null
+          photo_purge_after?: string | null
+          photo_purged_at?: string | null
+          receipt_path?: string | null
+          thumb_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_usage_records_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1376,6 +1477,24 @@ export type Database = {
           p_vehicle_number: string
         }
         Returns: string
+      }
+      app_admin_company_overview: {
+        Args: { p_month: string }
+        Returns: {
+          billing_status: string
+          business_number: string
+          company_id: string
+          created_at: string
+          credits_granted: number
+          credits_used: number
+          last_receipt_at: string
+          members_approved: number
+          members_pending: number
+          name: string
+          receipts_deleted: number
+          receipts_month: number
+          receipts_total: number
+        }[]
       }
       apply_receipt_parse: {
         Args: { p_item_id: string; p_ok: boolean; p_payload?: Json }

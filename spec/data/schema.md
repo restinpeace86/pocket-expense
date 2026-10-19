@@ -340,6 +340,10 @@
 - 승인 대기(`pending`)·비활성(`inactive`) 멤버는 자기 member 행 외 회사 데이터에 접근할 수 없다.
 - service role 키는 서버 코드(알림톡 발송, 회사 생성, export)에서만 사용한다.
 
+### 운영자 전용 (D-080) — 고객 역할 접근 불가(권한·정책 없음), 서버가 service role로만 읽는다
+- `app_admins` — 운영자 계정: `auth_user_id`(PK, auth.users), `note`, `created_at`. SQL로만 등록.
+- `receipt_usage_records` — 크레딧을 쓴 영수증 기록(항목당 1행, 항목을 지워도 남음): `company_id`, `item_id`(unique, FK 없음), `claim_id`, `member_id`·`member_name`, `ledger_id`, `credited_at`, `receipt_path`·`thumb_path`, `parse_status`·`parsed_at`·`ai_parsed_payload`, `claim_title`·`claim_status`, `item_deleted_at`·`item_snapshot`(지울 때의 항목 행), `archived_receipt_path`·`archived_thumb_path`, `photo_purge_after`(삭제 후 3개월)·`photo_purged_at`. 트리거: 크레딧 차감 시 생성, AI 인식 시 갱신, 항목·소명서 삭제 시 스냅샷.
+
 ## 4. Storage
 | 버킷 | 공개 | 경로 규칙 | 접근 |
 |---|---|---|---|

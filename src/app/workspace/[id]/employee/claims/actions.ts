@@ -8,6 +8,7 @@ import { isUuid } from "@/lib/employee/claim";
 import type { ClaimHeaderInput, ItemInput } from "@/lib/employee/editor-types";
 import { todayKst } from "@/lib/dates";
 import { messageForDbError } from "@/lib/errors";
+import { archiveCreditedReceipts } from "@/lib/receipts/archive";
 import { parseReceiptWithGemini } from "@/lib/receipts/gemini";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -69,6 +70,20 @@ async function removeReceiptFiles(supabase: Awaited<ReturnType<typeof createClie
   if (list.length) await supabase.storage.from("receipts").remove(list);
 }
 
+// 본인 작성 중(draft·rejected) 소명서인지 — 보관함으로 옮기기 전에 확인(관리자도 남의 항목을 지울 수 없다)
+async function canEditOwnClaim(supabase: Awaited<ReturnType<typeof createClient>>, claimId: string) {
+  const m = await approvedMember();
+  if (!m) return false;
+  const { data } = await supabase
+    .from("expense_claims")
+    .select("id")
+    .eq("id", claimId)
+    .eq("member_id", m.member_id)
+    .in("status", ["draft", "rejected"])
+    .maybeSingle();
+  return !!data;
+}
+
 export async function deleteDraftClaimAction(claimId: string): Promise<Result> {
   const m = await approvedMember();
   if (!m) return fail("NOT_A_MEMBER");
@@ -83,7 +98,9 @@ export async function deleteDraftClaimAction(claimId: string): Promise<Result> {
     .maybeSingle();
   if (!claim) return fail("NOT_FOUND");
   if (claim.status !== "draft") return fail("NOT_EDITABLE");
-  const { data: items } = await supabase.from("expense_items").select("receipt_path, receipt_thumb_path").eq("claim_id", claimId);
+  const { data: items } = await supabase.from("expense_items").select("id, receipt_path, receipt_thumb_path, credit_charged").eq("claim_id", claimId);
+  // 크레딧을 쓴 영수증은 사진을 운영 보관함으로 먼저 옮긴다(D-080). 못 옮기면 지우지 않는다
+  if (!(await archiveCreditedReceipts(m.company_id, (items ?? []).filter((i) => i.credit_charged).map((i) => i.id)))) return fail("UNAVAILABLE");
   await removeReceiptFiles(supabase, (items ?? []).flatMap((i) => [i.receipt_path, i.receipt_thumb_path]));
   const { data, error } = await supabase.from("expense_claims").delete().eq("id", claimId).eq("member_id", m.member_id).select("id");
   if (error) return { ok: false, error: messageForDbError(error) };
@@ -99,11 +116,13 @@ export async function deleteItemAction(itemId: string): Promise<Result> {
   const supabase = await createClient();
   const { data: item } = await supabase
     .from("expense_items")
-    .select("id, claim_id, receipt_path, receipt_thumb_path")
+    .select("id, claim_id, receipt_path, receipt_thumb_path, credit_charged")
     .eq("id", itemId)
     .eq("company_id", m.company_id)
     .maybeSingle();
   if (!item) return fail("NOT_FOUND");
+  if (!(await canEditOwnClaim(supabase, item.claim_id))) return fail("NOT_EDITABLE");
+  if (item.credit_charged && !(await archiveCreditedReceipts(m.company_id, [item.id]))) return fail("UNAVAILABLE");
   await removeReceiptFiles(supabase, [item.receipt_path, item.receipt_thumb_path]);
   const { data, error } = await supabase.from("expense_items").delete().eq("id", itemId).select("id");
   if (error) return { ok: false, error: messageForDbError(error) };
