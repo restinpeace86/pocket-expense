@@ -23,3 +23,11 @@ describe("month/filter helpers", () => {
     expect(filterStatuses("all")).toBeNull();
   });
 });
+
+describe("formatDateTimeKst", () => {
+  it("한국 시간", async () => {
+    const { formatDateTimeKst } = await import("@/lib/claims/format");
+    expect(formatDateTimeKst("2026-10-19T15:30:00Z")).toBe("2026.10.20 00:30");
+    expect(formatDateTimeKst(null)).toBe("");
+  });
+});

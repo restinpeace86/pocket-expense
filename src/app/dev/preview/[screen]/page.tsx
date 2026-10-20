@@ -12,6 +12,12 @@ import { EmployeeShell } from "@/components/employee/employee-shell";
 import { ClaimEditor } from "@/components/employee/claim-editor";
 import { AppAdminShell } from "@/components/app-admin/app-admin-shell";
 import { BillingView } from "@/components/admin/billing-view";
+import { AdminClaimDetail } from "@/components/claims/admin-claim-detail";
+import { AdminClaimList, ApprovalTabs } from "@/components/claims/admin-claim-list";
+import { ApprovalTimeline } from "@/components/claims/approval-timeline";
+import { EmployeeClaimDetail } from "@/components/claims/employee-claim-detail";
+import { PayoutsView } from "@/components/claims/payouts-view";
+import type { ClaimDetail, DetailItem } from "@/lib/claims/types";
 import { CompaniesView } from "@/components/app-admin/companies-view";
 import { CompanyDetailView, type CompanyDetail } from "@/components/app-admin/company-detail-view";
 import { ReceiptRecordView, type ReceiptRecordData } from "@/components/app-admin/receipt-record-view";
@@ -137,6 +143,41 @@ const SAMPLE_PLANS = [
   { code: "pro", name: "프로", monthly_price: 110000, annual_price: 1188000, monthly_receipts: 800, recommended_size: "영업·현장직이 많은 팀", is_featured: false },
 ];
 const SAMPLE_CREDIT = { granted: 200, used: 163, freeTrial: 100, eventCount: 1, eventTotal: 100, eventEnabled: true, eventAmount: 100, showEventBanner: false };
+
+const DI: DetailItem = {
+  id: "d1", sort_order: 1, category: "trip", trip_type: "public_transport", purchase_type: null, payment_method: "corporate_card", corporate_card_id: "card1", card_last4: "7890",
+  evidence_type: "card_slip", expense_date: "2026-10-14", merchant_name: "코레일 KTX", merchant_business_number: "2208162517", amount: 50000, supply_amount: 45455, vat_amount: 4545,
+  headcount: 1, purpose: null, attendees: null, client_name: null, trip_start_date: null, trip_end_date: null, parse_status: "success", receipt_path: "x/1.jpg",
+  company_supported_amount: 50000, personal_burden_amount: 0, applied_meal_limit_per_person: null, applied_meal_limit_mode: null, account_title_name: "여비교통비", account_title_code: null,
+  account_title_overridden: false, paid_time: "08:10", approval_number: "30012345", merchant_address: "서울 용산구 한강대로 405", line_items: [], ai: { merchant_name: "코레일 KTX", amount: 50000, expense_date: "2026-10-14" },
+  thumbUrl: null, isPdf: false, duplicate: null,
+};
+const SAMPLE_DETAIL_CLAIM: ClaimDetail = {
+  claim: {
+    id: "cl1", member_id: "p3", status: "submitted", title: "10/15 부산 출장 경비", description: "부산 지사 미팅 및 현장 점검 건", is_business_trip: true, trip_destination: "부산",
+    trip_start_date: "2026-10-14", trip_end_date: "2026-10-15", trip_purpose: "부산 지사 미팅", item_count: 3, total_amount: 72000, total_company_supported: 65000, total_personal_burden: 7000,
+    settlement_required: null, self_approved: false, current_round: 2, rejection_reason: null, created_at: "2026-10-14T01:00:00Z", submitted_at: "2026-10-16T01:00:00Z", approved_at: null, rejected_at: null, paid_at: null,
+  },
+  owner: { name: "김개발", department: "개발팀", position: "대리" },
+  items: [
+    DI,
+    { ...DI, id: "d2", sort_order: 2, merchant_name: "한국도로공사", trip_type: "toll_parking", amount: 5000, supply_amount: null, vat_amount: null, company_supported_amount: 5000, merchant_business_number: null },
+    { ...DI, id: "d3", sort_order: 3, merchant_name: "부산국밥 (직원이 고친 이름)", trip_type: "meal", amount: 17000, payment_method: "personal_card", corporate_card_id: null, company_supported_amount: 10000, personal_burden_amount: 7000, applied_meal_limit_per_person: 10000, applied_meal_limit_mode: "split", ai: { merchant_name: "부산국밥", amount: 17000 }, duplicate: { mine: 0, others: 1 } },
+  ],
+  approvals: [
+    { id: "a1", round: 1, step_order: 1, step_kind: "final", status: "rejected", approver_name: null, acted_by_name: "김대표", acted_at: "2026-10-15T05:00:00Z", comment: "국밥 영수증 날짜를 확인해 주세요", flagged_item_ids: ["d3"] },
+    { id: "a2", round: 2, step_order: 1, step_kind: "final", status: "pending", approver_name: null, acted_by_name: null, acted_at: null, comment: null, flagged_item_ids: [] },
+  ],
+  cards: [{ id: "card1", nickname: "대표", last4: "7890" }],
+  payout: 10000,
+  payback: 0,
+  flaggedItemIds: [],
+  pendingStep: { id: "a2", round: 2, step_order: 1, step_kind: "final", status: "pending", approver_name: null, acted_by_name: null, acted_at: null, comment: null, flagged_item_ids: [] },
+};
+const SAMPLE_ADMIN_ROWS = [
+  { id: "cl1", title: "10/15 부산 출장 경비", status: "submitted" as const, is_business_trip: true, item_count: 3, total_amount: 72000, settlement_required: null, self_approved: false, submitted_at: "2026-10-16T01:00:00Z", member_id: "p3", member_name: "김개발", reviewing: null },
+  { id: "cl2", title: "10/14 간식 구입", status: "submitted" as const, is_business_trip: false, item_count: 1, total_amount: 25000, settlement_required: null, self_approved: false, submitted_at: "2026-10-16T03:00:00Z", member_id: "p4", member_name: "이디자인", reviewing: "박팀장" },
+];
 
 const SAMPLE_MEMBERS: MemberRow[] = [
   { id: "p1", name: "김대표", phone: "01011112222", email: "ceo@pocket.co.kr", position: "대표", role: "super_admin", status: "approved", department: null, created_at: "2026-10-01T00:00:00Z" },
@@ -362,6 +403,57 @@ async function Preview({
             }
           />
         </AdminShell>
+      );
+    case "admin-claims-detail":
+    case "admin-claims-own":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/claims">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
+            <div className="hidden min-w-0 flex-col gap-3 lg:flex">
+              <ApprovalTabs tab="pending" pendingCount={2} base="#" />
+              <AdminClaimList rows={SAMPLE_ADMIN_ROWS} tab="pending" base="#" selectedId="cl1" />
+            </div>
+            <AdminClaimDetail
+              detail={SAMPLE_DETAIL_CLAIM}
+              canAct={screen === "admin-claims-detail"}
+              blockedReason={screen === "admin-claims-own" ? "본인 소명서는 다른 관리자가 승인합니다." : null}
+              backHref="#"
+              payoutsHref="#"
+              timeline={<ApprovalTimeline detail={SAMPLE_DETAIL_CLAIM} />}
+            />
+          </div>
+        </AdminShell>
+      );
+    case "admin-payouts":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/payouts">
+          <PayoutsView
+            tab="waiting"
+            base="#"
+            claimsBase="#"
+            groups={[
+              { member_id: "p3", name: "김개발", department: "개발팀", bank: { bank_name: "국민은행", account_number: "123456-01-234567", account_holder: "김개발" }, payout: 52000, payback: 0, claims: [
+                { id: "c1", title: "10/15 부산 출장 경비", approved_at: "2026-10-16T05:00:00Z", paid_at: null, payout: 10000, payback: 0 },
+                { id: "c2", title: "10월 야근 식대 (아주 긴 제목이 들어가도 줄이 넘치지 않는지 확인)", approved_at: "2026-10-17T05:00:00Z", paid_at: null, payout: 42000, payback: 0 },
+              ] },
+              { member_id: "p4", name: "이디자인", department: null, bank: null, payout: 0, payback: 6000, claims: [{ id: "c3", title: "거래처 점심", approved_at: "2026-10-17T05:00:00Z", paid_at: null, payout: 0, payback: 6000 }] },
+            ]}
+          />
+        </AdminShell>
+      );
+    case "employee-claim-detail":
+    case "employee-claim-detail-rejected":
+      return (
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/claims/cl1">
+          <EmployeeClaimDetail
+            base="#"
+            detail={
+              screen === "employee-claim-detail"
+                ? SAMPLE_DETAIL_CLAIM
+                : { ...SAMPLE_DETAIL_CLAIM, claim: { ...SAMPLE_DETAIL_CLAIM.claim, status: "rejected", current_round: 1, rejection_reason: "국밥 영수증 날짜를 확인해 주세요" }, approvals: SAMPLE_DETAIL_CLAIM.approvals.slice(0, 1), flaggedItemIds: ["d3"], pendingStep: null }
+            }
+          />
+        </EmployeeShell>
       );
     case "admin-home":
       return (

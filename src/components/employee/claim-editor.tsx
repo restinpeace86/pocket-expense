@@ -11,6 +11,8 @@ import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL } from "@/lib/expe
 import { claimStatusBadge } from "@/lib/expense/status";
 import { suggestTitle } from "@/lib/expense/title";
 import { formatWon } from "@/lib/format";
+import { submitClaimAction } from "@/lib/claims/actions";
+import { HEADER_PROBLEM_LABEL, ITEM_PROBLEM_LABEL, type ClaimProblems } from "@/lib/claims/problems";
 import { measureAction } from "@/lib/perf/client";
 import { MAX_PER_CLAIM, useReceiptUpload, type UploadRow } from "./use-receipt-upload";
 
@@ -57,12 +59,12 @@ function Thumb({ item }: { item: EditorItem }) {
   );
 }
 
-function ItemRow({ item, href, onOpen, onDelete }: { item: EditorItem; href: string; onOpen: (href: string) => void; onDelete: () => void }) {
+function ItemRow({ item, href, onOpen, onDelete, problem }: { item: EditorItem; href: string; onOpen: (href: string) => void; onDelete: () => void; problem?: boolean }) {
   const [confirm, setConfirm] = useState(false);
   const check = itemNeedsCheck(item);
   const parsing = item.parse_status === "parsing";
   return (
-    <li className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
+    <li className={`flex items-center gap-2 rounded-2xl border bg-white p-3 ${problem ? "border-red-400 ring-1 ring-red-300" : "border-zinc-200"}`}>
       <a
         href={href}
         onClick={(e) => {
@@ -197,7 +199,8 @@ function Label({ children, required, htmlFor }: { children: React.ReactNode; req
   );
 }
 
-export function ClaimEditor({ data, base, openAdd }: { data: EditorData; base: string; openAdd: boolean }) {
+// selfApprove: 최고 관리자 본인 소명서는 결재 없이 바로 승인된다(D-026) — 확인 문구에만 쓴다
+export function ClaimEditor({ data, base, openAdd, selfApprove = false }: { data: EditorData; base: string; openAdd: boolean; selfApprove?: boolean }) {
   const { claim, items } = data;
   const router = useRouter();
   const touch = useTouchDevice();
@@ -222,6 +225,9 @@ export function ClaimEditor({ data, base, openAdd }: { data: EditorData; base: s
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [saving, startSave] = useTransition();
   const [busy, startBusy] = useTransition();
+  const [problems, setProblems] = useState<ClaimProblems | null>(null);
+  const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [submitting, startSubmit] = useTransition();
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const uploader = useReceiptUpload(claim.id, items.length);
@@ -428,7 +434,7 @@ export function ClaimEditor({ data, base, openAdd }: { data: EditorData; base: s
         ) : (
           <ul className="flex flex-col gap-2">
             {visibleItems.map((item) => (
-              <ItemRow key={item.id} item={item} href={`${base}/claims/${claim.id}/items/${item.id}`} onOpen={openItem} onDelete={() => removeItem(item.id)} />
+              <ItemRow key={item.id} item={item} href={`${base}/claims/${claim.id}/items/${item.id}`} onOpen={openItem} onDelete={() => removeItem(item.id)} problem={!!problems?.items.some((p) => p.item_id === item.id)} />
             ))}
             {uploader.rows.map((row) => (
               <UploadingRow key={row.key} row={row} onDismiss={() => uploader.dismiss(row.key)} />
@@ -493,6 +499,63 @@ export function ClaimEditor({ data, base, openAdd }: { data: EditorData; base: s
         <AddSheet touch={touch} remaining={uploader.remaining} onCamera={() => pick(cameraRef.current)} onGallery={() => pick(galleryRef.current)} onManual={addManual} onClose={() => setSheet(false)} />
       )}
 
+      {problems && (
+        <section className="flex flex-col gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+          <p className="font-semibold">아래 칸을 채우면 상신할 수 있어요</p>
+          {problems.header.length > 0 && <p>소명서: {problems.header.map((h) => HEADER_PROBLEM_LABEL[h] ?? h).join(", ")}</p>}
+          {problems.items.map((p) => {
+            const it = items.find((x) => x.id === p.item_id);
+            const n = items.findIndex((x) => x.id === p.item_id) + 1;
+            return (
+              <button key={p.item_id} type="button" onClick={() => openItem(`${base}/claims/${claim.id}/items/${p.item_id}`)} className="text-left underline-offset-2 hover:underline">
+                영수증 {n} ({it?.merchant_name || "가맹점 미입력"}): {p.fields.map((f) => ITEM_PROBLEM_LABEL[f] ?? f).join(", ")} →
+              </button>
+            );
+          })}
+        </section>
+      )}
+
+      {confirmSubmit && (
+        <div className="fixed inset-0 z-50" role="dialog" aria-modal aria-labelledby="submit-title">
+          <button type="button" className="absolute inset-0 bg-black/40" aria-label="닫기" onClick={() => setConfirmSubmit(false)} />
+          <div className="absolute inset-x-0 bottom-0 mx-auto flex max-w-md flex-col gap-3 rounded-t-2xl bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 shadow-xl sm:bottom-auto sm:top-1/3 sm:rounded-2xl">
+            <h2 id="submit-title" className="text-lg font-semibold">
+              {claim.status === "rejected" ? "다시 상신할까요?" : "결재를 상신할까요?"}
+            </h2>
+            <p className="text-sm text-zinc-700">
+              영수증 {items.length}건 · {formatWon(claim.total_amount)}
+              {payout > 0 && ` · 사비 지급 예정 ${formatWon(payout)}`}
+            </p>
+            <p className="rounded-xl bg-zinc-50 px-3 py-2 text-sm text-zinc-600">{selfApprove ? "최고 관리자 본인 소명서라 결재 없이 바로 승인됩니다." : "결재선: 관리자 승인. 상신하면 승인·반려 전까지 고칠 수 없어요."}</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setConfirmSubmit(false)} className="min-h-12 rounded-xl border border-zinc-300 font-medium">
+                취소
+              </button>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() =>
+                  startSubmit(async () => {
+                    const res = await measureAction("employee.submit_claim", () => submitClaimAction(claim.id));
+                    setConfirmSubmit(false);
+                    if (res.ok) {
+                      router.push(base);
+                      return;
+                    }
+                    if ("problems" in res) setProblems(res.problems);
+                    setMessage({ kind: "error", text: res.error });
+                  })
+                }
+                className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-brand-600 font-semibold text-white disabled:opacity-60"
+              >
+                {submitting && <Loader2 className="size-4 animate-spin" />}
+                {claim.status === "rejected" ? "재상신" : "상신"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 하단 액션 바 (§4) */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         <div className="mx-auto flex max-w-md flex-col gap-2 md:max-w-2xl">
@@ -510,11 +573,23 @@ export function ClaimEditor({ data, base, openAdd }: { data: EditorData; base: s
             >
               {saving && <Loader2 className="size-4 animate-spin" />}💾 임시저장{dirty ? " •" : ""}
             </button>
-            <button type="button" disabled className="min-h-12 rounded-xl bg-brand-600 font-semibold text-white opacity-50" title="결재 상신은 다음 업데이트에서 열려요">
-              🚀 {claim.status === "rejected" ? "재상신" : "결재 상신"}
+            <button
+              type="button"
+              disabled={!editable || submitting || uploader.rows.some((r) => r.phase !== "failed")}
+              onClick={() =>
+                startSubmit(async () => {
+                  setMessage(null);
+                  // 바뀐 헤더를 먼저 저장하고, 서버에서 빠진 칸을 확인한 뒤 확인 창을 연다
+                  if (dirty && !(await save())) return;
+                  setProblems(null);
+                  setConfirmSubmit(true);
+                })
+              }
+              className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+            >
+              {submitting && <Loader2 className="size-4 animate-spin" />}🚀 {claim.status === "rejected" ? "재상신" : "결재 상신"}
             </button>
           </div>
-          <p className="text-center text-[11px] text-zinc-500">결재 상신은 준비 중이에요. 지금은 임시저장까지 할 수 있어요.</p>
         </div>
       </div>
     </main>

@@ -1509,6 +1509,7 @@ export type Database = {
       }
       approve_member: { Args: { p_member_id: string }; Returns: undefined }
       business_verify_mode: { Args: never; Returns: string }
+      check_claim_for_submit: { Args: { p_claim_id: string }; Returns: Json }
       claim_duplicate_receipts: { Args: { p_claim_id: string }; Returns: Json }
       consume_receipt_credit: {
         Args: {

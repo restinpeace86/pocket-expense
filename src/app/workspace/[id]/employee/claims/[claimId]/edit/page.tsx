@@ -22,7 +22,7 @@ async function ClaimEdit({ params, searchParams }: Pick<PageProps<"/workspace/[i
   const data = await getMyClaimForEdit(membership, claimId);
   if (!data) notFound();
   const base = `/workspace/${id}/employee`;
-  // 상신 이후에는 편집하지 않는다 (읽기 전용 상세는 승인 흐름(T9)에서)
-  if (data.claim.status !== "draft" && data.claim.status !== "rejected") redirect(base);
-  return <ClaimEditor key={data.claim.id} data={data} base={base} openAdd={sp.add === "1"} />;
+  // 상신 이후에는 편집하지 않고 읽기 전용 상세로
+  if (data.claim.status !== "draft" && data.claim.status !== "rejected") redirect(`${base}/claims/${claimId}`);
+  return <ClaimEditor key={data.claim.id} data={data} base={base} openAdd={sp.add === "1"} selfApprove={membership.role === "super_admin"} />;
 }

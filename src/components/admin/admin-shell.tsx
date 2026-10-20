@@ -33,8 +33,8 @@ import type { Membership } from "@/lib/auth/paths";
 type NavItem = { href: string; label: string; icon: LucideIcon; ready: boolean };
 const NAV: NavItem[] = [
   { href: "", label: "홈", icon: LayoutDashboard, ready: true },
-  { href: "/claims", label: "지출 승인 관리", icon: ReceiptText, ready: false },
-  { href: "/payouts", label: "정산 지급 관리", icon: Banknote, ready: false },
+  { href: "/claims", label: "지출 승인 관리", icon: ReceiptText, ready: true },
+  { href: "/payouts", label: "정산 지급 관리", icon: Banknote, ready: true },
   { href: "/members", label: "멤버 관리", icon: Users, ready: true },
   { href: "/export", label: "세무 마감", icon: FileDown, ready: false },
 ];

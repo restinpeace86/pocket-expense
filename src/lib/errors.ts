@@ -42,6 +42,14 @@ const MESSAGES: Record<string, string> = {
   INVALID_EXPENSE_DATE: "사용일자가 오늘보다 뒤일 수 없어요. 날짜를 확인해 주세요.",
   INVALID_ITEM_TEXT: "가맹점·거래처는 100자, 목적·참석자는 200자 이내로 입력해 주세요.",
   INVALID_HEADCOUNT: "인원수는 1~99명 사이로 입력해 주세요.",
+  CLAIM_INCOMPLETE: "빠진 칸이 있어 상신할 수 없어요. 표시된 항목을 채워 주세요.",
+  INVALID_STATUS: "이미 처리된 소명서예요. 화면을 새로고침해 주세요.",
+  ALREADY_PROCESSED: "이미 처리된 결재입니다. 화면을 새로고침해 주세요.",
+  REASON_TOO_SHORT: "반려 사유를 5자 이상 적어 주세요.",
+  REASON_TOO_LONG: "반려 사유는 500자 이내로 적어 주세요.",
+  INVALID_FLAGGED_ITEMS: "지목한 항목을 다시 골라 주세요.",
+  INACTIVE_REVIEWER: "사전 검토자가 비활성 상태라 상신할 수 없어요. 관리자에게 결재라인 수정을 요청해 주세요.",
+  INVALID_CLAIMS: "정산 대기 상태가 아닌 소명서가 섞여 있어요. 화면을 새로고침해 주세요.",
   INCOMPLETE_BANK_ACCOUNT: "정산 계좌는 은행·계좌번호·예금주를 모두 입력하거나 모두 비워 주세요.",
 };
 

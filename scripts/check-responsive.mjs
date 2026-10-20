@@ -17,6 +17,7 @@ const DEFAULT_PATHS = [
   "/dev/preview/employee-home", "/dev/preview/employee-home-empty", "/dev/preview/employee-home-blocked", "/dev/preview/employee-home-rejected", "/dev/preview/employee-home?theme=emerald",
   "/dev/preview/employee-claim-edit", "/dev/preview/employee-claim-edit-empty", "/dev/preview/employee-claim-edit-trip",
   "/dev/preview/employee-item-edit", "/dev/preview/employee-item-edit-trip", "/dev/preview/employee-item-edit-manual",
+  "/dev/preview/admin-claims-detail", "/dev/preview/admin-claims-own", "/dev/preview/admin-payouts", "/dev/preview/employee-claim-detail", "/dev/preview/employee-claim-detail-rejected",
   "/dev/preview/admin-billing", "/dev/preview/admin-billing-banner", "/dev/preview/admin-billing-empty",
   "/dev/preview/app-admin-companies", "/dev/preview/app-admin-company", "/dev/preview/app-admin-receipt",
 ];
