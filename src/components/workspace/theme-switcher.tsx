@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Palette } from "lucide-react";
+import { Check, ChevronDown, Palette } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { saveUiThemeAction } from "@/app/workspace/theme-actions";
 import { DEFAULT_THEME, isThemeKey, THEME_STORAGE_KEY, THEMES, type ThemeKey } from "@/lib/theme";
@@ -63,12 +63,24 @@ function Swatch({ colors }: { colors: readonly string[] }) {
 }
 
 // 모바일 관리자 메뉴(사이드바 색) 안에 펼쳐 두는 선택지. 헤더 공간이 좁은 모바일용.
+// 모바일 관리자 메뉴 안의 색상 선택 — 설정 메뉴처럼 기본은 접어 둔다
 export function ThemeOptionsInline() {
   const theme = useTheme();
+  const current = THEMES.find((t) => t.key === theme);
   return (
-    <div className="border-t border-sidebar-border px-3 pb-4 pt-3">
-      <p className="px-3 pb-1 text-xs text-sidebar-muted">화면 색상</p>
-      <div className="flex flex-col gap-1" role="radiogroup" aria-label="화면 색상">
+    <details className="group border-t border-sidebar-border px-3 pb-4 pt-3">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-xl px-3 text-sm text-sidebar-fg hover:bg-sidebar-hover [&::-webkit-details-marker]:hidden">
+        <Palette className="size-5 shrink-0" />
+        <span className="flex-1">화면 색상</span>
+        {current && (
+          <span className="flex items-center gap-1.5 text-xs text-sidebar-muted">
+            <Swatch colors={current.swatch} />
+            {current.label}
+          </span>
+        )}
+        <ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="mt-1 flex flex-col gap-1 pl-3" role="radiogroup" aria-label="화면 색상">
         {THEMES.map((t) => (
           <button
             key={t.key}
@@ -84,7 +96,7 @@ export function ThemeOptionsInline() {
           </button>
         ))}
       </div>
-    </div>
+    </details>
   );
 }
 
