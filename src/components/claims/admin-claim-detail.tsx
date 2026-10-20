@@ -4,13 +4,13 @@ import { ArrowLeft, Check, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { approveClaimAction, rejectClaimAction } from "@/lib/claims/actions";
+import { approveClaimAction, overrideAccountTitleAction, rejectClaimAction } from "@/lib/claims/actions";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import type { ClaimDetail } from "@/lib/claims/types";
 import { claimStatusBadge } from "@/lib/expense/status";
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
-import { ClaimItems } from "./claim-items";
+import { ClaimItems, type AccountTitleOption } from "./claim-items";
 
 // 지출 승인 관리 오른쪽 상세 (admin-expense-approvals.md §4.C·D). 사전 검토자 결재 화면(approver.md ①)도 같은 화면을 쓴다
 export function AdminClaimDetail({
@@ -21,6 +21,7 @@ export function AdminClaimDetail({
   payoutsHref,
   timeline,
   reviewer = false,
+  accountTitles,
 }: {
   detail: ClaimDetail;
   canAct: boolean;
@@ -28,7 +29,8 @@ export function AdminClaimDetail({
   backHref: string;
   payoutsHref: string;
   timeline: React.ReactNode;
-  reviewer?: boolean; // 사전 검토자: [검토 승인], 마감 요약 없음, 직원 화면 틀(왼쪽 메뉴 없음)
+  reviewer?: boolean; // 사전 검토자: [검토 승인], 마감 요약·계정과목 없음, 직원 화면 틀(왼쪽 메뉴 없음)
+  accountTitles?: AccountTitleOption[]; // 관리자: 항목별 계정과목 조정 (T11-3)
 }) {
   const { claim, owner } = detail;
   const router = useRouter();
@@ -37,6 +39,16 @@ export function AdminClaimDetail({
   const [flagged, setFlagged] = useState<string[]>([]);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [pending, start] = useTransition();
+  const [accountBusy, setAccountBusy] = useState<string | null>(null);
+  const changeAccount = (itemId: string, titleId: string | null) => {
+    setAccountBusy(itemId);
+    start(async () => {
+      const res = await measureAction("admin.override_account_title", () => overrideAccountTitleAction(itemId, titleId));
+      setAccountBusy(null);
+      if (!res.ok) setMessage({ kind: "error", text: res.error });
+      else router.refresh();
+    });
+  };
   const badge = claimStatusBadge(claim.status, claim.settlement_required);
   const lastReject = [...detail.approvals].reverse().find((a) => a.status === "rejected");
 
@@ -102,6 +114,9 @@ export function AdminClaimDetail({
           selectable={mode === "reject"}
           selected={flagged}
           onToggle={(id) => setFlagged((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]))}
+          accountTitles={reviewer ? undefined : accountTitles}
+          onAccountChange={reviewer || !accountTitles ? undefined : changeAccount}
+          accountBusyId={accountBusy}
         />
       </section>
 

@@ -16,6 +16,7 @@ import { ApprovalLinesHeading, ApprovalLinesView } from "@/components/admin/appr
 import { NotificationList } from "@/components/admin/notification-list";
 import { AdminClaimDetail } from "@/components/claims/admin-claim-detail";
 import { AdminClaimList, ApprovalTabs } from "@/components/claims/admin-claim-list";
+import { ClaimFiltersBar } from "@/components/claims/claim-filters";
 import { ApprovalTimeline } from "@/components/claims/approval-timeline";
 import { EmployeeClaimDetail } from "@/components/claims/employee-claim-detail";
 import { PayoutsView } from "@/components/claims/payouts-view";
@@ -150,7 +151,7 @@ const DI: DetailItem = {
   id: "d1", sort_order: 1, category: "trip", trip_type: "public_transport", purchase_type: null, payment_method: "corporate_card", corporate_card_id: "card1", card_last4: "7890",
   evidence_type: "card_slip", expense_date: "2026-10-14", merchant_name: "코레일 KTX", merchant_business_number: "2208162517", amount: 50000, supply_amount: 45455, vat_amount: 4545,
   headcount: 1, purpose: null, attendees: null, client_name: null, trip_start_date: null, trip_end_date: null, parse_status: "success", receipt_path: "x/1.jpg",
-  company_supported_amount: 50000, personal_burden_amount: 0, applied_meal_limit_per_person: null, applied_meal_limit_mode: null, account_title_name: "여비교통비", account_title_code: null,
+  company_supported_amount: 50000, personal_burden_amount: 0, applied_meal_limit_per_person: null, applied_meal_limit_mode: null, account_title_id: "t2", account_title_name: "여비교통비", account_title_code: null, closed_month: null,
   account_title_overridden: false, paid_time: "08:10", approval_number: "30012345", merchant_address: "서울 용산구 한강대로 405", line_items: [], ai: { merchant_name: "코레일 KTX", amount: 50000, expense_date: "2026-10-14" },
   thumbUrl: null, isPdf: false, duplicate: null,
 };
@@ -413,6 +414,13 @@ async function Preview({
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
             <div className="hidden min-w-0 flex-col gap-3 lg:flex">
               <ApprovalTabs tab="pending" pendingCount={2} base="#" />
+              <ClaimFiltersBar
+                filters={{ month: "2026-10", department: null, member: null, category: "trip", q: null }}
+                tab="pending"
+                base="#"
+                departments={[{ id: "d1", name: "개발팀" }]}
+                members={[{ id: "p3", name: "김개발" }]}
+              />
               <AdminClaimList rows={SAMPLE_ADMIN_ROWS} tab="pending" base="#" selectedId="cl1" />
             </div>
             <AdminClaimDetail
@@ -422,6 +430,11 @@ async function Preview({
               backHref="#"
               payoutsHref="#"
               timeline={<ApprovalTimeline detail={SAMPLE_DETAIL_CLAIM} />}
+              accountTitles={[
+                { id: "t1", name: "복리후생비", code: "811" },
+                { id: "t2", name: "여비교통비", code: "812" },
+                { id: "t3", name: "기업업무추진비", code: "813" },
+              ]}
             />
           </div>
         </AdminShell>

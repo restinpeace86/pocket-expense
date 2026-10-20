@@ -5,13 +5,13 @@ import { claimStatusBadge } from "@/lib/expense/status";
 import { formatWon } from "@/lib/format";
 
 // 지출 승인 관리 왼쪽 목록 + 상태 탭 (admin-expense-approvals.md §4.A·B)
-export function ApprovalTabs({ tab, pendingCount, base }: { tab: ApprovalTab; pendingCount: number; base: string }) {
+export function ApprovalTabs({ tab, pendingCount, base, query = "" }: { tab: ApprovalTab; pendingCount: number; base: string; query?: string }) {
   return (
     <div className="flex gap-1 overflow-x-auto rounded-xl bg-zinc-100 p-1" aria-label="상태">
       {APPROVAL_TABS.map((t) => (
         <Link
           key={t.key}
-          href={`${base}?tab=${t.key}`}
+          href={`${base}?tab=${t.key}${query ? `&${query}` : ""}`}
           aria-current={tab === t.key ? "page" : undefined}
           className={`inline-flex min-h-10 flex-1 items-center justify-center whitespace-nowrap rounded-lg px-2 text-[13px] ${tab === t.key ? "bg-white font-semibold shadow-sm" : "text-zinc-600 hover:text-zinc-900"}`}
         >
@@ -23,7 +23,7 @@ export function ApprovalTabs({ tab, pendingCount, base }: { tab: ApprovalTab; pe
   );
 }
 
-export function AdminClaimList({ rows, tab, base, selectedId }: { rows: AdminClaimRow[]; tab: ApprovalTab; base: string; selectedId?: string }) {
+export function AdminClaimList({ rows, tab, base, selectedId, query = "" }: { rows: AdminClaimRow[]; tab: ApprovalTab; base: string; selectedId?: string; query?: string }) {
   if (rows.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
@@ -39,7 +39,7 @@ export function AdminClaimList({ rows, tab, base, selectedId }: { rows: AdminCla
         return (
           <li key={c.id}>
             <Link
-              href={`${base}/${c.id}?tab=${tab}`}
+              href={`${base}/${c.id}?tab=${tab}${query ? `&${query}` : ""}`}
               aria-current={active ? "true" : undefined}
               className={`block rounded-xl border p-3 hover:border-brand-300 ${active ? "border-brand-500 bg-brand-50" : "border-zinc-200 bg-white"}`}
             >

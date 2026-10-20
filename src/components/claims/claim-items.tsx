@@ -88,7 +88,7 @@ function Thumb({ i, onOpen }: { i: DetailItem; onOpen: () => void }) {
   );
 }
 
-function ReceiptPanel({ items, index, cards, onIndex, onClose }: { items: DetailItem[]; index: number; cards: { id: string; nickname: string; last4: string }[]; onIndex: (n: number) => void; onClose: () => void }) {
+function ReceiptPanel({ items, index, cards, onIndex, onClose, showAccount }: { items: DetailItem[]; index: number; cards: { id: string; nickname: string; last4: string }[]; onIndex: (n: number) => void; onClose: () => void; showAccount: boolean }) {
   const i = items[index];
   const [url, setUrl] = useState<{ id: string; url: string | null } | null>(null);
   useEffect(() => {
@@ -112,7 +112,7 @@ function ReceiptPanel({ items, index, cards, onIndex, onClose }: { items: Detail
     ["증빙 구분", i.evidence_type ? EVIDENCE_LABEL[i.evidence_type] : null],
     ["결제수단", paymentBadge(i, cards)],
     ["카테고리", classLabel(i)],
-    ["계정과목", i.account_title_name ? `${i.account_title_name}${i.account_title_code ? ` (${i.account_title_code})` : ""}` : "미지정"],
+    ...(showAccount ? ([["계정과목", i.account_title_name ? `${i.account_title_name}${i.account_title_code ? ` (${i.account_title_code})` : ""}${i.account_title_overridden ? " · 계정 조정됨" : ""}` : "미지정"]] as [string, React.ReactNode][]) : []),
     ["인원 · 목적", [i.headcount ? `${i.headcount}명` : null, i.purpose, i.client_name, i.attendees].filter(Boolean).join(" · ") || null],
     ["승인번호", i.approval_number],
     ["가맹점 주소", i.merchant_address],
@@ -199,6 +199,34 @@ function ReceiptPanel({ items, index, cards, onIndex, onClose }: { items: Detail
   );
 }
 
+// 관리자만 계정과목을 보고 바꾼다 (account-titles.md §4: 직원·결재자 화면에는 보여 주지 않음)
+function AccountCell({ i, titles, onChange, busy }: { i: DetailItem; titles: AccountTitleOption[]; onChange?: (itemId: string, titleId: string | null) => void; busy: boolean }) {
+  if (!onChange) return <span className="text-xs text-zinc-500">{i.account_title_name ?? "계정과목 미지정"}</span>;
+  return (
+    <span className="mt-1 flex flex-wrap items-center gap-1">
+      <select
+        aria-label={`${i.merchant_name ?? "항목"} 계정과목`}
+        disabled={busy || !!i.closed_month}
+        title={i.closed_month ? `${i.closed_month} 세무 마감된 항목이라 바꿀 수 없어요` : undefined}
+        value={i.account_title_id ?? ""}
+        onChange={(e) => onChange(i.id, e.target.value || null)}
+        className="min-h-9 max-w-full rounded-lg border border-zinc-300 bg-white px-2 text-xs disabled:bg-zinc-100"
+      >
+        <option value="">{i.account_title_overridden ? "자동(분류 기준)으로 되돌리기" : "계정과목 미지정"}</option>
+        {titles.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name}
+            {t.code ? ` (${t.code})` : ""}
+          </option>
+        ))}
+      </select>
+      {i.account_title_overridden && <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-800">계정 조정됨</span>}
+    </span>
+  );
+}
+
+export type AccountTitleOption = { id: string; name: string; code: string | null };
+
 export function ClaimItems({
   items,
   cards,
@@ -206,6 +234,9 @@ export function ClaimItems({
   selectable = false,
   selected = [],
   onToggle,
+  accountTitles,
+  onAccountChange,
+  accountBusyId,
 }: {
   items: DetailItem[];
   cards: { id: string; nickname: string; last4: string }[];
@@ -213,8 +244,12 @@ export function ClaimItems({
   selectable?: boolean; // 반려할 때 문제 항목 지목
   selected?: string[];
   onToggle?: (id: string) => void;
+  accountTitles?: AccountTitleOption[]; // 넘기면 관리자 화면: 계정과목 표시·조정
+  onAccountChange?: (itemId: string, titleId: string | null) => void;
+  accountBusyId?: string | null;
 }) {
   const [open, setOpen] = useState<number | null>(null);
+  const showAccount = !!accountTitles;
   return (
     // 화면 폭이 아니라 이 영역의 폭으로 표/카드를 고른다(관리자 분할 화면에서 오른쪽이 좁을 때 카드)
     <div className="@container">
@@ -228,7 +263,7 @@ export function ClaimItems({
               <th className="border-b border-zinc-200 px-2 py-2 font-medium">사용일</th>
               <th className="border-b border-zinc-200 px-2 py-2 font-medium">가맹점 · 결제수단</th>
               <th className="border-b border-zinc-200 px-2 py-2 text-right font-medium">청구금액</th>
-              <th className="border-b border-zinc-200 px-2 py-2 font-medium">분류 · 계정과목</th>
+              <th className="border-b border-zinc-200 px-2 py-2 font-medium">{showAccount ? "분류 · 계정과목" : "분류"}</th>
               <th className="border-b border-zinc-200 px-2 py-2 font-medium">처리 상태 / 정산 안내</th>
             </tr>
           </thead>
@@ -257,7 +292,7 @@ export function ClaimItems({
                   <td className="whitespace-nowrap border-b border-zinc-100 px-2 py-2 text-right align-top font-semibold tabular-nums">{i.amount !== null ? formatWon(i.amount) : "-"}</td>
                   <td className="border-b border-zinc-100 px-2 py-2 align-top">
                     <span className="block">{classLabel(i)}</span>
-                    <span className="text-xs text-zinc-500">{i.account_title_name ?? "계정과목 미지정"}</span>
+                    {showAccount && <AccountCell i={i} titles={accountTitles} onChange={onAccountChange} busy={accountBusyId === i.id} />}
                   </td>
                   <td className="border-b border-zinc-100 px-2 py-2 align-top">
                     <span className="block">{note.text}</span>
@@ -284,8 +319,9 @@ export function ClaimItems({
                   <p className="shrink-0 font-semibold tabular-nums">{i.amount !== null ? formatWon(i.amount) : "-"}</p>
                 </div>
                 <p className="text-xs text-zinc-500">
-                  {[i.expense_date?.replaceAll("-", "."), classLabel(i), i.account_title_name].filter(Boolean).join(" · ")}
+                  {[i.expense_date?.replaceAll("-", "."), classLabel(i)].filter(Boolean).join(" · ")}
                 </p>
+                {showAccount && <AccountCell i={i} titles={accountTitles} onChange={onAccountChange} busy={accountBusyId === i.id} />}
                 <div className="mt-1 flex flex-wrap items-center gap-1">{paymentBadge(i, cards)}</div>
                 <p className="mt-1 text-xs text-zinc-700">
                   {note.text}
@@ -299,7 +335,7 @@ export function ClaimItems({
           );
         })}
       </ul>
-      {open !== null && <ReceiptPanel items={items} index={open} cards={cards} onIndex={setOpen} onClose={() => setOpen(null)} />}
+      {open !== null && <ReceiptPanel items={items} index={open} cards={cards} onIndex={setOpen} onClose={() => setOpen(null)} showAccount={showAccount} />}
     </div>
   );
 }

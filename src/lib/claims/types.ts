@@ -32,9 +32,11 @@ export type DetailItem = {
   personal_burden_amount: number;
   applied_meal_limit_per_person: number | null;
   applied_meal_limit_mode: "split" | "notify" | null;
+  account_title_id: string | null;
   account_title_name: string | null;
   account_title_code: string | null;
   account_title_overridden: boolean;
+  closed_month: string | null; // 세무 마감된 항목이면 계정과목 조정 불가(D-045)
   paid_time: string | null;
   approval_number: string | null;
   merchant_address: string | null;

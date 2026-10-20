@@ -53,6 +53,7 @@ const MESSAGES: Record<string, string> = {
   TOO_MANY_REVIEWERS: "사전 검토자는 4명까지 넣을 수 있어요.",
   DUPLICATE_REVIEWER: "같은 사람을 두 번 넣을 수 없어요.",
   INVALID_REVIEWER: "검토자는 우리 회사의 활성 멤버만 고를 수 있어요. 화면을 새로고침해 주세요.",
+  ITEM_CLOSED: "세무 마감된 항목이라 바꿀 수 없어요. 최고 관리자가 마감을 해제한 뒤 바꿔 주세요.",
   INCOMPLETE_BANK_ACCOUNT: "정산 계좌는 은행·계좌번호·예금주를 모두 입력하거나 모두 비워 주세요.",
 };
 

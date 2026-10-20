@@ -1574,6 +1574,10 @@ export type Database = {
       }
       my_employee_summary: { Args: never; Returns: Json }
       my_membership: { Args: never; Returns: Json }
+      override_item_account_title: {
+        Args: { p_account_title_id: string; p_item_id: string }
+        Returns: undefined
+      }
       reactivate_member: { Args: { p_member_id: string }; Returns: undefined }
       record_perf_events: { Args: { p_events: Json }; Returns: number }
       refresh_claim_totals: { Args: { p_claim_id: string }; Returns: Json }
