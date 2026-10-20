@@ -56,11 +56,12 @@
 ### 2.1a `billing_plans` — 요금제 (D-046, 표시용)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
-| code | text | not null, unique | `starter` / `standard` / `pro` / `enterprise` |
-| name | text | not null | 스타터 / 스탠다드 / 프로 / 엔터프라이즈 (D-077) |
-| monthly_price | integer | not null | 25000 / 50000 / 100000 / 200000 (부가세 별도) |
-| monthly_receipts | integer | not null | 150 / 400 / 1000 / 3000(무제한 요금제의 공정 사용 기준) |
-| recommended_size | text | null | 5~10인 / 10~25인 / 25~50인 / 50인 이상 |
+| code | text | not null, unique | `starter` / `standard` / `pro` (D-081) |
+| name | text | not null | 스타터 / 스탠다드 / 프로 (D-081) |
+| monthly_price | integer | not null | 30000 / 60000 / 110000 (공급가액, 부가세 별도) |
+| annual_price | integer | null | 연간 선결제 총액(월 요금 × 12 × 0.9): 324000 / 648000 / 1188000 (D-081) |
+| monthly_receipts | integer | not null | 150 / 400 / 800 |
+| recommended_size | text | null | 5인 미만 / 5~15인 / 영업·현장직이 많은 팀 |
 | sort_order | integer | default 0 | |
 | is_purchasable | boolean | not null, default false | 결제 가능 여부. 결제 연동 전까지 false (D-046) |
 | is_unlimited | boolean | not null, default false | 무제한 요금제(장수는 공정 사용 기준) (D-077) |

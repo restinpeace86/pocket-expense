@@ -25,6 +25,12 @@ describe("safeNextPath", () => {
 });
 
 describe("destinationAfterLogin", () => {
+  it("운영자 화면 경로는 로그인 뒤 그대로 (접근 확인은 그 화면에서)", () => {
+    expect(destinationAfterLogin(member(), "/app-admin")).toBe("/app-admin");
+    expect(destinationAfterLogin(null, "/app-admin/companies/x?month=2026-10")).toBe("/app-admin/companies/x?month=2026-10");
+    expect(destinationAfterLogin(member(), "/app-adminx")).toBe(`/workspace/${A}/employee`);
+  });
+
   it("소속이 없으면 온보딩(가입·생성 경로만 next 허용)", () => {
     expect(destinationAfterLogin(null, null)).toBe("/onboarding");
     expect(destinationAfterLogin(null, "/onboarding/join?code=ABCDEFGH")).toBe("/onboarding/join?code=ABCDEFGH");

@@ -32,6 +32,8 @@ export function workspaceHome(m: Pick<Membership, "company_id" | "role">): strin
 // 소속 상태에 따라 갈 곳을 정한다. next는 그 상태에서 허용되는 경로일 때만 따른다.
 export function destinationAfterLogin(membership: Membership | null, nextRaw: string | null | undefined): string {
   const next = safeNextPath(nextRaw);
+  // 운영자 화면(D-080): 로그인 뒤 그대로 돌려보낸다. 운영자 계정인지는 그 화면(proxy·서버)이 확인한다
+  if (next && (next === "/app-admin" || next.startsWith("/app-admin/") || next.startsWith("/app-admin?"))) return next;
 
   if (!membership) {
     // 아직 회사가 없으면 가입·회사 생성 경로만 허용

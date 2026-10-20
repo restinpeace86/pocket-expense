@@ -214,6 +214,7 @@ export type Database = {
       }
       billing_plans: {
         Row: {
+          annual_price: number | null
           code: string
           created_at: string
           id: string
@@ -228,6 +229,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          annual_price?: number | null
           code: string
           created_at?: string
           id?: string
@@ -242,6 +244,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          annual_price?: number | null
           code?: string
           created_at?: string
           id?: string
