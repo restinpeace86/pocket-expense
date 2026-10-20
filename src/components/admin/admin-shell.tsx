@@ -46,7 +46,7 @@ const SETTINGS_NAV: NavItem[] = [
   { href: "/approval-lines", label: "사전 검토 결재라인", icon: Route, ready: false },
   { href: "/account-titles", label: "계정과목", icon: BookOpen, ready: true },
   { href: "/billing", label: "요금제", icon: Wallet, ready: true },
-  { href: "/notifications", label: "알림 이력", icon: Bell, ready: false },
+  { href: "/notifications", label: "알림 이력", icon: Bell, ready: true },
 ];
 
 function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: string; pathname: string; onNavigate?: () => void }) {
