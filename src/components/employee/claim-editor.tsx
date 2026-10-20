@@ -200,7 +200,7 @@ function Label({ children, required, htmlFor }: { children: React.ReactNode; req
 }
 
 // selfApprove: 최고 관리자 본인 소명서는 결재 없이 바로 승인된다(D-026) — 확인 문구에만 쓴다
-export function ClaimEditor({ data, base, openAdd, selfApprove = false }: { data: EditorData; base: string; openAdd: boolean; selfApprove?: boolean }) {
+export function ClaimEditor({ data, base, openAdd, selfApprove = false, approvalPreview = "관리자 승인" }: { data: EditorData; base: string; openAdd: boolean; selfApprove?: boolean; approvalPreview?: string }) {
   const { claim, items } = data;
   const router = useRouter();
   const touch = useTouchDevice();
@@ -526,7 +526,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false }: { data
               영수증 {items.length}건 · {formatWon(claim.total_amount)}
               {payout > 0 && ` · 사비 지급 예정 ${formatWon(payout)}`}
             </p>
-            <p className="rounded-xl bg-zinc-50 px-3 py-2 text-sm text-zinc-600">{selfApprove ? "최고 관리자 본인 소명서라 결재 없이 바로 승인됩니다." : "결재선: 관리자 승인. 상신하면 승인·반려 전까지 고칠 수 없어요."}</p>
+            <p className="rounded-xl bg-zinc-50 px-3 py-2 text-sm text-zinc-600">{selfApprove ? "최고 관리자 본인 소명서라 결재 없이 바로 승인됩니다." : `결재선: ${approvalPreview}. 상신하면 승인·반려 전까지 고칠 수 없어요.`}</p>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setConfirmSubmit(false)} className="min-h-12 rounded-xl border border-zinc-300 font-medium">
                 취소

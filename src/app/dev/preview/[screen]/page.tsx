@@ -12,6 +12,7 @@ import { EmployeeShell } from "@/components/employee/employee-shell";
 import { ClaimEditor } from "@/components/employee/claim-editor";
 import { AppAdminShell } from "@/components/app-admin/app-admin-shell";
 import { BillingView } from "@/components/admin/billing-view";
+import { ApprovalLinesHeading, ApprovalLinesView } from "@/components/admin/approval-lines-view";
 import { NotificationList } from "@/components/admin/notification-list";
 import { AdminClaimDetail } from "@/components/claims/admin-claim-detail";
 import { AdminClaimList, ApprovalTabs } from "@/components/claims/admin-claim-list";
@@ -166,14 +167,14 @@ const SAMPLE_DETAIL_CLAIM: ClaimDetail = {
     { ...DI, id: "d3", sort_order: 3, merchant_name: "부산국밥 (직원이 고친 이름)", trip_type: "meal", amount: 17000, payment_method: "personal_card", corporate_card_id: null, company_supported_amount: 10000, personal_burden_amount: 7000, applied_meal_limit_per_person: 10000, applied_meal_limit_mode: "split", ai: { merchant_name: "부산국밥", amount: 17000 }, duplicate: { mine: 0, others: 1 } },
   ],
   approvals: [
-    { id: "a1", round: 1, step_order: 1, step_kind: "final", status: "rejected", approver_name: null, acted_by_name: "김대표", acted_at: "2026-10-15T05:00:00Z", comment: "국밥 영수증 날짜를 확인해 주세요", flagged_item_ids: ["d3"] },
-    { id: "a2", round: 2, step_order: 1, step_kind: "final", status: "pending", approver_name: null, acted_by_name: null, acted_at: null, comment: null, flagged_item_ids: [] },
+    { id: "a1", round: 1, step_order: 1, step_kind: "final", status: "rejected", approver_member_id: null, approver_name: null, acted_by_name: "김대표", acted_at: "2026-10-15T05:00:00Z", comment: "국밥 영수증 날짜를 확인해 주세요", flagged_item_ids: ["d3"] },
+    { id: "a2", round: 2, step_order: 1, step_kind: "final", status: "pending", approver_member_id: null, approver_name: null, acted_by_name: null, acted_at: null, comment: null, flagged_item_ids: [] },
   ],
   cards: [{ id: "card1", nickname: "대표", last4: "7890" }],
   payout: 10000,
   payback: 0,
   flaggedItemIds: [],
-  pendingStep: { id: "a2", round: 2, step_order: 1, step_kind: "final", status: "pending", approver_name: null, acted_by_name: null, acted_at: null, comment: null, flagged_item_ids: [] },
+  pendingStep: { id: "a2", round: 2, step_order: 1, step_kind: "final", status: "pending", approver_member_id: null, approver_name: null, acted_by_name: null, acted_at: null, comment: null, flagged_item_ids: [] },
 };
 const SAMPLE_ADMIN_ROWS = [
   { id: "cl1", title: "10/15 부산 출장 경비", status: "submitted" as const, is_business_trip: true, item_count: 3, total_amount: 72000, settlement_required: null, self_approved: false, submitted_at: "2026-10-16T01:00:00Z", member_id: "p3", member_name: "김개발", reviewing: null },
@@ -304,7 +305,7 @@ async function Preview({
     case "employee-home-blocked":
     case "employee-home-rejected":
       return (
-        <EmployeeShell membership={screen === "employee-home" ? SAMPLE_MEMBERSHIP : EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="">
+        <EmployeeShell membership={screen === "employee-home" ? SAMPLE_MEMBERSHIP : EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee" inbox={screen === "employee-home" ? { waiting: 3 } : null}>
           <EmployeeHomeView
             name={screen === "employee-home" ? "김대표" : "김개발"}
             base="#"
@@ -322,7 +323,7 @@ async function Preview({
     case "employee-claim-edit-empty":
     case "employee-claim-edit-trip":
       return (
-        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/claims/claim1/edit">
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee/claims/claim1/edit">
           <ClaimEditor
             data={
               screen === "employee-claim-edit-empty"
@@ -340,7 +341,7 @@ async function Preview({
     case "employee-item-edit-trip":
     case "employee-item-edit-manual":
       return (
-        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/claims/claim1/items/i1">
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee/claims/claim1/items/i1">
           <ItemEditor
             claim={screen === "employee-item-edit-trip" ? { ...SAMPLE_EDITOR.claim, is_business_trip: true, trip_start_date: "2026-10-15", trip_end_date: "2026-10-16" } : SAMPLE_EDITOR.claim}
             item={
@@ -445,7 +446,7 @@ async function Preview({
     case "employee-claim-detail":
     case "employee-claim-detail-rejected":
       return (
-        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/claims/cl1">
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee/claims/cl1">
           <EmployeeClaimDetail
             base="#"
             detail={
@@ -470,9 +471,56 @@ async function Preview({
           />
         </AdminShell>
       );
+    case "admin-approval-lines":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/approval-lines">
+          <ApprovalLinesHeading />
+          <ApprovalLinesView
+            lines={[
+              { department_id: null, name: "기본 결재라인", reviewers: [], appliesTo: 6 },
+              { department_id: "d1", name: "영업팀 결재라인", reviewers: [{ id: "m5", name: "박영업", position: "팀장" }, { id: "m6", name: "최본부장", position: "본부장 (아주 긴 직급 이름 확인)" }], appliesTo: 4 },
+            ]}
+            departments={[
+              { id: "d1", name: "영업팀", hasLine: true },
+              { id: "d2", name: "개발팀", hasLine: false },
+            ]}
+            members={[
+              { id: "m1", name: "김대표", position: "대표", department_id: null, role: "super_admin" },
+              { id: "m5", name: "박영업", position: "팀장", department_id: "d1", role: "employee" },
+              { id: "m6", name: "최본부장", position: "본부장", department_id: null, role: "admin" },
+              { id: "m7", name: "이개발", position: null, department_id: "d2", role: "employee" },
+            ]}
+          />
+        </AdminShell>
+      );
+    case "approvals-inbox":
+      return (
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/approvals" inbox={{ waiting: 2 }}>
+          <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 pb-6 pt-5 md:max-w-2xl">
+            <h1 className="text-xl font-bold tracking-tight">결재함</h1>
+            <AdminClaimList rows={SAMPLE_ADMIN_ROWS.map((r) => ({ ...r, reviewing: null }))} tab="pending" base="#" />
+          </main>
+        </EmployeeShell>
+      );
+    case "approval-reviewer":
+      return (
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/approvals/cl1" inbox={{ waiting: 2 }}>
+          <main className="mx-auto flex w-full max-w-md flex-col px-4 pt-3 md:max-w-3xl">
+            <AdminClaimDetail
+              detail={{ ...SAMPLE_DETAIL_CLAIM, pendingStep: { ...SAMPLE_DETAIL_CLAIM.pendingStep!, step_kind: "review", approver_member_id: "m" } }}
+              canAct
+              blockedReason={null}
+              backHref="#"
+              payoutsHref="#"
+              timeline={<ApprovalTimeline detail={SAMPLE_DETAIL_CLAIM} />}
+              reviewer
+            />
+          </main>
+        </EmployeeShell>
+      );
     case "admin-home":
       return (
-        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="">
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/employee">
           <AdminHomeView
             adminName="김대표"
             companyName="포켓컴퍼니 주식회사"
@@ -490,7 +538,7 @@ async function Preview({
     case "admin-home-team":
       // 직원이 들어온 뒤: 초대 카드는 아래로, 간단히
       return (
-        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="">
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/employee">
           <AdminHomeView
             adminName="김대표"
             companyName="포켓컴퍼니 주식회사"

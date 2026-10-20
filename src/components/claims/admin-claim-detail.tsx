@@ -12,7 +12,7 @@ import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
 import { ClaimItems } from "./claim-items";
 
-// 지출 승인 관리 오른쪽 상세 (admin-expense-approvals.md §4.C·D)
+// 지출 승인 관리 오른쪽 상세 (admin-expense-approvals.md §4.C·D). 사전 검토자 결재 화면(approver.md ①)도 같은 화면을 쓴다
 export function AdminClaimDetail({
   detail,
   canAct,
@@ -20,6 +20,7 @@ export function AdminClaimDetail({
   backHref,
   payoutsHref,
   timeline,
+  reviewer = false,
 }: {
   detail: ClaimDetail;
   canAct: boolean;
@@ -27,6 +28,7 @@ export function AdminClaimDetail({
   backHref: string;
   payoutsHref: string;
   timeline: React.ReactNode;
+  reviewer?: boolean; // 사전 검토자: [검토 승인], 마감 요약 없음, 직원 화면 틀(왼쪽 메뉴 없음)
 }) {
   const { claim, owner } = detail;
   const router = useRouter();
@@ -43,7 +45,10 @@ export function AdminClaimDetail({
       setMessage(null);
       const res = await measureAction("admin.approve_claim", () => approveClaimAction(claim.id));
       if (!res.ok) return setMessage({ kind: "error", text: res.error });
-      setMessage({ kind: "ok", text: res.status === "paid" ? "승인했어요. 정산할 금액이 없어 바로 완료됐어요." : "승인했어요. 정산 지급 관리에서 지급 완료 처리를 해 주세요." });
+      setMessage({
+        kind: "ok",
+        text: res.status === "submitted" ? "검토 승인했어요. 다음 결재자에게 전달됩니다." : res.status === "paid" ? "승인했어요. 정산할 금액이 없어 바로 완료됐어요." : "승인했어요. 정산 지급 관리에서 지급 완료 처리를 해 주세요.",
+      });
       router.refresh();
     });
   const reject = () =>
@@ -59,7 +64,7 @@ export function AdminClaimDetail({
   return (
     <div className="flex min-w-0 flex-col gap-5 pb-28">
       <div className="flex items-center justify-between gap-2">
-        <Link href={backHref} className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm text-zinc-600 hover:bg-zinc-100 lg:hidden">
+        <Link href={backHref} className={`-ml-2 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm text-zinc-600 hover:bg-zinc-100 ${reviewer ? "" : "lg:hidden"}`}>
           <ArrowLeft className="size-4" />
           목록
         </Link>
@@ -100,6 +105,7 @@ export function AdminClaimDetail({
         />
       </section>
 
+      {!reviewer && (
       <section className="rounded-xl border border-zinc-200 bg-white p-4 text-sm">
         <h2 className="mb-2 font-semibold">마감 요약</h2>
         <dl className="grid grid-cols-[1fr_auto] gap-y-1.5">
@@ -116,6 +122,7 @@ export function AdminClaimDetail({
           </Link>
         )}
       </section>
+      )}
 
       <section className="rounded-xl border border-zinc-200 bg-white p-4">
         <h2 className="mb-3 font-semibold">결재 이력</h2>
@@ -123,7 +130,7 @@ export function AdminClaimDetail({
       </section>
 
       {(canAct || blockedReason || message) && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur md:left-64">
+        <div className={`fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur ${reviewer ? "" : "md:left-64"}`}>
           <div className="mx-auto flex max-w-5xl flex-col gap-2">
             {message && (
               <p className={`rounded-lg px-3 py-2 text-sm ${message.kind === "ok" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-700"}`} role={message.kind === "error" ? "alert" : "status"}>
@@ -135,11 +142,11 @@ export function AdminClaimDetail({
               <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:w-96">
                 <button type="button" disabled={pending} onClick={() => setMode("reject")} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl border border-red-300 bg-white font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60">
                   <X className="size-4" />
-                  소명서 반려
+                  {reviewer ? "반려" : "소명서 반려"}
                 </button>
                 <button type="button" disabled={pending} onClick={approve} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700 disabled:opacity-60">
                   {pending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-                  일괄 승인
+                  {reviewer ? "검토 승인" : "일괄 승인"}
                 </button>
               </div>
             )}

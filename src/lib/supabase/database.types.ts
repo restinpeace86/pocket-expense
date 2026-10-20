@@ -1587,6 +1587,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["claim_status"]
       }
       reject_member: { Args: { p_member_id: string }; Returns: undefined }
+      save_approval_line: {
+        Args: { p_approver_ids: string[]; p_department_id: string }
+        Returns: string
+      }
       set_member_role: {
         Args: {
           p_member_id: string

@@ -60,6 +60,7 @@ export async function getClaimDetail(companyId: string, claimId: string, opts: {
     step_order: a.step_order,
     step_kind: a.step_kind,
     status: a.status,
+    approver_member_id: a.approver_member_id,
     approver_name: a.approver_member_id ? (names.get(a.approver_member_id) ?? null) : null,
     acted_by_name: a.acted_by_member_id ? (names.get(a.acted_by_member_id) ?? null) : null,
     acted_at: a.acted_at,

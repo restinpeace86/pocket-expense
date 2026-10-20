@@ -51,6 +51,7 @@ export type DetailApproval = {
   step_order: number;
   step_kind: "review" | "final";
   status: "waiting" | "pending" | "approved" | "rejected" | "skipped" | "canceled";
+  approver_member_id: string | null;
   approver_name: string | null;
   acted_by_name: string | null;
   acted_at: string | null;
@@ -98,7 +99,10 @@ export type ClaimDetail = {
 export function canActOnClaim(detail: ClaimDetail, viewer: { member_id: string; role: string }): { can: boolean; reason: string | null } {
   if (detail.claim.status !== "submitted" || !detail.pendingStep) return { can: false, reason: null };
   const step = detail.pendingStep;
-  if (step.step_kind === "review") return { can: false, reason: `${step.approver_name ?? "사전 검토자"} 검토 중이에요. 검토가 끝나면 승인할 수 있어요.` };
+  if (step.step_kind === "review") {
+    if (step.approver_member_id === viewer.member_id) return { can: true, reason: null };
+    return { can: false, reason: `${step.approver_name ?? "사전 검토자"} 검토 중이에요. 검토가 끝나면 승인할 수 있어요.` };
+  }
   if (viewer.role !== "super_admin" && viewer.role !== "admin") return { can: false, reason: null };
   if (detail.claim.member_id === viewer.member_id) return { can: false, reason: "본인 소명서는 다른 관리자가 승인합니다." };
   return { can: true, reason: null };
