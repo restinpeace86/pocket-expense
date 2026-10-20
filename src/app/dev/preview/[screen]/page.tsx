@@ -11,6 +11,7 @@ import { EmployeeHomeView } from "@/components/employee/employee-home-view";
 import { EmployeeShell } from "@/components/employee/employee-shell";
 import { ClaimEditor } from "@/components/employee/claim-editor";
 import { AppAdminShell } from "@/components/app-admin/app-admin-shell";
+import { BillingView } from "@/components/admin/billing-view";
 import { CompaniesView } from "@/components/app-admin/companies-view";
 import { CompanyDetailView, type CompanyDetail } from "@/components/app-admin/company-detail-view";
 import { ReceiptRecordView, type ReceiptRecordData } from "@/components/app-admin/receipt-record-view";
@@ -129,6 +130,13 @@ const AA_RECORD = {
   item_snapshot: { merchant_name: "이마트 판교점", expense_date: "2026-10-16", amount: 48300, supply_amount: 43909, vat_amount: 4391, category: "purchase", purchase_type: "pantry", payment_method: "corporate_card", evidence_type: "card_slip", headcount: 1, purpose: "탕비실 커피·생수", company_supported_amount: 48300, personal_burden_amount: 0 },
   archived_receipt_path: "c1/i9.jpg", archived_thumb_path: null, photo_purge_after: "2027-01-15T05:00:00Z", photo_purged_at: null, created_at: "2026-10-15T03:10:00Z",
 } as unknown as ReceiptRecordData["record"];
+
+const SAMPLE_PLANS = [
+  { code: "starter", name: "스타터", monthly_price: 30000, annual_price: 324000, monthly_receipts: 150, recommended_size: "5인 미만", is_featured: false },
+  { code: "standard", name: "스탠다드", monthly_price: 60000, annual_price: 648000, monthly_receipts: 400, recommended_size: "5~15인", is_featured: true },
+  { code: "pro", name: "프로", monthly_price: 110000, annual_price: 1188000, monthly_receipts: 800, recommended_size: "영업·현장직이 많은 팀", is_featured: false },
+];
+const SAMPLE_CREDIT = { granted: 200, used: 163, freeTrial: 100, eventCount: 1, eventTotal: 100, eventEnabled: true, eventAmount: 100, showEventBanner: false };
 
 const SAMPLE_MEMBERS: MemberRow[] = [
   { id: "p1", name: "김대표", phone: "01011112222", email: "ceo@pocket.co.kr", position: "대표", role: "super_admin", status: "approved", department: null, created_at: "2026-10-01T00:00:00Z" },
@@ -336,6 +344,24 @@ async function Preview({
         <AppAdminShell>
           <ReceiptRecordView data={{ record: AA_RECORD, company: { id: "c1", name: "포켓컴퍼니 주식회사" }, item: null, claim: null, photoUrl: null, thumbUrl: null }} base="#" />
         </AppAdminShell>
+      );
+    case "admin-billing":
+    case "admin-billing-banner":
+    case "admin-billing-empty":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/billing">
+          <BillingView
+            preview
+            plans={SAMPLE_PLANS}
+            status={
+              screen === "admin-billing-banner"
+                ? { ...SAMPLE_CREDIT, used: 188, showEventBanner: true }
+                : screen === "admin-billing-empty"
+                  ? { ...SAMPLE_CREDIT, granted: 100, used: 100, eventCount: 0, eventTotal: 0, eventEnabled: false }
+                  : SAMPLE_CREDIT
+            }
+          />
+        </AdminShell>
       );
     case "admin-home":
       return (
