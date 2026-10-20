@@ -126,5 +126,15 @@ begin
   end if;
 end $$;
 
+-- 회사를 지우면 기록도 함께 지워지고, 삭제가 막히지 않는다(037). 크레딧을 쓴 항목이 남아 있는 상태에서 확인
+insert into public.expense_claims (id, company_id, member_id, title) values ('a3300000-0000-0000-0000-000000000009', 'c3100000-0000-0000-0000-00000000000a', 'a3200000-0000-0000-0000-000000000002', '남은 소명서');
+insert into public.expense_items (id, claim_id, company_id, sort_order, payment_method, credit_charged) values ('a3400000-0000-0000-0000-000000000009', 'a3300000-0000-0000-0000-000000000009', 'c3100000-0000-0000-0000-00000000000a', 1, 'personal_card', true);
+insert into public.receipt_usage_records (company_id, item_id, claim_id, credited_at) values ('c3100000-0000-0000-0000-00000000000a', 'a3400000-0000-0000-0000-000000000009', 'a3300000-0000-0000-0000-000000000009', now());
+delete from public.companies where id = 'c3100000-0000-0000-0000-00000000000a';
+do $$
+begin
+  if exists (select 1 from public.receipt_usage_records where company_id = 'c3100000-0000-0000-0000-00000000000a') then raise exception 'FAIL records not removed with company'; end if;
+end $$;
+
 select 'RECEIPT_RECORDS_OK' as result;
 rollback;
