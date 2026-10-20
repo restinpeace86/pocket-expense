@@ -113,8 +113,57 @@ function ItemRow({ item, href, onOpen, onDelete, problem }: { item: EditorItem; 
   );
 }
 
+// 업로드 진행 단계 — 단계 이름·진행 막대·경과 시간을 보여 줘 "멈춘 것 아님"을 알린다
+const UPLOAD_STEPS: { phase: UploadRow["phase"]; label: string; short: string; photoLabel?: string; pct: number }[] = [
+  { phase: "waiting", label: "차례를 기다리는 중", short: "기다리는 중", pct: 5 },
+  { phase: "preparing", label: "사진 최적화 중 (크기 줄이는 중)", short: "사진 최적화 중", photoLabel: "PDF 확인 중", pct: 25 },
+  { phase: "uploading", label: "사진 업로드 중", short: "업로드 중", pct: 55 },
+  { phase: "reading", label: "AI가 영수증을 읽는 중 · 보통 2~5초", short: "AI가 읽는 중", pct: 85 },
+  { phase: "done", label: "다 읽었어요 · 목록에 넣는 중", short: "목록에 넣는 중", pct: 100 },
+];
+
+function useElapsed(since?: number) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!since) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [since]);
+  return since ? Math.max(0, Math.floor((now - since) / 1000)) : 0;
+}
+
+// 하단 바의 한 줄 진행 요약 — 휴대폰에서 목록이 화면 아래에 있어도 진행 중임을 보이게
+function UploadSummary({ rows }: { rows: UploadRow[] }) {
+  const live = rows.filter((r) => r.phase !== "failed");
+  const started = live.reduce<number | undefined>((m, r) => (r.since && (!m || r.since < m) ? r.since : m), undefined);
+  const elapsed = useElapsed(started);
+  if (live.length === 0) return null;
+  const done = live.filter((r) => r.phase === "done").length;
+  const order: UploadRow["phase"][] = ["reading", "uploading", "preparing", "waiting", "done"];
+  const current = order.find((ph) => live.some((r) => r.phase === ph)) ?? "waiting";
+  const step = UPLOAD_STEPS.find((x) => x.phase === current)!;
+  const pct = Math.round(live.reduce((s, r) => s + (UPLOAD_STEPS.find((x) => x.phase === r.phase)?.pct ?? 0), 0) / live.length);
+  return (
+    <div className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-900" role="status" aria-live="polite">
+      <p className="flex items-center gap-2">
+        <Loader2 className="size-4 shrink-0 animate-spin" />
+        <span className="min-w-0 flex-1 truncate">
+          영수증 {live.length}장 · {done}장 완료 · {step.short}
+        </span>
+        {elapsed >= 2 && <span className="shrink-0 text-xs text-brand-700">{elapsed}초</span>}
+      </p>
+      <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-white" aria-hidden>
+        <span className="block h-full rounded-full bg-brand-500 transition-all duration-700" style={{ width: `${pct}%` }} />
+      </span>
+    </div>
+  );
+}
+
 function UploadingRow({ row, onDismiss }: { row: UploadRow; onDismiss: () => void }) {
-  const label = { preparing: "사진을 준비하고 있어요…", uploading: "올리는 중…", reading: "AI가 영수증을 읽고 있어요… 🪄", failed: row.error ?? "올리지 못했어요" }[row.phase];
+  const elapsed = useElapsed(row.phase === "failed" ? undefined : row.since);
+  const idx = UPLOAD_STEPS.findIndex((s) => s.phase === row.phase);
+  const step = UPLOAD_STEPS[idx];
+  const label = row.phase === "failed" ? (row.error ?? "올리지 못했어요") : row.isPdf && step.photoLabel ? step.photoLabel : step.label;
   return (
     <li className={`flex items-center gap-3 rounded-2xl border p-3 ${row.phase === "failed" ? "border-red-200 bg-red-50" : "border-zinc-200 bg-white"}`} aria-live="polite">
       <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400">
@@ -122,7 +171,16 @@ function UploadingRow({ row, onDismiss }: { row: UploadRow; onDismiss: () => voi
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium">{row.name}</span>
-        <span className={`block text-xs ${row.phase === "failed" ? "text-red-700" : "text-zinc-500"}`}>{label}</span>
+        <span className={`block text-xs ${row.phase === "failed" ? "text-red-700" : "text-zinc-600"}`}>
+          {(row.phase === "preparing" || row.phase === "uploading" || row.phase === "reading") && <b className="mr-1 text-brand-700">{idx}/3</b>}
+          {label}
+          {row.phase !== "failed" && elapsed >= 2 && <span className="ml-1 text-zinc-400">{elapsed}초</span>}
+        </span>
+        {row.phase !== "failed" && (
+          <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-zinc-100" aria-hidden>
+            <span className="block h-full rounded-full bg-brand-500 transition-all duration-700" style={{ width: `${step.pct}%` }} />
+          </span>
+        )}
       </span>
       {row.phase === "failed" && (
         <button type="button" onClick={onDismiss} className="min-h-9 shrink-0 rounded-lg border border-red-200 bg-white px-2.5 text-xs">
@@ -232,16 +290,22 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
   const galleryRef = useRef<HTMLInputElement>(null);
   const uploader = useReceiptUpload(claim.id, items.length);
 
-  // ?add=1은 처음 한 번만 (뒤로 가기·새로고침 때 시트가 다시 열리지 않게)
-  useEffect(() => {
-    if (openAdd) window.history.replaceState(null, "", window.location.pathname);
-  }, [openAdd]);
+  // ?add=1(새 소명서)이면 처음에만 추가 시트를 연다(영수증이 생기면 다시 열리지 않음).
+  // 주소에서 ?add=1을 지우지 않는다: 주소를 바꾸면 업로드 뒤 화면 갱신 때 Next가 이 화면을 새로 만들어
+  // 그 사이 입력한 제목·소명 내용이 지워졌다(2026-10-21 로그인 E2E에서 재현).
 
   const suggestion = suggestTitle({ isBusinessTrip: form.isBusinessTrip, tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null }, items);
   const title = titleTouched ? form.title : suggestion;
   const current = { ...form, title };
   const dirty = JSON.stringify(current) !== JSON.stringify(savedForm);
-  const uploadingIds = new Set(uploader.rows.map((r) => r.itemId).filter(Boolean));
+  const uploadingIds = new Set(uploader.rows.filter((r) => r.phase !== "done").map((r) => r.itemId).filter(Boolean));
+  const { prune } = uploader;
+  const itemKey = items.map((i) => `${i.id}:${i.parse_status}`).join(",");
+  // 다 읽은 영수증이 목록에 나타나면 진행 행을 지운다
+  useEffect(() => {
+    prune(new Set(items.filter((i) => i.parse_status !== "parsing").map((i) => i.id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- itemKey가 items의 변화를 대표한다
+  }, [itemKey, prune]);
   const visibleItems = items.filter((i) => !uploadingIds.has(i.id));
   const editable = claim.status === "draft" || claim.status === "rejected";
   const badge = claimStatusBadge(claim.status);
@@ -257,7 +321,8 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
     if (res.ok) {
       setSavedForm(current);
       setForm(current);
-      setTitleTouched(true);
+      // 제목이 비어 있으면 자동 제안을 계속 쓴다(영수증이 늦게 나타나도 제안이 채워지게)
+      if (current.title.trim()) setTitleTouched(true);
       setMessage({ kind: "ok", text: "임시저장했어요. 다른 기기(PC)에서도 이어서 쓸 수 있어요." });
     } else {
       setMessage({ kind: "error", text: res.error });
@@ -559,6 +624,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
       {/* 하단 액션 바 (§4) */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         <div className="mx-auto flex max-w-md flex-col gap-2 md:max-w-2xl">
+          <UploadSummary rows={uploader.rows} />
           {message && (
             <p className={`rounded-lg px-3 py-2 text-sm ${message.kind === "ok" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-700"}`} role={message.kind === "error" ? "alert" : "status"}>
               {message.text}

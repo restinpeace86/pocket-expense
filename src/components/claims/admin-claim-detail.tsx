@@ -40,14 +40,29 @@ export function AdminClaimDetail({
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [pending, start] = useTransition();
   const [accountBusy, setAccountBusy] = useState<string | null>(null);
-  const changeAccount = (itemId: string, titleId: string | null) => {
+  // 계정과목은 고르는 즉시 화면에 반영하고(낙관적 갱신) 저장은 뒤에서 한다. 실패하면 원래대로 되돌린다
+  const [accounts, setAccounts] = useState<Record<string, { id: string | null; name: string | null; code: string | null; overridden: boolean }>>({});
+  const items = detail.items.map((i) =>
+    accounts[i.id] ? { ...i, account_title_id: accounts[i.id].id, account_title_name: accounts[i.id].name, account_title_code: accounts[i.id].code, account_title_overridden: accounts[i.id].overridden } : i,
+  );
+  const changeAccount = async (itemId: string, titleId: string | null) => {
+    const before = accounts[itemId];
+    const t = titleId ? accountTitles?.find((x) => x.id === titleId) : null;
+    if (t) setAccounts((a) => ({ ...a, [itemId]: { id: t.id, name: t.name, code: t.code, overridden: true } }));
     setAccountBusy(itemId);
-    start(async () => {
-      const res = await measureAction("admin.override_account_title", () => overrideAccountTitleAction(itemId, titleId));
-      setAccountBusy(null);
-      if (!res.ok) setMessage({ kind: "error", text: res.error });
-      else router.refresh();
-    });
+    const res = await measureAction("admin.override_account_title", () => overrideAccountTitleAction(itemId, titleId));
+    setAccountBusy(null);
+    if (!res.ok) {
+      setAccounts((a) => {
+        const n = { ...a };
+        if (before) n[itemId] = before;
+        else delete n[itemId];
+        return n;
+      });
+      setMessage({ kind: "error", text: res.error });
+      return;
+    }
+    setAccounts((a) => ({ ...a, [itemId]: res.account }));
   };
   const badge = claimStatusBadge(claim.status, claim.settlement_required);
   const lastReject = [...detail.approvals].reverse().find((a) => a.status === "rejected");
@@ -108,7 +123,7 @@ export function AdminClaimDetail({
           포함된 영수증 {detail.items.length}건{mode === "reject" && <span className="ml-2 text-sm font-normal text-red-700">문제 있는 영수증을 체크해 주세요(선택)</span>}
         </h2>
         <ClaimItems
-          items={detail.items}
+          items={items}
           cards={detail.cards}
           flaggedIds={claim.status === "rejected" ? detail.flaggedItemIds : []}
           selectable={mode === "reject"}

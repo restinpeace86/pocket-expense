@@ -206,7 +206,7 @@ function AccountCell({ i, titles, onChange, busy }: { i: DetailItem; titles: Acc
     <span className="mt-1 flex flex-wrap items-center gap-1">
       <select
         aria-label={`${i.merchant_name ?? "항목"} 계정과목`}
-        disabled={busy || !!i.closed_month}
+        disabled={!!i.closed_month}
         title={i.closed_month ? `${i.closed_month} 세무 마감된 항목이라 바꿀 수 없어요` : undefined}
         value={i.account_title_id ?? ""}
         onChange={(e) => onChange(i.id, e.target.value || null)}
@@ -221,6 +221,7 @@ function AccountCell({ i, titles, onChange, busy }: { i: DetailItem; titles: Acc
         ))}
       </select>
       {i.account_title_overridden && <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-800">계정 조정됨</span>}
+      {busy && <span className="text-[11px] text-zinc-400">저장 중…</span>}
     </span>
   );
 }

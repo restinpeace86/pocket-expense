@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { deleteItemAction, finishReceiptUploadAction, startReceiptUploadAction } from "@/app/workspace/[id]/employee/claims/actions";
 import { runPool } from "@/lib/concurrency";
 import { recordPerf } from "@/lib/perf/client";
@@ -15,7 +15,8 @@ import { createClient } from "@/lib/supabase/client";
 export const MAX_PER_PICK = 10;
 export const MAX_PER_CLAIM = 30;
 
-export type UploadRow = { key: string; name: string; phase: "preparing" | "uploading" | "reading" | "failed"; error?: string; itemId?: string };
+// phase: 차례 기다림 → 사진 최적화 → 업로드 → AI 읽기 (화면에 단계로 보여 줘 멈춘 게 아님을 알린다). since: 지금 단계를 시작한 시각
+export type UploadRow = { key: string; name: string; phase: "waiting" | "preparing" | "uploading" | "reading" | "done" | "failed"; error?: string; itemId?: string; isPdf?: boolean; since?: number };
 
 export const BONUS_TOAST = "회사 무료 영수증 100장을 모두 사용했습니다. 현재 이벤트 기간이라 추가 100장을 무료로 더 드립니다.";
 const NETWORK_ERROR = "올리지 못했어요. 인터넷 연결을 확인하고 다시 골라 주세요.";
@@ -35,7 +36,8 @@ export function useReceiptUpload(claimId: string, currentCount: number) {
   const [rows, setRows] = useState<UploadRow[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const active = rows.filter((r) => r.phase !== "failed").length;
+  // done: 다 읽었지만 소명서 목록에 아직 안 나타난 상태(목록 갱신을 기다림) — 이미 항목이 만들어졌으므로 남은 장수에서는 빼지 않는다
+  const active = rows.filter((r) => r.phase !== "failed" && r.phase !== "done").length;
   const remaining = Math.max(MAX_PER_CLAIM - currentCount - active, 0);
 
   const upload = useCallback(
@@ -55,7 +57,7 @@ export function useReceiptUpload(claimId: string, currentCount: number) {
 
       const stamp = Date.now();
       const keys = files.map((_, i) => `${stamp}-${i}`);
-      setRows((prev) => [...prev, ...files.map((f, i) => ({ key: keys[i], name: f.name, phase: "preparing" as const }))]);
+      setRows((prev) => [...prev, ...files.map((f, i) => ({ key: keys[i], name: f.name, phase: "waiting" as const, isPdf: f.type === "application/pdf" }))]);
       const set = (key: string, patch: Partial<UploadRow>) => setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
       const bucket = createClient().storage.from("receipts");
       let bonus = false;
@@ -66,10 +68,11 @@ export function useReceiptUpload(claimId: string, currentCount: number) {
         async (file, i) => {
           const key = keys[i];
           const t0 = performance.now();
+          set(key, { phase: "preparing", since: Date.now() });
           const processed = await processReceiptFile(file).catch(() => {
             throw new StepError("올릴 수 없는 파일이에요. 사진 또는 PDF를 골라 주세요.");
           });
-          set(key, { phase: "uploading" });
+          set(key, { phase: "uploading", since: Date.now() });
           const start = await twice(() =>
             startReceiptUploadAction(claimId, { isPdf: processed.kind === "pdf", thumbExt: processed.kind === "image" ? processed.thumbExt : "webp" }),
           );
@@ -95,7 +98,7 @@ export function useReceiptUpload(claimId: string, currentCount: number) {
             await deleteItemAction(start.itemId).catch(() => undefined); // 빈 항목이 남지 않게
             throw new StepError(NETWORK_ERROR);
           }
-          set(key, { phase: "reading" });
+          set(key, { phase: "reading", since: Date.now() });
           // 크레딧 차감은 항목당 한 번만 되므로(credit_charged) 다시 시도해도 두 번 빠지지 않는다
           const done = await twice(() => finishReceiptUploadAction(start.itemId)).catch(() => null);
           if (done && !done.ok) throw new StepError(done.error);
@@ -106,7 +109,8 @@ export function useReceiptUpload(claimId: string, currentCount: number) {
         {
           onSettled: (i, result) => {
             if (result.ok) {
-              setRows((prev) => prev.filter((r) => r.key !== keys[i]));
+              // 바로 지우지 않는다: 목록에 그 영수증이 나타나면 화면(prune)이 지운다 — 그 사이 상신·제목 제안이 빈 목록을 보지 않게
+              set(keys[i], { phase: "done", since: undefined });
             } else {
               const e = result.error;
               set(keys[i], { phase: "failed", error: e instanceof StepError ? e.message : NETWORK_ERROR });
@@ -121,6 +125,15 @@ export function useReceiptUpload(claimId: string, currentCount: number) {
   );
 
   const dismiss = (key: string) => setRows((prev) => prev.filter((r) => r.key !== key));
+  // 목록에 나타난 항목의 완료 행 정리 (안전장치: 10초가 지나도 안 나타나면 그래도 지운다)
+  const prune = useCallback((presentItemIds: Set<string>) => {
+    setRows((prev) => (prev.some((r) => r.phase === "done" && r.itemId && presentItemIds.has(r.itemId)) ? prev.filter((r) => !(r.phase === "done" && r.itemId && presentItemIds.has(r.itemId))) : prev));
+  }, []);
+  useEffect(() => {
+    if (!rows.some((r) => r.phase === "done")) return;
+    const t = setTimeout(() => setRows((prev) => prev.filter((r) => r.phase !== "done")), 10_000);
+    return () => clearTimeout(t);
+  }, [rows]);
 
-  return { rows, notice, setNotice, upload, remaining, dismiss };
+  return { rows, notice, setNotice, upload, remaining, dismiss, prune };
 }

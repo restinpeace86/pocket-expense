@@ -76,14 +76,21 @@ export async function markClaimsPaidAction(claimIds: string[]): Promise<Result<{
 }
 
 // 관리자: 항목별 계정과목 조정 (null = 분류 기준으로 되돌리기). 권한·회사·마감 여부는 DB 함수(035)가 확인
-export async function overrideAccountTitleAction(itemId: string, accountTitleId: string | null): Promise<Result> {
+// 화면 전체를 다시 그리지 않고(체감 속도), 바뀐 계정과목만 돌려준다 — 화면은 그 칸만 바꾼다
+export async function overrideAccountTitleAction(
+  itemId: string,
+  accountTitleId: string | null,
+): Promise<Result<{ account: { id: string | null; name: string | null; code: string | null; overridden: boolean } }>> {
   if (!(await member())) return fail("NOT_A_MEMBER");
   if (!UUID.test(itemId) || (accountTitleId !== null && !UUID.test(accountTitleId))) return fail("NOT_FOUND");
   const supabase = await createClient();
   const { error } = await supabase.rpc("override_item_account_title", { p_item_id: itemId, p_account_title_id: accountTitleId as string /* null = 되돌리기 */ });
   if (error) return { ok: false, error: messageForDbError(error) };
-  refresh();
-  return { ok: true };
+  const { data } = await supabase.from("expense_items").select("account_title_id, account_title_name, account_title_code, account_title_overridden").eq("id", itemId).maybeSingle();
+  return {
+    ok: true,
+    account: { id: data?.account_title_id ?? null, name: data?.account_title_name ?? null, code: data?.account_title_code ?? null, overridden: !!data?.account_title_overridden },
+  };
 }
 
 // 영수증 원본 크게 보기 (볼 수 있는 소명서의 항목만 — 저장소 열람 정책이 다시 확인)
