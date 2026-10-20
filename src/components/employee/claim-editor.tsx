@@ -97,10 +97,10 @@ function ItemRow({ item, href, onOpen, onDelete, problem }: { item: EditorItem; 
       </a>
       {confirm ? (
         <span className="flex shrink-0 flex-col gap-1">
-          <button type="button" onClick={onDelete} className="min-h-9 rounded-lg bg-red-600 px-2.5 text-xs font-semibold text-white">
+          <button type="button" onClick={onDelete} className="min-h-11 rounded-lg bg-red-600 px-3 text-xs font-semibold text-white">
             삭제
           </button>
-          <button type="button" onClick={() => setConfirm(false)} className="min-h-9 rounded-lg border border-zinc-300 px-2.5 text-xs">
+          <button type="button" onClick={() => setConfirm(false)} className="min-h-11 rounded-lg border border-zinc-300 px-3 text-xs">
             취소
           </button>
         </span>
@@ -183,7 +183,7 @@ function UploadingRow({ row, onDismiss }: { row: UploadRow; onDismiss: () => voi
         )}
       </span>
       {row.phase === "failed" && (
-        <button type="button" onClick={onDismiss} className="min-h-9 shrink-0 rounded-lg border border-red-200 bg-white px-2.5 text-xs">
+        <button type="button" onClick={onDismiss} className="min-h-11 shrink-0 rounded-lg border border-red-200 bg-white px-3.5 text-xs">
           닫기
         </button>
       )}

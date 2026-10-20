@@ -200,7 +200,7 @@ export function EmployeeHomeView({
               key={f.key}
               href={q(month, f.key)}
               aria-current={filter === f.key ? "true" : undefined}
-              className={`inline-flex min-h-10 shrink-0 items-center rounded-full border px-3.5 text-sm ${filter === f.key ? "border-brand-600 bg-brand-600 font-semibold text-white" : "border-zinc-300 bg-white text-zinc-700"}`}
+              className={`inline-flex min-h-11 shrink-0 items-center rounded-full border px-3.5 text-sm ${filter === f.key ? "border-brand-600 bg-brand-600 font-semibold text-white" : "border-zinc-300 bg-white text-zinc-700"}`}
             >
               {f.label}
             </Link>

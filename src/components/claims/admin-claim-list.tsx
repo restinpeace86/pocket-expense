@@ -13,7 +13,7 @@ export function ApprovalTabs({ tab, pendingCount, base, query = "" }: { tab: App
           key={t.key}
           href={`${base}?tab=${t.key}${query ? `&${query}` : ""}`}
           aria-current={tab === t.key ? "page" : undefined}
-          className={`inline-flex min-h-10 flex-1 items-center justify-center whitespace-nowrap rounded-lg px-2 text-[13px] ${tab === t.key ? "bg-white font-semibold shadow-sm" : "text-zinc-600 hover:text-zinc-900"}`}
+          className={`inline-flex min-h-11 flex-1 items-center justify-center whitespace-nowrap rounded-lg px-2 text-[13px] ${tab === t.key ? "bg-white font-semibold shadow-sm" : "text-zinc-600 hover:text-zinc-900"}`}
         >
           {t.label}
           {t.key === "pending" && pendingCount > 0 && <span className="ml-1.5 rounded-full bg-brand-600 px-1.5 text-xs text-white">{pendingCount}</span>}

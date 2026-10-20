@@ -72,7 +72,7 @@ function Chips<T extends string>({ label, options, value, onChange }: { label: s
           role="radio"
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`min-h-10 rounded-full border px-3.5 text-sm ${value === o.value ? "border-brand-600 bg-brand-600 font-semibold text-white" : "border-zinc-300 bg-white text-zinc-700"}`}
+          className={`min-h-11 rounded-full border px-3.5 text-sm ${value === o.value ? "border-brand-600 bg-brand-600 font-semibold text-white" : "border-zinc-300 bg-white text-zinc-700"}`}
         >
           {o.label}
         </button>
@@ -311,7 +311,7 @@ export function ItemEditor({
             {(item.parse_status === "failed" || item.parse_status === "parsing") && (
               <>
                 <p className="text-zinc-600">{item.parse_status === "failed" ? "자동 인식에 실패했어요. 직접 입력해 주세요." : "AI가 아직 읽지 못했어요."}</p>
-                <button type="button" onClick={reread} disabled={rereading} className="inline-flex min-h-10 w-fit items-center gap-1.5 rounded-lg border border-zinc-300 px-3 text-sm hover:bg-zinc-50 disabled:opacity-60">
+                <button type="button" onClick={reread} disabled={rereading} className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg border border-zinc-300 px-3 text-sm hover:bg-zinc-50 disabled:opacity-60">
                   {rereading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
                   AI로 다시 읽기
                 </button>
@@ -385,7 +385,7 @@ export function ItemEditor({
         </div>
         {outsideTrip && <Warn>출장 기간 밖의 날짜예요. 날짜를 확인해 주세요(그대로 상신할 수도 있어요).</Warn>}
         <details className="group rounded-xl bg-zinc-50 px-3 py-2" open={!!(input.merchantBusinessNumber || input.supplyAmount || input.vatAmount) || undefined}>
-          <summary className="flex min-h-10 cursor-pointer list-none items-center text-sm font-medium text-zinc-700 [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-zinc-700 [&::-webkit-details-marker]:hidden">
             사업자등록번호·공급가액·부가세 <span className="ml-1 text-xs font-normal text-zinc-500">(세무사 전달용 · AI가 채워요)</span>
           </summary>
           <div className="mt-2 flex flex-col gap-3 pb-2">

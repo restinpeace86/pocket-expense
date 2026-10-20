@@ -25,7 +25,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
           // 복사할 수 없는 환경이면 화면의 글자를 직접 선택하면 된다
         }
       }}
-      className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-zinc-300 bg-white px-2 text-xs hover:bg-zinc-50"
+      className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-zinc-300 bg-white px-3 text-xs hover:bg-zinc-50"
       aria-label={label}
     >
       <Copy className="size-3.5" />
@@ -56,7 +56,7 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
             ["paid", "지급 완료"],
           ] as const
         ).map(([k, l]) => (
-          <Link key={k} href={`${base}?tab=${k}`} aria-current={tab === k ? "page" : undefined} className={`inline-flex min-h-10 flex-1 items-center justify-center rounded-lg text-sm ${tab === k ? "bg-white font-semibold shadow-sm" : "text-zinc-600"}`}>
+          <Link key={k} href={`${base}?tab=${k}`} aria-current={tab === k ? "page" : undefined} className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-lg text-sm ${tab === k ? "bg-white font-semibold shadow-sm" : "text-zinc-600"}`}>
             {l}
           </Link>
         ))}

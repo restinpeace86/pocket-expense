@@ -53,7 +53,7 @@ export function EmployeeShell({
                     <Link href={href} aria-current={active ? "page" : undefined} className={`${cls} ${active ? "font-semibold text-brand-700" : "text-zinc-600"}`}>
                       <Icon className="size-6" />
                       {label}
-                      {!!badge && <span className="absolute right-[calc(50%-1.5rem)] top-1.5 min-w-5 rounded-full bg-red-600 px-1 text-center text-[10px] font-semibold leading-5 text-white">{badge > 99 ? "99+" : badge}</span>}
+                      {!!badge && <span className="absolute right-[calc(50%-1.5rem)] top-1.5 min-w-5 rounded-full bg-red-600 px-1 text-center text-[11px] font-semibold leading-5 text-white">{badge > 99 ? "99+" : badge}</span>}
                     </Link>
                   ) : (
                     <span className={`${cls} cursor-not-allowed text-zinc-400`} aria-disabled>

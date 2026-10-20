@@ -34,7 +34,7 @@ async function Inbox({ params, searchParams }: Pick<PageProps<"/workspace/[id]/a
             ["done", "처리완료"],
           ] as const
         ).map(([k, l]) => (
-          <Link key={k} href={`${base}?tab=${k}`} aria-current={tab === k ? "page" : undefined} className={`inline-flex min-h-10 flex-1 items-center justify-center rounded-lg text-sm ${tab === k ? "bg-white font-semibold shadow-sm" : "text-zinc-600"}`}>
+          <Link key={k} href={`${base}?tab=${k}`} aria-current={tab === k ? "page" : undefined} className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-lg text-sm ${tab === k ? "bg-white font-semibold shadow-sm" : "text-zinc-600"}`}>
             {l}
           </Link>
         ))}

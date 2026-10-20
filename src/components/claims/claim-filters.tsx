@@ -7,7 +7,8 @@ import type { ClaimFilters } from "@/lib/claims/filters";
 import { CATEGORY_LABEL, type ExpenseCategory } from "@/lib/expense/categories";
 
 // 지출 승인 관리 공통 필터 (admin-expense-approvals.md §4.A): 월(항목 사용일자), 부서, 직원, 카테고리, 검색(제목·가맹점명)
-const sel = "min-h-10 w-full rounded-lg border border-zinc-300 bg-white px-2 text-sm";
+// 휴대폰에서는 16px(아이폰이 확대하지 않게)·44px, 넓은 화면에서는 조금 작게
+const sel = "min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-2 text-base sm:min-h-10 sm:text-sm";
 
 export function ClaimFiltersBar({
   filters,
@@ -53,7 +54,7 @@ export function ClaimFiltersBar({
             onChange={(e) => set("q", e.target.value || null)}
             placeholder="제목·가맹점명 검색"
             aria-label="제목·가맹점명 검색"
-            className="min-h-10 w-full rounded-lg border border-zinc-300 bg-white pl-8 pr-2 text-sm"
+            className="min-h-11 w-full rounded-lg border border-zinc-300 bg-white pl-8 pr-2 text-base sm:min-h-10 sm:text-sm"
           />
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -91,11 +92,11 @@ export function ClaimFiltersBar({
               setF(empty);
               go(empty);
             }}
-            className="min-h-10 rounded-lg border border-zinc-300 bg-white text-sm"
+            className="min-h-11 rounded-lg border border-zinc-300 bg-white text-sm"
           >
             초기화
           </button>
-          <button type="submit" className="min-h-10 rounded-lg bg-brand-600 text-sm font-semibold text-white">
+          <button type="submit" className="min-h-11 rounded-lg bg-brand-600 text-sm font-semibold text-white">
             적용
           </button>
         </div>
