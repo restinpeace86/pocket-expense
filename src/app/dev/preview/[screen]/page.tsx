@@ -10,6 +10,8 @@ import { CompanySettingsForm } from "@/components/admin/company-settings-form";
 import { EmployeeHomeView } from "@/components/employee/employee-home-view";
 import { EmployeeShell } from "@/components/employee/employee-shell";
 import { ClaimEditor } from "@/components/employee/claim-editor";
+import { ProfileForm } from "@/components/employee/profile-form";
+import { SettlementsView } from "@/components/employee/settlements-view";
 import { AppAdminShell } from "@/components/app-admin/app-admin-shell";
 import { BillingView } from "@/components/admin/billing-view";
 import { ApprovalLinesHeading, ApprovalLinesView } from "@/components/admin/approval-lines-view";
@@ -529,6 +531,38 @@ async function Preview({
               reviewer
             />
           </main>
+        </EmployeeShell>
+      );
+    case "employee-profile":
+    case "employee-profile-new":
+      return (
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee/profile">
+          <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 pb-6 pt-5">
+            <h1 className="text-xl font-bold tracking-tight">내 정보</h1>
+            <ProfileForm
+              profile={
+                screen === "employee-profile"
+                  ? { name: "김개발", phone: "01012345678", position: "대리", employee_number: "PK-2024-007", vehicle_number: "12가3456", department: "개발팀", role: "employee", optionalConsented: true, bank: { bank_name: "국민은행", account_number: "123456-01-234567", account_holder: "김개발" }, login: { provider: "kakao", email: "dev.long.address@pocketcompany.co.kr" } }
+                  : { name: "최신입", phone: "01033335555", position: null, employee_number: null, vehicle_number: null, department: null, role: "employee", optionalConsented: false, bank: null, login: { provider: "google", email: "new@example.com" } }
+              }
+            />
+          </main>
+        </EmployeeShell>
+      );
+    case "employee-settlements":
+      return (
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee/settlements">
+          <SettlementsView
+            base="#"
+            hasBank={false}
+            waiting={52000}
+            paidThisMonth={28000}
+            payback={6000}
+            cards={[
+              { id: "s1", title: "10/15 부산 출장 경비", status: "approved", approved_at: "2026-10-16T05:00:00Z", paid_at: null, dateFrom: "2026-10-14", dateTo: "2026-10-15", personalCount: 1, corporateCount: 2, payout: 10000, payback: 0, items: [{ id: "x1", expense_date: "2026-10-15", merchant_name: "부산국밥", amount: 17000, supported: 10000, over: 7000 }] },
+              { id: "s2", title: "고객사 방문 택시비 (아주 긴 제목이 들어가도 줄바꿈되는지 확인)", status: "paid", approved_at: "2026-10-15T05:00:00Z", paid_at: "2026-10-16T05:30:00Z", dateFrom: "2026-10-15", dateTo: "2026-10-15", personalCount: 1, corporateCount: 0, payout: 28000, payback: 0, items: [{ id: "x2", expense_date: "2026-10-15", merchant_name: "카카오T", amount: 28000, supported: 28000, over: 0 }] },
+            ]}
+          />
         </EmployeeShell>
       );
     case "admin-home":

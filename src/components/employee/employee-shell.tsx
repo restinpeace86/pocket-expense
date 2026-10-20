@@ -31,9 +31,9 @@ export function EmployeeShell({
   const pathname = previewPath !== undefined ? `${ws}${previewPath}` : realPath;
   const tabs: Tab[] = [
     { href: `${ws}/employee`, label: "홈", icon: Home, ready: true },
-    { href: `${ws}/employee/settlements`, label: "정산", icon: Wallet, ready: false },
+    { href: `${ws}/employee/settlements`, label: "정산", icon: Wallet, ready: true },
     ...(inbox ? [{ href: `${ws}/approvals`, label: "결재함", icon: Inbox, ready: true, badge: inbox.waiting }] : []),
-    { href: `${ws}/employee/me`, label: "내 정보", icon: UserRound, ready: false },
+    { href: `${ws}/employee/profile`, label: "내 정보", icon: UserRound, ready: true },
   ];
   const showNav = !pathname.includes("/employee/claims/") && !/\/approvals\/[^/]+/.test(pathname);
 

@@ -1638,6 +1638,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_my_profile: {
+        Args: {
+          p_account_holder: string
+          p_account_number: string
+          p_bank_name: string
+          p_employee_number: string
+          p_name: string
+          p_optional_agreed?: boolean
+          p_phone: string
+          p_position: string
+          p_vehicle_number: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       approval_step_kind: "review" | "final"
