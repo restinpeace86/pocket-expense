@@ -1,4 +1,6 @@
 import "server-only";
+import { deadlineDate, isOverdue, type DeadlinePolicy } from "@/lib/expense/deadline";
+import { todayKst } from "@/lib/dates";
 import { maskCardNumber } from "@/lib/cards/match";
 import type { Membership } from "@/lib/auth/paths";
 import { signReceiptUrls } from "@/lib/storage/signed-urls";
@@ -42,7 +44,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
       .maybeSingle(),
     supabase.from("expense_items").select(ITEM_COLUMNS).eq("claim_id", claimId).eq("company_id", membership.company_id).order("sort_order"),
     supabase.from("corporate_cards").select("id, nickname, bin6, last4").eq("company_id", membership.company_id).eq("is_active", true).order("created_at"),
-    supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km").eq("id", membership.company_id).single(),
+    supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, claim_deadline_type, claim_deadline_days").eq("id", membership.company_id).single(),
     supabase.from("members").select("meal_limit_override, receives_car_allowance, vehicle_number").eq("id", membership.member_id).single(),
     supabase.rpc("claim_duplicate_receipts", { p_claim_id: claimId }),
   ]);
@@ -51,6 +53,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
   if (!claim) return null;
   const rows = itemsRes.data ?? [];
   const urls = await signReceiptUrls(supabase, rows.map((r) => r.receipt_thumb_path));
+  const deadline: DeadlinePolicy = { type: companyRes.data?.claim_deadline_type ?? "none", days: companyRes.data?.claim_deadline_days ?? null };
   const items: EditorItem[] = rows.map(({ ai_parsed_payload, receipt_thumb_path, line_items, paid_time, ...r }) => ({
     ...r,
     paid_time: paid_time?.slice(0, 5) ?? null,
@@ -60,6 +63,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
     isPdf: !!r.receipt_path?.endsWith(".pdf"),
     aiFilled: ai_parsed_payload !== null,
     ...aiFlags(ai_parsed_payload),
+    overdueDeadline: isOverdue(r.expense_date, deadline, todayKst()) ? deadlineDate(r.expense_date, deadline) : null,
   }));
   const c = companyRes.data;
   return {
@@ -68,6 +72,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
     cards: cardsRes.data ?? [],
     mealPolicy: { enabled: !!c?.meal_limit_enabled, perPerson: c?.meal_limit_per_person ?? 0, mode: c?.meal_limit_mode ?? "split" },
     mealOverride: meRes.data?.meal_limit_override ?? null,
+    deadline,
     fuel: {
       enabled: !!c?.fuel_enabled,
       ratePerKm: c?.fuel_rate_per_km ?? 0,

@@ -126,6 +126,8 @@ total_personal_burden   = Σ item.personal_burden_amount
 ## 6. 청구 기한 (D-031, 항목 단위 판정)
 - 출장 결의서의 출장비 항목 중 결제일자가 출장 기간 밖이면 "출장 기간 밖" 경고를 표시한다(상신 가능).
 - 항목마다 회사 청구 기한을 판정한다. 기한 초과 항목이 하나라도 있으면 결의서에 "기한 초과" 배지를 표시한다. 상신은 막지 않는다.
+- **판정 규칙(D-093)**: 기한 = 결제한 달 말일(`end_of_month`) / 결제일 + N일(`days_after`) / 결제한 다음 달 N일(`next_month_day`, N 1~28) / 없음(`none`). 그날까지 상신하면 기한 안. 기준일은 상신한 결의서는 **상신일(한국 날짜)**, 작성중·반려 결의서는 **오늘**. 규칙 코드: `src/lib/expense/deadline.ts` = DB `private.claim_deadline_date`(migration 046).
+- 표시: 직원 항목 화면 노란 경고("청구 기한(2026.09.05까지)이 지났어요…", 사용일을 고치면 바로 다시 판정), 결의서 화면 항목 "기한 초과" 배지, 관리자 지출 승인 관리 목록 "기한 초과" 배지, 결의서 상세(관리자·사전 검토자·직원) 항목 "기한 초과(9/5까지)" 배지, 관리자 홈 할 일 "청구 기한이 지난 항목이 든 승인 대기 결의서 n건".
 
 ## 7. 계정과목 (D-036, 항목 단위)
 - 상신 시 항목의 내부 분류(`category`, `trip_type`)로 `account_title_mappings`를 찾아 `account_title_id`, `account_title_name`, `account_title_code`를 저장한다.

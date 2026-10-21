@@ -1,4 +1,6 @@
 import "server-only";
+import { isOverdue, kstDate, type DeadlinePolicy } from "@/lib/expense/deadline";
+import { todayKst } from "@/lib/dates";
 import { monthRange } from "@/lib/dates";
 import type { ClaimStatus } from "@/lib/expense/status";
 import { createClient } from "@/lib/supabase/server";
@@ -26,6 +28,7 @@ export type AdminClaimRow = {
   member_id: string;
   member_name: string;
   reviewing: string | null; // 사전 검토 중이면 검토자 이름
+  overdue?: boolean; // 청구 기한이 지난 항목이 있음(상신일 기준, D-031)
 };
 
 export async function getAdminClaimList(companyId: string, tab: ApprovalTab, filters?: ClaimFilters, limit = 100) {
@@ -76,12 +79,17 @@ export async function getAdminClaimList(companyId: string, tab: ApprovalTab, fil
   ]);
   const rows = claims ?? [];
   const memberIds = [...new Set(rows.map((c) => c.member_id))];
-  const [{ data: members }, { data: steps }] = await Promise.all([
+  const [{ data: members }, { data: steps }, { data: company }, { data: itemDates }] = await Promise.all([
     memberIds.length ? supabase.from("members").select("id, name").in("id", memberIds) : Promise.resolve({ data: [] as { id: string; name: string }[] }),
     tab === "pending" && rows.length
       ? supabase.from("claim_approvals").select("claim_id, approver_member_id").in("claim_id", rows.map((c) => c.id)).eq("status", "pending").eq("step_kind", "review")
       : Promise.resolve({ data: [] as { claim_id: string; approver_member_id: string | null }[] }),
+    supabase.from("companies").select("claim_deadline_type, claim_deadline_days").eq("id", companyId).single(),
+    rows.length ? supabase.from("expense_items").select("claim_id, expense_date").eq("company_id", companyId).in("claim_id", rows.map((c) => c.id)) : Promise.resolve({ data: [] as { claim_id: string; expense_date: string | null }[] }),
   ]);
+  const policy: DeadlinePolicy = { type: company?.claim_deadline_type ?? "none", days: company?.claim_deadline_days ?? null };
+  const submitted = new Map(rows.map((c) => [c.id, c.submitted_at ? kstDate(c.submitted_at) : todayKst()]));
+  const overdue = new Set((itemDates ?? []).filter((i) => isOverdue(i.expense_date, policy, submitted.get(i.claim_id) ?? todayKst())).map((i) => i.claim_id));
   const names = new Map((members ?? []).map((m) => [m.id, m.name]));
   const reviewerIds = [...new Set((steps ?? []).map((s) => s.approver_member_id).filter((x): x is string => !!x && !names.has(x)))];
   if (reviewerIds.length) {
@@ -102,7 +110,8 @@ export async function getAdminClaimList(companyId: string, tab: ApprovalTab, fil
     member_id: c.member_id,
     member_name: names.get(c.member_id) ?? "",
     reviewing: reviewing.get(c.id) ?? null,
-  }));
+      overdue: overdue.has(c.id),
+}));
   return { list, pendingCount: pendingCount ?? 0 };
 }
 

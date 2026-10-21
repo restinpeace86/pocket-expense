@@ -58,6 +58,7 @@ function ItemBadges({ i, flagged }: { i: DetailItem; flagged: boolean }) {
   const badges: [string, string][] = [];
   if (flagged) badges.push(["반려 시 지목됨", "bg-red-100 text-red-700"]);
   if (i.duplicate) badges.push(["중복 의심", "bg-amber-200 text-amber-900"]);
+  if (i.overdueDeadline) badges.push([`기한 초과(${Number(i.overdueDeadline.slice(5, 7))}/${Number(i.overdueDeadline.slice(8))}까지)`, "bg-amber-100 text-amber-800"]);
   const edited = editedFields(i);
   if (edited.length) badges.push([`직원 수정: ${edited.join("·")}`, "bg-violet-100 text-violet-800"]);
   if (i.amount !== null && i.supply_amount !== null && i.vat_amount !== null && i.supply_amount + i.vat_amount !== i.amount) badges.push(["합계≠공급가+부가세", "bg-amber-100 text-amber-800"]);

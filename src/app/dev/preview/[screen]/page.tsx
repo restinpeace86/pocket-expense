@@ -75,7 +75,7 @@ const SAMPLE_CLAIMS: MyClaimRow[] = [
 ];
 const EMPLOYEE_MEMBERSHIP: Membership = { ...SAMPLE_MEMBERSHIP, name: "김개발", role: "employee" };
 
-const NO_ROUTE = { start_location: null, start_lat: null, start_lng: null, end_location: null, end_lat: null, end_lng: null, is_round_trip: null, route_one_way_km: null, distance_km: null, distance_source: null, route_evidence: null, applied_fuel_rate_per_km: null } as const;
+const NO_ROUTE = { start_location: null, start_lat: null, start_lng: null, end_location: null, end_lat: null, end_lng: null, is_round_trip: null, route_one_way_km: null, distance_km: null, distance_source: null, route_evidence: null, applied_fuel_rate_per_km: null, overdueDeadline: null } as const;
 const SAMPLE_ITEM: EditorItem = {
   id: "i1", sort_order: 1, category: "meal", trip_type: null, purchase_type: null, payment_method: "corporate_card", corporate_card_id: "card1",
   evidence_type: "card_slip", expense_date: "2026-10-16", merchant_name: "김밥천국 강남역점", merchant_business_number: "2208162517",
@@ -108,6 +108,7 @@ const SAMPLE_EDITOR: EditorData = {
   mealPolicy: { enabled: true, perPerson: 10000, mode: "split" },
   mealOverride: null,
   fuel: { enabled: true, ratePerKm: 200, blocked: null, vehicleNumber: "12가3456" },
+  deadline: { type: "next_month_day", days: 5 },
 };
 
 const AA_PAYLOAD = {
@@ -161,7 +162,7 @@ const DI: DetailItem = {
   headcount: 1, purpose: null, attendees: null, client_name: null, trip_start_date: null, trip_end_date: null, parse_status: "success", receipt_path: "x/1.jpg",
   company_supported_amount: 50000, personal_burden_amount: 0, applied_meal_limit_per_person: null, applied_meal_limit_mode: null, account_title_id: "t2", account_title_name: "여비교통비", account_title_code: null, closed_month: null,
   account_title_overridden: false, paid_time: "08:10", approval_number: "30012345", merchant_address: "서울 용산구 한강대로 405", line_items: [], ai: { merchant_name: "코레일 KTX", amount: 50000, expense_date: "2026-10-14" },
-  thumbUrl: null, isPdf: false, duplicate: null, route: null, routeLabel: null, routeCardUrl: null,
+  thumbUrl: null, isPdf: false, duplicate: null, route: null, routeLabel: null, routeCardUrl: null, overdueDeadline: null,
 };
 const EXPORT_BASE = {
   kind: "current", claim_id: "cl100000-aaaa", claim_title: "9월 팀 점심", claim_description: "부서 정기 점심 식사 진행", exception_memo: null, is_trip: false,

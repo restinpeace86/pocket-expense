@@ -1,4 +1,6 @@
 import "server-only";
+import { deadlineDate, isOverdue, kstDate, type DeadlinePolicy } from "@/lib/expense/deadline";
+import { todayKst } from "@/lib/dates";
 import { routeCardFrom } from "@/lib/expense/route";
 import { signReceiptUrls } from "@/lib/storage/signed-urls";
 import { createClient } from "@/lib/supabase/server";
@@ -45,9 +47,13 @@ export async function getClaimDetail(companyId: string, claimId: string, opts: {
   const rows = itemsRes.data ?? [];
   const urls = await signReceiptUrls(supabase, [...rows.map((r) => r.receipt_thumb_path), ...rows.map((r) => r.route_card_path)]);
   const dups = (dupRes.data ?? {}) as Record<string, { mine: unknown[]; others: number }>;
+  const { data: co } = await supabase.from("companies").select("claim_deadline_type, claim_deadline_days").eq("id", companyId).single();
+  const policy: DeadlinePolicy = { type: co?.claim_deadline_type ?? "none", days: co?.claim_deadline_days ?? null };
+  const refDate = claimRes.data?.submitted_at ? kstDate(claimRes.data.submitted_at) : todayKst();
   const items: DetailItem[] = rows.map(({ receipt_thumb_path, ai_parsed_payload, line_items, paid_time, start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, route_card_path, ...r }) => ({
     ...r,
     routeCardUrl: route_card_path ? (urls.get(route_card_path) ?? null) : null,
+    overdueDeadline: isOverdue(r.expense_date, policy, refDate) ? deadlineDate(r.expense_date, policy) : null,
     // 자차 유류비: 영수증 대신 경로 요약 카드(D-085)
     route:
       r.category === "trip" && r.trip_type === "own_car"

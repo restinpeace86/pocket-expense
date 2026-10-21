@@ -39,7 +39,7 @@ begin
   if (r->'kpi'->>'pending_claims')::int <> 1 or (r->'kpi'->>'pending_oldest_days')::int <> 3 then raise exception 'FAIL pending %', r->'kpi'; end if;
   -- 미지급 사비: 승인 결의서의 개인카드 회사지원금 85,400 / 미수 납부: 법인카드 개인부담 3,000
   if (r->'kpi'->>'unpaid_payout')::int <> 85400 or (r->'kpi'->>'unpaid_payback')::int <> 3000 then raise exception 'FAIL settle %', r->'kpi'; end if;
-  if r->'todo' <> '{"pending_members": 1, "unmapped_items": 1, "settle_claims": 1, "failed_notifications": 1}'::jsonb then raise exception 'FAIL todo %', r->'todo'; end if;
+  if r->'todo' <> '{"pending_members": 1, "unmapped_items": 1, "settle_claims": 1, "failed_notifications": 1, "overdue_claims": 0}'::jsonb then raise exception 'FAIL todo %', r->'todo'; end if;
   if r->'checklist' <> '{"approved_members": 2, "departments": 1, "policy_confirmed": true, "review_steps": 0}'::jsonb then raise exception 'FAIL checklist %', r->'checklist'; end if;
   if (r->'categories'->0->>'category') <> 'trip' or (r->'categories'->0->>'trip_type') <> 'own_car' or jsonb_array_length(r->'categories') <> 3 then raise exception 'FAIL categories %', r->'categories'; end if;
   if (r->'top_members'->0->>'name') <> '김직원' or (r->'top_members'->0->>'department') <> '영업팀' or (r->'top_members'->0->>'amount')::int <> 118400 then raise exception 'FAIL top %', r->'top_members'; end if;

@@ -1,5 +1,7 @@
 "use client";
 
+import { deadlineDate, isOverdue, type DeadlinePolicy } from "@/lib/expense/deadline";
+import { todayKst } from "@/lib/dates";
 import { formatMaskedCard, matchCard } from "@/lib/cards/match";
 import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, FileText, ImageOff, Loader2, Minus, Plus, RefreshCw, Sparkles, X } from "lucide-react";
 import Link from "next/link";
@@ -204,6 +206,7 @@ export function ItemEditor({
   mealOverride,
   originalUrl,
   base,
+  deadline = { type: "none", days: null },
 }: {
   claim: EditorClaim;
   item: EditorItem;
@@ -216,6 +219,7 @@ export function ItemEditor({
   mealOverride: number | null;
   originalUrl: string | null;
   base: string;
+  deadline?: DeadlinePolicy;
 }) {
   const router = useRouter();
   const [input, setInput] = useState<ItemInput>(() => toInput(item));
@@ -263,6 +267,7 @@ export function ItemEditor({
   const supply = input.supplyAmount === "" ? null : Number(input.supplyAmount);
   const vat = input.vatAmount === "" ? null : Number(input.vatAmount);
   const sumMismatch = amount !== null && supply !== null && vat !== null && supply + vat !== amount;
+  const overdueAt = isOverdue(input.expenseDate || null, deadline, todayKst()) ? deadlineDate(input.expenseDate, deadline) : null;
   const outsideTrip =
     claim.is_business_trip &&
     input.category === "trip" &&
@@ -341,6 +346,7 @@ export function ItemEditor({
           </Field>
         </div>
         {outsideTrip && <Warn>출장 기간 밖의 날짜예요. 날짜를 확인해 주세요(그대로 상신할 수도 있어요).</Warn>}
+        {overdueAt && <Warn>청구 기한({overdueAt.replaceAll("-", ".")}까지)이 지났어요. 상신은 할 수 있지만 관리자 화면에 &ldquo;기한 초과&rdquo;로 표시돼요.</Warn>}
         <details className="group rounded-xl bg-zinc-50 px-3 py-2" open={!!(input.merchantBusinessNumber || input.supplyAmount || input.vatAmount) || undefined}>
           <summary className="flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-zinc-700 [&::-webkit-details-marker]:hidden">
             사업자등록번호·공급가액·부가세 <span className="ml-1 text-xs font-normal text-zinc-500">(세무사 전달용 · AI가 채워요)</span>

@@ -4,7 +4,7 @@ import { CATEGORY_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, type TripType } 
 export type Dashboard = {
   month: string;
   kpi: { spend: number; spend_prev: number; pending_claims: number; pending_oldest_days: number | null; unpaid_payout: number; unpaid_payback: number };
-  todo: { pending_members: number; unmapped_items: number; settle_claims: number; failed_notifications: number };
+  todo: { pending_members: number; unmapped_items: number; settle_claims: number; failed_notifications: number; overdue_claims?: number };
   checklist: { approved_members: number; departments: number; policy_confirmed: boolean; review_steps: number };
   categories: { category: ExpenseCategory | null; trip_type: TripType | null; amount: number; count: number }[];
   top_members: { name: string; department: string | null; amount: number; count: number }[];

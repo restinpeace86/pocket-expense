@@ -56,6 +56,7 @@ export function AdminClaimList({ rows, tab, base, selectedId, query = "" }: { ro
               <p className="mt-1 flex flex-wrap gap-1">
                 {tab !== "pending" && <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${badge.className}`}>{c.self_approved ? "결재 생략" : badge.label}</span>}
                 {c.reviewing && <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-600">{c.reviewing} 검토 중</span>}
+                {c.overdue && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">기한 초과</span>}
               </p>
             </Link>
           </li>

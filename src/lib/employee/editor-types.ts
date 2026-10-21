@@ -78,6 +78,7 @@ export type EditorItem = {
   distance_source: "api" | "manual" | null;
   route_evidence: unknown;
   applied_fuel_rate_per_km: number | null;
+  overdueDeadline: string | null; // 청구 기한이 지났으면 그 기한 (오늘 기준, D-031)
 };
 
 // 자차 유류비를 쓸 수 있는지·단가·차량번호 (trip-expense.md §4, D-068·D-070)
@@ -95,6 +96,7 @@ export type EditorData = {
   mealPolicy: MealPolicy;
   mealOverride: number | null;
   fuel: FuelPolicy;
+  deadline: { type: "none" | "end_of_month" | "days_after" | "next_month_day"; days: number | null }; // 회사 청구 기한 (D-031)
 };
 
 export type ItemInput = {

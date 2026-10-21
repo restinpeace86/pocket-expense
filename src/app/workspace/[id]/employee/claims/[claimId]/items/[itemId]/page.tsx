@@ -56,6 +56,7 @@ async function ItemEdit({ params }: Pick<PageProps<"/workspace/[id]/employee/cla
       mealOverride={data.mealOverride}
       originalUrl={originalUrl}
       base={base}
+      deadline={data.deadline}
     />
   );
 }
