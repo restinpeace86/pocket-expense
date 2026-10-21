@@ -3,7 +3,7 @@ import type { ExpenseCategory, PurchaseType, TripType } from "@/lib/expense/cate
 import type { ClaimStatus } from "@/lib/expense/status";
 import type { LineItem } from "@/lib/receipts/parse-result";
 
-// 소명서 상세(직원 읽기 전용 E-④, 관리자 지출 승인 관리) 공용 데이터
+// 결의서 상세(직원 읽기 전용 E-④, 관리자 지출 승인 관리) 공용 데이터
 export type DetailItem = {
   id: string;
   sort_order: number;
@@ -68,6 +68,7 @@ export type ClaimDetail = {
     status: ClaimStatus;
     title: string;
     description: string | null;
+    exception_memo: string | null; // 예외 소명 사유 (D-084)
     is_business_trip: boolean;
     trip_destination: string | null;
     trip_start_date: string | null;
@@ -106,6 +107,6 @@ export function canActOnClaim(detail: ClaimDetail, viewer: { member_id: string; 
     return { can: false, reason: `${step.approver_name ?? "사전 검토자"} 검토 중이에요. 검토가 끝나면 승인할 수 있어요.` };
   }
   if (viewer.role !== "super_admin" && viewer.role !== "admin") return { can: false, reason: null };
-  if (detail.claim.member_id === viewer.member_id) return { can: false, reason: "본인 소명서는 다른 관리자가 승인합니다." };
+  if (detail.claim.member_id === viewer.member_id) return { can: false, reason: "본인 결의서는 다른 관리자가 승인합니다." };
   return { can: true, reason: null };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { exceptionFlags, exceptionSummary } from "@/lib/expense/exceptions";
 import { ArrowLeft, Camera, FileText, ImageIcon, Loader2, PenLine, Plus, ReceiptText, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,7 +17,7 @@ import { HEADER_PROBLEM_LABEL, ITEM_PROBLEM_LABEL, type ClaimProblems } from "@/
 import { measureAction } from "@/lib/perf/client";
 import { MAX_PER_CLAIM, useReceiptUpload, type UploadRow } from "./use-receipt-upload";
 
-// 화면 E-02 지출소명서 작성 (spec/screens/worker-tax-processing.md §1·§3-1·§3-2·§3-4·§4)
+// 화면 E-02 지출결의서 작성 (spec/screens/worker-tax-processing.md §1·§3-1·§3-2·§3-4·§4)
 
 // 휴대폰·태블릿(손가락 터치)에서만 카메라 촬영을 보여 준다 (workspace-architecture.md §2.C)
 function useTouchDevice() {
@@ -257,7 +258,7 @@ function Label({ children, required, htmlFor }: { children: React.ReactNode; req
   );
 }
 
-// selfApprove: 최고 관리자 본인 소명서는 결재 없이 바로 승인된다(D-026) — 확인 문구에만 쓴다
+// selfApprove: 최고 관리자 본인 결의서는 결재 없이 바로 승인된다(D-026) — 확인 문구에만 쓴다
 export function ClaimEditor({ data, base, openAdd, selfApprove = false, approvalPreview = "관리자 승인" }: { data: EditorData; base: string; openAdd: boolean; selfApprove?: boolean; approvalPreview?: string }) {
   const { claim, items } = data;
   const router = useRouter();
@@ -266,6 +267,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
     () => ({
       title: claim.title,
       description: claim.description ?? "",
+      exceptionMemo: claim.exception_memo ?? "",
       defaultPaymentMethod: claim.default_payment_method,
       isBusinessTrip: claim.is_business_trip,
       tripDestination: claim.trip_destination ?? "",
@@ -290,10 +292,11 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
   const galleryRef = useRef<HTMLInputElement>(null);
   const uploader = useReceiptUpload(claim.id, items.length);
 
-  // ?add=1(새 소명서)이면 처음에만 추가 시트를 연다(영수증이 생기면 다시 열리지 않음).
+  // ?add=1(새 결의서)이면 처음에만 추가 시트를 연다(영수증이 생기면 다시 열리지 않음).
   // 주소에서 ?add=1을 지우지 않는다: 주소를 바꾸면 업로드 뒤 화면 갱신 때 Next가 이 화면을 새로 만들어
-  // 그 사이 입력한 제목·소명 내용이 지워졌다(2026-10-21 로그인 E2E에서 재현).
+  // 그 사이 입력한 제목·지출 사유가 지워졌다(2026-10-21 로그인 E2E에서 재현).
 
+  const exceptionText = exceptionSummary(exceptionFlags(items));
   const suggestion = suggestTitle({ isBusinessTrip: form.isBusinessTrip, tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null }, items);
   const title = titleTouched ? form.title : suggestion;
   const current = { ...form, title };
@@ -362,7 +365,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-3 md:max-w-2xl">
       <div className="flex items-center justify-between gap-2">
         <Link href={base} className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100">
-          <ArrowLeft className="size-4" />내 소명서
+          <ArrowLeft className="size-4" />내 결의서
         </Link>
         <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
       </div>
@@ -375,7 +378,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
       )}
 
       <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4">
-        <h1 className="text-lg font-bold">지출소명서</h1>
+        <h1 className="text-lg font-bold">지출결의서</h1>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="claim-title" required>
             제목
@@ -395,7 +398,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="claim-desc" required>
-            소명 내용
+            지출 사유
           </Label>
           <textarea
             id="claim-desc"
@@ -406,6 +409,23 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
             onChange={(e) => set("description", e.target.value)}
           />
           <p className="text-xs text-zinc-500">관리자가 &ldquo;이 돈을 왜 썼지?&rdquo; 하고 묻지 않도록 한 줄로 적어 주세요.</p>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="claim-memo">예외 소명 사유 (선택)</Label>
+          {exceptionText && (
+            <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              {exceptionText}이 있어요. 왜 이때 썼는지 적어 두면 결재가 빨라져요.
+            </p>
+          )}
+          <textarea
+            id="claim-memo"
+            className={`${inputClass} min-h-16 py-2`}
+            value={form.exceptionMemo}
+            maxLength={500}
+            placeholder="예: 토요일 고객사 장애 긴급 대응 후 식사"
+            onChange={(e) => set("exceptionMemo", e.target.value)}
+          />
+          <p className="text-xs text-zinc-500">주말·심야 사용처럼 평소와 다른 지출이 있을 때만 적어요.</p>
         </div>
         <div className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-zinc-800">결제수단 기본값</span>
@@ -528,7 +548,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
         <div className="flex justify-center">
           {confirmDelete ? (
             <div className="flex w-full flex-col gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm">
-              <p className="text-red-800">이 소명서와 올린 영수증 {items.length}장을 모두 삭제할까요? 되돌릴 수 없어요.</p>
+              <p className="text-red-800">이 결의서와 올린 영수증 {items.length}장을 모두 삭제할까요? 되돌릴 수 없어요.</p>
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => setConfirmDelete(false)} className="min-h-11 rounded-xl border border-zinc-300 bg-white font-medium">
                   취소
@@ -551,7 +571,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
           ) : (
             <button type="button" onClick={() => setConfirmDelete(true)} className="inline-flex min-h-11 items-center gap-1.5 px-3 text-sm text-zinc-500 hover:text-red-600">
               <Trash2 className="size-4" />
-              소명서 삭제
+              결의서 삭제
             </button>
           )}
         </div>
@@ -567,7 +587,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
       {problems && (
         <section className="flex flex-col gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
           <p className="font-semibold">아래 칸을 채우면 상신할 수 있어요</p>
-          {problems.header.length > 0 && <p>소명서: {problems.header.map((h) => HEADER_PROBLEM_LABEL[h] ?? h).join(", ")}</p>}
+          {problems.header.length > 0 && <p>결의서: {problems.header.map((h) => HEADER_PROBLEM_LABEL[h] ?? h).join(", ")}</p>}
           {problems.items.map((p) => {
             const it = items.find((x) => x.id === p.item_id);
             const n = items.findIndex((x) => x.id === p.item_id) + 1;
@@ -591,7 +611,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
               영수증 {items.length}건 · {formatWon(claim.total_amount)}
               {payout > 0 && ` · 사비 지급 예정 ${formatWon(payout)}`}
             </p>
-            <p className="rounded-xl bg-zinc-50 px-3 py-2 text-sm text-zinc-600">{selfApprove ? "최고 관리자 본인 소명서라 결재 없이 바로 승인됩니다." : `결재선: ${approvalPreview}. 상신하면 승인·반려 전까지 고칠 수 없어요.`}</p>
+            <p className="rounded-xl bg-zinc-50 px-3 py-2 text-sm text-zinc-600">{selfApprove ? "최고 관리자 본인 결의서라 결재 없이 바로 승인됩니다." : `결재선: ${approvalPreview}. 상신하면 승인·반려 전까지 고칠 수 없어요.`}</p>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setConfirmSubmit(false)} className="min-h-12 rounded-xl border border-zinc-300 font-medium">
                 취소

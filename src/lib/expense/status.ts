@@ -1,4 +1,4 @@
-// 지출소명서 상태 배지 표준 (spec/common/ui-rules.md §4, D-022)
+// 지출결의서 상태 배지 표준 (spec/common/ui-rules.md §4, D-022)
 import { currentMonthKst } from "@/lib/dates";
 export type ClaimStatus = "draft" | "submitted" | "approved" | "rejected" | "paid";
 

@@ -53,7 +53,7 @@ export function CompanyDetailView({ data, month, base = "/app-admin" }: { data: 
                   <th className={`${th} text-right`}>금액</th>
                   <th className={`${th} text-right`}>품목</th>
                   <th className={th}>AI 인식</th>
-                  <th className={th}>소명서</th>
+                  <th className={th}>결의서</th>
                   <th className={th}>상태</th>
                   <th className={th}>사진</th>
                 </tr>
@@ -77,7 +77,7 @@ export function CompanyDetailView({ data, month, base = "/app-admin" }: { data: 
                       <span className="ml-1 text-xs text-zinc-500">{CLAIM_STATUS_LABEL[r.claim_status ?? ""] ?? ""}</span>
                     </td>
                     <td className={`${td} whitespace-nowrap`}>
-                      {r.status === "item_deleted" ? <span className="font-medium text-red-700">직원이 지움 {formatKst(r.item_deleted_at)}</span> : "소명서에 있음"}
+                      {r.status === "item_deleted" ? <span className="font-medium text-red-700">직원이 지움 {formatKst(r.item_deleted_at)}</span> : "결의서에 있음"}
                     </td>
                     <td className={`${td} whitespace-nowrap text-xs`}>
                       <PhotoState r={r} />

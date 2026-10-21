@@ -8,15 +8,15 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ITEM_COLUMNS =
   "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, card_last4, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, applied_meal_limit_per_person, applied_meal_limit_mode, account_title_id, account_title_name, account_title_code, account_title_overridden, closed_month, paid_time, approval_number, merchant_address, line_items, ai_parsed_payload";
 
-// 소명서 상세. 열람 권한은 RLS(본인 / 같은 회사 관리자 이상 / 지정된 사전 검토자)가 건다.
-// ownerOnly: 직원 화면에서는 본인 소명서만(관리자가 직원 모드로 봐도 남의 것은 안 보이게)
+// 결의서 상세. 열람 권한은 RLS(본인 / 같은 회사 관리자 이상 / 지정된 사전 검토자)가 건다.
+// ownerOnly: 직원 화면에서는 본인 결의서만(관리자가 직원 모드로 봐도 남의 것은 안 보이게)
 export async function getClaimDetail(companyId: string, claimId: string, opts: { ownerMemberId?: string } = {}): Promise<ClaimDetail | null> {
   if (!UUID.test(claimId)) return null;
   const supabase = await createClient();
   let cq = supabase
     .from("expense_claims")
     .select(
-      "id, member_id, status, title, description, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, settlement_required, self_approved, current_round, rejection_reason, created_at, submitted_at, approved_at, rejected_at, paid_at",
+      "id, member_id, status, title, description, exception_memo, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, settlement_required, self_approved, current_round, rejection_reason, created_at, submitted_at, approved_at, rejected_at, paid_at",
     )
     .eq("id", claimId)
     .eq("company_id", companyId);

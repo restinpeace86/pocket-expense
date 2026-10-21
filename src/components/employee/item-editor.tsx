@@ -93,15 +93,15 @@ function DuplicateWarning({ dup, base }: { dup: NonNullable<EditorItem["duplicat
       <p>승인번호(또는 가맹점·날짜·시각)와 금액이 같은 영수증이 있어요. 같은 영수증이면 이 항목을 지워 주세요. 다른 결제라면 그대로 두셔도 돼요.</p>
       {dup.mine.map((c) => (
         <Link key={c.claim_id} href={`${base}/claims/${c.claim_id}/edit`} className="underline underline-offset-2">
-          내 소명서: {c.title || "제목 없는 소명서"}
+          내 결의서: {c.title || "제목 없는 결의서"}
         </Link>
       ))}
-      {dup.others > 0 && <p>회사의 다른 직원 소명서에도 {dup.others}건 있어요.</p>}
+      {dup.others > 0 && <p>회사의 다른 직원 결의서에도 {dup.others}건 있어요.</p>}
     </div>
   );
 }
 
-// AI가 읽은 참고 정보 (D-079): 지출소명서에는 들어가지 않고 확인용으로만 보여 준다
+// AI가 읽은 참고 정보 (D-079): 지출결의서에는 들어가지 않고 확인용으로만 보여 준다
 function ReceiptDetails({ item }: { item: EditorItem }) {
   const rows: [string, string][] = [];
   if (item.paid_time) rows.push(["결제 시각", item.paid_time]);
@@ -114,7 +114,7 @@ function ReceiptDetails({ item }: { item: EditorItem }) {
         <Sparkles className="size-4 shrink-0 text-brand-700" />
         <span>
           <span className="block font-semibold">AI가 읽은 참고 정보</span>
-          <span className="block text-xs text-zinc-500">결제 시각·승인번호·주소·품목 · 소명서에는 들어가지 않아요</span>
+          <span className="block text-xs text-zinc-500">결제 시각·승인번호·주소·품목 · 결의서에는 들어가지 않아요</span>
         </span>
       </summary>
       <div className="flex flex-col gap-3 pb-3 pt-1 text-sm">
@@ -277,7 +277,7 @@ export function ItemEditor({
       <div className="flex items-center justify-between gap-2">
         <button type="button" onClick={() => go(claimHref)} className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100">
           <ArrowLeft className="size-4" />
-          소명서로
+          결의서로
         </button>
         <span className="text-sm text-zinc-500">
           영수증 {index + 1} / {total}
@@ -524,7 +524,7 @@ export function ItemEditor({
             </button>
           </div>
           <Link href={claimHref} className="sr-only">
-            소명서로 돌아가기
+            결의서로 돌아가기
           </Link>
         </div>
       </div>

@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { AdminClaimRow } from "./admin-list";
 
-// 내 결재함 (approver.md ②) — 사전 검토자용: 대기(내 차례인 검토 단계) / 처리완료(내가 승인·반려한 소명서)
+// 내 결재함 (approver.md ②) — 사전 검토자용: 대기(내 차례인 검토 단계) / 처리완료(내가 승인·반려한 결의서)
 export async function getReviewerInbox(companyId: string, memberId: string, tab: "waiting" | "done"): Promise<AdminClaimRow[]> {
   const supabase = await createClient();
   const stepQ = supabase.from("claim_approvals").select("claim_id, acted_at").eq("company_id", companyId).eq("step_kind", "review");

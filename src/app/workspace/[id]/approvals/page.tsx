@@ -40,7 +40,7 @@ async function Inbox({ params, searchParams }: Pick<PageProps<"/workspace/[id]/a
         ))}
       </div>
       {tab === "waiting" && rows.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">결재할 소명서가 없어요.</p>
+        <p className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">결재할 결의서가 없어요.</p>
       ) : (
         <AdminClaimList rows={rows} tab={tab === "waiting" ? "pending" : "done"} base={base} />
       )}

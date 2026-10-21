@@ -8,7 +8,7 @@ import { getAdminClaimList, parseApprovalTab } from "@/lib/claims/admin-list";
 
 export const metadata = { title: "지출 승인 관리 · PocketExpense" };
 
-// 지출 승인 관리 목록 (admin-expense-approvals.md). 넓은 화면에서는 소명서를 고르면 오른쪽에 상세가 열린다
+// 지출 승인 관리 목록 (admin-expense-approvals.md). 넓은 화면에서는 결의서를 고르면 오른쪽에 상세가 열린다
 export default function ClaimsPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/claims">) {
   return (
     <>
@@ -35,7 +35,7 @@ async function Claims({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
         <ClaimFiltersBar key={query} filters={filters} tab={tab} base={base} {...options} />
         <AdminClaimList rows={list} tab={tab} base={base} query={query} />
       </div>
-      <p className="hidden rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-16 text-center text-sm text-zinc-500 lg:block">왼쪽에서 지출소명서를 고르면 여기에 내용이 보여요.</p>
+      <p className="hidden rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-16 text-center text-sm text-zinc-500 lg:block">왼쪽에서 지출결의서를 고르면 여기에 내용이 보여요.</p>
     </div>
   );
 }

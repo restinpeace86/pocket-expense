@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 // 크레딧을 쓴 영수증을 직원이 지울 때, 사진을 운영 보관함(receipt-archive)으로 옮겨 둔다 (D-080).
 // 보관 사진은 삭제 후 ARCHIVE_RETENTION_MONTHS개월이 지나면 매일 도는 정리 작업이 지운다(/api/cron/purge-receipt-archive).
-// 호출하는 쪽이 먼저 "본인 회사·본인 작성 중 소명서의 항목"인지 확인해야 한다.
+// 호출하는 쪽이 먼저 "본인 회사·본인 작성 중 결의서의 항목"인지 확인해야 한다.
 export const ARCHIVE_RETENTION_MONTHS = 3;
 
 function purgeAfter(now = new Date()) {

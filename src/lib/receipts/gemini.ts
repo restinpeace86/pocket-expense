@@ -52,7 +52,7 @@ function prompt(isBusinessTrip: boolean, today: string) {
 - supply_amount / vat_amount: 공급가액 / 부가세. 표기가 없으면 null
 - expense_date: 결제일자 YYYY-MM-DD (오늘은 ${today})
 - suggested_category: 식당·카페 식사는 meal, 교통·숙박·통행료는 trip, 거래처 접대로 보이면 meeting, 편의점·마트·문구점·전자제품 매장 구매는 purchase. 판단이 어려우면 null
-${isBusinessTrip ? "- 이 영수증은 출장 소명서에 올라왔습니다. suggested_category는 trip으로 하고 suggested_trip_type을 판단하세요" : "- 식당 영수증은 suggested_category를 meal로 하세요"}
+${isBusinessTrip ? "- 이 영수증은 출장 결의서에 올라왔습니다. suggested_category는 trip으로 하고 suggested_trip_type을 판단하세요" : "- 식당 영수증은 suggested_category를 meal로 하세요"}
 - suggested_trip_type(출장비일 때): 식당 meal, 승차권·항공권 public_transport, 택시 taxi, 톨게이트·하이패스·주차장 toll_parking, 호텔·숙박 lodging, 그 밖 other
 - suggested_purchase_type(물품 구매일 때): 간식·음료·생수 pantry, 문구·소모품 office_supplies, 소형 전자기기·비품 small_equipment
 - paid_time: 결제(거래) 시각 HH:MM (24시간)

@@ -11,7 +11,7 @@ export const metadata = { title: "결재 · PocketExpense" };
 
 // 결재 화면 (approver.md ①) — 알림톡 [결재하러 가기] 도착지.
 // 링크에 토큰이 없으므로 로그인은 proxy가 확인하고(로그인 뒤 이 주소로 돌아옴), 여기서는 권한에 맞는 화면을 보여 준다.
-// 관리자 → 지출 승인 관리 상세 / 청구자 본인 → 내 소명서 / 사전 검토자 → 이 화면 / 그 밖 → 권한 없음
+// 관리자 → 지출 승인 관리 상세 / 청구자 본인 → 내 결의서 / 사전 검토자 → 이 화면 / 그 밖 → 권한 없음
 export default function ApprovalPage({ params }: PageProps<"/workspace/[id]/approvals/[claimId]">) {
   return (
     <Suspense fallback={<div className="m-4 h-64 animate-pulse rounded-xl bg-zinc-100" />}>

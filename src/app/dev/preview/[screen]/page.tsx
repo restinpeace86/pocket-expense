@@ -89,7 +89,7 @@ const SAMPLE_ITEM: EditorItem = {
 };
 const SAMPLE_EDITOR: EditorData = {
   claim: {
-    id: "claim1", status: "draft", title: "", description: "", default_payment_method: "corporate_card", is_business_trip: false,
+    id: "claim1", status: "draft", title: "", description: "", exception_memo: null, default_payment_method: "corporate_card", is_business_trip: false,
     trip_destination: null, trip_start_date: null, trip_end_date: null, trip_purpose: null, item_count: 4, total_amount: 172000,
     total_company_supported: 161000, total_personal_burden: 11000, rejection_reason: null,
   },
@@ -159,7 +159,7 @@ const DI: DetailItem = {
 };
 const SAMPLE_DETAIL_CLAIM: ClaimDetail = {
   claim: {
-    id: "cl1", member_id: "p3", status: "submitted", title: "10/15 부산 출장 경비", description: "부산 지사 미팅 및 현장 점검 건", is_business_trip: true, trip_destination: "부산",
+    id: "cl1", member_id: "p3", status: "submitted", title: "10/15 부산 출장 경비", description: "부산 지사 미팅 및 현장 점검 건", exception_memo: "토요일 오전 현장 점검 일정이라 전날 밤 이동", is_business_trip: true, trip_destination: "부산",
     trip_start_date: "2026-10-14", trip_end_date: "2026-10-15", trip_purpose: "부산 지사 미팅", item_count: 3, total_amount: 72000, total_company_supported: 65000, total_personal_burden: 7000,
     settlement_required: null, self_approved: false, current_round: 2, rejection_reason: null, created_at: "2026-10-14T01:00:00Z", submitted_at: "2026-10-16T01:00:00Z", approved_at: null, rejected_at: null, paid_at: null,
   },
@@ -428,7 +428,7 @@ async function Preview({
             <AdminClaimDetail
               detail={SAMPLE_DETAIL_CLAIM}
               canAct={screen === "admin-claims-detail"}
-              blockedReason={screen === "admin-claims-own" ? "본인 소명서는 다른 관리자가 승인합니다." : null}
+              blockedReason={screen === "admin-claims-own" ? "본인 결의서는 다른 관리자가 승인합니다." : null}
               backHref="#"
               payoutsHref="#"
               timeline={<ApprovalTimeline detail={SAMPLE_DETAIL_CLAIM} />}
@@ -480,8 +480,8 @@ async function Preview({
             failedOnly={false}
             base="#"
             rows={[
-              { id: "n1", claim_id: "c1", recipient_member_id: "m1", recipient_phone: "01011112222", template_code: "APPROVAL_REQUEST", payload: { text: "[PocketExpense] 새로운 지출소명서가 상신되었습니다.\n상신자: 김개발 (개발팀)\n제목: 10/15 부산 출장 경비\n금액: 72,000 원 (영수증 3장)\n결제수단: 법인 2 · 사비 1", button_label: "결재하러 가기", button_url: "https://pocket-expense-ruby.vercel.app/workspace/00000000-0000-0000-0000-0000000000aa/approvals/00000000-0000-0000-0000-000000000001" }, status: "sent", provider: "log", error_message: null, created_at: "2026-10-20T01:00:00Z", recipient_name: "김대표", claim_title: "10/15 부산 출장 경비" },
-              { id: "n2", claim_id: "c1", recipient_member_id: "m2", recipient_phone: "", template_code: "APPROVAL_REJECTED", payload: { text: "[PocketExpense] 지출소명서가 반려되었습니다.", button_label: "수정 후 재상신하기", button_url: "#" }, status: "failed", provider: "log", error_message: "수신 번호가 없거나 휴대폰 번호 형식이 아닙니다", created_at: "2026-10-20T02:00:00Z", recipient_name: "이직원", claim_title: "팀 점심" },
+              { id: "n1", claim_id: "c1", recipient_member_id: "m1", recipient_phone: "01011112222", template_code: "APPROVAL_REQUEST", payload: { text: "[PocketExpense] 새로운 지출결의서가 상신되었습니다.\n상신자: 김개발 (개발팀)\n제목: 10/15 부산 출장 경비\n금액: 72,000 원 (영수증 3장)\n결제수단: 법인 2 · 사비 1", button_label: "결재하러 가기", button_url: "https://pocket-expense-ruby.vercel.app/workspace/00000000-0000-0000-0000-0000000000aa/approvals/00000000-0000-0000-0000-000000000001" }, status: "sent", provider: "log", error_message: null, created_at: "2026-10-20T01:00:00Z", recipient_name: "김대표", claim_title: "10/15 부산 출장 경비" },
+              { id: "n2", claim_id: "c1", recipient_member_id: "m2", recipient_phone: "", template_code: "APPROVAL_REJECTED", payload: { text: "[PocketExpense] 지출결의서가 반려되었습니다.", button_label: "수정 후 재상신하기", button_url: "#" }, status: "failed", provider: "log", error_message: "수신 번호가 없거나 휴대폰 번호 형식이 아닙니다", created_at: "2026-10-20T02:00:00Z", recipient_name: "이직원", claim_title: "팀 점심" },
             ]}
           />
         </AdminShell>

@@ -16,7 +16,7 @@ export function approvalRequest(p: { companyId: string; claimId: string; name: s
   return {
     template: "APPROVAL_REQUEST",
     text: [
-      "[PocketExpense] 새로운 지출소명서가 상신되었습니다.",
+      "[PocketExpense] 새로운 지출결의서가 상신되었습니다.",
       `상신자: ${p.name}${p.department ? ` (${p.department})` : ""}`,
       `제목: ${p.title}`,
       `금액: ${won(p.total)} 원 (영수증 ${p.count}장)`,
@@ -31,7 +31,7 @@ export function approvalCompleted(p: { companyId: string; claimId: string; title
   return {
     template: "APPROVAL_COMPLETED",
     text: [
-      "[PocketExpense] 지출소명서가 승인되었습니다. ✅",
+      "[PocketExpense] 지출결의서가 승인되었습니다. ✅",
       `제목: ${p.title}`,
       `금액: ${won(p.total)} 원`,
       `상태: ${p.payout > 0 ? `사비 ${won(p.payout)}원 지급 대기 중입니다.` : "법인카드 사용 건으로 정상 마감 처리되었습니다."}`,
@@ -44,7 +44,7 @@ export function approvalCompleted(p: { companyId: string; claimId: string; title
 export function approvalRejected(p: { companyId: string; claimId: string; title: string; reason: string }): BuiltMessage {
   return {
     template: "APPROVAL_REJECTED",
-    text: ["[PocketExpense] 지출소명서가 반려되었습니다. 🔴", `제목: ${p.title}`, `반려 사유: ${p.reason}`].join("\n"),
+    text: ["[PocketExpense] 지출결의서가 반려되었습니다. 🔴", `제목: ${p.title}`, `반려 사유: ${p.reason}`].join("\n"),
     buttonLabel: "수정 후 재상신하기",
     buttonPath: `/workspace/${p.companyId}/employee/claims/${p.claimId}/edit`,
   };
@@ -71,7 +71,7 @@ export function invite(p: { companyName: string; name: string; token: string }):
 export function reminder(p: { companyId: string; companyName: string; pending: number }): BuiltMessage {
   return {
     template: "REMINDER",
-    text: `${p.companyName} 이번 달 지출소명서 제출을 확인해 주세요 (작성중·반려 ${p.pending}건)`,
+    text: `${p.companyName} 이번 달 지출결의서 제출을 확인해 주세요 (작성중·반려 ${p.pending}건)`,
     buttonLabel: "제출하러 가기",
     buttonPath: `/workspace/${p.companyId}/employee`,
   };

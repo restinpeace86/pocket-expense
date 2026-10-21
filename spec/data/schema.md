@@ -4,7 +4,7 @@
 > 모든 테이블은 `id uuid PK default gen_random_uuid()`, `created_at`, `updated_at timestamptz`(updated_at 트리거)를 가진다. 아래 표에서는 생략한다.
 > 금액은 모두 원 단위 정수(`integer`)다.
 > **격리 구현(T1)**: 회사 데이터 테이블은 모두 `company_id NOT NULL`이고, 회사 데이터끼리의 참조는 `(id, company_id)` 복합 외래키로 묶어 다른 회사 행을 가리킬 수 없다. 실제 정의는 `supabase/migrations/001~005`, 검증은 `supabase/tests/001_tenant_isolation.sql`.
-> **경비 구조 (D-034)**: 지출소명서 1건(`expense_claims`, 헤더) 안에 영수증 항목 N건(`expense_items`, 행). 결재·상태·정산완료는 소명서 단위, 카테고리·금액 계산·영수증은 항목 단위다.
+> **경비 구조 (D-034)**: 지출결의서 1건(`expense_claims`, 헤더) 안에 영수증 항목 N건(`expense_items`, 행). 결재·상태·정산완료는 결의서 단위, 카테고리·금액 계산·영수증은 항목 단위다.
 
 ## 1. Enum
 
@@ -12,7 +12,7 @@
 |---|---|
 | `member_role` | `super_admin`(최고 관리자, 회사당 1명), `admin`(관리자), `employee`(직원) (D-038) |
 | `member_status` | `pending`(승인 대기), `approved`(활성), `inactive`(비활성/퇴사) |
-| `claim_status` | `draft`, `submitted`, `approved`, `rejected`, `paid` (소명서 상태) |
+| `claim_status` | `draft`, `submitted`, `approved`, `rejected`, `paid` (결의서 상태) |
 | `expense_category` | `meal`(일반 식대), `trip`(출장비), `meeting`(외부 미팅비), `purchase`(회사 물품 구매, D-076) (항목 카테고리. 출장 중 비용은 모두 `trip`, D-035) |
 | `purchase_type` | `pantry`(탕비실·간식), `office_supplies`(사무용품·소모품), `small_equipment`(소액 비품) — `purchase`일 때만 (D-076) |
 | `payment_method` | `corporate_card`(법인카드, 기본값), `personal_card`(개인(사비): 개인카드·현금 등 직원 돈) (D-048) |
@@ -143,7 +143,7 @@
 | account_number | text | not null | |
 | account_holder | text | not null | 예금주 |
 
-### 2.5 `form_templates` — 사내 지출소명서 양식 (D-019)
+### 2.5 `form_templates` — 사내 지출결의서 양식 (D-019)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | company_id | uuid | FK companies | |
@@ -199,15 +199,16 @@
 | account_title_id | uuid | FK account_titles, not null | |
 | | | unique(company_id, category, trip_type) — null 포함 | |
 
-### 2.7 `expense_claims` — 지출소명서 (헤더, 결재 단위) (D-034)
+### 2.7 `expense_claims` — 지출결의서 (헤더, 결재 단위) (D-034)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | company_id | uuid | FK companies, not null | |
 | member_id | uuid | FK members, not null | 청구자 |
 | form_template_id | uuid | FK form_templates, null | 작성 당시 활성 양식 |
-| title | text | not null | 소명서 제목. 예: "10/15 부산 출장" (자동 제안, 수정 가능) |
-| description | text | null | 소명 내용(공통 사유) |
-| is_business_trip | boolean | not null, default false | 출장 소명서 여부 (D-035) |
+| title | text | not null | 결의서 제목. 예: "10/15 부산 출장" (자동 제안, 수정 가능) |
+| description | text | null | 지출 사유(공통 사유) |
+| exception_memo | text | null, 500자 이하 | 예외 소명 사유(주말·심야 등 예외 건 해명, 선택, D-084) |
+| is_business_trip | boolean | not null, default false | 출장 결의서 여부 (D-035) |
 | trip_destination | text | null | 출장지. `is_business_trip`이면 상신 시 필수 |
 | trip_start_date / trip_end_date | date | null | 출장 기간. `is_business_trip`이면 상신 시 필수 |
 | trip_purpose | text | null | 출장 목적. `is_business_trip`이면 상신 시 필수 |
@@ -227,9 +228,9 @@
 ### 2.8 `expense_items` — 영수증 항목 (행) (D-034)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
-| claim_id | uuid | FK expense_claims, cascade, not null | 소속 소명서 |
+| claim_id | uuid | FK expense_claims, cascade, not null | 소속 결의서 |
 | company_id | uuid | FK companies, not null | RLS용 |
-| sort_order | integer | not null, default 0 | 소명서 안 표시 순서 |
+| sort_order | integer | not null, default 0 | 결의서 안 표시 순서 |
 | category | expense_category | null (상신 시 필수) | |
 | payment_method | payment_method | not null, default 'corporate_card' | (D-010, D-048) |
 | expense_date | date | null (상신 시 필수) | 결제/사용 일자. 출력 기준월 (D-016) |
@@ -275,9 +276,9 @@
 | account_title_overridden | boolean | not null, default false | 관리자가 개별 조정했는지 |
 | closed_month | text | null | 세무 마감에 포함된 마감월 `YYYY-MM` (D-045) |
 
-- 소명서 1건의 항목은 1~30건이다.
+- 결의서 1건의 항목은 1~30건이다.
 
-### 2.9 `claim_approvals` — 소명서별 결재 진행 (스냅샷, D-012)
+### 2.9 `claim_approvals` — 결의서별 결재 진행 (스냅샷, D-012)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | claim_id | uuid | FK expense_claims, cascade | |
@@ -334,9 +335,9 @@
 | credit_ledger | 자기 회사 admin | 서버 액션(업로드 차감, 회사 생성 지급)으로만 |
 | member_invitations | 자기 회사 admin | admin. 토큰으로 가입하는 경로는 서버 액션 |
 | monthly_closings | 자기 회사 admin | 서버 액션(다운로드 시 마감, 해제는 `super_admin`) |
-| expense_claims | 본인 소명서 / 해당 소명서의 사전 검토자(claim_approvals에 지정된 멤버) / 자기 회사 admin | 본인: `draft`·`rejected` 상태에서만 수정, `draft`만 삭제. 상태·합계 컬럼은 서버 액션(RPC)으로만 |
-| expense_items | 소속 소명서 열람 가능자 (계정과목 컬럼은 admin 화면에서만 표시) | 본인: 소속 소명서가 `draft`·`rejected`일 때만 추가·수정·삭제. 계정과목 컬럼은 서버 액션(상신 스냅샷, admin 개별 조정)으로만 |
-| claim_approvals | 해당 소명서 열람 가능자 | 서버 액션(RPC)으로만 |
+| expense_claims | 본인 결의서 / 해당 결의서의 사전 검토자(claim_approvals에 지정된 멤버) / 자기 회사 admin | 본인: `draft`·`rejected` 상태에서만 수정, `draft`만 삭제. 상태·합계 컬럼은 서버 액션(RPC)으로만 |
+| expense_items | 소속 결의서 열람 가능자 (계정과목 컬럼은 admin 화면에서만 표시) | 본인: 소속 결의서가 `draft`·`rejected`일 때만 추가·수정·삭제. 계정과목 컬럼은 서버 액션(상신 스냅샷, admin 개별 조정)으로만 |
+| claim_approvals | 해당 결의서 열람 가능자 | 서버 액션(RPC)으로만 |
 | notification_logs | 자기 회사 admin | 서버 전용 |
 
 - 승인 대기(`pending`)·비활성(`inactive`) 멤버는 자기 member 행 외 회사 데이터에 접근할 수 없다.
@@ -344,12 +345,12 @@
 
 ### 운영자 전용 (D-080) — 고객 역할 접근 불가(권한·정책 없음), 서버가 service role로만 읽는다
 - `app_admins` — 운영자 계정: `auth_user_id`(PK, auth.users), `note`, `created_at`. SQL로만 등록.
-- `receipt_usage_records` — 크레딧을 쓴 영수증 기록(항목당 1행, 항목을 지워도 남음): `company_id`, `item_id`(unique, FK 없음), `claim_id`, `member_id`·`member_name`, `ledger_id`, `credited_at`, `receipt_path`·`thumb_path`, `parse_status`·`parsed_at`·`ai_parsed_payload`, `claim_title`·`claim_status`, `item_deleted_at`·`item_snapshot`(지울 때의 항목 행), `archived_receipt_path`·`archived_thumb_path`, `photo_purge_after`(삭제 후 3개월)·`photo_purged_at`. 트리거: 크레딧 차감 시 생성, AI 인식 시 갱신, 항목·소명서 삭제 시 스냅샷.
+- `receipt_usage_records` — 크레딧을 쓴 영수증 기록(항목당 1행, 항목을 지워도 남음): `company_id`, `item_id`(unique, FK 없음), `claim_id`, `member_id`·`member_name`, `ledger_id`, `credited_at`, `receipt_path`·`thumb_path`, `parse_status`·`parsed_at`·`ai_parsed_payload`, `claim_title`·`claim_status`, `item_deleted_at`·`item_snapshot`(지울 때의 항목 행), `archived_receipt_path`·`archived_thumb_path`, `photo_purge_after`(삭제 후 3개월)·`photo_purged_at`. 트리거: 크레딧 차감 시 생성, AI 인식 시 갱신, 항목·결의서 삭제 시 스냅샷.
 
 ## 4. Storage
 | 버킷 | 공개 | 경로 규칙 | 접근 |
 |---|---|---|---|
-| `receipts` | 비공개 | `{company_id}/{member_id}/{claim_id}/{item_id}.{ext}` + 썸네일 `{item_id}_thumb.webp` (D-073) | 소속 소명서 열람 가능자. signed URL(유효 10분, 화면당 한 번에 묶어 발급)로만 표시 |
+| `receipts` | 비공개 | `{company_id}/{member_id}/{claim_id}/{item_id}.{ext}` + 썸네일 `{item_id}_thumb.webp` (D-073) | 소속 결의서 열람 가능자. signed URL(유효 10분, 화면당 한 번에 묶어 발급)로만 표시 |
 | `form-templates` | 비공개 | `{company_id}/{uuid}.{ext}` | 자기 회사 admin |
 
 - 허용 형식: 영수증 jpg/png/webp/pdf, 양식 jpg/png/pdf. 최대 10MB.

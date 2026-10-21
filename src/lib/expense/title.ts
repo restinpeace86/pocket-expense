@@ -1,4 +1,4 @@
-// 지출소명서 제목 자동 제안 (worker-tax-processing.md §3-1, trip-expense.md §2)
+// 지출결의서 제목 자동 제안 (worker-tax-processing.md §3-1, trip-expense.md §2)
 // 영수증 1장: "{가맹점} 지출" / 여러 장: "{첫 사용일 M/D} {첫 가맹점} 외 n건" / 출장: "{시작일 M/D} {출장지} 출장"
 export function monthDay(date: string): string {
   const [, m, d] = date.split("-");

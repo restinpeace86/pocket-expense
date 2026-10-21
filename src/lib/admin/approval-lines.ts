@@ -46,7 +46,7 @@ export async function getApprovalLines(companyId: string) {
 
 // 직원 상신 확인 창의 결재선 미리보기: "박팀장 검토 → 관리자 승인" (본인 단계까지는 건너뜀, D-026)
 export async function getApprovalPreview(companyId: string, member: { member_id: string; role: string }): Promise<string> {
-  if (member.role === "super_admin") return "최고 관리자 본인 소명서라 결재 없이 바로 승인됩니다.";
+  if (member.role === "super_admin") return "최고 관리자 본인 결의서라 결재 없이 바로 승인됩니다.";
   const supabase = await createClient();
   const { data: me } = await supabase.from("members").select("department_id").eq("id", member.member_id).maybeSingle();
   let { data: line } = me?.department_id

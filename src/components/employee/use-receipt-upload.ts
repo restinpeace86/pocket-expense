@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 
 // 영수증 여러 장 올리기 (performance.md §1·§6, D-073):
 // 브라우저에서 2000px 보관본·320px 썸네일 만들기 → 항목 만들기(경로는 서버가 정함) → 저장소에 바로 올리기 → 크레딧 차감 + AI 인식
-// 한 번에 최대 10장, 소명서당 최대 30장, 동시에 3장씩. 인터넷 끊김 같은 일시적 실패는 단계마다 1회 자동 재시도하고,
+// 한 번에 최대 10장, 결의서당 최대 30장, 동시에 3장씩. 인터넷 끊김 같은 일시적 실패는 단계마다 1회 자동 재시도하고,
 // 크레딧 부족·장수 초과처럼 이유가 분명한 실패는 바로 알린다.
 export const MAX_PER_PICK = 10;
 export const MAX_PER_CLAIM = 30;
@@ -36,7 +36,7 @@ export function useReceiptUpload(claimId: string, currentCount: number) {
   const [rows, setRows] = useState<UploadRow[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
 
-  // done: 다 읽었지만 소명서 목록에 아직 안 나타난 상태(목록 갱신을 기다림) — 이미 항목이 만들어졌으므로 남은 장수에서는 빼지 않는다
+  // done: 다 읽었지만 결의서 목록에 아직 안 나타난 상태(목록 갱신을 기다림) — 이미 항목이 만들어졌으므로 남은 장수에서는 빼지 않는다
   const active = rows.filter((r) => r.phase !== "failed" && r.phase !== "done").length;
   const remaining = Math.max(MAX_PER_CLAIM - currentCount - active, 0);
 
@@ -49,7 +49,7 @@ export function useReceiptUpload(claimId: string, currentCount: number) {
         files = files.slice(0, MAX_PER_PICK);
       }
       if (files.length > remaining) {
-        notes.push(`소명서 한 건에는 영수증을 ${MAX_PER_CLAIM}장까지 담을 수 있어요. ${remaining}장만 올립니다.`);
+        notes.push(`결의서 한 건에는 영수증을 ${MAX_PER_CLAIM}장까지 담을 수 있어요. ${remaining}장만 올립니다.`);
         files = files.slice(0, remaining);
       }
       setNotice(notes.join(" ") || null);

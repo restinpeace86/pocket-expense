@@ -27,7 +27,7 @@ export function AdminClaimList({ rows, tab, base, selectedId, query = "" }: { ro
   if (rows.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
-        {tab === "pending" ? "승인할 지출소명서가 없어요." : tab === "done" ? "승인한 지출소명서가 없어요." : "반려한 지출소명서가 없어요."}
+        {tab === "pending" ? "승인할 지출결의서가 없어요." : tab === "done" ? "승인한 지출결의서가 없어요." : "반려한 지출결의서가 없어요."}
       </p>
     );
   }
@@ -46,7 +46,7 @@ export function AdminClaimList({ rows, tab, base, selectedId, query = "" }: { ro
               <div className="flex items-start justify-between gap-2">
                 <p className="min-w-0 break-keep font-medium [overflow-wrap:anywhere]">
                   {c.is_business_trip && <span className="mr-1 rounded bg-sky-100 px-1.5 py-0.5 text-[11px] text-sky-800">출장</span>}
-                  {c.title || "제목 없는 소명서"}
+                  {c.title || "제목 없는 결의서"}
                 </p>
                 <span className="shrink-0 font-semibold tabular-nums">{formatWon(c.total_amount)}</span>
               </div>

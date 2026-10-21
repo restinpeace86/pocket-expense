@@ -13,7 +13,7 @@ export default function PayoutsPage({ params, searchParams }: PageProps<"/worksp
       <SectionHeading
         as="h1"
         title="정산 지급 관리"
-        summary="승인된 소명서 중 직원에게 돌려줄 사비(또는 받을 법인카드 개인 부담금)가 남은 건이에요. 회사 은행에서 이체한 뒤 지급 완료로 처리해 주세요."
+        summary="승인된 결의서 중 직원에게 돌려줄 사비(또는 받을 법인카드 개인 부담금)가 남은 건이에요. 회사 은행에서 이체한 뒤 지급 완료로 처리해 주세요."
       />
       <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-zinc-100" />}>
         <Payouts params={params} searchParams={searchParams} />

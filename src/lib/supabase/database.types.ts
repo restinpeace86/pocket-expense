@@ -591,6 +591,7 @@ export type Database = {
           current_round: number
           default_payment_method: Database["public"]["Enums"]["payment_method"]
           description: string | null
+          exception_memo: string | null
           form_template_id: string | null
           header_custom_payload: Json
           id: string
@@ -622,6 +623,7 @@ export type Database = {
           current_round?: number
           default_payment_method?: Database["public"]["Enums"]["payment_method"]
           description?: string | null
+          exception_memo?: string | null
           form_template_id?: string | null
           header_custom_payload?: Json
           id?: string
@@ -653,6 +655,7 @@ export type Database = {
           current_round?: number
           default_payment_method?: Database["public"]["Enums"]["payment_method"]
           description?: string | null
+          exception_memo?: string | null
           form_template_id?: string | null
           header_custom_payload?: Json
           id?: string

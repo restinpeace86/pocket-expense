@@ -3,7 +3,7 @@ export type ClaimProblems = { header: string[]; items: { item_id: string; sort_o
 
 export const HEADER_PROBLEM_LABEL: Record<string, string> = {
   title: "제목",
-  description: "소명 내용",
+  description: "지출 사유",
   trip_destination: "출장지",
   trip_period: "출장 기간",
   trip_period_order: "출장 기간(끝나는 날이 시작일보다 빠름)",

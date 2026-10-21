@@ -10,7 +10,7 @@ import type { ThemeKey } from "@/lib/theme";
 
 // 직원 워크스페이스 레이아웃 (worker-dashboard.md §5, D-067 모바일 우선)
 // 휴대폰 폭 기준 가운데 정렬, 하단 메뉴는 엄지가 닿는 아래에 고정.
-// 소명서 편집·상세, 결재 화면에서는 하단 메뉴를 숨긴다(그 화면의 하단 버튼을 쓰기 때문).
+// 결의서 편집·상세, 결재 화면에서는 하단 메뉴를 숨긴다(그 화면의 하단 버튼을 쓰기 때문).
 type Tab = { href: string; label: string; icon: LucideIcon; ready: boolean; badge?: number };
 
 export function EmployeeShell({

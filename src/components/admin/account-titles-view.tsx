@@ -42,7 +42,7 @@ export function AccountTitlesHeading() {
             회사 자산으로 따로 처리하는 경우가 많으니 담당 세무사와 기준을 정해 주세요.
           </p>
           <p>
-            <b>바꾸면?</b> 이후에 상신되는 소명서부터 적용돼요. 이미 상신된 영수증은 그대로이고, 필요하면 지출 승인 관리에서 하나씩 조정할 수 있어요.
+            <b>바꾸면?</b> 이후에 상신되는 결의서부터 적용돼요. 이미 상신된 영수증은 그대로이고, 필요하면 지출 승인 관리에서 하나씩 조정할 수 있어요.
           </p>
         </>
       }
@@ -99,7 +99,7 @@ export function AccountTitlesView({ titles, mappings, preview = false }: { title
                       "map",
                       () => setMappingAction(r, e.target.value),
                       undefined,
-                      "저장했어요. 이후 상신되는 소명서부터 적용돼요.",
+                      "저장했어요. 이후 상신되는 결의서부터 적용돼요.",
                     )
                   }
                 >

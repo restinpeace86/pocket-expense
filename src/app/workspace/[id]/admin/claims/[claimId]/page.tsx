@@ -12,7 +12,7 @@ import { getClaimDetail } from "@/lib/claims/detail";
 import { canActOnClaim } from "@/lib/claims/types";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "지출소명서 검토 · PocketExpense" };
+export const metadata = { title: "지출결의서 검토 · PocketExpense" };
 
 // 지출 승인 관리 상세 (admin-expense-approvals.md §2: 넓은 화면은 25/75 분할, 휴대폰은 상세만)
 export default function ClaimDetailPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/claims/[claimId]">) {
@@ -37,7 +37,7 @@ async function Detail({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
     supabase.from("account_titles").select("id, name, code").eq("company_id", membership.company_id).order("sort_order"),
     getFilterOptions(membership.company_id),
   ]);
-  // 작성 중인 소명서는 관리자 화면에서 열지 않는다
+  // 작성 중인 결의서는 관리자 화면에서 열지 않는다
   if (!detail || detail.claim.status === "draft") notFound();
   const { can, reason } = canActOnClaim(detail, membership);
   return (

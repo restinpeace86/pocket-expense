@@ -13,7 +13,7 @@ import { parseReceiptWithGemini } from "@/lib/receipts/gemini";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-// 소명서 편집(E-02) 서버 액션. 모든 쓰기는 사용자 세션으로 하고 RLS·DB 함수가 "본인 회사·본인 작성 중 소명서"만 허용한다.
+// 결의서 편집(E-02) 서버 액션. 모든 쓰기는 사용자 세션으로 하고 RLS·DB 함수가 "본인 회사·본인 작성 중 결의서"만 허용한다.
 // 크레딧 차감(consume_receipt_credit)만 service role로 부르며, 그 전에 세션 사용자·소속을 확인한다(CLAUDE.md 제2장 제4조).
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -32,9 +32,10 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
   if (!isUuid(claimId)) return fail("NOT_FOUND");
   const title = input.title.trim();
   const description = input.description.trim();
+  const memo = input.exceptionMemo.trim();
   const dest = input.tripDestination.trim();
   const purpose = input.tripPurpose.trim();
-  if (title.length > 100 || description.length > 1000 || dest.length > 100 || purpose.length > 100) return fail("INVALID_CLAIM_TEXT");
+  if (title.length > 100 || description.length > 1000 || memo.length > 500 || dest.length > 100 || purpose.length > 100) return fail("INVALID_CLAIM_TEXT");
   const start = DATE.test(input.tripStartDate) ? input.tripStartDate : null;
   const end = DATE.test(input.tripEndDate) ? input.tripEndDate : null;
   if (input.isBusinessTrip && start && end && end < start) return fail("INVALID_TRIP_PERIOD");
@@ -46,6 +47,7 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
     .update({
       title,
       description: description || null,
+      exception_memo: memo || null,
       default_payment_method: input.defaultPaymentMethod,
       is_business_trip: input.isBusinessTrip,
       // 출장을 끄면 출장 정보도 비운다(다시 켜면 새로 입력)
@@ -70,7 +72,7 @@ async function removeReceiptFiles(supabase: Awaited<ReturnType<typeof createClie
   if (list.length) await supabase.storage.from("receipts").remove(list);
 }
 
-// 본인 작성 중(draft·rejected) 소명서인지 — 보관함으로 옮기기 전에 확인(관리자도 남의 항목을 지울 수 없다)
+// 본인 작성 중(draft·rejected) 결의서인지 — 보관함으로 옮기기 전에 확인(관리자도 남의 항목을 지울 수 없다)
 async function canEditOwnClaim(supabase: Awaited<ReturnType<typeof createClient>>, claimId: string) {
   const m = await approvedMember();
   if (!m) return false;
@@ -154,7 +156,7 @@ export async function finishReceiptUploadAction(
   if (!m) return fail("NOT_A_MEMBER");
   if (!isUuid(itemId)) return fail("NOT_FOUND");
   const supabase = await createClient();
-  // 본인 회사·본인 작성 중 소명서의 항목인지 세션으로 먼저 확인
+  // 본인 회사·본인 작성 중 결의서의 항목인지 세션으로 먼저 확인
   const { data: item } = await supabase
     .from("expense_items")
     .select("id, claim_id, receipt_path, claim:expense_claims!inner(member_id, status, is_business_trip)")

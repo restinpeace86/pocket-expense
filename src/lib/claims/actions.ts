@@ -93,7 +93,7 @@ export async function overrideAccountTitleAction(
   };
 }
 
-// 영수증 원본 크게 보기 (볼 수 있는 소명서의 항목만 — 저장소 열람 정책이 다시 확인)
+// 영수증 원본 크게 보기 (볼 수 있는 결의서의 항목만 — 저장소 열람 정책이 다시 확인)
 export async function receiptOriginalUrlAction(itemId: string): Promise<Result<{ url: string | null }>> {
   if (!(await member())) return fail("NOT_A_MEMBER");
   if (!UUID.test(itemId)) return fail("NOT_FOUND");

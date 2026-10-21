@@ -67,7 +67,7 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
           {(
             [
               ["미지급 사비 총액", formatWon(totalPayout)],
-              ["대상 소명서", `${all.length}건`],
+              ["대상 결의서", `${all.length}건`],
               ["미수 납부액 (법인카드 개인 부담)", formatWon(totalPayback)],
             ] as const
           ).map(([k, v]) => (
@@ -80,7 +80,7 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
       )}
 
       {groups.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-12 text-center text-sm text-zinc-500">{tab === "waiting" ? "지급할 소명서가 없어요." : "지급 완료한 소명서가 없어요."}</p>
+        <p className="rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-12 text-center text-sm text-zinc-500">{tab === "waiting" ? "지급할 결의서가 없어요." : "지급 완료한 결의서가 없어요."}</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {groups.map((g) => {
@@ -121,7 +121,7 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
                     <li key={c.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                       {tab === "waiting" && <input type="checkbox" className="size-5" aria-label={`${c.title} 선택`} checked={selected.includes(c.id)} onChange={(e) => toggle([c.id], e.target.checked)} />}
                       <Link href={`${claimsBase}/${c.id}?tab=done`} className="min-w-0 flex-1 truncate hover:underline">
-                        {c.title || "제목 없는 소명서"}
+                        {c.title || "제목 없는 결의서"}
                         <span className="ml-1 text-xs text-zinc-500">{tab === "waiting" ? `승인 ${formatDateTimeKst(c.approved_at).slice(0, 10)}` : `지급 ${formatDateTimeKst(c.paid_at)}`}</span>
                       </Link>
                       <span className="shrink-0 text-right tabular-nums">
@@ -144,7 +144,7 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
             {sel.length > 0 && (
               <>
                 <p className="text-sm text-zinc-700 sm:flex-1">
-                  직원 {selMembers}명 · 소명서 {sel.length}건 · 지급 {formatWon(sel.reduce((s, c) => s + c.payout, 0))}
+                  직원 {selMembers}명 · 결의서 {sel.length}건 · 지급 {formatWon(sel.reduce((s, c) => s + c.payout, 0))}
                   {sel.some((c) => c.payback > 0) && ` / 납부 확인 ${formatWon(sel.reduce((s, c) => s + c.payback, 0))}`}
                 </p>
                 <button type="button" onClick={() => setConfirm(true)} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-brand-600 px-5 font-semibold text-white hover:bg-brand-700">
@@ -164,7 +164,7 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
               지급 완료로 처리할까요?
             </h2>
             <p className="mt-2 text-sm text-zinc-700">
-              직원 {selMembers}명 · 소명서 {sel.length}건 · 지급 {formatWon(sel.reduce((s, c) => s + c.payout, 0))}
+              직원 {selMembers}명 · 결의서 {sel.length}건 · 지급 {formatWon(sel.reduce((s, c) => s + c.payout, 0))}
               {sel.some((c) => c.payback > 0) && ` / 납부 확인 ${formatWon(sel.reduce((s, c) => s + c.payback, 0))}`}
             </p>
             <p className="mt-2 rounded-xl bg-zinc-50 px-3 py-2 text-sm text-zinc-600">이체는 회사 은행에서 먼저 해 주세요. 처리하면 직원 화면에 &ldquo;정산 지급 완료&rdquo;로 바뀌고 되돌릴 수 없어요.</p>
@@ -181,7 +181,7 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
                     setConfirm(false);
                     if (!res.ok) return setMessage({ kind: "error", text: res.error });
                     setSelected([]);
-                    setMessage({ kind: "ok", text: `소명서 ${res.count}건을 지급 완료로 처리했어요.` });
+                    setMessage({ kind: "ok", text: `결의서 ${res.count}건을 지급 완료로 처리했어요.` });
                     router.refresh();
                   })
                 }

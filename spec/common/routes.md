@@ -24,9 +24,9 @@
 | 경로 | 화면 |
 |---|---|
 | `/workspace/[id]/employee` | E-01 직원 메인 대시보드 (`worker-dashboard.md`) |
-| `/workspace/[id]/employee/claims/new` | `draft` 소명서 생성 후 편집 화면으로 리다이렉트 |
-| `/workspace/[id]/employee/claims/[claimId]` | 소명서 상세 (결재 타임라인, 반려 정보) |
-| `/workspace/[id]/employee/claims/[claimId]/edit` | E-02 소명서 작성·편집 (`worker-tax-processing.md`) |
+| `/workspace/[id]/employee/claims/new` | `draft` 결의서 생성 후 편집 화면으로 리다이렉트 |
+| `/workspace/[id]/employee/claims/[claimId]` | 결의서 상세 (결재 타임라인, 반려 정보) |
+| `/workspace/[id]/employee/claims/[claimId]/edit` | E-02 결의서 작성·편집 (`worker-tax-processing.md`) |
 | `/workspace/[id]/employee/claims/[claimId]/items/[itemId]` | 영수증 항목 편집 |
 | `/workspace/[id]/employee/settlements` | E-03 정산 내역 · 입금 타임라인 (`worker-timeline.md`) |
 | `/workspace/[id]/employee/profile` | 내 정보 수정, 정산 계좌, 로그아웃 |
@@ -35,14 +35,14 @@
 | 경로 | 화면 | 접근 |
 |---|---|---|
 | `/workspace/[id]/approvals` | 내 결재함 (대기 / 처리완료 탭) | 사전 검토자로 지정된 적 있는 멤버, 관리자 이상 |
-| `/workspace/[id]/approvals/[claimId]` | 소명서 결재 화면 (**알림톡 링크 도착지**) | 해당 소명서의 사전 검토자 또는 관리자 이상. 처리 권한이 없으면 읽기 전용 |
+| `/workspace/[id]/approvals/[claimId]` | 결의서 결재 화면 (**알림톡 링크 도착지**) | 해당 결의서의 사전 검토자 또는 관리자 이상. 처리 권한이 없으면 읽기 전용 |
 
 ## 4. 관리자 (PC)
 | 경로 | 화면 |
 |---|---|
 | `/workspace/[id]/admin` | 대시보드 홈 |
 | `/workspace/[id]/admin/claims` | 지출 승인 관리 (`spec/screens/admin-expense-approvals.md`) |
-| `/workspace/[id]/admin/claims/[claimId]` | 지출 승인 관리에서 소명서 선택 상태(딥링크) |
+| `/workspace/[id]/admin/claims/[claimId]` | 지출 승인 관리에서 결의서 선택 상태(딥링크) |
 | `/workspace/[id]/admin/members` | 멤버 관리 (`spec/screens/admin-team-members.md`) |
 | `/workspace/[id]/admin/members/[memberId]` | 멤버 상세·편집 (기본 정보, 권한, 퇴사 처리 — `admin-team-members.md` §4.B~D) |
 | `/workspace/[id]/admin/departments` | 부서 관리 |

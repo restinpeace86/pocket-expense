@@ -81,8 +81,8 @@ export function ReceiptRecordView({ data, base = "/app-admin" }: { data: Receipt
                 ["직원", r.member_name],
                 ["크레딧 사용", formatKst(r.credited_at)],
                 ["AI 인식", `${PARSE_STATUS_LABEL[r.parse_status ?? "none"] ?? r.parse_status ?? "-"}${r.parsed_at ? ` · ${formatKst(r.parsed_at)}` : ""}`],
-                ["소명서", claimTitle ? `${claimTitle} (${CLAIM_STATUS_LABEL[claimStatus ?? ""] ?? claimStatus ?? ""})` : "(제목 없음)"],
-                ["항목 상태", deleted ? `직원이 지움 · ${formatKst(r.item_deleted_at)}` : "소명서에 있음"],
+                ["결의서", claimTitle ? `${claimTitle} (${CLAIM_STATUS_LABEL[claimStatus ?? ""] ?? claimStatus ?? ""})` : "(제목 없음)"],
+                ["항목 상태", deleted ? `직원이 지움 · ${formatKst(r.item_deleted_at)}` : "결의서에 있음"],
                 ["기록 ID", <span key="id" className="font-mono text-xs">{r.id}</span>],
               ]}
             />

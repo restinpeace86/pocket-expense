@@ -3,7 +3,7 @@ import type { ExpenseCategory, PurchaseType, TripType } from "@/lib/expense/cate
 import type { ClaimStatus } from "@/lib/expense/status";
 import type { LineItem } from "@/lib/receipts/parse-result";
 
-// 소명서 편집 화면(E-02)이 주고받는 데이터
+// 결의서 편집 화면(E-02)이 주고받는 데이터
 export type PaymentMethod = "corporate_card" | "personal_card";
 export type EvidenceType = "card_slip" | "cash_receipt" | "tax_invoice" | "simple_receipt" | "other";
 export type ParseStatus = "none" | "parsing" | "success" | "failed";
@@ -13,6 +13,7 @@ export type EditorClaim = {
   status: ClaimStatus;
   title: string;
   description: string | null;
+  exception_memo: string | null; // 예외 소명 사유 (D-084)
   default_payment_method: PaymentMethod;
   is_business_trip: boolean;
   trip_destination: string | null;
@@ -98,6 +99,7 @@ export type ItemInput = {
 export type ClaimHeaderInput = {
   title: string;
   description: string;
+  exceptionMemo: string;
   defaultPaymentMethod: PaymentMethod;
   isBusinessTrip: boolean;
   tripDestination: string;

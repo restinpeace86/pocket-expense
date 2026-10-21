@@ -5,9 +5,9 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { getApprovalPreview } from "@/lib/admin/approval-lines";
 import { getMyClaimForEdit } from "@/lib/employee/claim";
 
-export const metadata = { title: "지출소명서 작성 · PocketExpense" };
+export const metadata = { title: "지출결의서 작성 · PocketExpense" };
 
-// 화면 E-02 지출소명서 작성 (spec/screens/worker-tax-processing.md)
+// 화면 E-02 지출결의서 작성 (spec/screens/worker-tax-processing.md)
 export default function ClaimEditPage({ params, searchParams }: PageProps<"/workspace/[id]/employee/claims/[claimId]/edit">) {
   return (
     <Suspense fallback={<div className="mx-auto my-4 h-96 w-[calc(100%-2rem)] max-w-md animate-pulse rounded-2xl bg-zinc-100" />}>

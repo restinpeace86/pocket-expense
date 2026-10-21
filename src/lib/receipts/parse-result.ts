@@ -16,7 +16,7 @@ export type ParsedReceipt = {
   suggested_category: "meal" | "trip" | "meeting" | "purchase" | null;
   suggested_trip_type: "meal" | "public_transport" | "taxi" | "toll_parking" | "lodging" | "other" | null;
   suggested_purchase_type: "pantry" | "office_supplies" | "small_equipment" | null;
-  // 참고 정보(D-079): 지출소명서 양식에는 넣지 않고 화면에 보여 주기·중복 영수증 확인에 쓴다
+  // 참고 정보(D-079): 지출결의서 양식에는 넣지 않고 화면에 보여 주기·중복 영수증 확인에 쓴다
   paid_time: string | null; // HH:MM
   approval_number: string | null;
   merchant_address: string | null;

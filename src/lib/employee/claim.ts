@@ -27,14 +27,14 @@ export async function signOriginalUrl(path: string | null): Promise<string | nul
   return (await signReceiptUrls(supabase, [path])).get(path) ?? null;
 }
 
-// 편집 화면 데이터: 본인 회사·본인 소명서만 (다른 사람 소명서 id를 넣어도 null → 404)
+// 편집 화면 데이터: 본인 회사·본인 결의서만 (다른 사람 결의서 id를 넣어도 null → 404)
 export async function getMyClaimForEdit(membership: Membership, claimId: string): Promise<EditorData | null> {
   if (!isUuid(claimId)) return null;
   const supabase = await createClient();
   const [claimRes, itemsRes, cardsRes, companyRes, meRes, dupRes] = await Promise.all([
     supabase
       .from("expense_claims")
-      .select("id, status, title, description, default_payment_method, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, rejection_reason")
+      .select("id, status, title, description, exception_memo, default_payment_method, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, rejection_reason")
       .eq("id", claimId)
       .eq("company_id", membership.company_id)
       .eq("member_id", membership.member_id)

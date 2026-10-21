@@ -3,7 +3,7 @@ import { formatDateTimeKst } from "@/lib/claims/format";
 import { currentMonthKst } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
-// 화면 E-03 정산 내역 (worker-timeline.md): 정산이 필요한 내 소명서(승인됨=정산 대기, 지급 완료). 본인 것만
+// 화면 E-03 정산 내역 (worker-timeline.md): 정산이 필요한 내 결의서(승인됨=정산 대기, 지급 완료). 본인 것만
 export type SettlementItem = { id: string; expense_date: string | null; merchant_name: string | null; amount: number | null; supported: number; over: number };
 export type SettlementCard = {
   id: string;

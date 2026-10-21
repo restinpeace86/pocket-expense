@@ -7,7 +7,7 @@ import type { DetailItem } from "@/lib/claims/types";
 import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL } from "@/lib/expense/categories";
 import { formatWon } from "@/lib/format";
 
-// 소명서 항목 목록 + 영수증 패널 (admin-expense-approvals.md §4.C, employee-mobile.md ④)
+// 결의서 항목 목록 + 영수증 패널 (admin-expense-approvals.md §4.C, employee-mobile.md ④)
 const EVIDENCE_LABEL: Record<string, string> = { card_slip: "카드매출전표", cash_receipt: "현금영수증", tax_invoice: "세금계산서", simple_receipt: "간이영수증", other: "기타" };
 
 export function classLabel(i: DetailItem): string {

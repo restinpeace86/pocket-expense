@@ -59,7 +59,7 @@ export function SettlementsView({
               <details className="group">
                 <summary className="flex cursor-pointer list-none flex-col gap-1 p-4 [&::-webkit-details-marker]:hidden">
                   <span className="flex items-start justify-between gap-2">
-                    <span className="min-w-0 break-keep font-semibold [overflow-wrap:anywhere]">{c.title || "제목 없는 소명서"}</span>
+                    <span className="min-w-0 break-keep font-semibold [overflow-wrap:anywhere]">{c.title || "제목 없는 결의서"}</span>
                     <span className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${c.status === "paid" ? "bg-purple-100 text-purple-700" : "bg-yellow-100 text-yellow-800"}`}>
                       {c.status === "paid" ? "💰 지급 완료" : "🟡 정산 대기"}
                     </span>
@@ -89,7 +89,7 @@ export function SettlementsView({
                   ))}
                   <li>
                     <Link href={`${base}/claims/${c.id}`} className="text-xs text-brand-700 underline underline-offset-2">
-                      소명서 보기
+                      결의서 보기
                     </Link>
                   </li>
                 </ul>

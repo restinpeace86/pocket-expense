@@ -5,7 +5,7 @@
 
 export type MatchCard = { id: string; bin6: string | null; last4: string };
 export type CardMatch =
-  | { kind: "unknown" } // 보이는 숫자가 없음(현금·배달앱 캡처 등) → 소명서 기본값 유지
+  | { kind: "unknown" } // 보이는 숫자가 없음(현금·배달앱 캡처 등) → 결의서 기본값 유지
   | { kind: "unique"; cardId: string } // 등록 카드 1장과 맞음 → 법인카드 + 그 카드
   | { kind: "ambiguous"; cardIds: string[] } // 2장 이상과 맞음 → 법인카드, 카드는 직원이 고름
   | { kind: "mismatch" }; // 어느 카드와도 안 맞음 → 개인(사비) 추천

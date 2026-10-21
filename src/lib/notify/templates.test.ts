@@ -4,7 +4,7 @@ import { approvalCompleted, approvalRejected, approvalRequest, maskPhone, normal
 describe("알림톡 템플릿 (notification-rule.md §2)", () => {
   it("결재 요청", () => {
     const m = approvalRequest({ companyId: "c", claimId: "k", name: "김개발", department: "개발팀", title: "부산 출장", total: 72000, count: 3, corporate: 2, personal: 1 });
-    expect(m.text).toBe("[PocketExpense] 새로운 지출소명서가 상신되었습니다.\n상신자: 김개발 (개발팀)\n제목: 부산 출장\n금액: 72,000 원 (영수증 3장)\n결제수단: 법인 2 · 사비 1");
+    expect(m.text).toBe("[PocketExpense] 새로운 지출결의서가 상신되었습니다.\n상신자: 김개발 (개발팀)\n제목: 부산 출장\n금액: 72,000 원 (영수증 3장)\n결제수단: 법인 2 · 사비 1");
     expect(m.buttonPath).toBe("/workspace/c/approvals/k");
   });
   it("승인: 사비 있음 / 법인카드만", () => {

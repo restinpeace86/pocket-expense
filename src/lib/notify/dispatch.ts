@@ -125,7 +125,7 @@ export async function notifyClaimEvent(companyId: string, claimId: string, event
   }
 }
 
-// 정산 지급 완료 직후: 지급액이 있는 소명서만 (D-047)
+// 정산 지급 완료 직후: 지급액이 있는 결의서만 (D-047)
 export async function notifyPayouts(companyId: string, claimIds: string[]) {
   const admin = createAdminClient();
   if (!admin) return;

@@ -1,5 +1,5 @@
 // 히어로 목업 애니메이션 (spec/screens/landing-page.md §3). 소개 동영상이 준비되면 교체할 수 있다.
-// 영수증 여러 장 촬영 → 소명서 표 자동 입력 → 대표 카카오톡 결재 요청 → [전체 승인]
+// 영수증 여러 장 촬영 → 결의서 표 자동 입력 → 대표 카카오톡 결재 요청 → [전체 승인]
 const ROWS = [
   { place: "코레일(KTX)", amount: "50,000원", tag: "대중교통" },
   { place: "한국도로공사", amount: "5,000원", tag: "통행료" },
@@ -11,7 +11,7 @@ export function HeroMockup() {
     <div className="relative mx-auto w-full max-w-sm lg:mb-20" aria-hidden>
       <div className="rounded-[2rem] border border-white/15 bg-zinc-950/80 p-4 shadow-2xl shadow-blue-900/40 backdrop-blur">
         <div className="rounded-2xl bg-white p-4 text-zinc-900">
-          <p className="text-xs text-zinc-500">지출소명서</p>
+          <p className="text-xs text-zinc-500">지출결의서</p>
           <p className="font-semibold">10/15 부산 출장</p>
           <ul className="mt-3 flex flex-col gap-2">
             {ROWS.map((row, i) => (

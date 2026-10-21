@@ -23,7 +23,7 @@ export function ApprovalLinesHeading() {
         <>
           <p>부서별 결재라인이 있으면 그 부서 직원에게 먼저 적용되고, 없으면 기본 결재라인을 따릅니다.</p>
           <p>검토자는 최대 {MAX_REVIEWERS}명, 순서대로 검토합니다. 누구든 반려하면 직원에게 돌아가요. 마지막 관리자 승인은 항상 들어갑니다.</p>
-          <p>바꾼 결재라인은 이후 상신되는 소명서부터 적용되고, 이미 진행 중인 결재에는 영향이 없어요.</p>
+          <p>바꾼 결재라인은 이후 상신되는 결의서부터 적용되고, 이미 진행 중인 결재에는 영향이 없어요.</p>
         </>
       }
     />
@@ -127,7 +127,7 @@ function LineEditor({ line, members, onSaved }: { line: ApprovalLineView; member
         <button
           type="button"
           disabled={pending || !dirty}
-          onClick={() => save(list.map((r) => r.id), "저장했어요. 이후 상신되는 소명서부터 적용돼요.")}
+          onClick={() => save(list.map((r) => r.id), "저장했어요. 이후 상신되는 결의서부터 적용돼요.")}
           className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-5 font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
         >
           {pending && <Loader2 className="size-4 animate-spin" />}저장

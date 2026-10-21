@@ -1,4 +1,5 @@
 import { ArrowLeft } from "lucide-react";
+import { ExceptionNote } from "./exception-note";
 import Link from "next/link";
 import type { ClaimDetail } from "@/lib/claims/types";
 import { formatDateTimeKst } from "@/lib/claims/format";
@@ -7,7 +8,7 @@ import { formatWon } from "@/lib/format";
 import { ApprovalTimeline } from "./approval-timeline";
 import { ClaimItems } from "./claim-items";
 
-// 직원 소명서 상세 — 읽기 전용 (employee-mobile.md ④, T9-5)
+// 직원 결의서 상세 — 읽기 전용 (employee-mobile.md ④, T9-5)
 function period(d: ClaimDetail) {
   const dates = d.items.map((i) => i.expense_date).filter((x): x is string => !!x).sort();
   if (!dates.length) return null;
@@ -25,16 +26,17 @@ export function EmployeeClaimDetail({ detail, base }: { detail: ClaimDetail; bas
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-3 md:max-w-3xl">
       <div className="flex items-center justify-between gap-2">
         <Link href={base} className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100">
-          <ArrowLeft className="size-4" />내 소명서
+          <ArrowLeft className="size-4" />내 결의서
         </Link>
         <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
       </div>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-4">
-        <h1 className="break-keep text-lg font-bold [overflow-wrap:anywhere]">{claim.title || "제목 없는 소명서"}</h1>
+        <h1 className="break-keep text-lg font-bold [overflow-wrap:anywhere]">{claim.title || "제목 없는 결의서"}</h1>
         <p className="mt-1 text-sm text-zinc-500">{[period(detail), `영수증 ${claim.item_count}건`, reviewing].filter(Boolean).join(" · ")}</p>
         <p className="mt-2 text-2xl font-bold tabular-nums">{formatWon(claim.total_amount)}</p>
         {claim.description && <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{claim.description}</p>}
+        <ExceptionNote memo={claim.exception_memo} items={detail.items} />
         {claim.is_business_trip && (
           <p className="mt-2 text-sm text-zinc-600">
             🧳 {claim.trip_destination} · {claim.trip_start_date?.replaceAll("-", ".")} ~ {claim.trip_end_date?.slice(5).replace("-", ".")} · {claim.trip_purpose}

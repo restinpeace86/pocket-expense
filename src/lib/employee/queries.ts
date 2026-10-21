@@ -5,7 +5,7 @@ import type { EmployeeSummary, MyClaimRow } from "./types";
 import { decodeCursor, keysetFilter, toPage } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 
-// 직원 화면 조회 — 본인 소명서만(RLS도 본인·관리자·검토자만 보이게 막지만, 직원 모드에서는 본인 것만 명시적으로 고른다: workspace-architecture §2.D)
+// 직원 화면 조회 — 본인 결의서만(RLS도 본인·관리자·검토자만 보이게 막지만, 직원 모드에서는 본인 것만 명시적으로 고른다: workspace-architecture §2.D)
 
 export async function getMyClaims(
   companyId: string,

@@ -91,7 +91,7 @@ export function MemberDetailView({
     const to = m.role === "admin" ? "employee" : "admin";
     const msg =
       to === "admin"
-        ? `${m.name}님을 관리자로 지정할까요?\n\n관리자는 모든 직원의 지출소명서 승인·반려, 회사 설정, 멤버 관리를 할 수 있어요.`
+        ? `${m.name}님을 관리자로 지정할까요?\n\n관리자는 모든 직원의 지출결의서 승인·반려, 회사 설정, 멤버 관리를 할 수 있어요.`
         : `${m.name}님을 일반 멤버로 바꿀까요?\n\n관리자 화면에 더 이상 들어올 수 없어요.`;
     if (!confirm(msg)) return;
     run(() => setMemberRoleAction(m.id, to), to === "admin" ? "관리자로 지정했어요." : "일반 멤버로 바꿨어요.");
@@ -176,7 +176,7 @@ export function MemberDetailView({
                 <HelpDetails id="admin.member.meal-override">
                   <p>
                     외근이 잦은 영업직처럼 회사 기본 한도로는 자주 넘치는 사람에게만 다른 한도를 정해요. 일반 식대와 출장 식비 모두에 적용되고, 이후 상신되는
-                    소명서부터 적용돼요.
+                    결의서부터 적용돼요.
                   </p>
                 </HelpDetails>
               </div>
@@ -245,7 +245,7 @@ export function MemberDetailView({
             help={
               <>
                 <p>
-                  <b>관리자</b>는 직원 지출소명서 승인·반려, 회사 설정, 멤버 관리를 할 수 있어요. 경리·총무 담당자에게 주면 대표 계정을 같이 쓰지 않아도 돼요.
+                  <b>관리자</b>는 직원 지출결의서 승인·반려, 회사 설정, 멤버 관리를 할 수 있어요. 경리·총무 담당자에게 주면 대표 계정을 같이 쓰지 않아도 돼요.
                 </p>
                 <p>
                   <b>최고 관리자 넘기기</b>는 대표가 바뀌거나, 담당자가 대신 회사를 등록한 뒤 대표에게 넘길 때 써요. 넘기면 나는 관리자가 되고, 되돌리려면 상대가
@@ -298,12 +298,12 @@ export function MemberDetailView({
             help={
               <>
                 <p>
-                  <b>왜 삭제가 아니라 비활성화인가요?</b> 지난 영수증과 지출소명서는 세무 증빙이라 지우면 안 돼요. 비활성화는 기록은 남기고 회사 데이터에 들어오는
+                  <b>왜 삭제가 아니라 비활성화인가요?</b> 지난 영수증과 지출결의서는 세무 증빙이라 지우면 안 돼요. 비활성화는 기록은 남기고 회사 데이터에 들어오는
                   것만 막아요.
                 </p>
                 <p>
-                  <b>누르면 먼저 점검해요.</b> 아직 정산받지 못한 건이나 작성 중인 소명서가 있으면 알려 주고(그래도 진행 가능), 결재라인 검토자이거나 지금
-                  검토할 차례인 소명서가 있으면 먼저 처리하도록 막아요.
+                  <b>누르면 먼저 점검해요.</b> 아직 정산받지 못한 건이나 작성 중인 결의서가 있으면 알려 주고(그래도 진행 가능), 결재라인 검토자이거나 지금
+                  검토할 차례인 결의서가 있으면 먼저 처리하도록 막아요.
                 </p>
               </>
             }
@@ -330,10 +330,10 @@ function DeactivatePanel({ check, busy, onCancel, onConfirm }: { check: Deactiva
   const warnings: string[] = [];
   if (check.unpaid_claims > 0)
     warnings.push(`정산받지 못한 승인 건 ${check.unpaid_claims}건 (지급 ${won(check.payout_amount)} / 납부 ${won(check.payback_amount)})`);
-  if (check.open_claims > 0) warnings.push(`작성 중이거나 반려된 소명서 ${check.open_claims}건`);
+  if (check.open_claims > 0) warnings.push(`작성 중이거나 반려된 결의서 ${check.open_claims}건`);
   const blocks: string[] = [];
   if (check.approval_line_steps > 0) blocks.push("사전 검토 결재라인에 검토자로 들어 있어요. 결재라인에서 먼저 빼 주세요.");
-  if (check.pending_reviews > 0) blocks.push(`지금 이 멤버가 검토할 차례인 소명서가 ${check.pending_reviews}건 있어요. 먼저 처리해 주세요.`);
+  if (check.pending_reviews > 0) blocks.push(`지금 이 멤버가 검토할 차례인 결의서가 ${check.pending_reviews}건 있어요. 먼저 처리해 주세요.`);
 
   return (
     <div className="mt-4 flex flex-col gap-3">
@@ -356,7 +356,7 @@ function DeactivatePanel({ check, busy, onCancel, onConfirm }: { check: Deactiva
           </ul>
         </div>
       ) : (
-        <p className="rounded-xl bg-zinc-50 p-4 text-sm text-zinc-700">남은 정산이나 작성 중인 소명서가 없어요.</p>
+        <p className="rounded-xl bg-zinc-50 p-4 text-sm text-zinc-700">남은 정산이나 작성 중인 결의서가 없어요.</p>
       )}
       <div className="flex flex-col gap-2 sm:flex-row">
         <button type="button" onClick={onCancel} className={secondaryBtn}>

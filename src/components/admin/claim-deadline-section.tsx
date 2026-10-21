@@ -52,7 +52,7 @@ export function ClaimDeadlineSection({
         title="청구 기한"
         summary={
           <>
-            직원이 쓴 경비를 <b>영수증과 함께 지출소명서로 올려야 하는 기한</b>이에요.
+            직원이 쓴 경비를 <b>영수증과 함께 지출결의서로 올려야 하는 기한</b>이에요.
           </>
         }
         helpId="settings.claim-deadline"

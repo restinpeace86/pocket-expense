@@ -14,8 +14,8 @@
 |---|---|---|
 | 1 | 제목 | `claim.title` |
 | 2 | 청구자 / 부서 / 직급 | `member.name` / `member.department` / `member.position` |
-| 3 | 소명 내용 | `claim.description` |
-| 4 | 출장지 / 출장 기간 / 출장 목적 (출장 소명서일 때만 표시) | `claim.trip_destination` / `claim.trip_period` / `claim.trip_purpose` |
+| 3 | 지출 사유 | `claim.description` |
+| 4 | 출장지 / 출장 기간 / 출장 목적 (출장 결의서일 때만 표시) | `claim.trip_destination` / `claim.trip_period` / `claim.trip_purpose` |
 | 5 | 상신일 | `claim.submitted_at` |
 | 6 | 합계 / 회사 지원금 / 개인 부담금 | `claim.total_amount` / `claim.total_company_supported` / `claim.total_personal_burden` |
 
@@ -41,5 +41,5 @@
 
 
 ## 4. 화면 위치
-- 관리자 워크스페이스 [⚙️ 설정] 허브의 "사내 지출소명서 양식 설정" 메뉴에 둔다. 설정 허브 전체 구성은 `admin-settings.md` §4가 기준이다.
+- 관리자 워크스페이스 [⚙️ 설정] 허브의 "사내 지출결의서 양식 설정" 메뉴에 둔다. 설정 허브 전체 구성은 `admin-settings.md` §4가 기준이다.
 - 모바일 관리자 화면에서도 [📷 서식 촬영/업로드]로 종이 양식을 바로 찍어 올릴 수 있다. 3단 편집은 모바일에서 탭 전환(원본 / 편집 / 미리보기)으로 보여 준다(`workspace-architecture.md` §2.A).

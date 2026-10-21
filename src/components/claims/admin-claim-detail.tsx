@@ -1,5 +1,6 @@
 "use client";
 
+import { ExceptionNote } from "./exception-note";
 import { ArrowLeft, Check, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -99,7 +100,7 @@ export function AdminClaimDetail({
       </div>
 
       <section className="rounded-xl border border-zinc-200 bg-white p-4">
-        <h1 className="break-keep text-xl font-bold [overflow-wrap:anywhere]">{claim.title || "제목 없는 소명서"}</h1>
+        <h1 className="break-keep text-xl font-bold [overflow-wrap:anywhere]">{claim.title || "제목 없는 결의서"}</h1>
         <p className="mt-1 text-sm text-zinc-600">
           신청자: {owner.name}
           {owner.department && ` (${owner.department})`}
@@ -110,7 +111,8 @@ export function AdminClaimDetail({
             🧳 출장지·기간·목적: {claim.trip_destination} / {claim.trip_start_date?.replaceAll("-", ".")}~{claim.trip_end_date?.slice(5).replace("-", ".")} / {claim.trip_purpose}
           </p>
         )}
-        {claim.description && <p className="mt-2 whitespace-pre-wrap rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-700">소명 내용: {claim.description}</p>}
+        {claim.description && <p className="mt-2 whitespace-pre-wrap rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-700">지출 사유: {claim.description}</p>}
+        <ExceptionNote memo={claim.exception_memo} items={detail.items} />
         {claim.status === "submitted" && claim.current_round > 1 && lastReject && (
           <p className="mt-2 text-sm text-red-700">
             이전 회차 반려 사유: {lastReject.comment} ({formatDateTimeKst(lastReject.acted_at)})
@@ -172,7 +174,7 @@ export function AdminClaimDetail({
               <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:w-96">
                 <button type="button" disabled={pending} onClick={() => setMode("reject")} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl border border-red-300 bg-white font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60">
                   <X className="size-4" />
-                  {reviewer ? "반려" : "소명서 반려"}
+                  {reviewer ? "반려" : "결의서 반려"}
                 </button>
                 <button type="button" disabled={pending} onClick={approve} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700 disabled:opacity-60">
                   {pending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}

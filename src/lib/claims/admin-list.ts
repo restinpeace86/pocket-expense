@@ -50,7 +50,7 @@ export async function getAdminClaimList(companyId: string, tab: ApprovalTab, fil
       if (memberIds.length === 0) return { list: [], pendingCount: await countPending(companyId) };
       q = q.in("member_id", memberIds);
     }
-    // 월(항목 사용일자)·카테고리 → 해당 항목이 든 소명서
+    // 월(항목 사용일자)·카테고리 → 해당 항목이 든 결의서
     if (filters.month || filters.category) {
       let iq = supabase.from("expense_items").select("claim_id").eq("company_id", companyId).limit(5000);
       if (filters.month) {
@@ -62,7 +62,7 @@ export async function getAdminClaimList(companyId: string, tab: ApprovalTab, fil
       if (ids.length === 0) return { list: [], pendingCount: await countPending(companyId) };
       q = q.in("id", ids.slice(0, 1000));
     }
-    // 검색: 소명서 제목 또는 가맹점명
+    // 검색: 결의서 제목 또는 가맹점명
     if (filters.q) {
       const { data } = await supabase.from("expense_items").select("claim_id").eq("company_id", companyId).ilike("merchant_name", `%${filters.q}%`).limit(1000);
       const ids = [...new Set((data ?? []).map((i) => i.claim_id))];

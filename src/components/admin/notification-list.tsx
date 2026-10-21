@@ -66,7 +66,7 @@ export function NotificationList({ rows, devMode, failedOnly, base }: { rows: No
                   </span>
                   <span className="ml-auto text-xs text-zinc-500">{formatDateTimeKst(r.created_at)}</span>
                 </div>
-                {r.claim_id && <p className="mt-1 text-xs text-zinc-500">소명서: {r.claim_title}</p>}
+                {r.claim_id && <p className="mt-1 text-xs text-zinc-500">결의서: {r.claim_title}</p>}
                 {r.error_message && <p className="mt-1 text-xs text-red-700">실패 사유: {r.error_message}</p>}
                 <details className="mt-2">
                   <summary className="cursor-pointer text-xs text-zinc-500">보낸 내용 보기</summary>

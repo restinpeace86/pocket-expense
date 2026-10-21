@@ -50,7 +50,7 @@ function ClaimCard({ claim, base, onRejected }: { claim: MyClaimRow; base: strin
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             {tag && <p className="text-xs font-medium text-zinc-500">{tag}</p>}
-            <p className="break-keep font-semibold text-zinc-900 [overflow-wrap:anywhere]">{claim.title || "제목 없는 소명서"}</p>
+            <p className="break-keep font-semibold text-zinc-900 [overflow-wrap:anywhere]">{claim.title || "제목 없는 결의서"}</p>
           </div>
           <span className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
         </div>
@@ -83,7 +83,7 @@ function RejectedSheet({ claim, base, onClose }: { claim: MyClaimRow; base: stri
           <div className="min-w-0">
             <p className="text-xs text-zinc-500">🔴 반려됨{claim.rejected_at ? ` · ${dot(claim.rejected_at.slice(0, 10))}` : ""}</p>
             <h2 id="rejected-title" className="break-keep font-semibold [overflow-wrap:anywhere]">
-              {claim.title || "제목 없는 소명서"}
+              {claim.title || "제목 없는 결의서"}
             </h2>
           </div>
           <button type="button" onClick={onClose} aria-label="닫기" className="-mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-xl hover:bg-zinc-100">
@@ -168,14 +168,14 @@ export function EmployeeHomeView({
       {summary.rejected_count > 0 && (
         <Link href={q(month, "rejected")} className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
           <AlertCircle className="size-5 shrink-0" />
-          <span className="flex-1">반려된 소명서 {summary.rejected_count}건 — 수정이 필요해요</span>
+          <span className="flex-1">반려된 결의서 {summary.rejected_count}건 — 수정이 필요해요</span>
           <ChevronRight className="size-4 shrink-0" />
         </Link>
       )}
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">내 지출소명서</h2>
+          <h2 className="text-base font-semibold">내 지출결의서</h2>
           <div className="flex items-center">
             <Link href={q(shiftMonth(month, -1), filter)} aria-label="이전 달" className="inline-flex size-11 items-center justify-center rounded-xl hover:bg-zinc-100">
               <ChevronLeft className="size-5" />
@@ -209,7 +209,7 @@ export function EmployeeHomeView({
 
         {items.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
-            {filter === "all" ? "이 달에 올린 지출소명서가 없어요." : "해당 상태의 지출소명서가 없어요."}
+            {filter === "all" ? "이 달에 올린 지출결의서가 없어요." : "해당 상태의 지출결의서가 없어요."}
             <br />
             {!creditsBlocked && "아래 버튼으로 영수증을 찍어 올려 보세요."}
           </p>
