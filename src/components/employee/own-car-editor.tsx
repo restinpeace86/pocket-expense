@@ -53,7 +53,10 @@ export function OwnCarEditor({
   const [pending, start_] = useTransition();
   const claimHref = `${base}/claims/${claim.id}/edit`;
   const itemHref = (id: string) => `${base}/claims/${claim.id}/items/${id}`;
-  const card = routeCardFrom(item, fuel.ratePerKm);
+  const saved = routeCardFrom(item, fuel.ratePerKm);
+  // 왕복 × 2는 화면에서 바로 계산해 보여 주고(기다림 없음), 저장은 뒤에서 한다. 금액의 최종값은 DB가 같은 식으로 다시 계산한다
+  const card = saved && { ...saved, roundTrip, totalKm: saved.oneWayKm * (roundTrip ? 2 : 1), amount: fuelAmount(saved.oneWayKm, saved.rate, roundTrip) };
+  const [savingRound, startRoundSave] = useTransition();
   const metaDirty = expenseDate !== (item.expense_date ?? "") || purpose !== (item.purpose ?? "");
 
   // 장소·왕복·직접 입력 거리를 서버에 저장(저장 뒤 화면은 새 거리·금액으로 다시 그려진다)
@@ -75,7 +78,16 @@ export function OwnCarEditor({
 
   const toggleRound = (next: boolean) => {
     setRoundTrip(next);
-    saveRoute({ start, end, roundTrip: next, manual: manualOpen && manualValid ? manualNum : null });
+    setError(null);
+    startRoundSave(async () => {
+      const res = await measureAction("employee.own_car_round_trip", () =>
+        saveOwnCarRouteAction(item.id, { start, end, roundTrip: next, manualOneWayKm: manualOpen && manualValid ? manualNum : null }),
+      );
+      if (!res.ok) {
+        setRoundTrip(!next); // 저장 실패 → 화면 되돌림
+        setError(res.error);
+      }
+    });
   };
 
   const choose = (which: "start" | "end") => (p: RoutePlaceInput | null) => {
@@ -129,6 +141,7 @@ export function OwnCarEditor({
               aria-pressed={roundTrip}
               disabled={calculating}
               onClick={() => toggleRound(!roundTrip)}
+              data-saving={savingRound || undefined}
               className={`inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl border px-4 text-sm font-semibold ${roundTrip ? "border-zinc-300 bg-white text-zinc-700" : "border-brand-300 bg-brand-50 text-brand-800"}`}
             >
               {roundTrip ? "편도로 되돌리기" : `왕복으로 계산 (× 2 = ${formatWon(fuelAmount(card.oneWayKm, card.rate, true))})`}
@@ -236,7 +249,7 @@ export function OwnCarEditor({
             <button type="button" disabled={!prevId || pending} onClick={() => prevId && go(itemHref(prevId))} aria-label="이전 항목" className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-xl border border-zinc-300 bg-white disabled:opacity-40">
               <ChevronLeft className="size-5" />
             </button>
-            <button type="button" disabled={pending || calculating} onClick={() => go(nextId ? itemHref(nextId) : claimHref)} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700 disabled:opacity-70">
+            <button type="button" disabled={pending || calculating || savingRound} onClick={() => go(nextId ? itemHref(nextId) : claimHref)} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700 disabled:opacity-70">
               {pending && <Loader2 className="size-4 animate-spin" />}
               {nextId ? "저장하고 다음 항목" : "저장하고 완료"}
             </button>
