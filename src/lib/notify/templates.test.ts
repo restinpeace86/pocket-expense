@@ -27,3 +27,13 @@ describe("알림톡 템플릿 (notification-rule.md §2)", () => {
     expect(maskPhone("01012345678")).toBe("010-****-5678");
   });
 });
+
+describe("미제출자 독촉 (REMINDER)", () => {
+  it("문구·버튼", async () => {
+    const { reminder } = await import("./templates");
+    const m = reminder({ companyId: "c1", companyName: "포켓컴퍼니", pending: 2 });
+    expect(m.template).toBe("REMINDER");
+    expect(m.text).toBe("포켓컴퍼니 아직 제출하지 않은 지출결의서가 있어요 (작성중·반려 2건). 확인 후 상신해 주세요.");
+    expect(m.buttonPath).toBe("/workspace/c1/employee");
+  });
+});

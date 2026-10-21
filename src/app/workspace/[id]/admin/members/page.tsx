@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { InviteLinkCard } from "@/components/admin/invite-link-card";
 import { MembersHeading, MembersView } from "@/components/admin/members-view";
+import { ReminderPanel } from "@/components/admin/reminder-panel";
+import { createClient } from "@/lib/supabase/server";
 import { getCompanySummary, getMembers } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 
@@ -27,14 +29,16 @@ async function Members({
 }) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const membership = await requireWorkspace(id, { admin: true });
-  const [members, { company }] = await Promise.all([getMembers(membership.company_id), getCompanySummary(membership.company_id)]);
+  const supabase = await createClient();
+  const [members, { company }, { data: candidates }] = await Promise.all([getMembers(membership.company_id), getCompanySummary(membership.company_id), supabase.rpc("reminder_candidates")]);
   const hasPending = members.some((m) => m.status === "pending");
   const tab = sp.tab === "pending" || sp.tab === "inactive" || sp.tab === "all" ? sp.tab : hasPending ? "pending" : "all";
 
   return (
     <>
+      <ReminderPanel candidates={candidates ?? []} />
       {company && <InviteLinkCard inviteCode={company.invite_code} companyName={company.name} compact />}
-      <MembersView members={members} tab={tab} basePath={`/workspace/${membership.company_id}/admin/members`} />
+      <MembersView members={members} tab={tab} basePath={`/workspace/${membership.company_id}/admin/members`} reminders={candidates ?? []} />
     </>
   );
 }

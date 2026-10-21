@@ -1630,6 +1630,17 @@ export type Database = {
         Returns: Database["public"]["Enums"]["claim_status"]
       }
       reject_member: { Args: { p_member_id: string }; Returns: undefined }
+      reminder_candidates: {
+        Args: never
+        Returns: {
+          department: string
+          has_phone: boolean
+          member_id: string
+          name: string
+          open_claims: number
+          reminded_today: boolean
+        }[]
+      }
       reopen_tax_month: {
         Args: { p_month: string; p_reason: string }
         Returns: undefined

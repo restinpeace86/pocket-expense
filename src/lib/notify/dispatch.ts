@@ -2,7 +2,7 @@ import "server-only";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSender, siteUrl } from "./sender";
-import { approvalCompleted, approvalRejected, approvalRequest, normalizePhone, payoutCompleted, type BuiltMessage } from "./templates";
+import { approvalCompleted, approvalRejected, approvalRequest, normalizePhone, payoutCompleted, reminder, type BuiltMessage } from "./templates";
 
 // 결재 알림 보내기 (kakao-alimtalk.md §2, notification-rule.md §2).
 // - 결재 처리(DB 트랜잭션)가 끝난 뒤에 부른다. 실패해도 결재는 되돌리지 않는다.
@@ -144,4 +144,23 @@ export async function notifyPayouts(companyId: string, claimIds: string[]) {
   } catch (e) {
     console.error("[alimtalk] 지급 알림 처리 실패", e);
   }
+}
+
+// 미제출자 독촉 (REMINDER, D-043, notification-rule.md ⑥). 관리자가 누른 직후 바로 보낸다(결과를 화면에 보여 주려고 기다림).
+// 대상 확인(작성중·반려가 있는 활성 멤버, 오늘 아직 안 받음)은 부르는 쪽이 DB 함수 reminder_candidates로 먼저 한다.
+export async function sendReminders(companyId: string, targets: { memberId: string; openClaims: number }[]): Promise<number> {
+  const admin = createAdminClient();
+  if (!admin || !targets.length) return 0;
+  const [{ data: company }, { data: members }] = await Promise.all([
+    admin.from("companies").select("name").eq("id", companyId).single(),
+    admin.from("members").select("id, phone").eq("company_id", companyId).eq("status", "approved").in("id", targets.map((t) => t.memberId)),
+  ]);
+  const phones = new Map((members ?? []).map((m) => [m.id, m.phone]));
+  let n = 0;
+  for (const t of targets) {
+    if (!phones.has(t.memberId)) continue;
+    await deliver(admin, { companyId, memberId: t.memberId, phone: phones.get(t.memberId) ?? null, message: reminder({ companyId, companyName: company?.name ?? "", pending: t.openClaims }) });
+    n++;
+  }
+  return n;
 }

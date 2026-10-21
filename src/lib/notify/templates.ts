@@ -71,7 +71,7 @@ export function invite(p: { companyName: string; name: string; token: string }):
 export function reminder(p: { companyId: string; companyName: string; pending: number }): BuiltMessage {
   return {
     template: "REMINDER",
-    text: `${p.companyName} 이번 달 지출결의서 제출을 확인해 주세요 (작성중·반려 ${p.pending}건)`,
+    text: `${p.companyName} 아직 제출하지 않은 지출결의서가 있어요 (작성중·반려 ${p.pending}건). 확인 후 상신해 주세요.`,
     buttonLabel: "제출하러 가기",
     buttonPath: `/workspace/${p.companyId}/employee`,
   };

@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronRight, Search } from "lucide-react";
+import { useSendReminders, type ReminderCandidate } from "./reminder-panel";
+import { Bell, ChevronRight, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { approveMemberAction, rejectMemberAction } from "@/app/workspace/[id]/admin/actions";
@@ -51,7 +52,8 @@ export function MembersHeading() {
 }
 
 // 멤버 관리 (spec/screens/admin-team-members.md): 탭, 이름/부서 검색·부서 필터, 가입 승인·거절, [편집]으로 상세 이동
-export function MembersView({ members, tab, basePath, preview = false }: { members: MemberRow[]; tab: Tab; basePath: string; preview?: boolean }) {
+export function MembersView({ members, tab, basePath, preview = false, reminders = [] }: { members: MemberRow[]; tab: Tab; basePath: string; preview?: boolean; reminders?: ReminderCandidate[] }) {
+  const remindBy = new Map(reminders.map((r) => [r.member_id, r]));
   const pending = members.filter((m) => m.status === "pending");
   const active = members.filter((m) => m.status === "approved");
   const inactive = members.filter((m) => m.status === "inactive");
@@ -130,7 +132,7 @@ export function MembersView({ members, tab, basePath, preview = false }: { membe
       ) : (
         <ul className="flex flex-col gap-2">
           {list.map((m) => (
-            <MemberItem key={m.id} member={m} preview={preview} href={`${basePath}/${m.id}`} />
+            <MemberItem key={m.id} member={m} preview={preview} href={`${basePath}/${m.id}`} reminder={remindBy.get(m.id)} />
           ))}
         </ul>
       )}
@@ -138,8 +140,9 @@ export function MembersView({ members, tab, basePath, preview = false }: { membe
   );
 }
 
-function MemberItem({ member: m, preview, href }: { member: MemberRow; preview: boolean; href: string }) {
+function MemberItem({ member: m, preview, href, reminder }: { member: MemberRow; preview: boolean; href: string; reminder?: ReminderCandidate }) {
   const [pending, startTransition] = useTransition();
+  const remind = useSendReminders();
   const [error, setError] = useState<string | null>(null);
 
   function run(kind: "approve" | "reject") {
@@ -180,6 +183,20 @@ function MemberItem({ member: m, preview, href }: { member: MemberRow; preview: 
             <span className={`mr-auto whitespace-nowrap rounded-full px-2.5 py-1 text-xs md:mr-0 ${m.role === "employee" ? "bg-zinc-100 text-zinc-600" : "bg-brand-50 text-brand-700"}`}>
               {ROLE_LABEL[m.role]}
             </span>
+            {reminder &&
+              (reminder.reminded_today || remind.message?.kind === "ok" ? (
+                <span className="whitespace-nowrap rounded-full bg-zinc-100 px-2.5 py-1 text-xs text-zinc-500">독촉 보냄(오늘)</span>
+              ) : (
+                <button
+                  type="button"
+                  disabled={remind.pending || preview}
+                  onClick={() => remind.send([m.id])}
+                  aria-label={`${m.name}님에게 독촉 알림 보내기 (작성중·반려 ${reminder.open_claims}건)`}
+                  className="inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-xl border border-amber-300 bg-amber-50 px-3 text-sm font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+                >
+                  <Bell className="size-4" /> 독촉 {reminder.open_claims}건
+                </button>
+              ))}
             <Link
               href={href}
               className="inline-flex min-h-11 items-center gap-0.5 whitespace-nowrap rounded-xl border border-zinc-300 pl-4 pr-2 text-sm font-medium hover:bg-zinc-50"
@@ -192,6 +209,11 @@ function MemberItem({ member: m, preview, href }: { member: MemberRow; preview: 
       {error && (
         <p role="alert" className="text-sm text-red-600 md:basis-full">
           {error}
+        </p>
+      )}
+      {remind.message?.kind === "error" && (
+        <p role="alert" className="text-sm text-red-600 md:basis-full">
+          {remind.message.text}
         </p>
       )}
     </li>
