@@ -160,7 +160,7 @@
 - [x] T11-1 대시보드 홈 (체크리스트, 초대 카드, KPI 3종·전월 대비, 할 일, 카테고리 차트) (2026-10-22, D-091, migration 045, `implementation/2026-10-22_T11-1-admin-home.md`)
   - 남은 것: 체크리스트 사내 양식(T5 뒤). 기한 초과 건수는 T6-8에서 추가됨
 - [x] T11-3 지출 승인 관리 상세의 항목별 계정과목 개별 조정 (마감 항목 제외) (2026-10-21, migration 035, `supabase/tests/019_account_title_override.sql`, `implementation/2026-10-21_T9-filters-account-override.md`)
-- [ ] T11-4 알림 이력 + 재발송 + 개발 모드 배너
+- [x] T11-4 알림 이력 + 재발송 + 개발 모드 배너 (2026-10-22, `implementation/2026-10-22_T11-4-resend.md`)
   - 일부 완료(2026-10-20): 알림 이력(전체/실패, 보낸 내용·버튼 링크, 실패 사유) + 개발 모드 배너. 남은 것: [재발송]
 
 ## IMP. 개선사항 — 기준: `implementation/todo_improvement.md` (순서대로)

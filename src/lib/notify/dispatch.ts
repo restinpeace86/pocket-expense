@@ -11,7 +11,7 @@ import { approvalCompleted, approvalRejected, approvalRequest, invite, normalize
 type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
 const RETRY_DELAY_MS = 30_000;
 
-async function deliver(admin: Admin, p: { companyId: string; claimId?: string; memberId?: string; invitationId?: string; phone: string | null; message: BuiltMessage }) {
+async function deliver(admin: Admin, p: { companyId: string; claimId?: string; memberId?: string; invitationId?: string; phone: string | null; message: BuiltMessage }): Promise<boolean> {
   const sender = getSender();
   const to = normalizePhone(p.phone);
   const buttonUrl = `${siteUrl()}${p.message.buttonPath}`;
@@ -30,10 +30,10 @@ async function deliver(admin: Admin, p: { companyId: string; claimId?: string; m
     })
     .select("id")
     .single();
-  if (!log) return;
+  if (!log) return false;
   if (!to) {
     await admin.from("notification_logs").update({ status: "failed", error_message: "수신 번호가 없거나 휴대폰 번호 형식이 아닙니다" }).eq("id", log.id);
-    return;
+    return false;
   }
   const message = { to, template: p.message.template, text: p.message.text, buttonLabel: p.message.buttonLabel, buttonUrl };
   let result = await sender.send(message);
@@ -45,6 +45,7 @@ async function deliver(admin: Admin, p: { companyId: string; claimId?: string; m
     .from("notification_logs")
     .update(result.ok ? { status: "sent", sent_at: new Date().toISOString(), provider_message_id: result.providerMessageId } : { status: "failed", error_message: result.error })
     .eq("id", log.id);
+  return result.ok;
 }
 
 async function loadClaim(admin: Admin, companyId: string, claimId: string) {
@@ -178,4 +179,43 @@ export async function sendInvite(companyId: string, invitationId: string): Promi
   await deliver(admin, { companyId, invitationId: inv.id, phone: inv.phone, message: invite({ companyName: company?.name ?? "", name: inv.name, token: inv.token }) });
   await admin.from("member_invitations").update({ last_sent_at: new Date().toISOString() }).eq("id", inv.id);
   return true;
+}
+
+// 실패한 알림 다시 보내기 (admin-dashboard.md ⑩, T11-4). 같은 회사의 실패 건만. 보낸 내용은 그대로, 받는 번호는 지금 멤버(또는 초대) 번호로.
+// 새 기록을 하나 더 남기고 예전 실패 기록은 그대로 둔다(이력).
+export async function resendLog(companyId: string, logId: string): Promise<"sent" | "failed" | "not_found"> {
+  const admin = createAdminClient();
+  if (!admin) return "failed";
+  const { data: log } = await admin
+    .from("notification_logs")
+    .select("id, claim_id, recipient_member_id, invitation_id, recipient_phone, template_code, payload, status")
+    .eq("id", logId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  if (!log || log.status !== "failed") return "not_found";
+  let phone: string | null = log.recipient_phone;
+  if (log.recipient_member_id) {
+    const { data: m } = await admin.from("members").select("phone").eq("id", log.recipient_member_id).eq("company_id", companyId).maybeSingle();
+    phone = m?.phone ?? phone;
+  } else if (log.invitation_id) {
+    const { data: inv } = await admin.from("member_invitations").select("phone, status").eq("id", log.invitation_id).eq("company_id", companyId).maybeSingle();
+    if (!inv || inv.status !== "invited") return "not_found"; // 이미 가입·취소된 초대는 다시 보내지 않는다
+    phone = inv.phone ?? phone;
+  }
+  const p = (log.payload ?? {}) as { text?: string; button_label?: string; button_url?: string };
+  let buttonPath = "/";
+  try {
+    buttonPath = p.button_url ? new URL(p.button_url).pathname : "/";
+  } catch {
+    // 잘못된 주소면 첫 화면
+  }
+  const ok = await deliver(admin, {
+    companyId,
+    claimId: log.claim_id ?? undefined,
+    memberId: log.recipient_member_id ?? undefined,
+    invitationId: log.invitation_id ?? undefined,
+    phone,
+    message: { template: log.template_code as BuiltMessage["template"], text: p.text ?? "", buttonLabel: p.button_label ?? "", buttonPath },
+  });
+  return ok ? "sent" : "failed";
 }

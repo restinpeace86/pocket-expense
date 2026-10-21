@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { ResendButton } from "./resend-button";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { maskPhone } from "@/lib/notify/templates";
 
-// 알림 이력 목록 (T11-4 일부, kakao-alimtalk.md §5)
+// 알림 이력 목록 + 실패 건 [재발송] (T11-4, kakao-alimtalk.md §5)
 const TEMPLATE_LABEL: Record<string, string> = {
   APPROVAL_REQUEST: "결재 요청",
   APPROVAL_COMPLETED: "승인 완료",
@@ -68,6 +69,7 @@ export function NotificationList({ rows, devMode, failedOnly, base }: { rows: No
                 </div>
                 {r.claim_id && <p className="mt-1 text-xs text-zinc-500">결의서: {r.claim_title}</p>}
                 {r.error_message && <p className="mt-1 text-xs text-red-700">실패 사유: {r.error_message}</p>}
+                {r.status === "failed" && <ResendButton logId={r.id} />}
                 <details className="mt-2">
                   <summary className="cursor-pointer text-xs text-zinc-500">보낸 내용 보기</summary>
                   <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-zinc-50 p-3 font-sans text-xs text-zinc-700">{payload.text}</pre>
