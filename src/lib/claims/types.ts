@@ -1,4 +1,5 @@
 import type { EvidenceType, ParseStatus, PaymentMethod } from "@/lib/employee/editor-types";
+import type { RouteCard } from "@/lib/expense/route";
 import type { ExpenseCategory, PurchaseType, TripType } from "@/lib/expense/categories";
 import type { ClaimStatus } from "@/lib/expense/status";
 import type { LineItem } from "@/lib/receipts/parse-result";
@@ -45,6 +46,8 @@ export type DetailItem = {
   thumbUrl: string | null;
   isPdf: boolean;
   duplicate: { mine: number; others: number } | null;
+  route: RouteCard | null; // 자차 유류비 경로 요약 카드(디지털 증빙, D-085)
+  routeLabel: string | null; // 자차 항목 이름(출발 → 도착)
 };
 
 export type DetailApproval = {

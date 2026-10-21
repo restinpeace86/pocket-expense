@@ -1,13 +1,16 @@
 "use client";
 
 import { exceptionFlags, exceptionSummary } from "@/lib/expense/exceptions";
-import { ArrowLeft, Camera, FileText, ImageIcon, Loader2, PenLine, Plus, ReceiptText, Trash2, X } from "lucide-react";
+import { ArrowLeft, Camera, Car, FileText, ImageIcon, Loader2, PenLine, Plus, ReceiptText, TrainFront, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
-import { createManualItemAction, deleteDraftClaimAction, deleteItemAction, saveClaimHeaderAction } from "@/app/workspace/[id]/employee/claims/actions";
+import { createManualItemAction, createOwnCarItemAction, deleteDraftClaimAction, deleteItemAction, saveClaimHeaderAction } from "@/app/workspace/[id]/employee/claims/actions";
+import { RouteEvidenceCard } from "@/components/claims/route-evidence-card";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { inputClass } from "@/components/ui/page-shell";
-import type { ClaimHeaderInput, EditorData, EditorItem, PaymentMethod } from "@/lib/employee/editor-types";
+import type { ClaimHeaderInput, EditorData, EditorItem, PaymentMethod, TripTransport } from "@/lib/employee/editor-types";
+import { routeCardFrom } from "@/lib/expense/route";
 import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL } from "@/lib/expense/categories";
 import { claimStatusBadge } from "@/lib/expense/status";
 import { suggestTitle } from "@/lib/expense/title";
@@ -40,6 +43,8 @@ export function itemNeedsCheck(item: EditorItem): boolean {
   return false;
 }
 
+const isOwnCar = (item: EditorItem) => item.category === "trip" && item.trip_type === "own_car";
+
 function itemTypeLabel(item: EditorItem): string | null {
   if (!item.category) return null;
   if (item.category === "trip" && item.trip_type) return `${CATEGORY_LABEL.trip} · ${TRIP_TYPE_LABEL[item.trip_type]}`;
@@ -55,7 +60,7 @@ function Thumb({ item }: { item: EditorItem }) {
   }
   return (
     <span className={`${cls} inline-flex items-center justify-center text-zinc-400`}>
-      {item.isPdf ? <FileText className="size-5" /> : item.receipt_path ? <ImageIcon className="size-5" /> : <PenLine className="size-5" />}
+      {isOwnCar(item) ? <Car className="size-5 text-brand-600" /> : item.isPdf ? <FileText className="size-5" /> : item.receipt_path ? <ImageIcon className="size-5" /> : <PenLine className="size-5" />}
     </span>
   );
 }
@@ -76,7 +81,9 @@ function ItemRow({ item, href, onOpen, onDelete, problem }: { item: EditorItem; 
       >
         <Thumb item={item} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{item.merchant_name || (parsing ? "읽는 중…" : "가맹점 미입력")}</span>
+          <span className="block truncate font-medium">
+            {isOwnCar(item) ? (item.start_location && item.end_location ? `${item.start_location} → ${item.end_location}` : "경로 미입력") : item.merchant_name || (parsing ? "읽는 중…" : "가맹점 미입력")}
+          </span>
           <span className="block truncate text-xs text-zinc-500">
             {[item.expense_date?.replaceAll("-", "."), itemTypeLabel(item)].filter(Boolean).join(" · ") || "날짜·카테고리 미입력"}
           </span>
@@ -274,6 +281,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
       tripStartDate: claim.trip_start_date ?? "",
       tripEndDate: claim.trip_end_date ?? "",
       tripPurpose: claim.trip_purpose ?? "",
+      tripTransport: claim.trip_transport,
     }),
     [claim],
   );
@@ -332,6 +340,16 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
     }
     return res.ok;
   };
+
+  // 자차 항목을 만들고 경로 입력 화면으로 (헤더를 먼저 저장해 출장 시작일이 사용일 기본값이 되게)
+  const ownCarItems = items.filter(isOwnCar);
+  const addOwnCar = () =>
+    startBusy(async () => {
+      if (dirty && !(await save())) return;
+      const res = await measureAction("employee.create_own_car", () => createOwnCarItemAction(claim.id));
+      if (!res.ok) return setMessage({ kind: "error", text: res.error });
+      router.push(`${base}/claims/${claim.id}/items/${res.itemId}`);
+    });
 
   // 항목 화면으로 가기 전에 바뀐 헤더를 먼저 저장한다
   const openItem = (href: string) =>
@@ -467,17 +485,76 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
                 </Label>
                 <input id="trip-dest" className={inputClass} value={form.tripDestination} maxLength={100} placeholder="예: 부산" onChange={(e) => set("tripDestination", e.target.value)} />
               </div>
+              {/* 달력 하나에서 시작일 → 종료일 (개선사항 6-1) */}
+              <DateRangePicker label="출장 기간" required start={form.tripStartDate} end={form.tripEndDate} onChange={(s, e) => setForm((f) => ({ ...f, tripStartDate: s, tripEndDate: e }))} />
               <div className="flex flex-col gap-1.5">
-                <span className="text-sm font-medium text-zinc-800">
-                  출장 기간<span className="ml-0.5 text-red-600">*</span>
-                </span>
-                {/* 휴대폰에서는 날짜 칸 두 개를 위아래로 (가로로 두면 폭을 넘는다) */}
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
-                  <input type="date" aria-label="출장 시작일" className={`${inputClass} min-w-0`} value={form.tripStartDate} onChange={(e) => set("tripStartDate", e.target.value)} />
-                  <span className="hidden text-zinc-500 sm:inline">~</span>
-                  <input type="date" aria-label="출장 종료일" className={`${inputClass} min-w-0`} value={form.tripEndDate} min={form.tripStartDate || undefined} onChange={(e) => set("tripEndDate", e.target.value)} />
+                <span className="text-sm font-medium text-zinc-800">이동 수단</span>
+                <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="이동 수단">
+                  {(
+                    [
+                      ["own_car", "자차", Car],
+                      ["public_transport", "대중교통·KTX", TrainFront],
+                    ] as [TripTransport, string, typeof Car][]
+                  ).map(([v, label, Icon]) => (
+                    <button
+                      key={v}
+                      type="button"
+                      role="radio"
+                      aria-checked={form.tripTransport === v}
+                      onClick={() => set("tripTransport", v)}
+                      className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border text-sm font-medium ${form.tripTransport === v ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
+                    >
+                      <Icon className="size-4" />
+                      {label}
+                    </button>
+                  ))}
                 </div>
+                {form.tripTransport === "public_transport" && <p className="text-xs text-zinc-500">KTX·버스·항공권 영수증을 올리면 출장비 › 대중교통으로 분류돼요.</p>}
               </div>
+              {form.tripTransport === "own_car" && (
+                <div className="flex flex-col gap-2 rounded-xl border border-brand-200 bg-white p-3">
+                  <p className="text-sm font-semibold">🚗 자차 유류비</p>
+                  {data.fuel.blocked ? (
+                    <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                      {data.fuel.blocked === "allowance"
+                        ? "자가운전보조금을 받고 있어 자차 유류비는 청구할 수 없어요. 통행료·주차비는 영수증으로 올려 주세요."
+                        : "회사에서 자차 유류비 청구를 쓰지 않아요. 통행료·주차비는 영수증으로 올려 주세요."}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xs text-zinc-500">출발지·도착지를 고르면 거리 × km당 {data.fuel.ratePerKm.toLocaleString("ko-KR")}원으로 자동 계산하고, 경로 요약 카드를 증빙으로 붙여요.</p>
+                      {ownCarItems.map((i) => {
+                        const card = routeCardFrom(i, data.fuel.ratePerKm);
+                        const href = `${base}/claims/${claim.id}/items/${i.id}`;
+                        return (
+                          <a
+                            key={i.id}
+                            href={href}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              openItem(href);
+                            }}
+                            className="block"
+                          >
+                            {card ? <RouteEvidenceCard card={card} compact /> : <span className="block rounded-lg border border-dashed border-zinc-300 px-3 py-3 text-sm text-zinc-600">경로를 아직 입력하지 않았어요 — 눌러서 입력</span>}
+                          </a>
+                        );
+                      })}
+                      {editable && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={addOwnCar}
+                          className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-brand-300 bg-brand-50 px-3 text-sm font-semibold text-brand-800 disabled:opacity-60"
+                        >
+                          {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+                          {ownCarItems.length ? "자차 이동 하나 더 (다른 경로)" : "경로 입력하고 유류비 계산"}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="trip-purpose" required>
                   출장 목적

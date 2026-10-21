@@ -5,12 +5,13 @@ import { redirect } from "next/navigation";
 import { getMembership } from "@/lib/auth/session";
 import { creditEventAmount, creditEventEnabled } from "@/lib/credits";
 import { isUuid } from "@/lib/employee/claim";
-import type { ClaimHeaderInput, ItemInput } from "@/lib/employee/editor-types";
+import type { ClaimHeaderInput, ItemInput, RoutePlaceInput } from "@/lib/employee/editor-types";
 import { todayKst } from "@/lib/dates";
 import { messageForDbError } from "@/lib/errors";
 import { archiveCreditedReceipts } from "@/lib/receipts/archive";
 import { parseReceiptWithGemini } from "@/lib/receipts/gemini";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { routeDistance } from "@/lib/maps/kakao";
 import { createClient } from "@/lib/supabase/server";
 
 // 결의서 편집(E-02) 서버 액션. 모든 쓰기는 사용자 세션으로 하고 RLS·DB 함수가 "본인 회사·본인 작성 중 결의서"만 허용한다.
@@ -55,6 +56,7 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
       trip_start_date: input.isBusinessTrip ? start : null,
       trip_end_date: input.isBusinessTrip ? end : null,
       trip_purpose: input.isBusinessTrip ? purpose || null : null,
+      trip_transport: input.isBusinessTrip && (input.tripTransport === "own_car" || input.tripTransport === "public_transport") ? input.tripTransport : null,
     })
     .eq("id", claimId)
     .eq("company_id", m.company_id)
@@ -259,8 +261,16 @@ export async function saveItemAction(itemId: string, input: ItemInput): Promise<
   const corporate = input.paymentMethod === "corporate_card";
 
   const supabase = await createClient();
-  const { data: item } = await supabase.from("expense_items").select("claim_id").eq("id", itemId).eq("company_id", m.company_id).maybeSingle();
+  const { data: item } = await supabase.from("expense_items").select("claim_id, category, trip_type").eq("id", itemId).eq("company_id", m.company_id).maybeSingle();
   if (!item) return fail("NOT_FOUND");
+  // 자차 유류비 항목: 경로·거리·금액은 경로 함수만 바꾼다. 여기서는 사용일·적요만
+  if (item.category === "trip" && item.trip_type === "own_car") {
+    const { data, error } = await supabase.from("expense_items").update({ expense_date: date, purpose: texts[1] || null }).eq("id", itemId).select("id");
+    if (error) return { ok: false, error: messageForDbError(error) };
+    if (!data?.length) return fail("NOT_EDITABLE");
+    refresh();
+    return { ok: true };
+  }
   const { data, error } = await supabase
     .from("expense_items")
     .update({
@@ -291,6 +301,91 @@ export async function saveItemAction(itemId: string, input: ItemInput): Promise<
   if (totals.error) return { ok: false, error: messageForDbError(totals.error) };
   refresh();
   return { ok: true };
+}
+
+// 자차 유류비 항목 만들기 (trip-expense.md §4). 회사 설정·자가운전보조금은 DB가 확인한다
+export async function createOwnCarItemAction(claimId: string): Promise<Result<{ itemId: string }>> {
+  const m = await approvedMember();
+  if (!m) return fail("NOT_A_MEMBER");
+  if (!isUuid(claimId)) return fail("NOT_FOUND");
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("create_own_car_item", { p_claim_id: claimId });
+  if (error || !data) return { ok: false, error: messageForDbError(error ?? { message: "NOT_FOUND" }) };
+  refresh();
+  return { ok: true, itemId: data };
+}
+
+// 자차 항목의 사용일·적요 (경로·거리·금액은 saveOwnCarRouteAction)
+export async function saveOwnCarItemAction(itemId: string, input: { expenseDate: string; purpose: string }): Promise<Result> {
+  const m = await approvedMember();
+  if (!m) return fail("NOT_A_MEMBER");
+  if (!isUuid(itemId)) return fail("NOT_FOUND");
+  const date = DATE.test(input.expenseDate) ? input.expenseDate : null;
+  if (date && date > todayKst()) return fail("INVALID_EXPENSE_DATE");
+  const purpose = input.purpose.trim();
+  if (purpose.length > 200) return fail("INVALID_ITEM_TEXT");
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("expense_items")
+    .update({ expense_date: date, purpose: purpose || null })
+    .eq("id", itemId)
+    .eq("company_id", m.company_id)
+    .eq("category", "trip")
+    .eq("trip_type", "own_car")
+    .select("id");
+  if (error) return { ok: false, error: messageForDbError(error) };
+  if (!data?.length) return fail("NOT_EDITABLE");
+  refresh();
+  return { ok: true };
+}
+
+const place = (p: RoutePlaceInput | null) =>
+  p && p.name.trim() && Number.isFinite(p.lat) && Number.isFinite(p.lng) ? { name: p.name.trim().slice(0, 100), address: p.address?.slice(0, 200) ?? null, lat: p.lat, lng: p.lng } : null;
+
+// 자차 경로 저장 → (직접 입력이 아니면) 서버가 Kakao 길찾기로 편도 거리를 구해 반영한다.
+// 직원 권한 확인은 set_own_car_route(본인 작성 중 결의서만)가 먼저 하고, 거리 반영은 서버 전용 함수가 저장된 좌표와 같을 때만 한다.
+export async function saveOwnCarRouteAction(
+  itemId: string,
+  input: { start: RoutePlaceInput | null; end: RoutePlaceInput | null; roundTrip: boolean; manualOneWayKm: number | null },
+): Promise<Result<{ autoFailed: boolean }>> {
+  const m = await approvedMember();
+  if (!m) return fail("NOT_A_MEMBER");
+  if (!isUuid(itemId)) return fail("NOT_FOUND");
+  const start = place(input.start);
+  const end = place(input.end);
+  const manual = input.manualOneWayKm != null && Number.isFinite(input.manualOneWayKm) ? input.manualOneWayKm : null;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_own_car_route", {
+    p_item_id: itemId,
+    p_start: start,
+    p_end: end,
+    p_round_trip: input.roundTrip,
+    p_manual_one_way_km: manual ?? undefined,
+  });
+  if (error) return { ok: false, error: messageForDbError(error) };
+  let autoFailed = false;
+  if (manual === null && start && end) {
+    const { data: it } = await supabase.from("expense_items").select("distance_km, start_lat, start_lng, end_lat, end_lng").eq("id", itemId).maybeSingle();
+    if (it && it.distance_km == null && it.start_lat != null && it.start_lng != null && it.end_lat != null && it.end_lng != null) {
+      const route = await routeDistance({ lat: Number(it.start_lat), lng: Number(it.start_lng) }, { lat: Number(it.end_lat), lng: Number(it.end_lng) });
+      const admin = createAdminClient();
+      const applied =
+        route && admin
+          ? await admin.rpc("apply_route_distance", {
+              p_item_id: itemId,
+              p_start_lat: Number(it.start_lat),
+              p_start_lng: Number(it.start_lng),
+              p_end_lat: Number(it.end_lat),
+              p_end_lng: Number(it.end_lng),
+              p_one_way_m: route.meters,
+              p_duration_s: route.seconds,
+            })
+          : null;
+      autoFailed = !applied || !!applied.error || applied.data !== true;
+    }
+  }
+  refresh();
+  return { ok: true, autoFailed };
 }
 
 // AI로 다시 읽기 — 인식이 실패했거나 멈춘 항목. 크레딧은 항목당 한 번만 빠진다(credit_charged)

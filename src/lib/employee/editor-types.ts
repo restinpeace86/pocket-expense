@@ -14,6 +14,7 @@ export type EditorClaim = {
   title: string;
   description: string | null;
   exception_memo: string | null; // 예외 소명 사유 (D-084)
+  trip_transport: TripTransport | null; // 출장 이동 수단 (D-085)
   default_payment_method: PaymentMethod;
   is_business_trip: boolean;
   trip_destination: string | null;
@@ -63,7 +64,26 @@ export type EditorItem = {
   merchant_address: string | null;
   line_items: LineItem[];
   duplicate: { mine: { claim_id: string; title: string; status: ClaimStatus }[]; others: number } | null; // 같은 영수증으로 보이는 다른 항목
+  // 자차 유류비 경로 (D-085). 거리·금액은 서버가 정한다
+  start_location: string | null;
+  start_lat: number | null;
+  start_lng: number | null;
+  end_location: string | null;
+  end_lat: number | null;
+  end_lng: number | null;
+  is_round_trip: boolean | null;
+  route_one_way_km: number | null;
+  distance_km: number | null;
+  distance_source: "api" | "manual" | null;
+  route_evidence: unknown;
+  applied_fuel_rate_per_km: number | null;
 };
+
+// 자차 유류비를 쓸 수 있는지·단가·차량번호 (trip-expense.md §4, D-068·D-070)
+export type FuelPolicy = { enabled: boolean; ratePerKm: number; blocked: null | "disabled" | "allowance"; vehicleNumber: string | null };
+
+export type TripTransport = "own_car" | "public_transport";
+export type RoutePlaceInput = { name: string; address: string | null; lat: number; lng: number };
 
 export type EditorCard = { id: string; nickname: string; bin6: string | null; last4: string };
 
@@ -73,6 +93,7 @@ export type EditorData = {
   cards: EditorCard[];
   mealPolicy: MealPolicy;
   mealOverride: number | null;
+  fuel: FuelPolicy;
 };
 
 export type ItemInput = {
@@ -106,4 +127,5 @@ export type ClaimHeaderInput = {
   tripStartDate: string;
   tripEndDate: string;
   tripPurpose: string;
+  tripTransport: TripTransport | null;
 };

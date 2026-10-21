@@ -122,9 +122,10 @@
 
 ## T7. 출장비 — 기준: `spec/features/trip-expense.md` (D-035)
 - [ ] T7-1 출장 세부 유형별 입력·검증 (출장 식비·대중교통·택시·통행료·주차·숙박·자차·기타, 출장 기간 밖 경고)
-- [ ] T7-2 자차: Kakao Local 주소 검색 + Kakao Mobility 거리 계산 어댑터
-- [ ] T7-3 자차 유류비 계산 + 수동 입력 Fallback + `distance_source` + 단위 테스트
-- [ ] T7-4 왕복 토글(기본 왕복) 및 왕복 거리 × 2 계산 + 승인 화면 "왕복 · n km × 2" 표시 (D-069, O-04 해소)
+- [x] T7-2 자차: Kakao Local 주소 검색 + Kakao Mobility 거리 계산 어댑터 (2026-10-21, IMP-6, `src/lib/maps/kakao.ts`)
+- [x] T7-3 자차 유류비 계산 + 수동 입력 Fallback + `distance_source` + 단위 테스트 (2026-10-21, IMP-6, migration 040)
+- [x] T7-4 왕복 토글(기본 왕복) 및 왕복 거리 × 2 계산 + 승인 화면 "왕복 · n km × 2" 표시 (D-069, O-04 해소) (2026-10-21, IMP-6)
+- [ ] T7-5 자차 계기판 사진 2장(회사 설정 켰을 때만 필수, D-070 ②) — 설정 기본 꺼짐, 아직 직원 화면 없음
 
 ## T8. 알림톡 — 기준: `spec/features/kakao-alimtalk.md`
 - [x] T8-1 `NotificationSender` 어댑터 + `log` 드라이버 + `notification_logs` 기록 (2026-10-20, `implementation/2026-10-20_T8-alimtalk-ready.md`)
@@ -164,7 +165,7 @@
 - [x] IMP-4 법인카드 앞 6자리+뒤 4자리 저장 · 마스킹 카드번호 매칭 (2026-10-21, D-083, migration 038, `implementation/2026-10-21_improvement-4.md`)
 - [x] IMP-5 지출소명서 → 지출결의서 명칭 · 예외 소명 사유 (2026-10-21, D-084, migration 039, `implementation/2026-10-21_improvement-5.md`)
 - [ ] IMP-5b ⛔ 보류(사용자 확인 대기) 코드·DB 식별자 이름 바꾸기(`expense_claims` → `expense_reports` 등) — 운영 DB 함수·정책 약 40개 재정의 필요, 위험이 커서 사용자 확인 전 진행하지 않음(D-084). 임의로 구현 가능으로 바꾸지 말 것
-- [ ] IMP-6 출장 경비 개편 (기간 선택·자차/대중교통·경로 거리)
+- [x] IMP-6 출장 경비 개편 (기간 선택·자차/대중교통·경로 거리) (2026-10-21, D-085, migration 040, `implementation/2026-10-21_improvement-6.md`)
 - [ ] IMP-7 AI 지출 사유 초안
 - [ ] IMP-8 제목 `[카테고리] 가맹점 (외 N건)`
 

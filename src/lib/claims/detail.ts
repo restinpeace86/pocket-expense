@@ -1,4 +1,5 @@
 import "server-only";
+import { routeCardFrom } from "@/lib/expense/route";
 import { signReceiptUrls } from "@/lib/storage/signed-urls";
 import { createClient } from "@/lib/supabase/server";
 import type { ClaimDetail, DetailApproval, DetailItem } from "./types";
@@ -6,7 +7,7 @@ import type { ClaimDetail, DetailApproval, DetailItem } from "./types";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const ITEM_COLUMNS =
-  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, card_last4, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, applied_meal_limit_per_person, applied_meal_limit_mode, account_title_id, account_title_name, account_title_code, account_title_overridden, closed_month, paid_time, approval_number, merchant_address, line_items, ai_parsed_payload";
+  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, card_last4, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, applied_meal_limit_per_person, applied_meal_limit_mode, account_title_id, account_title_name, account_title_code, account_title_overridden, closed_month, paid_time, approval_number, merchant_address, line_items, ai_parsed_payload, start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km";
 
 // 결의서 상세. 열람 권한은 RLS(본인 / 같은 회사 관리자 이상 / 지정된 사전 검토자)가 건다.
 // ownerOnly: 직원 화면에서는 본인 결의서만(관리자가 직원 모드로 봐도 남의 것은 안 보이게)
@@ -44,8 +45,14 @@ export async function getClaimDetail(companyId: string, claimId: string, opts: {
   const rows = itemsRes.data ?? [];
   const urls = await signReceiptUrls(supabase, rows.map((r) => r.receipt_thumb_path));
   const dups = (dupRes.data ?? {}) as Record<string, { mine: unknown[]; others: number }>;
-  const items: DetailItem[] = rows.map(({ receipt_thumb_path, ai_parsed_payload, line_items, paid_time, ...r }) => ({
+  const items: DetailItem[] = rows.map(({ receipt_thumb_path, ai_parsed_payload, line_items, paid_time, start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, ...r }) => ({
     ...r,
+    // 자차 유류비: 영수증 대신 경로 요약 카드(D-085)
+    route:
+      r.category === "trip" && r.trip_type === "own_car"
+        ? routeCardFrom({ start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, amount: r.amount, applied_fuel_rate_per_km }, applied_fuel_rate_per_km ?? 0)
+        : null,
+    routeLabel: r.category === "trip" && r.trip_type === "own_car" ? (start_location && end_location ? `🚗 ${start_location} → ${end_location}` : "🚗 자차 (경로 미입력)") : null,
     paid_time: paid_time?.slice(0, 5) ?? null,
     line_items: Array.isArray(line_items) ? (line_items as DetailItem["line_items"]) : [],
     ai: ai_parsed_payload && typeof ai_parsed_payload === "object" ? (ai_parsed_payload as Record<string, unknown>) : null,

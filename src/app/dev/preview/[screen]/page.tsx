@@ -72,6 +72,7 @@ const SAMPLE_CLAIMS: MyClaimRow[] = [
 ];
 const EMPLOYEE_MEMBERSHIP: Membership = { ...SAMPLE_MEMBERSHIP, name: "김개발", role: "employee" };
 
+const NO_ROUTE = { start_location: null, start_lat: null, start_lng: null, end_location: null, end_lat: null, end_lng: null, is_round_trip: null, route_one_way_km: null, distance_km: null, distance_source: null, route_evidence: null, applied_fuel_rate_per_km: null } as const;
 const SAMPLE_ITEM: EditorItem = {
   id: "i1", sort_order: 1, category: "meal", trip_type: null, purchase_type: null, payment_method: "corporate_card", corporate_card_id: "card1",
   evidence_type: "card_slip", expense_date: "2026-10-16", merchant_name: "김밥천국 강남역점", merchant_business_number: "2208162517",
@@ -86,10 +87,11 @@ const SAMPLE_ITEM: EditorItem = {
     { name: "쿠폰 할인", quantity: null, unit_price: null, amount: -1000 },
   ],
   duplicate: null,
+  ...NO_ROUTE,
 };
 const SAMPLE_EDITOR: EditorData = {
   claim: {
-    id: "claim1", status: "draft", title: "", description: "", exception_memo: null, default_payment_method: "corporate_card", is_business_trip: false,
+    id: "claim1", status: "draft", title: "", description: "", exception_memo: null, trip_transport: null, default_payment_method: "corporate_card", is_business_trip: false,
     trip_destination: null, trip_start_date: null, trip_end_date: null, trip_purpose: null, item_count: 4, total_amount: 172000,
     total_company_supported: 161000, total_personal_burden: 11000, rejection_reason: null,
   },
@@ -102,6 +104,7 @@ const SAMPLE_EDITOR: EditorData = {
   cards: [{ id: "card1", nickname: "대표 법인카드", bin6: "532712", last4: "7890" }, { id: "card2", nickname: "영업팀 카드", bin6: null, last4: "1234" }],
   mealPolicy: { enabled: true, perPerson: 10000, mode: "split" },
   mealOverride: null,
+  fuel: { enabled: true, ratePerKm: 200, blocked: null, vehicleNumber: "12가3456" },
 };
 
 const AA_PAYLOAD = {
@@ -155,7 +158,7 @@ const DI: DetailItem = {
   headcount: 1, purpose: null, attendees: null, client_name: null, trip_start_date: null, trip_end_date: null, parse_status: "success", receipt_path: "x/1.jpg",
   company_supported_amount: 50000, personal_burden_amount: 0, applied_meal_limit_per_person: null, applied_meal_limit_mode: null, account_title_id: "t2", account_title_name: "여비교통비", account_title_code: null, closed_month: null,
   account_title_overridden: false, paid_time: "08:10", approval_number: "30012345", merchant_address: "서울 용산구 한강대로 405", line_items: [], ai: { merchant_name: "코레일 KTX", amount: 50000, expense_date: "2026-10-14" },
-  thumbUrl: null, isPdf: false, duplicate: null,
+  thumbUrl: null, isPdf: false, duplicate: null, route: null, routeLabel: null,
 };
 const SAMPLE_DETAIL_CLAIM: ClaimDetail = {
   claim: {
@@ -166,6 +169,12 @@ const SAMPLE_DETAIL_CLAIM: ClaimDetail = {
   owner: { name: "김개발", department: "개발팀", position: "대리" },
   items: [
     DI,
+    {
+      ...DI, id: "d4", sort_order: 4, trip_type: "own_car", merchant_name: null, merchant_business_number: null, receipt_path: null, payment_method: "personal_card", corporate_card_id: null, card_last4: null,
+      amount: 150800, company_supported_amount: 150800, supply_amount: null, vat_amount: null, paid_time: null, approval_number: null, merchant_address: null, ai: null,
+      routeLabel: "🚗 판교역 → 부산역",
+      route: { startName: "판교역", startAddress: "경기 성남시 분당구 판교역로 160", endName: "부산역", endAddress: "부산 동구 중앙대로 206", roundTrip: true, oneWayKm: 377, totalKm: 754, rate: 200, amount: 150800, source: "api", computedAt: "2026-10-14T00:30:00Z" },
+    },
     { ...DI, id: "d2", sort_order: 2, merchant_name: "한국도로공사", trip_type: "toll_parking", amount: 5000, supply_amount: null, vat_amount: null, company_supported_amount: 5000, merchant_business_number: null },
     { ...DI, id: "d3", sort_order: 3, merchant_name: "부산국밥 (직원이 고친 이름)", trip_type: "meal", amount: 17000, payment_method: "personal_card", corporate_card_id: null, company_supported_amount: 10000, personal_burden_amount: 7000, applied_meal_limit_per_person: 10000, applied_meal_limit_mode: "split", ai: { merchant_name: "부산국밥", amount: 17000 }, duplicate: { mine: 0, others: 1 } },
   ],

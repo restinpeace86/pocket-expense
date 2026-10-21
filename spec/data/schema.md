@@ -208,6 +208,7 @@
 | title | text | not null | 결의서 제목. 예: "10/15 부산 출장" (자동 제안, 수정 가능) |
 | description | text | null | 지출 사유(공통 사유) |
 | exception_memo | text | null, 500자 이하 | 예외 소명 사유(주말·심야 등 예외 건 해명, 선택, D-084) |
+| trip_transport | trip_transport enum(own_car, public_transport) | null | 출장 이동 수단 (D-085) |
 | is_business_trip | boolean | not null, default false | 출장 결의서 여부 (D-035) |
 | trip_destination | text | null | 출장지. `is_business_trip`이면 상신 시 필수 |
 | trip_start_date / trip_end_date | date | null | 출장 기간. `is_business_trip`이면 상신 시 필수 |
@@ -269,6 +270,8 @@
 | is_round_trip | boolean | null | 왕복 여부. true면 distance_km = 편도 × 2 (D-069, 기본 왕복) |
 | distance_km | numeric(8,1) | null | 주행거리 |
 | distance_source | distance_source | null | |
+| route_one_way_km | numeric(8,1) | null, 0~5000 | 길찾기(api) 또는 직접 입력(manual) 편도 거리. distance_km = 편도 × (왕복이면 2) (D-085) |
+| route_evidence | jsonb | null | 디지털 증빙 근거: 출발·도착 주소, 길찾기 제공자·편도 m·소요 초·계산 시각(또는 직접 입력 시각) (D-085) |
 | applied_fuel_rate_per_km | integer | null | 계산 시점 단가 스냅샷 (D-018) |
 | item_custom_payload | jsonb | not null, default '{}' | 양식 항목(표) 고유 필드 값 `{ field_key: value }` |
 | account_title_id | uuid | FK account_titles, null | 상신 시 매핑으로 결정 (D-036) |

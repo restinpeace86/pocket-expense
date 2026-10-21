@@ -1,14 +1,18 @@
 "use client";
 
-import { AlertTriangle, ChevronLeft, ChevronRight, FileText, ImageIcon, Loader2, PenLine, Search, X } from "lucide-react";
+import { AlertTriangle, Car, ChevronLeft, ChevronRight, FileText, ImageIcon, Loader2, PenLine, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { receiptOriginalUrlAction } from "@/lib/claims/actions";
 import type { DetailItem } from "@/lib/claims/types";
 import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL } from "@/lib/expense/categories";
 import { formatWon } from "@/lib/format";
+import { RouteEvidenceCard } from "./route-evidence-card";
 
 // 결의서 항목 목록 + 영수증 패널 (admin-expense-approvals.md §4.C, employee-mobile.md ④)
 const EVIDENCE_LABEL: Record<string, string> = { card_slip: "카드매출전표", cash_receipt: "현금영수증", tax_invoice: "세금계산서", simple_receipt: "간이영수증", other: "기타" };
+
+// 항목 이름: 자차는 "🚗 출발 → 도착", 나머지는 가맹점
+export const itemName = (i: DetailItem, empty: string) => i.routeLabel ?? i.merchant_name ?? empty;
 
 export function classLabel(i: DetailItem): string {
   if (!i.category) return "-";
@@ -57,8 +61,9 @@ function ItemBadges({ i, flagged }: { i: DetailItem; flagged: boolean }) {
   const edited = editedFields(i);
   if (edited.length) badges.push([`직원 수정: ${edited.join("·")}`, "bg-violet-100 text-violet-800"]);
   if (i.amount !== null && i.supply_amount !== null && i.vat_amount !== null && i.supply_amount + i.vat_amount !== i.amount) badges.push(["합계≠공급가+부가세", "bg-amber-100 text-amber-800"]);
-  if (!i.merchant_business_number) badges.push(["사업자번호 없음", "bg-zinc-100 text-zinc-500"]);
-  if (!i.receipt_path) badges.push(["영수증 없음", "bg-zinc-100 text-zinc-500"]);
+  if (i.route?.source === "manual") badges.push(["직접 입력 거리", "bg-amber-100 text-amber-800"]);
+  if (!i.routeLabel && !i.merchant_business_number) badges.push(["사업자번호 없음", "bg-zinc-100 text-zinc-500"]);
+  if (!i.routeLabel && !i.receipt_path) badges.push(["영수증 없음", "bg-zinc-100 text-zinc-500"]);
   if (badges.length === 0) return null;
   return (
     <span className="flex flex-wrap gap-1">
@@ -74,13 +79,13 @@ function ItemBadges({ i, flagged }: { i: DetailItem; flagged: boolean }) {
 function Thumb({ i, onOpen }: { i: DetailItem; onOpen: () => void }) {
   const cls = "size-12 shrink-0 rounded-lg border border-zinc-200 bg-zinc-50 object-cover";
   return (
-    <button type="button" onClick={onOpen} aria-label="영수증 보기" className="relative shrink-0">
+    <button type="button" onClick={onOpen} aria-label={i.routeLabel ? "경로 요약 보기" : "영수증 보기"} className="relative shrink-0">
       {i.thumbUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- 10분짜리 서명 링크
         <img src={i.thumbUrl} alt="" className={cls} />
       ) : (
         <span className={`${cls} inline-flex items-center justify-center text-zinc-400`}>
-          {i.isPdf ? <FileText className="size-5" /> : i.receipt_path ? <ImageIcon className="size-5" /> : <PenLine className="size-5" />}
+          {i.routeLabel ? <Car className="size-5 text-brand-600" /> : i.isPdf ? <FileText className="size-5" /> : i.receipt_path ? <ImageIcon className="size-5" /> : <PenLine className="size-5" />}
         </span>
       )}
       <Search className="absolute -bottom-1 -right-1 size-5 rounded-full bg-white p-0.5 text-zinc-600 shadow" />
@@ -122,7 +127,7 @@ function ReceiptPanel({ items, index, cards, onIndex, onClose, showAccount }: { 
       <div className="flex max-h-dvh w-full max-w-5xl flex-col overflow-hidden bg-white sm:max-h-[92vh] sm:rounded-2xl">
         <div className="flex items-center justify-between gap-2 border-b border-zinc-200 px-4 py-2">
           <p className="min-w-0 truncate font-semibold">
-            영수증 {index + 1} / {items.length} · {i.merchant_name ?? "가맹점 미입력"}
+            영수증 {index + 1} / {items.length} · {itemName(i, "가맹점 미입력")}
           </p>
           <div className="flex shrink-0 items-center gap-1">
             <button type="button" aria-label="이전 영수증" disabled={index === 0} onClick={() => onIndex(index - 1)} className="inline-flex size-11 items-center justify-center rounded-xl hover:bg-zinc-100 disabled:opacity-30">
@@ -138,8 +143,12 @@ function ReceiptPanel({ items, index, cards, onIndex, onClose, showAccount }: { 
         </div>
         <div className="grid min-h-0 flex-1 overflow-y-auto md:grid-cols-2">
           <div className="flex min-h-64 items-center justify-center bg-zinc-100 p-3">
-            {!i.receipt_path ? (
-              <p className="text-sm text-zinc-500">영수증 없이 추가한 항목이에요.</p>
+            {i.route ? (
+              <div className="w-full max-w-sm">
+                <RouteEvidenceCard card={i.route} />
+              </div>
+            ) : !i.receipt_path ? (
+              <p className="text-sm text-zinc-500">{i.routeLabel ? "경로를 아직 입력하지 않은 자차 항목이에요." : "영수증 없이 추가한 항목이에요."}</p>
             ) : loading ? (
               <Loader2 className="size-6 animate-spin text-zinc-400" />
             ) : !photo ? (
@@ -284,7 +293,7 @@ export function ClaimItems({
                   </td>
                   <td className="whitespace-nowrap border-b border-zinc-100 px-2 py-2 align-top">{i.expense_date?.slice(5).replace("-", "/") ?? "-"}</td>
                   <td className="border-b border-zinc-100 px-2 py-2 align-top">
-                    <span className="block font-medium">{i.merchant_name ?? "-"}</span>
+                    <span className="block font-medium">{itemName(i, "-")}</span>
                     <span className="mt-1 flex flex-wrap gap-1">{paymentBadge(i, cards)}</span>
                     <span className="mt-1 block">
                       <ItemBadges i={i} flagged={flagged} />
@@ -316,7 +325,7 @@ export function ClaimItems({
               <Thumb i={i} onOpen={() => setOpen(n)} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="min-w-0 truncate font-medium">{i.merchant_name ?? "가맹점 미입력"}</p>
+                  <p className="min-w-0 truncate font-medium">{itemName(i, "가맹점 미입력")}</p>
                   <p className="shrink-0 font-semibold tabular-nums">{i.amount !== null ? formatWon(i.amount) : "-"}</p>
                 </div>
                 <p className="text-xs text-zinc-500">

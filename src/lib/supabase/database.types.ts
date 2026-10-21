@@ -614,6 +614,7 @@ export type Database = {
           trip_end_date: string | null
           trip_purpose: string | null
           trip_start_date: string | null
+          trip_transport: Database["public"]["Enums"]["trip_transport"] | null
           updated_at: string
         }
         Insert: {
@@ -646,6 +647,7 @@ export type Database = {
           trip_end_date?: string | null
           trip_purpose?: string | null
           trip_start_date?: string | null
+          trip_transport?: Database["public"]["Enums"]["trip_transport"] | null
           updated_at?: string
         }
         Update: {
@@ -678,6 +680,7 @@ export type Database = {
           trip_end_date?: string | null
           trip_purpose?: string | null
           trip_start_date?: string | null
+          trip_transport?: Database["public"]["Enums"]["trip_transport"] | null
           updated_at?: string
         }
         Relationships: [
@@ -759,6 +762,8 @@ export type Database = {
           purpose: string | null
           receipt_path: string | null
           receipt_thumb_path: string | null
+          route_evidence: Json | null
+          route_one_way_km: number | null
           sort_order: number
           start_lat: number | null
           start_lng: number | null
@@ -819,6 +824,8 @@ export type Database = {
           purpose?: string | null
           receipt_path?: string | null
           receipt_thumb_path?: string | null
+          route_evidence?: Json | null
+          route_one_way_km?: number | null
           sort_order?: number
           start_lat?: number | null
           start_lng?: number | null
@@ -879,6 +886,8 @@ export type Database = {
           purpose?: string | null
           receipt_path?: string | null
           receipt_thumb_path?: string | null
+          route_evidence?: Json | null
+          route_one_way_km?: number | null
           sort_order?: number
           start_lat?: number | null
           start_lng?: number | null
@@ -1509,6 +1518,18 @@ export type Database = {
         Args: { p_item_id: string; p_ok: boolean; p_payload?: Json }
         Returns: undefined
       }
+      apply_route_distance: {
+        Args: {
+          p_duration_s: number
+          p_end_lat: number
+          p_end_lng: number
+          p_item_id: string
+          p_one_way_m: number
+          p_start_lat: number
+          p_start_lng: number
+        }
+        Returns: boolean
+      }
       approve_claim: {
         Args: { p_claim_id: string; p_comment?: string }
         Returns: Database["public"]["Enums"]["claim_status"]
@@ -1540,6 +1561,7 @@ export type Database = {
         }
         Returns: string
       }
+      create_own_car_item: { Args: { p_claim_id: string }; Returns: string }
       create_receipt_item: {
         Args: { p_claim_id: string; p_is_pdf?: boolean; p_thumb_ext?: string }
         Returns: Json
@@ -1605,6 +1627,16 @@ export type Database = {
         Args: {
           p_member_id: string
           p_role: Database["public"]["Enums"]["member_role"]
+        }
+        Returns: undefined
+      }
+      set_own_car_route: {
+        Args: {
+          p_end: Json
+          p_item_id: string
+          p_manual_one_way_km?: number
+          p_round_trip: boolean
+          p_start: Json
         }
         Returns: undefined
       }
@@ -1691,6 +1723,7 @@ export type Database = {
       parse_status: "none" | "parsing" | "success" | "failed"
       payment_method: "corporate_card" | "personal_card"
       purchase_type: "pantry" | "office_supplies" | "small_equipment"
+      trip_transport: "own_car" | "public_transport"
       trip_type:
         | "meal"
         | "public_transport"
@@ -1860,6 +1893,7 @@ export const Constants = {
       parse_status: ["none", "parsing", "success", "failed"],
       payment_method: ["corporate_card", "personal_card"],
       purchase_type: ["pantry", "office_supplies", "small_equipment"],
+      trip_transport: ["own_car", "public_transport"],
       trip_type: [
         "meal",
         "public_transport",
