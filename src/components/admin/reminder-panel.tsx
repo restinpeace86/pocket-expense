@@ -37,7 +37,7 @@ export function ReminderPanel({ candidates, preview = false }: { candidates: Rem
           setPicked(sendable.map((c) => c.member_id));
           setOpen(true);
         }}
-        className="inline-flex min-h-11 items-center gap-1.5 self-start rounded-xl border border-amber-300 bg-amber-50 px-4 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-4 text-sm font-semibold text-amber-900 hover:bg-amber-100"
       >
         <Bell className="size-4" /> 미제출자 독촉 ({candidates.length}명)
       </button>

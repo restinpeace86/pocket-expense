@@ -2,7 +2,7 @@ import "server-only";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSender, siteUrl } from "./sender";
-import { approvalCompleted, approvalRejected, approvalRequest, normalizePhone, payoutCompleted, reminder, type BuiltMessage } from "./templates";
+import { approvalCompleted, approvalRejected, approvalRequest, invite, normalizePhone, payoutCompleted, reminder, type BuiltMessage } from "./templates";
 
 // 결재 알림 보내기 (kakao-alimtalk.md §2, notification-rule.md §2).
 // - 결재 처리(DB 트랜잭션)가 끝난 뒤에 부른다. 실패해도 결재는 되돌리지 않는다.
@@ -11,7 +11,7 @@ import { approvalCompleted, approvalRejected, approvalRequest, normalizePhone, p
 type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
 const RETRY_DELAY_MS = 30_000;
 
-async function deliver(admin: Admin, p: { companyId: string; claimId?: string; memberId?: string; phone: string | null; message: BuiltMessage }) {
+async function deliver(admin: Admin, p: { companyId: string; claimId?: string; memberId?: string; invitationId?: string; phone: string | null; message: BuiltMessage }) {
   const sender = getSender();
   const to = normalizePhone(p.phone);
   const buttonUrl = `${siteUrl()}${p.message.buttonPath}`;
@@ -21,6 +21,7 @@ async function deliver(admin: Admin, p: { companyId: string; claimId?: string; m
       company_id: p.companyId,
       claim_id: p.claimId ?? null,
       recipient_member_id: p.memberId ?? null,
+      invitation_id: p.invitationId ?? null,
       recipient_phone: to ?? (p.phone ?? ""),
       template_code: p.message.template,
       payload: { text: p.message.text, button_label: p.message.buttonLabel, button_url: buttonUrl },
@@ -163,4 +164,18 @@ export async function sendReminders(companyId: string, targets: { memberId: stri
     n++;
   }
   return n;
+}
+
+// 개별 초대 알림톡 (INVITE, D-042, notification-rule.md). 관리자가 만든 초대(같은 회사, 아직 초대 대기)만 보낸다
+export async function sendInvite(companyId: string, invitationId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  if (!admin) return false;
+  const [{ data: inv }, { data: company }] = await Promise.all([
+    admin.from("member_invitations").select("id, name, phone, token, status").eq("id", invitationId).eq("company_id", companyId).maybeSingle(),
+    admin.from("companies").select("name").eq("id", companyId).single(),
+  ]);
+  if (!inv || inv.status !== "invited") return false;
+  await deliver(admin, { companyId, invitationId: inv.id, phone: inv.phone, message: invite({ companyName: company?.name ?? "", name: inv.name, token: inv.token }) });
+  await admin.from("member_invitations").update({ last_sent_at: new Date().toISOString() }).eq("id", inv.id);
+  return true;
 }

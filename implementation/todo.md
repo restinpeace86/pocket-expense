@@ -54,7 +54,7 @@
   - [x] 역할 변경·최고 관리자 넘기기(최고 관리자만), 비활성화(점검: 미정산 경고, 결재라인·검토 차례 차단) — migration 013, `supabase/tests/005_member_management.sql`, `src/lib/admin/capabilities.test.ts`
   - [x] T3-4r 비활성 멤버 다시 활성화 (D-062, migration 014, `supabase/tests/006_member_reactivation.sql`) (2026-10-17)
   - [x] 관리자 홈: 승인된 멤버가 본인뿐이면 초대 카드를 맨 위(안내 포함), 이후에는 아래로 간단히 (admin-dashboard.md ①-2) (2026-10-17)
-- [ ] T3-6 개별 초대(초대 대기·알림톡/링크 복사·취소, `/join/i/[token]` 즉시 활성, D-042)
+- [x] T3-6 개별 초대(초대 대기·알림톡/링크 복사·취소, `/join/i/[token]` 즉시 활성, D-042) (2026-10-22, D-095, `implementation/2026-10-22_T3-6-personal-invites.md`)
 - [x] T3-7 멤버 편집: 개인별 식대 예외 한도(D-044) — 회사가 식대 한도를 쓸 때만 보임, 비우면 회사 기본 (2026-10-18, migration 023)
 - [x] T3-8 미제출자 독촉 알림(멤버별·일괄, 하루 1회, D-043) (2026-10-22, D-094, migration 047, `implementation/2026-10-22_T3-8-reminders.md`)
 - [x] T3-10 법인카드 등록(선택: 별칭·끝 4자리·담당자, 전체 카드번호 미저장, 사용 안 함, 이번 달 사용 합계) 화면 (`corporate-cards.md`, D-055) (2026-10-18)
