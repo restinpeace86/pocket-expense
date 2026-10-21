@@ -14,7 +14,7 @@ import { routeCardFrom } from "@/lib/expense/route";
 import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL } from "@/lib/expense/categories";
 import { claimStatusBadge } from "@/lib/expense/status";
 import { suggestPurpose } from "@/lib/expense/purpose";
-import { suggestTitle } from "@/lib/expense/title";
+import { isAutoTitle, suggestTitle } from "@/lib/expense/title";
 import { formatWon } from "@/lib/format";
 import { submitClaimAction } from "@/lib/claims/actions";
 import { HEADER_PROBLEM_LABEL, ITEM_PROBLEM_LABEL, type ClaimProblems } from "@/lib/claims/problems";
@@ -287,7 +287,8 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
     [claim],
   );
   const [form, setForm] = useState<ClaimHeaderInput>(initial);
-  const [titleTouched, setTitleTouched] = useState(claim.title !== "");
+  // 저장된 제목이 자동 제안 모양이면 계속 자동(카테고리를 고르면 [카테고리]가 붙는다, D-087). 직원이 직접 쓴 제목만 고정
+  const [titleTouched, setTitleTouched] = useState(() => !isAutoTitle(claim.title, { isBusinessTrip: claim.is_business_trip, tripDestination: claim.trip_destination, tripStartDate: claim.trip_start_date }, items));
   // 지출 사유: 직원이 쓰기 전까지는 AI 초안을 보여 주고 그대로 저장·상신된다(D-086)
   const [descTouched, setDescTouched] = useState((claim.description ?? "") !== "");
   const [savedForm, setSavedForm] = useState<ClaimHeaderInput>(initial);
@@ -337,8 +338,6 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
     if (res.ok) {
       setSavedForm(current);
       setForm(current);
-      // 제목이 비어 있으면 자동 제안을 계속 쓴다(영수증이 늦게 나타나도 제안이 채워지게)
-      if (current.title.trim()) setTitleTouched(true);
       if (current.description.trim()) setDescTouched(true);
       setMessage({ kind: "ok", text: "임시저장했어요. 다른 기기(PC)에서도 이어서 쓸 수 있어요." });
     } else {

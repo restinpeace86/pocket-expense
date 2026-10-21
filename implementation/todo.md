@@ -167,7 +167,7 @@
 - [ ] IMP-5b ⛔ 보류(사용자 확인 대기) 코드·DB 식별자 이름 바꾸기(`expense_claims` → `expense_reports` 등) — 운영 DB 함수·정책 약 40개 재정의 필요, 위험이 커서 사용자 확인 전 진행하지 않음(D-084). 임의로 구현 가능으로 바꾸지 말 것
 - [x] IMP-6 출장 경비 개편 (기간 선택·자차/대중교통·경로 거리) (2026-10-21, D-085, migration 040, `implementation/2026-10-21_improvement-6.md`)
 - [x] IMP-7 AI 지출 사유 초안 (2026-10-21, D-086, `implementation/2026-10-21_improvement-7.md`)
-- [ ] IMP-8 제목 `[카테고리] 가맹점 (외 N건)`
+- [x] IMP-8 제목 `[카테고리] 가맹점 (외 N건)` (2026-10-21, D-087, `implementation/2026-10-21_improvement-8.md`)
 
 ## 스킵 기록
 (하네스가 스킵한 작업과 사유를 여기에 기록)
