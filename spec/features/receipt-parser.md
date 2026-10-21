@@ -18,6 +18,7 @@
 | `merchant_name` | string | 가맹점(상호)명 |
 | `merchant_business_number` | string(숫자 10자리) / null | 가맹점 사업자등록번호. 형식 검증(10자리) 실패 시 null (D-050) |
 | `card_number_masked` | string / null | 영수증에 찍힌 카드번호를 **보이는 그대로**(가려진 자리는 `*`, 추측 금지). 저장 전 앞 6자리·뒤 4자리 말고는 `*`로 바꾼다. 법인카드 자동 판별용 (D-083, `corporate-cards.md` §3) |
+| `suggested_purpose` | string / null | 지출 사유 초안 한 줄(25자 안팎, 명사형, 영수증에서 알 수 있는 사실만, 사람·회사 이름 지어내기 금지). 40자로 자른다. 결의서 [지출 사유] 초안에 쓴다 (D-086) |
 | `card_last4` | string(숫자 4자리) / null | 위 번호의 뒤 4자리가 모두 숫자일 때만(서버가 만든다) |
 | `suggested_evidence_type` | `evidence_type` 값 / null | 증빙구분 추정(D-051): "신용승인·카드번호 마스킹" → 카드매출전표, "현금영수증·지출증빙/소득공제" → 현금영수증, "세금계산서·공급받는자" → 세금계산서, 사업자 정보 없는 수기 영수증 → 간이영수증. 확신이 낮으면 null |
 | `amount` | integer | 총 결제금액(합계) |

@@ -11,12 +11,13 @@ export const isUuid = (v: string) => UUID.test(v);
 const ITEM_COLUMNS =
   "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items, start_location, start_lat, start_lng, end_location, end_lat, end_lng, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km";
 
-function aiFlags(payload: unknown): { aiCardMasked: string | null; aiIncomeDeduction: boolean } {
+function aiFlags(payload: unknown): { aiCardMasked: string | null; aiIncomeDeduction: boolean; aiPurpose: string | null } {
   const p = (payload && typeof payload === "object" ? payload : {}) as Record<string, unknown>;
   return {
     // 서버가 앞 6자리·뒤 4자리 말고는 가려 저장한 번호. 예전 기록은 card_last4만 있다
     aiCardMasked: maskCardNumber(p.card_number_masked ?? p.card_last4),
     aiIncomeDeduction: p.suggested_evidence_type === "cash_receipt" && p.cash_receipt_income_deduction === true,
+    aiPurpose: typeof p.suggested_purpose === "string" && p.suggested_purpose.trim() ? p.suggested_purpose.trim().slice(0, 40) : null,
   };
 }
 

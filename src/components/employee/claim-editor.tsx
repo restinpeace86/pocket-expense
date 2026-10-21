@@ -13,6 +13,7 @@ import type { ClaimHeaderInput, EditorData, EditorItem, PaymentMethod, TripTrans
 import { routeCardFrom } from "@/lib/expense/route";
 import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL } from "@/lib/expense/categories";
 import { claimStatusBadge } from "@/lib/expense/status";
+import { suggestPurpose } from "@/lib/expense/purpose";
 import { suggestTitle } from "@/lib/expense/title";
 import { formatWon } from "@/lib/format";
 import { submitClaimAction } from "@/lib/claims/actions";
@@ -287,6 +288,8 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
   );
   const [form, setForm] = useState<ClaimHeaderInput>(initial);
   const [titleTouched, setTitleTouched] = useState(claim.title !== "");
+  // 지출 사유: 직원이 쓰기 전까지는 AI 초안을 보여 주고 그대로 저장·상신된다(D-086)
+  const [descTouched, setDescTouched] = useState((claim.description ?? "") !== "");
   const [savedForm, setSavedForm] = useState<ClaimHeaderInput>(initial);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [sheet, setSheet] = useState(openAdd && items.length === 0);
@@ -307,7 +310,9 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
   const exceptionText = exceptionSummary(exceptionFlags(items));
   const suggestion = suggestTitle({ isBusinessTrip: form.isBusinessTrip, tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null }, items);
   const title = titleTouched ? form.title : suggestion;
-  const current = { ...form, title };
+  const purposeDraft = suggestPurpose({ isBusinessTrip: form.isBusinessTrip, tripDestination: form.tripDestination, tripPurpose: form.tripPurpose }, items);
+  const description = descTouched ? form.description : purposeDraft;
+  const current = { ...form, title, description };
   const dirty = JSON.stringify(current) !== JSON.stringify(savedForm);
   const uploadingIds = new Set(uploader.rows.filter((r) => r.phase !== "done").map((r) => r.itemId).filter(Boolean));
   const { prune } = uploader;
@@ -334,6 +339,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
       setForm(current);
       // 제목이 비어 있으면 자동 제안을 계속 쓴다(영수증이 늦게 나타나도 제안이 채워지게)
       if (current.title.trim()) setTitleTouched(true);
+      if (current.description.trim()) setDescTouched(true);
       setMessage({ kind: "ok", text: "임시저장했어요. 다른 기기(PC)에서도 이어서 쓸 수 있어요." });
     } else {
       setMessage({ kind: "error", text: res.error });
@@ -421,11 +427,20 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
           <textarea
             id="claim-desc"
             className={`${inputClass} min-h-20 py-2`}
-            value={form.description}
+            value={description}
             maxLength={1000}
             placeholder="예: A사 프로젝트 킥오프 미팅 시 참석자 음료 제공"
-            onChange={(e) => set("description", e.target.value)}
+            onChange={(e) => {
+              setDescTouched(true);
+              set("description", e.target.value);
+            }}
           />
+          {!descTouched && purposeDraft && (
+            <p className="flex items-start gap-1.5 text-xs text-brand-700">
+              <span className="shrink-0 whitespace-nowrap rounded-full bg-brand-50 px-2 py-0.5 font-semibold">✨ AI 초안</span>
+              영수증 내용으로 써 뒀어요. 다르면 눌러서 고쳐 주세요.
+            </p>
+          )}
           <p className="text-xs text-zinc-500">관리자가 &ldquo;이 돈을 왜 썼지?&rdquo; 하고 묻지 않도록 한 줄로 적어 주세요.</p>
         </div>
         <div className="flex flex-col gap-1.5">

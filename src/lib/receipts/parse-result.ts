@@ -16,6 +16,7 @@ export type ParsedReceipt = {
   suggested_category: "meal" | "trip" | "meeting" | "purchase" | null;
   suggested_trip_type: "meal" | "public_transport" | "taxi" | "toll_parking" | "lodging" | "other" | null;
   suggested_purchase_type: "pantry" | "office_supplies" | "small_equipment" | null;
+  suggested_purpose: string | null; // 지출 사유 초안 한 줄(D-086) — 결의서 [지출 사유] 초안에 쓴다
   // 참고 정보(D-079): 지출결의서 양식에는 넣지 않고 화면에 보여 주기·중복 영수증 확인에 쓴다
   paid_time: string | null; // HH:MM
   approval_number: string | null;
@@ -41,6 +42,13 @@ function digits(v: unknown, len: number): string | null {
   if (typeof v !== "string" && typeof v !== "number") return null;
   const d = String(v).replace(/[^0-9]/g, "");
   return d.length === len ? d : null;
+}
+
+// 사유 한 줄: 줄바꿈·끝 마침표 제거, 40자까지
+function purposeText(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.replace(/\s+/g, " ").trim().replace(/[.。]+$/, "").slice(0, 40).trim();
+  return t || null;
 }
 
 function lineItems(v: unknown): LineItem[] {
@@ -83,6 +91,7 @@ export function normalizeParsed(raw: unknown, today: string): ParsedReceipt {
     suggested_category: oneOf(r.suggested_category, CATEGORY),
     suggested_trip_type: oneOf(r.suggested_trip_type, TRIP),
     suggested_purchase_type: oneOf(r.suggested_purchase_type, PURCHASE),
+    suggested_purpose: purposeText(r.suggested_purpose),
     paid_time: typeof r.paid_time === "string" && /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(r.paid_time) ? r.paid_time.slice(0, 5) : null,
     approval_number: typeof r.approval_number === "string" && /^[0-9A-Za-z]{4,20}$/.test(r.approval_number.replace(/[\s-]/g, "")) ? r.approval_number.replace(/[\s-]/g, "") : null,
     merchant_address: typeof r.merchant_address === "string" && r.merchant_address.trim() ? r.merchant_address.trim().slice(0, 200) : null,

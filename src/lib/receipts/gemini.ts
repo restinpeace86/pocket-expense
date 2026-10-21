@@ -26,6 +26,7 @@ const RESPONSE_SCHEMA = {
     suggested_category: nullable("string", { enum: ["meal", "trip", "meeting", "purchase"] }),
     suggested_trip_type: nullable("string", { enum: ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other"] }),
     suggested_purchase_type: nullable("string", { enum: ["pantry", "office_supplies", "small_equipment"] }),
+    suggested_purpose: nullable("string"),
     paid_time: nullable("string"),
     approval_number: nullable("string"),
     merchant_address: nullable("string"),
@@ -55,6 +56,7 @@ function prompt(isBusinessTrip: boolean, today: string) {
 ${isBusinessTrip ? "- 이 영수증은 출장 결의서에 올라왔습니다. suggested_category는 trip으로 하고 suggested_trip_type을 판단하세요" : "- 식당 영수증은 suggested_category를 meal로 하세요"}
 - suggested_trip_type(출장비일 때): 식당 meal, 승차권·항공권 public_transport, 택시 taxi, 톨게이트·하이패스·주차장 toll_parking, 호텔·숙박 lodging, 그 밖 other
 - suggested_purchase_type(물품 구매일 때): 간식·음료·생수 pantry, 문구·소모품 office_supplies, 소형 전자기기·비품 small_equipment
+- suggested_purpose: 회계 장부·관리자 검토에 맞는 정중한 업무용 지출 사유 한 줄(25자 이내, 명사형으로 끝냄, 마침표 없음). 영수증에서 알 수 있는 사실(가맹점 종류·품목·시간대)만 쓰고 사람 이름·회사 이름·참석자를 지어내지 마세요. 예: 다이소 문구 → "사내 비품 및 소모품 구입", 카페 음료 여러 잔 → "팀원 실무 회의 및 다과 진행", 한식당 점심 → "부서 정기 점심 식사 진행"
 - paid_time: 결제(거래) 시각 HH:MM (24시간)
 - approval_number: 카드·현금영수증 승인번호
 - merchant_address: 영수증에 적힌 가맹점 주소 그대로

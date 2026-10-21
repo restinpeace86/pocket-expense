@@ -58,6 +58,7 @@ export type EditorItem = {
   aiFilled: boolean;
   aiCardMasked: string | null; // AI가 읽은 카드번호(가린 자리 *, 법인카드 판별 안내용, D-083)
   aiIncomeDeduction: boolean; // 현금영수증이 소득공제용으로 발행됨
+  aiPurpose: string | null; // AI가 쓴 지출 사유 한 줄(D-086)
   // 참고 정보(D-079, AI가 읽음·보여 주기만)
   paid_time: string | null;
   approval_number: string | null;

@@ -31,6 +31,11 @@ describe("normalizeParsed", () => {
     expect(normalizeParsed({ card_number_masked: "5327-12**-****-432*" }, "2026-10-20")).toMatchObject({ card_number_masked: "532712******432*", card_last4: null });
     expect(normalizeParsed({ card_number_masked: "****-****-****-****" }, "2026-10-20")).toMatchObject({ card_number_masked: null, card_last4: null });
   });
+  it("지출 사유 초안: 한 줄·40자·끝 마침표 없음", () => {
+    expect(normalizeParsed({ suggested_purpose: " 사내 비품 및\n소모품 구입. " }, "2026-10-20").suggested_purpose).toBe("사내 비품 및 소모품 구입");
+    expect(normalizeParsed({ suggested_purpose: "가".repeat(60) }, "2026-10-20").suggested_purpose).toHaveLength(40);
+    expect(normalizeParsed({ suggested_purpose: 3 }, "2026-10-20").suggested_purpose).toBeNull();
+  });
   it("참고 정보: 시각·승인번호·주소·품목", () => {
     const r = normalizeParsed(
       {
