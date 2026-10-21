@@ -53,9 +53,11 @@ export async function buildTaxZip(opts: {
   files: ZipFile[];
   refreshUrls: (names: string[]) => Promise<ZipFile[]>; // 실패분 새 링크
   onProgress: (p: ZipProgress) => void;
+  // 영수증을 다 받은 뒤 같은 바이트로 만들 추가 파일(지출결의서 PDF). 실패하면 null — ZIP은 그대로 만든다
+  extra?: (got: Map<string, Uint8Array>) => Promise<{ name: string; data: Uint8Array } | null>;
   maxPartBytes?: number;
   concurrency?: number;
-}): Promise<{ parts: Blob[]; failed: string[] }> {
+}): Promise<{ parts: Blob[]; failed: string[]; extraAdded: boolean }> {
   const max = opts.maxPartBytes ?? 500 * 1024 * 1024;
   const parts: Blob[] = [];
   let part = new Part();
@@ -63,6 +65,7 @@ export async function buildTaxZip(opts: {
   const total = opts.files.length;
   let done = 0;
   let failed: ZipFile[] = [];
+  const got = new Map<string, Uint8Array>();
   // 받은 순서대로 넣되, 넣는 동안 다른 다운로드와 섞이지 않게 한 줄로 넣는다
   let chain = Promise.resolve();
   const put = (name: string, data: Uint8Array) => {
@@ -73,6 +76,7 @@ export async function buildTaxZip(opts: {
       }
       part.add(`영수증/${name}`, data);
     });
+    got.set(name, data);
     return chain;
   };
 
@@ -99,8 +103,10 @@ export async function buildTaxZip(opts: {
     failed = await run(again, true);
   }
   await chain;
+  const more = opts.extra ? await opts.extra(got).catch(() => null) : null;
+  if (more) part.add(more.name, more.data);
   parts.push(await part.end());
-  return { parts, failed: failed.map((f) => f.name) };
+  return { parts, failed: failed.map((f) => f.name), extraAdded: !!more };
 }
 
 export function saveBlob(blob: Blob, name: string) {

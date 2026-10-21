@@ -4,7 +4,7 @@ import { AlertTriangle, FileDown, FileSpreadsheet, Loader2, LockOpen } from "luc
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { closeTaxMonthAction, reopenTaxMonthAction, taxEvidenceFilesAction } from "@/app/workspace/[id]/admin/export/actions";
+import { closeTaxMonthAction, reopenTaxMonthAction, taxClaimDocsAction, taxEvidenceFilesAction } from "@/app/workspace/[id]/admin/export/actions";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
@@ -77,7 +77,8 @@ export function TaxClosingView({
     }
     setProgress({ step: "영수증 받는 중", done: 0, total: list.files.length, failed: 0 });
     const t0 = performance.now();
-    const { parts, failed } = await buildTaxZip({
+    let pdfNote = "";
+    const { parts, failed, extraAdded } = await buildTaxZip({
       workbook,
       files: list.files,
       refreshUrls: async (names) => {
@@ -85,7 +86,41 @@ export function TaxClosingView({
         return r.ok ? r.files : [];
       },
       onProgress: (p) => setProgress({ step: "영수증 받는 중", ...p }),
+      // 지출결의서 PDF: 받은 영수증 바이트를 그대로 넣는다(T10-3b). 누락분 다시 받기에는 만들지 않는다
+      extra: only
+        ? undefined
+        : async (got) => {
+            setProgress({ step: "지출결의서 PDF 만드는 중", done: 0, total: 0, failed: 0 });
+            const d = await taxClaimDocsAction(month);
+            if (!d.ok) return null;
+            const { buildClaimsPdf } = await import("@/lib/tax/pdf-client");
+            const n = d.rows.length;
+            const evidence = new Map(
+              d.rows.map((r) => {
+                const f = evidenceFile(r, month, n);
+                const data = f ? got.get(f.name) : undefined;
+                const ext = f?.name.split(".").pop();
+                const what = isOwnCar(r) ? `자차 ${r.start_location ?? ""}→${r.end_location ?? ""}` : (r.merchant_name ?? "");
+                return [
+                  r.item_id,
+                  {
+                    no: evidenceNo(month, r.seq, n),
+                    label: `증빙 ${evidenceNo(month, r.seq, n)} · ${r.expense_date} · ${what} · ${(r.amount ?? 0).toLocaleString("ko-KR")}원 — ${r.claim_title}`,
+                    image: data ? { kind: ext === "pdf" ? ("pdf" as const) : ext === "png" ? ("png" as const) : ("jpg" as const), data } : null,
+                  },
+                ];
+              }),
+            );
+            try {
+              const pdf = await buildClaimsPdf({ docs: d.docs, companyName, month, evidence });
+              return { name: `지출결의서_${month}.pdf`, data: pdf };
+            } catch {
+              pdfNote = " 지출결의서 PDF는 만들지 못했어요(글꼴을 받지 못함) — 다시 받기를 눌러 주세요.";
+              return null;
+            }
+          },
     });
+    if (!only && !extraAdded && !pdfNote) pdfNote = " 지출결의서 PDF는 만들지 못했어요 — 다시 받기를 눌러 주세요.";
     parts.forEach((b, i) => saveBlob(b, `${zipBase}${only ? "_누락분" : ""}${parts.length > 1 ? `_${i + 1}` : ""}.zip`));
     setProgress(null);
     setMissing(failed);
@@ -93,7 +128,7 @@ export function TaxClosingView({
     setMessage(
       failed.length
         ? { kind: "error", text: `ZIP을 저장했지만 영수증 ${failed.length}장을 받지 못했어요. [못 받은 영수증 다시 받기]를 눌러 주세요.` }
-        : { kind: "ok", text: `${label} 패키지를 저장했어요 (영수증 ${list.files.length}장${parts.length > 1 ? `, ${parts.length}개 파일로 나눔` : ""}, ${secs}초).` },
+        : { kind: pdfNote ? "error" : "ok", text: `${label} 패키지를 저장했어요 (영수증 ${list.files.length}장${extraAdded ? " + 지출결의서 PDF" : ""}${parts.length > 1 ? `, ${parts.length}개 파일로 나눔` : ""}, ${secs}초).${pdfNote}` },
     );
     router.refresh();
   }

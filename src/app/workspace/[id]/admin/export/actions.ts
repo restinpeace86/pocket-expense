@@ -7,7 +7,8 @@ import { messageForDbError } from "@/lib/errors";
 import { signReceiptUrls } from "@/lib/storage/signed-urls";
 import { createClient } from "@/lib/supabase/server";
 import { getTaxMonth, MONTH } from "@/lib/tax/closing";
-import { evidenceFile } from "@/lib/tax/export-rows";
+import { getClaimDocs, type ClaimDoc } from "@/lib/tax/claim-docs";
+import { evidenceFile, type ExportRow } from "@/lib/tax/export-rows";
 
 // 세무 마감 (tax-closing.md §4.C, D-045). 권한(관리자 / 해제는 최고 관리자)·회사 격리는 DB 함수가 다시 확인한다.
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -56,4 +57,15 @@ export async function taxEvidenceFilesAction(month: string, only?: string[]): Pr
     part.forEach((v, k) => urls.set(k, v));
   }
   return { ok: true, files: list.map((f) => ({ name: f.name, url: urls.get(f.path) ?? null })) };
+}
+
+// 지출결의서 PDF에 그릴 결의서 문서들 (마감된 달만, T10-3b)
+export async function taxClaimDocsAction(month: string): Promise<Result<{ docs: ClaimDoc[]; rows: ExportRow[] }>> {
+  const m = await admin();
+  if (!m) return fail("NOT_ALLOWED");
+  if (!MONTH.test(month)) return fail("INVALID_MONTH");
+  const res = await getTaxMonth(month);
+  if (!res.ok) return { ok: false, error: messageForDbError({ message: res.error }) };
+  if (res.data.status !== "closed") return fail("NOT_CLOSED");
+  return { ok: true, docs: await getClaimDocs(m.company_id, res.data.rows), rows: res.data.rows };
 }
