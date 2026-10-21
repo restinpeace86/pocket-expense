@@ -10,6 +10,7 @@ import { PlaceSearch } from "@/components/employee/place-search";
 import { inputClass } from "@/components/ui/page-shell";
 import type { EditorClaim, EditorItem, FuelPolicy, RoutePlaceInput } from "@/lib/employee/editor-types";
 import { fuelAmount, routeCardFrom, routeFormula } from "@/lib/expense/route";
+import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
 
 // 자차 유류비 항목 (trip-expense.md §4, D-069, D-085)
@@ -41,7 +42,7 @@ export function OwnCarEditor({
   const ev = (item.route_evidence && typeof item.route_evidence === "object" ? item.route_evidence : {}) as Record<string, unknown>;
   const [start, setStart] = useState<RoutePlaceInput | null>(() => toPlace(item.start_location, item.start_lat, item.start_lng, ev.start_address));
   const [end, setEnd] = useState<RoutePlaceInput | null>(() => toPlace(item.end_location, item.end_lat, item.end_lng, ev.end_address));
-  const [roundTrip, setRoundTrip] = useState(item.is_round_trip !== false);
+  const [roundTrip, setRoundTrip] = useState(item.is_round_trip === true); // 기본 편도(D-089)
   const [manualOpen, setManualOpen] = useState(item.distance_source === "manual");
   const [manualKm, setManualKm] = useState(item.distance_source === "manual" && item.route_one_way_km != null ? String(item.route_one_way_km) : "");
   const [expenseDate, setExpenseDate] = useState(item.expense_date ?? "");
@@ -71,6 +72,11 @@ export function OwnCarEditor({
       router.refresh();
     });
   }
+
+  const toggleRound = (next: boolean) => {
+    setRoundTrip(next);
+    saveRoute({ start, end, roundTrip: next, manual: manualOpen && manualValid ? manualNum : null });
+  };
 
   const choose = (which: "start" | "end") => (p: RoutePlaceInput | null) => {
     const s = which === "start" ? p : start;
@@ -115,7 +121,19 @@ export function OwnCarEditor({
             길찾기로 거리를 계산하는 중…
           </div>
         ) : card ? (
-          <RouteEvidenceCard card={card} />
+          <>
+            <RouteEvidenceCard card={card} />
+            {/* 편도 금액이 먼저, 왕복은 직원이 골라서 × 2 (D-089) */}
+            <button
+              type="button"
+              aria-pressed={roundTrip}
+              disabled={calculating}
+              onClick={() => toggleRound(!roundTrip)}
+              className={`inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl border px-4 text-sm font-semibold ${roundTrip ? "border-zinc-300 bg-white text-zinc-700" : "border-brand-300 bg-brand-50 text-brand-800"}`}
+            >
+              {roundTrip ? "편도로 되돌리기" : `왕복으로 계산 (× 2 = ${formatWon(fuelAmount(card.oneWayKm, card.rate, true))})`}
+            </button>
+          </>
         ) : (
           <p className="rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-6 text-center text-sm text-zinc-600">
             출발지와 도착지를 고르면 거리와 금액이 자동으로 계산되고,
@@ -137,22 +155,6 @@ export function OwnCarEditor({
         <h2 className="font-semibold">경로</h2>
         <PlaceSearch label="출발지" value={start} onSelect={choose("start")} placeholder="예: 판교역, 회사 이름, 주소" disabled={calculating} />
         <PlaceSearch label="도착지" value={end} onSelect={choose("end")} placeholder="예: 부산역, 거래처 이름, 주소" suggestion={claim.trip_destination ?? undefined} disabled={calculating} />
-        <label className="flex min-h-11 items-center gap-3">
-          <input
-            type="checkbox"
-            className="size-5"
-            checked={roundTrip}
-            disabled={calculating}
-            onChange={(e) => {
-              setRoundTrip(e.target.checked);
-              saveRoute({ start, end, roundTrip: e.target.checked, manual: manualOpen && manualValid ? manualNum : null });
-            }}
-          />
-          <span>
-            <span className="font-medium">왕복</span>
-            <span className="block text-xs text-zinc-500">갔다가 돌아왔으면 켜 두세요. 거리 × 2로 계산해요.</span>
-          </span>
-        </label>
         {notice && <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">{notice}</p>}
         {manualOpen ? (
           <div className="flex flex-col gap-1.5 rounded-xl bg-zinc-50 p-3">
@@ -182,13 +184,7 @@ export function OwnCarEditor({
             </div>
             {manualPreview !== null && (
               <p className="text-xs text-zinc-600 tabular-nums">
-                {routeFormula({
-                  roundTrip,
-                  oneWayKm: manualPreview,
-                  totalKm: roundTrip ? manualPreview * 2 : manualPreview,
-                  rate: fuel.ratePerKm,
-                  amount: fuelAmount(roundTrip ? manualPreview * 2 : manualPreview, fuel.ratePerKm),
-                })}
+                {routeFormula({ roundTrip, oneWayKm: manualPreview, rate: fuel.ratePerKm })}
               </p>
             )}
             <p className="text-xs text-zinc-500">직접 입력한 거리는 결재 화면에 &ldquo;직접 입력 거리&rdquo;로 표시돼요.</p>

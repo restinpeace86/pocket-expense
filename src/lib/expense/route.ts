@@ -1,5 +1,6 @@
-// 자차 유류비 경로·거리·금액 표시 (trip-expense.md §4.2, D-069, D-085)
-// 금액 계산의 원본은 DB(private.recompute_claim: 거리 × 회사 km당 단가, 원 단위 반올림)다. 여기서는 같은 식으로 미리 보여 주기만 한다.
+// 자차 유류비 경로·거리·금액 표시 (trip-expense.md §4.2, D-085, D-089)
+// 계산 순서: 편도 거리 × km당 단가 = 편도 금액(원 단위 반올림) → 왕복이면 편도 금액 × 2.
+// 금액 계산의 원본은 DB(private.recompute_claim)다. 여기서는 같은 식으로 미리 보여 주기만 한다.
 import { formatWon } from "@/lib/format";
 
 export type RouteItem = {
@@ -30,14 +31,15 @@ export type RouteCard = {
 
 const km = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(1)}km`;
 
-export function fuelAmount(totalKm: number, rate: number): number {
-  return Math.round(totalKm * rate);
+export function fuelAmount(oneWayKm: number, rate: number, roundTrip: boolean): number {
+  return Math.round(oneWayKm * rate) * (roundTrip ? 2 : 1);
 }
 
-// "왕복 · 377km × 2 = 754km × 200원 = 150,800원" / "편도 · 128.4km × 200원 = 25,680원"
-export function routeFormula(c: Pick<RouteCard, "roundTrip" | "oneWayKm" | "totalKm" | "rate" | "amount">): string {
-  const dist = c.roundTrip ? `왕복 · ${km(c.oneWayKm)} × 2 = ${km(c.totalKm)}` : `편도 · ${km(c.totalKm)}`;
-  return `${dist} × ${formatWon(c.rate)} = ${formatWon(c.amount)}`;
+// "편도 377km × 200원 = 75,400원" / 왕복: "편도 377km × 200원 = 75,400원 × 2(왕복) = 150,800원"
+export function routeFormula(c: Pick<RouteCard, "roundTrip" | "oneWayKm" | "rate">): string {
+  const oneWay = fuelAmount(c.oneWayKm, c.rate, false);
+  const base = `편도 ${km(c.oneWayKm)} × ${formatWon(c.rate)} = ${formatWon(oneWay)}`;
+  return c.roundTrip ? `${base} × 2(왕복) = ${formatWon(oneWay * 2)}` : base;
 }
 
 // 거리까지 정해진 자차 항목 → 증빙 카드 내용. 아직 덜 정해졌으면 null
@@ -52,11 +54,11 @@ export function routeCardFrom(item: RouteItem, fallbackRate: number): RouteCard 
     startAddress: str(ev.start_address),
     endName: item.end_location,
     endAddress: str(ev.end_address),
-    roundTrip: item.is_round_trip !== false,
+    roundTrip: item.is_round_trip === true,
     oneWayKm: Number(item.route_one_way_km),
     totalKm,
     rate,
-    amount: item.amount ?? fuelAmount(totalKm, rate),
+    amount: item.amount ?? fuelAmount(Number(item.route_one_way_km), rate, item.is_round_trip === true),
     source: item.distance_source,
     computedAt: str(ev.computed_at) ?? str(ev.entered_at),
   };

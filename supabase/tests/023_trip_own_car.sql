@@ -1,5 +1,5 @@
 -- =============================================================================
--- 023_trip_own_car.sql — 출장 이동 수단·자차 경로·거리·금액 (D-085, migration 040)
+-- 023_trip_own_car.sql — 출장 이동 수단·자차 경로·거리·금액 (D-085, migration 040 / D-089 기본 편도·왕복은 금액 × 2, migration 042)
 -- 회사 A(자차 유류비 켬, km당 200원): 직원 e1, 자가운전보조금 받는 직원 e2 / 회사 B(자차 유류비 끔): 직원 b1
 -- =============================================================================
 begin;
@@ -44,7 +44,7 @@ begin
   perform set_config('t.item', v_item::text, true);
   select * into r from public.expense_items where id = v_item;
   if row(r.category, r.trip_type, r.payment_method, r.expense_date, r.is_round_trip)::text
-     <> row('trip'::public.expense_category, 'own_car'::public.trip_type, 'personal_card'::public.payment_method, '2026-10-14'::date, true)::text then
+     <> row('trip'::public.expense_category, 'own_car'::public.trip_type, 'personal_card'::public.payment_method, '2026-10-14'::date, false)::text then
     raise exception 'FAIL [A_E1] own car item defaults %', row(r.category, r.trip_type, r.payment_method, r.expense_date, r.is_round_trip);
   end if;
 
@@ -109,6 +109,25 @@ begin
 end;
 $$;
 reset role;
+
+-- ── 계산 순서: 편도 거리 × 단가(반올림) → 왕복이면 금액 × 2 (단가 205원, 편도 100.3km) ─────────────
+update public.companies set fuel_rate_per_km = 205 where id = 'c2300000-0000-0000-0000-00000000000a';
+select set_config('request.jwt.claims', '{"sub":"a2300000-0000-0000-0000-000000000021","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare v_item uuid := current_setting('t.item')::uuid;
+begin
+  perform public.set_own_car_route(v_item, '{"name":"서울역","lat":37.554648,"lng":126.970607}', '{"name":"부산역","lat":35.115225,"lng":129.042243}', false, 100.3);
+  if (select amount from public.expense_items where id = v_item) <> 20562 then raise exception 'FAIL [order] one way %', (select amount from public.expense_items where id = v_item); end if;
+  perform public.set_own_car_route(v_item, '{"name":"서울역","lat":37.554648,"lng":126.970607}', '{"name":"부산역","lat":35.115225,"lng":129.042243}', true, 100.3);
+  -- 편도 금액 20,562원 × 2 = 41,124원 (총 거리 200.6km × 205원 = 41,123원이 아님)
+  if (select row(distance_km, amount)::text from public.expense_items where id = v_item) <> row(200.6, 41124)::text then
+    raise exception 'FAIL [order] round trip %', (select row(distance_km, amount)::text from public.expense_items where id = v_item);
+  end if;
+end;
+$$;
+reset role;
+update public.companies set fuel_rate_per_km = 200 where id = 'c2300000-0000-0000-0000-00000000000a';
 
 -- ── 자가운전보조금 직원·자차 끈 회사는 자차 항목을 못 만든다, 다른 회사 항목은 안 보인다 ──
 select set_config('request.jwt.claims', '{"sub":"a2300000-0000-0000-0000-000000000022","role":"authenticated"}', true);
