@@ -1,10 +1,12 @@
 // AI 영수증 인식 결과의 형식·범위 검사 (receipt-parser.md §3). 서버(apply_receipt_parse)도 한 번 더 검사한다.
+import { maskCardNumber } from "@/lib/cards/match";
 export type LineItem = { name: string; quantity: number | null; unit_price: number | null; amount: number | null };
 
 export type ParsedReceipt = {
   merchant_name: string | null;
   merchant_business_number: string | null; // 숫자 10자리
-  card_last4: string | null; // 숫자 4자리 (카드번호 전체는 받지 않는다, D-055)
+  card_number_masked: string | null; // 영수증에 보이는 카드번호(가린 자리 *). 앞 6자리·뒤 4자리 말고는 가려 둔다(D-083)
+  card_last4: string | null; // 위 번호의 뒤 4자리가 모두 숫자일 때만
   suggested_evidence_type: "card_slip" | "cash_receipt" | "tax_invoice" | "simple_receipt" | null;
   cash_receipt_income_deduction: boolean | null; // 현금영수증이 "소득공제용"으로 발행됐는지
   amount: number | null;
@@ -66,10 +68,12 @@ export function normalizeParsed(raw: unknown, today: string): ParsedReceipt {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const date = typeof r.expense_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.expense_date) && !Number.isNaN(Date.parse(r.expense_date)) ? r.expense_date : null;
   const merchant = typeof r.merchant_name === "string" ? r.merchant_name.trim().slice(0, 100) : "";
+  const masked = maskCardNumber(r.card_number_masked ?? r.card_last4);
   return {
     merchant_name: merchant || null,
     merchant_business_number: digits(r.merchant_business_number, 10),
-    card_last4: digits(r.card_last4, 4),
+    card_number_masked: masked,
+    card_last4: masked && /^\d{4}$/.test(masked.slice(-4)) ? masked.slice(-4) : null,
     suggested_evidence_type: oneOf(r.suggested_evidence_type, EVIDENCE),
     cash_receipt_income_deduction: typeof r.cash_receipt_income_deduction === "boolean" ? r.cash_receipt_income_deduction : null,
     amount: won(r.amount),

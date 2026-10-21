@@ -77,7 +77,7 @@ const SAMPLE_ITEM: EditorItem = {
   evidence_type: "card_slip", expense_date: "2026-10-16", merchant_name: "김밥천국 강남역점", merchant_business_number: "2208162517",
   amount: 31000, supply_amount: 28182, vat_amount: 2818, headcount: 2, purpose: null, attendees: null, client_name: null,
   trip_start_date: null, trip_end_date: null, parse_status: "success", receipt_path: "x/receipt.jpg", company_supported_amount: 20000,
-  personal_burden_amount: 11000, thumbUrl: null, isPdf: false, aiFilled: true, aiCardLast4: "7890", aiIncomeDeduction: false,
+  personal_burden_amount: 11000, thumbUrl: null, isPdf: false, aiFilled: true, aiCardMasked: "532712******7890", aiIncomeDeduction: false,
   paid_time: "12:41", approval_number: "30012345", merchant_address: "서울 강남구 테헤란로 123 강남역 지하상가 B1층 (아주 긴 주소 줄바꿈 확인)",
   line_items: [
     { name: "참치김밥", quantity: 2, unit_price: 4500, amount: 9000 },
@@ -95,11 +95,11 @@ const SAMPLE_EDITOR: EditorData = {
   },
   items: [
     { ...SAMPLE_ITEM, duplicate: { mine: [], others: 1 } },
-    { ...SAMPLE_ITEM, id: "i2", sort_order: 2, category: "trip", trip_type: "public_transport", merchant_name: "코레일 KTX 서울→부산 (아주 긴 가맹점 이름 테스트)", amount: 59800, payment_method: "personal_card", corporate_card_id: null, company_supported_amount: 59800, personal_burden_amount: 0, headcount: 1, aiCardLast4: null },
+    { ...SAMPLE_ITEM, id: "i2", sort_order: 2, category: "trip", trip_type: "public_transport", merchant_name: "코레일 KTX 서울→부산 (아주 긴 가맹점 이름 테스트)", amount: 59800, payment_method: "personal_card", corporate_card_id: null, company_supported_amount: 59800, personal_burden_amount: 0, headcount: 1, aiCardMasked: null },
     { ...SAMPLE_ITEM, id: "i3", sort_order: 3, category: null, merchant_name: null, expense_date: null, amount: null, parse_status: "failed", evidence_type: null, isPdf: true, receipt_path: "x/a.pdf", company_supported_amount: null, personal_burden_amount: 0 },
     { ...SAMPLE_ITEM, id: "i4", sort_order: 4, category: "purchase", purchase_type: "pantry", merchant_name: "이마트24", amount: 81200, receipt_path: null, aiFilled: false, company_supported_amount: 81200, personal_burden_amount: 0 },
   ],
-  cards: [{ id: "card1", nickname: "대표 법인카드", last4: "7890" }, { id: "card2", nickname: "영업팀 카드", last4: "1234" }],
+  cards: [{ id: "card1", nickname: "대표 법인카드", bin6: "532712", last4: "7890" }, { id: "card2", nickname: "영업팀 카드", bin6: null, last4: "1234" }],
   mealPolicy: { enabled: true, perPerson: 10000, mode: "split" },
   mealOverride: null,
 };
@@ -351,7 +351,7 @@ async function Preview({
               screen === "employee-item-edit-trip"
                 ? { ...SAMPLE_ITEM, category: "trip", trip_type: "lodging", expense_date: "2026-10-18", merchant_name: "부산호텔", amount: 90000, supply_amount: 80000, vat_amount: 8182, parse_status: "failed" }
                 : screen === "employee-item-edit-manual"
-                  ? { ...SAMPLE_ITEM, receipt_path: null, aiFilled: false, aiCardLast4: null, parse_status: "none", category: "meeting", merchant_name: "", amount: null, purpose: "", payment_method: "personal_card", corporate_card_id: null }
+                  ? { ...SAMPLE_ITEM, receipt_path: null, aiFilled: false, aiCardMasked: null, parse_status: "none", category: "meeting", merchant_name: "", amount: null, purpose: "", payment_method: "personal_card", corporate_card_id: null }
                   : { ...SAMPLE_ITEM, duplicate: { mine: [{ claim_id: "c0", title: "10/16 팀 점심", status: "draft" }], others: 1 } }
             }
             index={0}
@@ -644,9 +644,9 @@ async function Preview({
           <CorporateCardsHeading />
           <CorporateCardsView
             cards={[
-              { id: "c1", nickname: "대표 법인카드", last4: "7890", is_active: true, holder_member_id: "p1", holder_name: "김대표", month_total: 1284000 },
-              { id: "c2", nickname: "영업팀 공용카드 (서울·부산 지사 함께 사용)", last4: "1234", is_active: true, holder_member_id: null, holder_name: null, month_total: 0 },
-              { id: "c3", nickname: "해지한 예전 카드", last4: "5555", is_active: false, holder_member_id: null, holder_name: null, month_total: 0 },
+              { id: "c1", nickname: "대표 법인카드", bin6: "532712", last4: "7890", is_active: true, holder_member_id: "p1", holder_name: "김대표", month_total: 1284000 },
+              { id: "c2", nickname: "영업팀 공용카드 (서울·부산 지사 함께 사용)", bin6: null, last4: "1234", is_active: true, holder_member_id: null, holder_name: null, month_total: 0 },
+              { id: "c3", nickname: "해지한 예전 카드", bin6: "943011", last4: "5555", is_active: false, holder_member_id: null, holder_name: null, month_total: 0 },
             ]}
             members={[{ id: "p1", name: "김대표" }, { id: "p2", name: "박관리" }]}
             preview

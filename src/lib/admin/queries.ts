@@ -124,6 +124,7 @@ export async function getAccountTitles(companyId: string): Promise<{ titles: Acc
 export type CorporateCardRow = {
   id: string;
   nickname: string;
+  bin6: string | null; // 예전 카드는 없음(뒤 4자리만)
   last4: string;
   is_active: boolean;
   holder_member_id: string | null;
@@ -136,7 +137,7 @@ export async function getCorporateCards(companyId: string, monthStart: string, m
   const [{ data: cards }, { data: items }, { data: members }] = await Promise.all([
     supabase
       .from("corporate_cards")
-      .select("id, nickname, last4, is_active, holder_member_id, holder:members(name)")
+      .select("id, nickname, bin6, last4, is_active, holder_member_id, holder:members(name)")
       .eq("company_id", companyId)
       .order("is_active", { ascending: false })
       .order("created_at"),
@@ -155,6 +156,7 @@ export async function getCorporateCards(companyId: string, monthStart: string, m
   const rows: CorporateCardRow[] = (cards ?? []).map((c) => ({
     id: c.id,
     nickname: c.nickname,
+    bin6: c.bin6,
     last4: c.last4,
     is_active: c.is_active,
     holder_member_id: c.holder_member_id,

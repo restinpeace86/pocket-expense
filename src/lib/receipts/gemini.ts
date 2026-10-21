@@ -16,7 +16,7 @@ const RESPONSE_SCHEMA = {
   properties: {
     merchant_name: nullable("string"),
     merchant_business_number: nullable("string"),
-    card_last4: nullable("string"),
+    card_number_masked: nullable("string"),
     suggested_evidence_type: nullable("string", { enum: ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt"] }),
     cash_receipt_income_deduction: nullable("boolean"),
     amount: nullable("integer"),
@@ -45,7 +45,7 @@ function prompt(isBusinessTrip: boolean, today: string) {
   return `한국 영수증(카드매출전표·현금영수증·세금계산서·간이영수증·배달앱/교통 예매 캡처 등) 이미지에서 다음 값을 JSON으로 뽑아 주세요. 보이지 않거나 확신이 없으면 null로 두고, 계산해서 만들어 내지 마세요.
 - merchant_name: 가맹점(상호)명
 - merchant_business_number: 가맹점 사업자등록번호(숫자 10자리)
-- card_last4: 마스킹된 카드번호의 끝 4자리만. 카드번호 전체는 절대 적지 마세요
+- card_number_masked: 영수증에 찍힌 카드번호를 보이는 그대로. *·X 등으로 가려진 자리는 *로 적고, 가려진 숫자를 추측해 채우지 마세요(예: "5327-12**-****-432*"). 카드번호가 없으면 null
 - suggested_evidence_type: "신용승인·카드번호 마스킹"이면 card_slip, "현금영수증"이면 cash_receipt, "세금계산서·공급받는자"면 tax_invoice, 사업자 정보 없는 수기 영수증이면 simple_receipt
 - cash_receipt_income_deduction: 현금영수증이 "소득공제용"이면 true, "지출증빙용"이면 false
 - amount: 총 결제금액(합계, 원 단위 정수)

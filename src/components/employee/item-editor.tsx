@@ -1,5 +1,6 @@
 "use client";
 
+import { formatMaskedCard, matchCard } from "@/lib/cards/match";
 import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, FileText, ImageOff, Loader2, Minus, Plus, RefreshCw, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -267,7 +268,8 @@ export function ItemEditor({
     input.category === "trip" &&
     !!input.expenseDate &&
     ((claim.trip_start_date && input.expenseDate < claim.trip_start_date) || (claim.trip_end_date && input.expenseDate > claim.trip_end_date));
-  const matchedCard = item.aiCardLast4 ? cards.find((c) => c.last4 === item.aiCardLast4) : undefined;
+  const cardMatch = matchCard(item.aiCardMasked, cards);
+  const matchedCard = cardMatch.kind === "unique" ? cards.find((c) => c.id === cardMatch.cardId) : undefined;
   const mealLike = isMealLike(input.category, input.tripType);
 
   return (
@@ -387,11 +389,13 @@ export function ItemEditor({
           ))}
         </div>
         <p className="text-xs text-zinc-500">{input.paymentMethod === "corporate_card" ? "회사 카드로 결제했어요. 따로 돌려받을 돈은 없어요." : "내 돈(개인카드·현금)으로 냈어요. 승인되면 회사가 돌려줘요."}</p>
-        {item.aiCardLast4 && cards.length > 0 && (
+        {item.aiCardMasked && cards.length > 0 && cardMatch.kind !== "unknown" && (
           <p className="rounded-xl bg-sky-50 px-3 py-2 text-sm text-sky-800">
             {matchedCard
               ? `💳 ${matchedCard.nickname}(${matchedCard.last4})로 인식했어요.`
-              : `영수증 카드 끝자리(${item.aiCardLast4})가 등록된 법인카드와 달라 개인(사비)으로 골랐어요. 법인카드였다면 바꿔 주세요.`}
+              : cardMatch.kind === "ambiguous"
+                ? `영수증 카드번호(${formatMaskedCard(item.aiCardMasked)})와 맞는 법인카드가 여러 장이에요. 사용한 카드를 골라 주세요.`
+                : `영수증 카드번호(${formatMaskedCard(item.aiCardMasked)})가 등록된 법인카드와 달라 개인(사비)으로 골랐어요. 법인카드였다면 바꿔 주세요.`}
           </p>
         )}
         {input.paymentMethod === "corporate_card" && cards.length > 1 && (

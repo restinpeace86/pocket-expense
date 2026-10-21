@@ -1,4 +1,5 @@
 import "server-only";
+import { maskCardNumber } from "@/lib/cards/match";
 import type { Membership } from "@/lib/auth/paths";
 import { signReceiptUrls } from "@/lib/storage/signed-urls";
 import { createClient } from "@/lib/supabase/server";
@@ -10,10 +11,11 @@ export const isUuid = (v: string) => UUID.test(v);
 const ITEM_COLUMNS =
   "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items";
 
-function aiFlags(payload: unknown): { aiCardLast4: string | null; aiIncomeDeduction: boolean } {
+function aiFlags(payload: unknown): { aiCardMasked: string | null; aiIncomeDeduction: boolean } {
   const p = (payload && typeof payload === "object" ? payload : {}) as Record<string, unknown>;
   return {
-    aiCardLast4: typeof p.card_last4 === "string" && /^\d{4}$/.test(p.card_last4) ? p.card_last4 : null,
+    // 서버가 앞 6자리·뒤 4자리 말고는 가려 저장한 번호. 예전 기록은 card_last4만 있다
+    aiCardMasked: maskCardNumber(p.card_number_masked ?? p.card_last4),
     aiIncomeDeduction: p.suggested_evidence_type === "cash_receipt" && p.cash_receipt_income_deduction === true,
   };
 }
@@ -38,7 +40,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
       .eq("member_id", membership.member_id)
       .maybeSingle(),
     supabase.from("expense_items").select(ITEM_COLUMNS).eq("claim_id", claimId).eq("company_id", membership.company_id).order("sort_order"),
-    supabase.from("corporate_cards").select("id, nickname, last4").eq("company_id", membership.company_id).eq("is_active", true).order("created_at"),
+    supabase.from("corporate_cards").select("id, nickname, bin6, last4").eq("company_id", membership.company_id).eq("is_active", true).order("created_at"),
     supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person, meal_limit_mode").eq("id", membership.company_id).single(),
     supabase.from("members").select("meal_limit_override").eq("id", membership.member_id).single(),
     supabase.rpc("claim_duplicate_receipts", { p_claim_id: claimId }),

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatMaskedCard, maskCardNumber } from "@/lib/cards/match";
 import type { getReceiptRecord } from "@/lib/app-admin/queries";
 import { CLAIM_STATUS_LABEL, EVIDENCE_LABEL, formatBizNo, formatKst, PARSE_STATUS_LABEL } from "@/lib/app-admin/labels";
 import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL } from "@/lib/expense/categories";
@@ -95,7 +96,7 @@ export function ReceiptRecordView({ data, base = "/app-admin" }: { data: Receipt
                 ["가맹점 주소", str(ai.merchant_address)],
                 ["결제일 · 시각", [str(ai.expense_date), str(ai.paid_time)].filter(Boolean).join(" ") || null],
                 ["승인번호", str(ai.approval_number)],
-                ["카드 끝 4자리", str(ai.card_last4)],
+                ["카드번호(가림)", (() => { const m = maskCardNumber(ai.card_number_masked ?? ai.card_last4); return m ? formatMaskedCard(m) : null; })()],
                 ["증빙 구분", EVIDENCE_LABEL[String(ai.suggested_evidence_type)] ?? null],
                 ["소득공제용 현금영수증", ai.cash_receipt_income_deduction === true ? "예" : ai.cash_receipt_income_deduction === false ? "아니오(지출증빙)" : null],
                 ["합계 / 공급가액 / 부가세", [won(ai.amount), won(ai.supply_amount), won(ai.vat_amount)].map((v) => v ?? "-").join(" / ")],

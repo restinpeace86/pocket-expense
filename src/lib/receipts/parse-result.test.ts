@@ -24,7 +24,12 @@ describe("normalizeParsed", () => {
       { merchant_business_number: "12345", card_last4: "1234-5678-9012-3456", amount: -100, expense_date: "2026-10-21", suggested_category: "travel", suggested_trip_type: "own_car", suggested_evidence_type: "other" },
       "2026-10-20",
     );
-    expect(r).toMatchObject({ merchant_business_number: null, card_last4: null, amount: null, expense_date: null, suggested_category: null, suggested_trip_type: null, suggested_evidence_type: null });
+    expect(r).toMatchObject({ merchant_business_number: null, amount: null, expense_date: null, suggested_category: null, suggested_trip_type: null, suggested_evidence_type: null });
+  });
+  it("카드번호: 전체 번호가 와도 앞 6자리·뒤 4자리만 남기고, 가려진 뒤 자리는 끝 4자리로 쓰지 않는다", () => {
+    expect(normalizeParsed({ card_last4: "1234-5678-9012-3456" }, "2026-10-20")).toMatchObject({ card_number_masked: "123456******3456", card_last4: "3456" });
+    expect(normalizeParsed({ card_number_masked: "5327-12**-****-432*" }, "2026-10-20")).toMatchObject({ card_number_masked: "532712******432*", card_last4: null });
+    expect(normalizeParsed({ card_number_masked: "****-****-****-****" }, "2026-10-20")).toMatchObject({ card_number_masked: null, card_last4: null });
   });
   it("참고 정보: 시각·승인번호·주소·품목", () => {
     const r = normalizeParsed(

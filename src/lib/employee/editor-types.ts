@@ -54,7 +54,7 @@ export type EditorItem = {
   thumbUrl: string | null;
   isPdf: boolean;
   aiFilled: boolean;
-  aiCardLast4: string | null; // AI가 읽은 카드 끝 4자리(법인카드 판별 안내용)
+  aiCardMasked: string | null; // AI가 읽은 카드번호(가린 자리 *, 법인카드 판별 안내용, D-083)
   aiIncomeDeduction: boolean; // 현금영수증이 소득공제용으로 발행됨
   // 참고 정보(D-079, AI가 읽음·보여 주기만)
   paid_time: string | null;
@@ -64,7 +64,7 @@ export type EditorItem = {
   duplicate: { mine: { claim_id: string; title: string; status: ClaimStatus }[]; others: number } | null; // 같은 영수증으로 보이는 다른 항목
 };
 
-export type EditorCard = { id: string; nickname: string; last4: string };
+export type EditorCard = { id: string; nickname: string; bin6: string | null; last4: string };
 
 export type EditorData = {
   claim: EditorClaim;

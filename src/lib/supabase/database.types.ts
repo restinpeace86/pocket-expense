@@ -447,6 +447,7 @@ export type Database = {
       }
       corporate_cards: {
         Row: {
+          bin6: string | null
           company_id: string
           created_at: string
           holder_member_id: string | null
@@ -457,6 +458,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bin6?: string | null
           company_id: string
           created_at?: string
           holder_member_id?: string | null
@@ -467,6 +469,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bin6?: string | null
           company_id?: string
           created_at?: string
           holder_member_id?: string | null
