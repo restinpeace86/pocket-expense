@@ -76,7 +76,8 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
   );
 }
 
-function NavList({ base, onNavigate, previewPath }: { base: string; onNavigate?: () => void; previewPath?: string }) {
+// settingsOpen: 휴대폰 메뉴(서랍)에서는 설정 하위 메뉴를 펼친 채로 연다(개선사항 1-1) — 화면 이름이 바로 보이게
+function NavList({ base, onNavigate, previewPath, settingsOpen = false }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean }) {
   const realPath = usePathname();
   const pathname = previewPath ? `${base}${previewPath}` : realPath;
   const settingsActive = SETTINGS_NAV.some((i) => pathname.startsWith(`${base}${i.href}`));
@@ -85,7 +86,7 @@ function NavList({ base, onNavigate, previewPath }: { base: string; onNavigate?:
       {NAV.map((item) => (
         <NavLink key={item.label} item={item} base={base} pathname={pathname} onNavigate={onNavigate} />
       ))}
-      <details className="group mt-3 border-t border-sidebar-border pt-3" open={settingsActive || undefined}>
+      <details className="group mt-3 border-t border-sidebar-border pt-3" open={settingsOpen || settingsActive || undefined}>
         <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-xl px-3 text-sm text-sidebar-fg hover:bg-sidebar-hover [&::-webkit-details-marker]:hidden">
           <Settings className="size-5 shrink-0" />
           <span className="flex-1">설정</span>
@@ -147,7 +148,7 @@ export function AdminShell({
                 <X className="size-5" />
               </button>
             </div>
-            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} />
+            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen />
             <div className="mt-auto sm:hidden">
               <ThemeOptionsInline />
             </div>

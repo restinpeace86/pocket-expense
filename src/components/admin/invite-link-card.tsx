@@ -10,6 +10,7 @@ import {
 } from "react";
 import { regenerateInviteCodeAction } from "@/app/workspace/[id]/admin/actions";
 import { SectionHeading } from "@/components/ui/help";
+import { KakaoShareButton } from "./kakao-share-button";
 
 const noop = () => () => {};
 
@@ -84,7 +85,7 @@ export function InviteLinkCard({
           <>
             <ol className="flex list-decimal flex-col gap-1.5 pl-5">
               <li>
-                <b>[링크 복사]</b>를 눌러 단톡방이나 개인 톡에 붙여 넣으세요. 사무실에 붙여 둘 땐 <b>[QR 이미지 저장]</b>이 편해요.
+                <b>[카카오톡으로 공유하기]</b>로 바로 보내거나, <b>[링크 복사]</b>를 눌러 단톡방·개인 톡에 붙여 넣으세요. 사무실에 붙여 둘 땐 <b>[QR 이미지 저장]</b>이 편해요.
               </li>
               <li>직원이 링크를 열어 로그인하고 이름·연락처를 입력하면 &lsquo;가입 승인 대기&rsquo;로 들어와요.</li>
               <li>
@@ -122,6 +123,7 @@ export function InviteLinkCard({
               )}
               {copied ? "복사됐어요" : "링크 복사"}
             </button>
+            <KakaoShareButton link={link} companyName={companyName} />
             {qr && (
               <a
                 href={qr}

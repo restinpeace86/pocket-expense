@@ -282,42 +282,41 @@ export function ItemEditor({
         </span>
       </div>
 
-      {/* 1. 영수증 사진 */}
+      {/* 1. 영수증 사진 — 화면 너비 그대로 잘림 없이(개선사항 1-3). 입력 칸과 겹치지 않게 사진 영역을 따로 둔다 */}
       {item.receipt_path ? (
-        <section className="flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-3">
+        <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-3">
           {item.isPdf ? (
-            <a href={originalUrl ?? undefined} target="_blank" rel="noreferrer" className="inline-flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-xl bg-zinc-100 text-xs text-zinc-600">
+            <a href={originalUrl ?? undefined} target="_blank" rel="noreferrer" className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl bg-zinc-100 text-sm text-zinc-600">
               <FileText className="size-8" />
-              PDF 열기
+              PDF 영수증 열기
             </a>
-          ) : item.thumbUrl || originalUrl ? (
-            <button type="button" onClick={() => setZoom(true)} className="shrink-0" aria-label="영수증 크게 보기">
+          ) : originalUrl || item.thumbUrl ? (
+            <button type="button" onClick={() => setZoom(true)} className="relative block w-full overflow-hidden rounded-xl bg-zinc-100" aria-label="영수증 크게 보기">
               {/* eslint-disable-next-line @next/next/no-img-element -- 10분짜리 서명 링크 */}
-              <img src={item.thumbUrl ?? originalUrl ?? undefined} alt="영수증" className="size-24 rounded-xl border border-zinc-200 object-cover" />
+              <img src={originalUrl ?? item.thumbUrl ?? undefined} alt="영수증" className="mx-auto block max-h-[60vh] w-auto max-w-full object-contain" />
+              <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white">눌러서 크게 보기</span>
             </button>
           ) : (
-            <span className="inline-flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-xl bg-zinc-100 px-1 text-center text-[11px] text-zinc-500">
+            <span className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl bg-zinc-100 text-sm text-zinc-500">
               <ImageOff className="size-6" />
               사진을 불러오지 못했어요
             </span>
           )}
-          <div className="flex min-w-0 flex-1 flex-col gap-2 text-sm">
-            {item.parse_status === "success" && (
-              <p className="inline-flex items-center gap-1 text-brand-700">
-                <Sparkles className="size-4" />
-                AI가 채운 값이에요. 영수증과 맞는지 확인해 주세요.
-              </p>
-            )}
-            {(item.parse_status === "failed" || item.parse_status === "parsing") && (
-              <>
-                <p className="text-zinc-600">{item.parse_status === "failed" ? "자동 인식에 실패했어요. 직접 입력해 주세요." : "AI가 아직 읽지 못했어요."}</p>
-                <button type="button" onClick={reread} disabled={rereading} className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg border border-zinc-300 px-3 text-sm hover:bg-zinc-50 disabled:opacity-60">
-                  {rereading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-                  AI로 다시 읽기
-                </button>
-              </>
-            )}
-          </div>
+          {item.parse_status === "success" && (
+            <p className="inline-flex items-start gap-1.5 text-sm text-brand-700">
+              <Sparkles className="mt-0.5 size-4 shrink-0" />
+              AI가 채운 값이에요. 사진과 아래 내용이 맞는지 확인해 주세요.
+            </p>
+          )}
+          {(item.parse_status === "failed" || item.parse_status === "parsing") && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <p className="text-zinc-600">{item.parse_status === "failed" ? "자동 인식에 실패했어요. 직접 입력해 주세요." : "AI가 아직 읽지 못했어요."}</p>
+              <button type="button" onClick={reread} disabled={rereading} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-zinc-300 px-3 text-sm hover:bg-zinc-50 disabled:opacity-60">
+                {rereading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                AI로 다시 읽기
+              </button>
+            </div>
+          )}
         </section>
       ) : (
         <p className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-600">영수증 없이 추가한 항목이에요. 사용 내용을 직접 입력해 주세요.</p>
@@ -325,7 +324,47 @@ export function ItemEditor({
 
       {item.duplicate && <DuplicateWarning dup={item.duplicate} base={base} />}
 
-      {/* 2. 결제수단 (D-048, D-055) */}
+      {/* 2. 영수증 정보 — 사진 바로 아래에서 대조 */}
+      <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4">
+        <h2 className="font-semibold">영수증 정보</h2>
+        <Field label="가맹점명" required htmlFor="merchant">
+          <input id="merchant" className={inputClass} value={input.merchantName} maxLength={100} placeholder="예: 스타벅스 강남점" onChange={(e) => set("merchantName", e.target.value)} />
+        </Field>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="사용일자" required htmlFor="date">
+            <input id="date" type="date" className={inputClass} value={input.expenseDate} onChange={(e) => set("expenseDate", e.target.value)} />
+          </Field>
+          <Field label="합계 금액" required>
+            <AmountInput name="amount" ariaLabel="합계 금액" value={input.amount} onChange={(v) => set("amount", v)} />
+          </Field>
+        </div>
+        {outsideTrip && <Warn>출장 기간 밖의 날짜예요. 날짜를 확인해 주세요(그대로 상신할 수도 있어요).</Warn>}
+        <details className="group rounded-xl bg-zinc-50 px-3 py-2" open={!!(input.merchantBusinessNumber || input.supplyAmount || input.vatAmount) || undefined}>
+          <summary className="flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-zinc-700 [&::-webkit-details-marker]:hidden">
+            사업자등록번호·공급가액·부가세 <span className="ml-1 text-xs font-normal text-zinc-500">(세무사 전달용 · AI가 채워요)</span>
+          </summary>
+          <div className="mt-2 flex flex-col gap-3 pb-2">
+            <Field label="가맹점 사업자등록번호" htmlFor="bn">
+              <input id="bn" className={inputClass} inputMode="numeric" value={input.merchantBusinessNumber} maxLength={12} placeholder="숫자 10자리" onChange={(e) => set("merchantBusinessNumber", e.target.value.replace(/[^0-9-]/g, ""))} />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="공급가액">
+                <AmountInput name="supply" ariaLabel="공급가액" value={input.supplyAmount} onChange={(v) => set("supplyAmount", v)} />
+              </Field>
+              <Field label="부가세">
+                <AmountInput name="vat" ariaLabel="부가세" value={input.vatAmount} onChange={(v) => set("vatAmount", v)} />
+              </Field>
+            </div>
+            {sumMismatch && <Warn>공급가액 + 부가세가 합계 금액과 달라요. 영수증을 확인해 주세요.</Warn>}
+          </div>
+        </details>
+        <Field label="증빙 구분" required>
+          <Chips label="증빙 구분" options={EVIDENCE} value={input.evidenceType} onChange={(v) => set("evidenceType", v)} />
+        </Field>
+        {item.aiIncomeDeduction && input.evidenceType === "cash_receipt" && <Warn>소득공제용 현금영수증이에요. 지출증빙용이 아니라 회사 경비 처리 시 불이익이 있을 수 있어요.</Warn>}
+      </section>
+
+      {/* 3. 결제수단 (D-048, D-055) */}
       <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
         <h2 className="font-semibold">결제수단</h2>
         <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="결제수단">
@@ -367,46 +406,6 @@ export function ItemEditor({
             </select>
           </Field>
         )}
-      </section>
-
-      {/* 3. 영수증 정보 */}
-      <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4">
-        <h2 className="font-semibold">영수증 정보</h2>
-        <Field label="가맹점명" required htmlFor="merchant">
-          <input id="merchant" className={inputClass} value={input.merchantName} maxLength={100} placeholder="예: 스타벅스 강남점" onChange={(e) => set("merchantName", e.target.value)} />
-        </Field>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="사용일자" required htmlFor="date">
-            <input id="date" type="date" className={inputClass} value={input.expenseDate} onChange={(e) => set("expenseDate", e.target.value)} />
-          </Field>
-          <Field label="합계 금액" required>
-            <AmountInput name="amount" ariaLabel="합계 금액" value={input.amount} onChange={(v) => set("amount", v)} />
-          </Field>
-        </div>
-        {outsideTrip && <Warn>출장 기간 밖의 날짜예요. 날짜를 확인해 주세요(그대로 상신할 수도 있어요).</Warn>}
-        <details className="group rounded-xl bg-zinc-50 px-3 py-2" open={!!(input.merchantBusinessNumber || input.supplyAmount || input.vatAmount) || undefined}>
-          <summary className="flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-zinc-700 [&::-webkit-details-marker]:hidden">
-            사업자등록번호·공급가액·부가세 <span className="ml-1 text-xs font-normal text-zinc-500">(세무사 전달용 · AI가 채워요)</span>
-          </summary>
-          <div className="mt-2 flex flex-col gap-3 pb-2">
-            <Field label="가맹점 사업자등록번호" htmlFor="bn">
-              <input id="bn" className={inputClass} inputMode="numeric" value={input.merchantBusinessNumber} maxLength={12} placeholder="숫자 10자리" onChange={(e) => set("merchantBusinessNumber", e.target.value.replace(/[^0-9-]/g, ""))} />
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="공급가액">
-                <AmountInput name="supply" ariaLabel="공급가액" value={input.supplyAmount} onChange={(v) => set("supplyAmount", v)} />
-              </Field>
-              <Field label="부가세">
-                <AmountInput name="vat" ariaLabel="부가세" value={input.vatAmount} onChange={(v) => set("vatAmount", v)} />
-              </Field>
-            </div>
-            {sumMismatch && <Warn>공급가액 + 부가세가 합계 금액과 달라요. 영수증을 확인해 주세요.</Warn>}
-          </div>
-        </details>
-        <Field label="증빙 구분" required>
-          <Chips label="증빙 구분" options={EVIDENCE} value={input.evidenceType} onChange={(v) => set("evidenceType", v)} />
-        </Field>
-        {item.aiIncomeDeduction && input.evidenceType === "cash_receipt" && <Warn>소득공제용 현금영수증이에요. 지출증빙용이 아니라 회사 경비 처리 시 불이익이 있을 수 있어요.</Warn>}
       </section>
 
       <ReceiptDetails item={item} />
