@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { updateMyProfileAction } from "@/app/workspace/[id]/employee/profile/actions";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ThemeOptionsCard } from "@/components/workspace/theme-switcher";
 import { inputClass } from "@/components/ui/page-shell";
 import type { MyProfile } from "@/lib/employee/profile";
 import { formatPhone } from "@/lib/format";
@@ -142,6 +143,8 @@ export function ProfileForm({ profile }: { profile: MyProfile }) {
       </button>
     </form>
 
+      <ThemeOptionsCard />
+
       {/* 로그아웃은 그 자체가 form이라 위 form 밖에 둔다(form 안에 form을 넣을 수 없음) */}
       <section className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-sm">
         <div className="min-w-0">
@@ -151,7 +154,7 @@ export function ProfileForm({ profile }: { profile: MyProfile }) {
             {profile.login.email && ` · ${profile.login.email}`}
           </p>
         </div>
-        <SignOutButton className="min-h-11 shrink-0 rounded-xl border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50" />
+        <SignOutButton className="min-h-11 shrink-0 whitespace-nowrap rounded-xl border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50" />
       </section>
     </div>
   );

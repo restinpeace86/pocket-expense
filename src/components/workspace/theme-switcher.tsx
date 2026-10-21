@@ -154,3 +154,46 @@ export function ThemeSwitcher({ saved }: { saved?: string | null }) {
     </div>
   );
 }
+
+// 직원 모드에는 헤더 색상 버튼이 없어(개선사항 3) 계정 색 맞추기만 한다
+export function ThemeSync({ saved }: { saved?: string | null }) {
+  useAccountThemeSync(saved);
+  return null;
+}
+
+// 직원 [내 정보]의 화면 색상 카드. 누르는 즉시 바뀌고 계정에 저장된다(저장 버튼 없음)
+export function ThemeOptionsCard() {
+  const theme = useTheme();
+  return (
+    <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4" aria-labelledby="theme-card-title">
+      <div>
+        <h2 id="theme-card-title" className="font-semibold">
+          화면 색상
+        </h2>
+        <p className="mt-0.5 text-sm text-zinc-600">누르면 바로 바뀌고 내 계정에 저장돼요.</p>
+      </div>
+      <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2" role="radiogroup" aria-label="화면 색상">
+        {THEMES.map((t) => {
+          const on = theme === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => chooseTheme(t.key)}
+              className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 text-left text-sm ${on ? "border-brand-600 bg-brand-50 ring-1 ring-brand-600" : "border-zinc-200 hover:bg-zinc-50"}`}
+            >
+              <Swatch colors={t.swatch} />
+              <span className="min-w-0 flex-1">
+                <span className={`block ${on ? "font-semibold text-brand-700" : "font-medium text-zinc-900"}`}>{t.label}</span>
+                <span className="block text-xs text-zinc-500">{t.hint}</span>
+              </span>
+              {on && <Check className="size-4 shrink-0 text-brand-600" />}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
