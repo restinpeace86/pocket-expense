@@ -7,6 +7,7 @@ import { claimStatusBadge } from "@/lib/expense/status";
 import { formatWon } from "@/lib/format";
 import { ApprovalTimeline } from "./approval-timeline";
 import { ClaimItems } from "./claim-items";
+import { GalleryButton } from "./receipt-gallery";
 
 // 직원 결의서 상세 — 읽기 전용 (employee-mobile.md ④, T9-5)
 function period(d: ClaimDetail) {
@@ -68,7 +69,10 @@ export function EmployeeClaimDetail({ detail, base }: { detail: ClaimDetail; bas
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="font-semibold">영수증 {detail.items.length}건</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">영수증 {detail.items.length}건</h2>
+          <GalleryButton claimId={claim.id} items={detail.items} />
+        </div>
         <ClaimItems items={detail.items} cards={detail.cards} flaggedIds={detail.flaggedItemIds} />
       </section>
 

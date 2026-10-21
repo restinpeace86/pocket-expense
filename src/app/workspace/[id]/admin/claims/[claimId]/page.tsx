@@ -40,6 +40,10 @@ async function Detail({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   // 작성 중인 결의서는 관리자 화면에서 열지 않는다
   if (!detail || detail.claim.status === "draft") notFound();
   const { can, reason } = canActOnClaim(detail, membership);
+  // 처리 뒤 [다음 결재]: 내가 지금 승인할 수 있는 결의서(관리자 승인 차례, 사전 검토 중·본인 것 제외), 오래된 상신 순
+  const pendingRows = tab === "pending" ? list : (await getAdminClaimList(membership.company_id, "pending")).list;
+  const nextList = pendingRows.filter((r) => r.id !== claimId && !r.reviewing && r.member_id !== membership.member_id);
+  const nextFor = (rows: typeof nextList) => (rows.length ? { href: `${base}/${rows[0].id}?tab=pending${query ? `&${query}` : ""}`, count: rows.length } : { href: "", count: 0 });
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
       <div className="hidden min-w-0 flex-col gap-3 lg:flex">
@@ -48,7 +52,7 @@ async function Detail({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
         <AdminClaimList rows={list} tab={tab} base={base} selectedId={claimId} query={query} />
       </div>
       <AdminClaimDetail
-        key={`${detail.claim.id}:${detail.claim.status}:${detail.claim.current_round}`}
+        key={`${detail.claim.id}:${detail.claim.current_round}`}
         detail={detail}
         canAct={can}
         blockedReason={reason}
@@ -56,6 +60,7 @@ async function Detail({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
         payoutsHref={`/workspace/${id}/admin/payouts`}
         timeline={<ApprovalTimeline detail={detail} />}
         accountTitles={titles ?? []}
+        next={nextFor(nextList)}
       />
     </div>
   );

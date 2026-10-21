@@ -1,7 +1,8 @@
 "use client";
 
+import { ReceiptGallery } from "./receipt-gallery";
 import { ExceptionNote } from "./exception-note";
-import { ArrowLeft, Check, Loader2, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Images, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -23,6 +24,7 @@ export function AdminClaimDetail({
   timeline,
   reviewer = false,
   accountTitles,
+  next = null,
 }: {
   detail: ClaimDetail;
   canAct: boolean;
@@ -32,6 +34,7 @@ export function AdminClaimDetail({
   timeline: React.ReactNode;
   reviewer?: boolean; // 사전 검토자: [검토 승인], 마감 요약·계정과목 없음, 직원 화면 틀(왼쪽 메뉴 없음)
   accountTitles?: AccountTitleOption[]; // 관리자: 항목별 계정과목 조정 (T11-3)
+  next?: { href: string; count: number } | null; // 처리 뒤 [다음 결재 n건 보기] (approver.md ① 완료 화면)
 }) {
   const { claim, owner } = detail;
   const router = useRouter();
@@ -41,6 +44,8 @@ export function AdminClaimDetail({
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [pending, start] = useTransition();
   const [accountBusy, setAccountBusy] = useState<string | null>(null);
+  const [done, setDone] = useState(false); // 승인·반려를 마친 뒤 완료 안내 + 다음 결재
+  const [gallery, setGallery] = useState(false);
   // 계정과목은 고르는 즉시 화면에 반영하고(낙관적 갱신) 저장은 뒤에서 한다. 실패하면 원래대로 되돌린다
   const [accounts, setAccounts] = useState<Record<string, { id: string | null; name: string | null; code: string | null; overridden: boolean }>>({});
   const items = detail.items.map((i) =>
@@ -77,6 +82,7 @@ export function AdminClaimDetail({
         kind: "ok",
         text: res.status === "submitted" ? "검토 승인했어요. 다음 결재자에게 전달됩니다." : res.status === "paid" ? "승인했어요. 정산할 금액이 없어 바로 완료됐어요." : "승인했어요. 정산 지급 관리에서 지급 완료 처리를 해 주세요.",
       });
+      setDone(true);
       router.refresh();
     });
   const reject = () =>
@@ -85,7 +91,8 @@ export function AdminClaimDetail({
       const res = await measureAction("admin.reject_claim", () => rejectClaimAction(claim.id, reason, flagged));
       if (!res.ok) return setMessage({ kind: "error", text: res.error });
       setMode("view");
-      setMessage({ kind: "ok", text: "반려했어요. 직원이 고쳐서 다시 올리면 승인 대기로 돌아와요." });
+      setMessage({ kind: "ok", text: "반려했어요. 청구자에게 사유가 전달됩니다. 직원이 고쳐서 다시 올리면 승인 대기로 돌아와요." });
+      setDone(true);
       router.refresh();
     });
 
@@ -121,9 +128,17 @@ export function AdminClaimDetail({
       </section>
 
       <section className="flex min-w-0 flex-col gap-2">
-        <h2 className="font-semibold">
-          포함된 영수증 {detail.items.length}건{mode === "reject" && <span className="ml-2 text-sm font-normal text-red-700">문제 있는 영수증을 체크해 주세요(선택)</span>}
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">
+            포함된 영수증 {detail.items.length}건{mode === "reject" && <span className="ml-2 text-sm font-normal text-red-700">문제 있는 영수증을 체크해 주세요(선택)</span>}
+          </h2>
+          {detail.items.length > 0 && (
+            <button type="button" onClick={() => setGallery(true)} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 text-sm font-medium hover:bg-zinc-50">
+              <Images className="size-4" /> 영수증 모아보기
+            </button>
+          )}
+        </div>
+        {gallery && <ReceiptGallery claimId={claim.id} items={items} onClose={() => setGallery(false)} />}
         <ClaimItems
           items={items}
           cards={detail.cards}
@@ -161,7 +176,7 @@ export function AdminClaimDetail({
         {timeline}
       </section>
 
-      {(canAct || blockedReason || message) && (
+      {(canAct || blockedReason || message || done) && (
         <div className={`fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur ${reviewer ? "" : "md:left-64"}`}>
           <div className="mx-auto flex max-w-5xl flex-col gap-2">
             {message && (
@@ -169,8 +184,22 @@ export function AdminClaimDetail({
                 {message.text}
               </p>
             )}
-            {!canAct && blockedReason && <p className="rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-600">{blockedReason}</p>}
-            {canAct && mode === "view" && (
+            {done && message?.kind === "ok" && (
+              <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:w-96">
+                <Link href={backHref} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-zinc-300 bg-white font-medium">
+                  목록으로
+                </Link>
+                {next && next.count > 0 ? (
+                  <Link href={next.href} className="inline-flex min-h-12 items-center justify-center gap-1 rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700">
+                    다음 결재 {next.count}건 보기 <ChevronRight className="size-4" />
+                  </Link>
+                ) : (
+                  <span className="inline-flex min-h-12 items-center justify-center rounded-xl bg-zinc-100 text-sm text-zinc-600">남은 결재가 없어요</span>
+                )}
+              </div>
+            )}
+            {!done && !canAct && blockedReason && <p className="rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-600">{blockedReason}</p>}
+            {canAct && !done && mode === "view" && (
               <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:w-96">
                 <button type="button" disabled={pending} onClick={() => setMode("reject")} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl border border-red-300 bg-white font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60">
                   <X className="size-4" />
@@ -182,7 +211,7 @@ export function AdminClaimDetail({
                 </button>
               </div>
             )}
-            {canAct && mode === "reject" && (
+            {canAct && !done && mode === "reject" && (
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium" htmlFor="reject-reason">
                   반려 사유<span className="text-red-600">*</span> <span className="font-normal text-zinc-500">(5자 이상, 직원에게 그대로 보여요)</span>

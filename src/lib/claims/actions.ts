@@ -97,6 +97,17 @@ export async function overrideAccountTitleAction(
 }
 
 // 영수증 원본 크게 보기 (볼 수 있는 결의서의 항목만 — 저장소 열람 정책이 다시 확인)
+// [영수증 모아보기]: 결의서의 모든 영수증 원본(자차는 경로 요약) 링크를 한 번에. 열람 권한은 RLS(본인·관리자·지정 검토자)가 막는다
+export async function receiptOriginalUrlsAction(claimId: string): Promise<Result<{ urls: Record<string, string | null> }>> {
+  if (!(await member())) return fail("NOT_A_MEMBER");
+  if (!UUID.test(claimId)) return fail("NOT_FOUND");
+  const supabase = await createClient();
+  const { data: items } = await supabase.from("expense_items").select("id, receipt_path, route_card_path").eq("claim_id", claimId);
+  const paths = (items ?? []).map((i) => i.receipt_path ?? i.route_card_path);
+  const signed = await signReceiptUrls(supabase, paths);
+  return { ok: true, urls: Object.fromEntries((items ?? []).map((i) => [i.id, signed.get((i.receipt_path ?? i.route_card_path) ?? "") ?? null])) };
+}
+
 export async function receiptOriginalUrlAction(itemId: string): Promise<Result<{ url: string | null }>> {
   if (!(await member())) return fail("NOT_A_MEMBER");
   if (!UUID.test(itemId)) return fail("NOT_FOUND");

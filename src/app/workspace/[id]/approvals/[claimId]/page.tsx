@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { getReviewerInbox } from "@/lib/claims/inbox";
 import { Suspense } from "react";
 import { AdminClaimDetail } from "@/components/claims/admin-claim-detail";
 import { ApprovalTimeline } from "@/components/claims/approval-timeline";
@@ -28,6 +29,7 @@ async function Approval({ params }: Pick<PageProps<"/workspace/[id]/approvals/[c
   if (detail && detail.claim.member_id === membership.member_id) redirect(`/workspace/${id}/employee/claims/${claimId}`);
   if (!detail || detail.claim.status === "draft") notFound();
   const { can } = canActOnClaim(detail, membership);
+  const nextRows = (await getReviewerInbox(membership.company_id, membership.member_id, "waiting")).filter((r) => r.id !== claimId);
   const myStep = [...detail.approvals].reverse().find((a) => a.approver_member_id === membership.member_id && a.round === detail.claim.current_round);
   // 처리 권한이 없을 때 이유 (approver.md ① 상태별 표시)
   const reason = can
@@ -42,7 +44,7 @@ async function Approval({ params }: Pick<PageProps<"/workspace/[id]/approvals/[c
   return (
     <main className="mx-auto flex w-full max-w-md flex-col px-4 pt-3 md:max-w-3xl">
         <AdminClaimDetail
-          key={`${detail.claim.id}:${detail.claim.status}:${detail.pendingStep?.id ?? ""}`}
+          key={`${detail.claim.id}:${detail.claim.current_round}`}
           detail={detail}
           canAct={can}
           blockedReason={reason}
@@ -50,6 +52,7 @@ async function Approval({ params }: Pick<PageProps<"/workspace/[id]/approvals/[c
           payoutsHref="#"
           timeline={<ApprovalTimeline detail={detail} />}
           reviewer
+          next={nextRows.length ? { href: `/workspace/${id}/approvals/${nextRows[0].id}`, count: nextRows.length } : { href: "", count: 0 }}
         />
     </main>
   );
