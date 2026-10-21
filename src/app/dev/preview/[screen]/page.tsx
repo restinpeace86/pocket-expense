@@ -158,7 +158,7 @@ const DI: DetailItem = {
   headcount: 1, purpose: null, attendees: null, client_name: null, trip_start_date: null, trip_end_date: null, parse_status: "success", receipt_path: "x/1.jpg",
   company_supported_amount: 50000, personal_burden_amount: 0, applied_meal_limit_per_person: null, applied_meal_limit_mode: null, account_title_id: "t2", account_title_name: "여비교통비", account_title_code: null, closed_month: null,
   account_title_overridden: false, paid_time: "08:10", approval_number: "30012345", merchant_address: "서울 용산구 한강대로 405", line_items: [], ai: { merchant_name: "코레일 KTX", amount: 50000, expense_date: "2026-10-14" },
-  thumbUrl: null, isPdf: false, duplicate: null, route: null, routeLabel: null,
+  thumbUrl: null, isPdf: false, duplicate: null, route: null, routeLabel: null, routeCardUrl: null,
 };
 const SAMPLE_DETAIL_CLAIM: ClaimDetail = {
   claim: {

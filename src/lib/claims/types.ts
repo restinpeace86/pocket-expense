@@ -48,6 +48,7 @@ export type DetailItem = {
   duplicate: { mine: number; others: number } | null;
   route: RouteCard | null; // 자차 유류비 경로 요약 카드(디지털 증빙, D-085)
   routeLabel: string | null; // 자차 항목 이름(출발 → 도착)
+  routeCardUrl: string | null; // 상신 때 만든 경로 요약 증빙 이미지(D-088), 없으면 화면이 값으로 카드를 그린다
 };
 
 export type DetailApproval = {

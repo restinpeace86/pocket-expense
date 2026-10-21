@@ -762,6 +762,7 @@ export type Database = {
           purpose: string | null
           receipt_path: string | null
           receipt_thumb_path: string | null
+          route_card_path: string | null
           route_evidence: Json | null
           route_one_way_km: number | null
           sort_order: number
@@ -824,6 +825,7 @@ export type Database = {
           purpose?: string | null
           receipt_path?: string | null
           receipt_thumb_path?: string | null
+          route_card_path?: string | null
           route_evidence?: Json | null
           route_one_way_km?: number | null
           sort_order?: number
@@ -886,6 +888,7 @@ export type Database = {
           purpose?: string | null
           receipt_path?: string | null
           receipt_thumb_path?: string | null
+          route_card_path?: string | null
           route_evidence?: Json | null
           route_one_way_km?: number | null
           sort_order?: number

@@ -6,6 +6,7 @@ import { getMembership } from "@/lib/auth/session";
 import { messageForDbError } from "@/lib/errors";
 import { signReceiptUrls } from "@/lib/storage/signed-urls";
 import { notifyClaimEvent, notifyPayouts } from "@/lib/notify/dispatch";
+import { attachRouteCards } from "./route-card-file";
 import { createClient } from "@/lib/supabase/server";
 import type { ClaimProblems } from "./problems";
 
@@ -34,6 +35,8 @@ export async function submitClaimAction(claimId: string): Promise<Result<{ statu
   const { data, error } = await supabase.rpc("submit_claim", { p_claim_id: claimId });
   if (error) return { ok: false, error: messageForDbError(error) };
   if (data === "submitted") after(() => notifyClaimEvent(m.company_id, claimId, "submitted"));
+  // 자차 유류비 항목의 경로 요약 증빙 이미지를 확정된 값으로 만들어 붙인다(D-088). 응답을 늦추지 않게 응답 뒤에
+  after(() => attachRouteCards(claimId));
   refresh();
   return { ok: true, status: String(data) };
 }

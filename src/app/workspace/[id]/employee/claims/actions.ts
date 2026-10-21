@@ -120,7 +120,7 @@ export async function deleteItemAction(itemId: string): Promise<Result> {
   const supabase = await createClient();
   const { data: item } = await supabase
     .from("expense_items")
-    .select("id, claim_id, receipt_path, receipt_thumb_path, credit_charged")
+    .select("id, claim_id, receipt_path, receipt_thumb_path, credit_charged, route_card_path")
     .eq("id", itemId)
     .eq("company_id", m.company_id)
     .maybeSingle();
@@ -128,6 +128,8 @@ export async function deleteItemAction(itemId: string): Promise<Result> {
   if (!(await canEditOwnClaim(supabase, item.claim_id))) return fail("NOT_EDITABLE");
   if (item.credit_charged && !(await archiveCreditedReceipts(m.company_id, [item.id]))) return fail("UNAVAILABLE");
   await removeReceiptFiles(supabase, [item.receipt_path, item.receipt_thumb_path]);
+  // 자차 경로 증빙 이미지는 직원이 지울 수 없는 폴더에 있어 서버가 지운다(권한 확인은 위 canEditOwnClaim)
+  if (item.route_card_path) await createAdminClient()?.storage.from("receipts").remove([item.route_card_path]);
   const { data, error } = await supabase.from("expense_items").delete().eq("id", itemId).select("id");
   if (error) return { ok: false, error: messageForDbError(error) };
   if (!data?.length) return fail("NOT_EDITABLE");

@@ -80,9 +80,9 @@ function Thumb({ i, onOpen }: { i: DetailItem; onOpen: () => void }) {
   const cls = "size-12 shrink-0 rounded-lg border border-zinc-200 bg-zinc-50 object-cover";
   return (
     <button type="button" onClick={onOpen} aria-label={i.routeLabel ? "경로 요약 보기" : "영수증 보기"} className="relative shrink-0">
-      {i.thumbUrl ? (
+      {i.thumbUrl || i.routeCardUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- 10분짜리 서명 링크
-        <img src={i.thumbUrl} alt="" className={cls} />
+        <img src={(i.thumbUrl ?? i.routeCardUrl)!} alt="" className={cls} />
       ) : (
         <span className={`${cls} inline-flex items-center justify-center text-zinc-400`}>
           {i.routeLabel ? <Car className="size-5 text-brand-600" /> : i.isPdf ? <FileText className="size-5" /> : i.receipt_path ? <ImageIcon className="size-5" /> : <PenLine className="size-5" />}
@@ -143,7 +143,13 @@ function ReceiptPanel({ items, index, cards, onIndex, onClose, showAccount }: { 
         </div>
         <div className="grid min-h-0 flex-1 overflow-y-auto md:grid-cols-2">
           <div className="flex min-h-64 items-center justify-center bg-zinc-100 p-3">
-            {i.route ? (
+            {i.routeCardUrl ? (
+              <a href={i.routeCardUrl} target="_blank" rel="noreferrer" className="block w-full" aria-label="경로 요약 증빙 이미지 새 창으로 열기">
+                {/* eslint-disable-next-line @next/next/no-img-element -- 10분짜리 서명 링크 */}
+                <img src={i.routeCardUrl} alt="출장 경로 및 거리 산정 요약 증빙" className="mx-auto block max-h-[70vh] w-auto max-w-full rounded-lg bg-white object-contain shadow" />
+                <span className="mt-2 block text-center text-xs text-zinc-500">상신 때 자동으로 만든 증빙 이미지 · 눌러서 크게 보기</span>
+              </a>
+            ) : i.route ? (
               <div className="w-full max-w-sm">
                 <RouteEvidenceCard card={i.route} />
               </div>
