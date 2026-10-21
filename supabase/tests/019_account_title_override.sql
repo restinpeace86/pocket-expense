@@ -32,9 +32,9 @@ insert into public.members (id, auth_user_id, company_id, name, phone, role, sta
 insert into public.expense_claims (id, company_id, member_id, title, status) values
   ('a6300000-0000-0000-0000-000000000001', 'c6100000-0000-0000-0000-00000000000a', 'a6200000-0000-0000-0000-000000000002', '식대', 'draft');
 update public.expense_claims set status = 'submitted' where id = 'a6300000-0000-0000-0000-000000000001';
-insert into public.expense_items (id, claim_id, company_id, sort_order, category, payment_method, amount, account_title_name, closed_month) values
-  ('a6400000-0000-0000-0000-000000000001', 'a6300000-0000-0000-0000-000000000001', 'c6100000-0000-0000-0000-00000000000a', 1, 'meal', 'personal_card', 9000, '복리후생비', null),
-  ('a6400000-0000-0000-0000-000000000002', 'a6300000-0000-0000-0000-000000000001', 'c6100000-0000-0000-0000-00000000000a', 2, 'meal', 'personal_card', 9000, '복리후생비', '2026-09');
+insert into public.expense_items (id, claim_id, company_id, sort_order, category, payment_method, amount, account_title_name, closed_month, closing_seq, closing_kind) values
+  ('a6400000-0000-0000-0000-000000000001', 'a6300000-0000-0000-0000-000000000001', 'c6100000-0000-0000-0000-00000000000a', 1, 'meal', 'personal_card', 9000, '복리후생비', null, null, null),
+  ('a6400000-0000-0000-0000-000000000002', 'a6300000-0000-0000-0000-000000000001', 'c6100000-0000-0000-0000-00000000000a', 2, 'meal', 'personal_card', 9000, '복리후생비', '2026-09', 1, 'current');
 select set_config('t.entertain', (select id::text from public.account_titles where company_id = 'c6100000-0000-0000-0000-00000000000a' and name = '기업업무추진비'), true);
 select set_config('t.b_title', (select id::text from public.account_titles where company_id = 'c6100000-0000-0000-0000-00000000000b' and name = '기업업무추진비'), true);
 

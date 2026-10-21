@@ -46,8 +46,8 @@ update public.expense_claims set status = 'submitted' where id = 'a2000000-0000-
 -- 마감된 항목이 든 작성 중 소명서(삭제 금지 조건 확인용)
 insert into public.expense_claims (id, company_id, member_id, title) values
   ('a2000000-0000-0000-0000-000000000002', 'c1700000-0000-0000-0000-00000000000a', 'a1800000-0000-0000-0000-000000000002', '마감 항목 포함');
-insert into public.expense_items (claim_id, company_id, sort_order, payment_method, closed_month) values
-  ('a2000000-0000-0000-0000-000000000002', 'c1700000-0000-0000-0000-00000000000a', 1, 'personal_card', '2026-09');
+insert into public.expense_items (claim_id, company_id, sort_order, payment_method, closed_month, closing_seq, closing_kind) values
+  ('a2000000-0000-0000-0000-000000000002', 'c1700000-0000-0000-0000-00000000000a', 1, 'personal_card', '2026-09', 1, 'current');
 
 -- ── A 직원1: 새 소명서 → 헤더 저장 → 영수증 없이 항목 → 항목 저장 ─────────────────────
 select set_config('request.jwt.claims', '{"sub":"a1700000-0000-0000-0000-000000000002","role":"authenticated"}', true);

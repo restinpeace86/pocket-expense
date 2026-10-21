@@ -11,6 +11,8 @@ import { EmployeeHomeView } from "@/components/employee/employee-home-view";
 import { EmployeeShell } from "@/components/employee/employee-shell";
 import { ClaimEditor } from "@/components/employee/claim-editor";
 import { ProfileForm } from "@/components/employee/profile-form";
+import { TaxClosingView } from "@/components/admin/tax-closing-view";
+import type { ExportRow } from "@/lib/tax/export-rows";
 import { SettlementsView } from "@/components/employee/settlements-view";
 import { AppAdminShell } from "@/components/app-admin/app-admin-shell";
 import { BillingView } from "@/components/admin/billing-view";
@@ -160,6 +162,21 @@ const DI: DetailItem = {
   account_title_overridden: false, paid_time: "08:10", approval_number: "30012345", merchant_address: "서울 용산구 한강대로 405", line_items: [], ai: { merchant_name: "코레일 KTX", amount: 50000, expense_date: "2026-10-14" },
   thumbUrl: null, isPdf: false, duplicate: null, route: null, routeLabel: null, routeCardUrl: null,
 };
+const EXPORT_BASE = {
+  kind: "current", claim_id: "cl100000-aaaa", claim_title: "9월 팀 점심", claim_description: "부서 정기 점심 식사 진행", exception_memo: null, is_trip: false,
+  trip_destination: null, trip_start: null, trip_end: null, trip_purpose: null, claim_status: "approved", self_approved: false, submitted_at: null, approved_at: null, paid_at: null,
+  approvers: "김대표(9/26)", header_custom: {}, merchant_business_number: "1234567890", evidence_type: "card_slip", supply_amount: null, vat_amount: null,
+  payment_method: "personal_card", card_nickname: null, card_last4: null, account_title_name: "복리후생비", account_title_code: null, category: "meal", trip_type: null,
+  purchase_type: null, department: "개발팀", member_name: "김개발", position: "대리", employee_number: null, vehicle_number: null, purpose: null, headcount: 1, attendees: null,
+  client_name: null, lodging_in: null, lodging_out: null, start_location: null, end_location: null, is_round_trip: null, route_one_way_km: null, distance_km: null,
+  distance_source: null, applied_meal_limit_per_person: 10000, applied_fuel_rate_per_km: null, personal_burden_amount: 0, route_card_path: null, item_custom: {},
+} as const;
+const SAMPLE_EXPORT_ROWS: ExportRow[] = [
+  { ...EXPORT_BASE, seq: 1, item_id: "it000001", expense_date: "2026-09-10", merchant_name: "김밥천국 강남역점 (아주 긴 가맹점 이름이 들어가도 괜찮은지)", amount: 31000, company_supported_amount: 31000, receipt_path: "x/1.jpg" },
+  { ...EXPORT_BASE, seq: 2, item_id: "it000002", expense_date: "2026-09-12", merchant_name: "이마트 판교점", amount: 12000, company_supported_amount: 12000, payment_method: "corporate_card", receipt_path: "x/2.jpg" },
+  { ...EXPORT_BASE, seq: 3, item_id: "it000003", expense_date: "2026-09-14", merchant_name: null, amount: 150800, company_supported_amount: 150800, category: "trip", trip_type: "own_car", account_title_name: "여비교통비", start_location: "판교역", end_location: "부산역", is_round_trip: true, route_one_way_km: 377, distance_km: 754, distance_source: "api", receipt_path: null, route_card_path: "x/route.png" },
+  { ...EXPORT_BASE, seq: 4, kind: "carryover", item_id: "it000004", expense_date: "2026-08-29", merchant_name: "스타벅스", amount: 9000, company_supported_amount: 9000, category: "meeting", account_title_name: "기업업무추진비", receipt_path: "x/4.jpg" },
+];
 const SAMPLE_DETAIL_CLAIM: ClaimDetail = {
   claim: {
     id: "cl1", member_id: "p3", status: "submitted", title: "10/15 부산 출장 경비", description: "부산 지사 미팅 및 현장 점검 건", exception_memo: "토요일 오전 현장 점검 일정이라 전날 밤 이동", is_business_trip: true, trip_destination: "부산",
@@ -448,6 +465,28 @@ async function Preview({
               ]}
             />
           </div>
+        </AdminShell>
+      );
+    case "admin-export":
+    case "admin-export-closed":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/export">
+          <TaxClosingView
+            data={{
+              month: "2026-09",
+              status: screen === "admin-export-closed" ? "closed" : "pending",
+              closedAt: screen === "admin-export-closed" ? "2026-10-05T01:00:00Z" : null,
+              reopenedAt: null,
+              reopenReason: null,
+              excluded: { draft: 2, submitted: 3, rejected: 1, claims: 4 },
+              rows: SAMPLE_EXPORT_ROWS,
+            }}
+            months={["2026-10", "2026-09", "2026-08"]}
+            base="#"
+            claimsBase="#"
+            companyName="포켓컴퍼니 주식회사"
+            isSuper
+          />
         </AdminShell>
       );
     case "admin-payouts":

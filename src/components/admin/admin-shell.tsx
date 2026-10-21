@@ -36,7 +36,7 @@ const NAV: NavItem[] = [
   { href: "/claims", label: "지출 승인 관리", icon: ReceiptText, ready: true },
   { href: "/payouts", label: "정산 지급 관리", icon: Banknote, ready: true },
   { href: "/members", label: "멤버 관리", icon: Users, ready: true },
-  { href: "/export", label: "세무 마감", icon: FileDown, ready: false },
+  { href: "/export", label: "세무 마감", icon: FileDown, ready: true },
 ];
 const SETTINGS_NAV: NavItem[] = [
   { href: "/settings", label: "지출 한도·정책", icon: SlidersHorizontal, ready: true },
