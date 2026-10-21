@@ -308,7 +308,7 @@ async function Preview({
     case "employee-home-blocked":
     case "employee-home-rejected":
       return (
-        <EmployeeShell membership={screen === "employee-home" ? SAMPLE_MEMBERSHIP : EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee" inbox={screen === "employee-home" ? { waiting: 3 } : null}>
+        <EmployeeShell membership={screen === "employee-home" ? SAMPLE_MEMBERSHIP : EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee">
           <EmployeeHomeView
             name={screen === "employee-home" ? "김대표" : "김개발"}
             base="#"

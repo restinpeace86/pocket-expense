@@ -24,7 +24,7 @@ export function EmployeeShell({
   children: ReactNode;
   theme?: ThemeKey;
   previewPath?: string; // 미리보기 전용: 워크스페이스 기준 경로(예: "/employee", "/approvals")
-  inbox?: { waiting: number } | null; // 결재함 탭: 사전 검토자·관리자 이상일 때만 (worker-dashboard.md §5)
+  inbox?: { waiting: number } | null; // 결재함 탭: 관리자가 아닌 사전 검토자만 (worker-dashboard.md §5, D-082)
 }) {
   const ws = `/workspace/${membership.company_id}`;
   const realPath = usePathname();

@@ -36,22 +36,11 @@ export async function getReviewerBadge(companyId: string, memberId: string): Pro
   return { isReviewer: (waiting ?? 0) > 0 || (inLine ?? 0) > 0, waiting: waiting ?? 0 };
 }
 
-// 하단 메뉴 [결재함] 표시: 관리자 이상은 관리자 승인 차례(본인 소명서 제외), 사전 검토자는 내 검토 차례 건수
+// 직원 하단 메뉴 [결재함] 표시 (D-082): 관리자 이상이 아닌 사전 검토자만, 내 검토 차례 건수.
+// 관리자 이상은 결재를 관리자 모드 [지출 승인 관리]에서 하므로 직원 하단 메뉴에 결재함을 두지 않는다
+// (누르면 관리자 화면으로 넘어가 하단 메뉴가 사라지던 문제).
 export async function getInboxBadge(membership: { company_id: string; member_id: string; role: string }): Promise<{ waiting: number } | null> {
-  if (membership.role === "super_admin" || membership.role === "admin") {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("claim_approvals")
-      .select("claim_id, claim:expense_claims!inner(member_id, status)")
-      .eq("company_id", membership.company_id)
-      .eq("step_kind", "final")
-      .eq("status", "pending");
-    const waiting = (data ?? []).filter((r) => {
-      const c = r.claim as unknown as { member_id: string; status: string } | null;
-      return c && c.status === "submitted" && c.member_id !== membership.member_id;
-    }).length;
-    return { waiting };
-  }
+  if (membership.role === "super_admin" || membership.role === "admin") return null;
   const r = await getReviewerBadge(membership.company_id, membership.member_id);
   return r.isReviewer ? { waiting: r.waiting } : null;
 }
