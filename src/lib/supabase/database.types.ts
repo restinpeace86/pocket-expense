@@ -1505,6 +1505,7 @@ export type Database = {
         }
         Returns: string
       }
+      admin_dashboard: { Args: { p_month: string }; Returns: Json }
       app_admin_company_overview: {
         Args: { p_month: string }
         Returns: {

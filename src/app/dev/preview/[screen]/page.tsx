@@ -13,6 +13,7 @@ import { ClaimEditor } from "@/components/employee/claim-editor";
 import { ProfileForm } from "@/components/employee/profile-form";
 import { TaxClosingView } from "@/components/admin/tax-closing-view";
 import type { ExportRow } from "@/lib/tax/export-rows";
+import type { Dashboard } from "@/lib/admin/dashboard";
 import { SettlementsView } from "@/components/employee/settlements-view";
 import { AppAdminShell } from "@/components/app-admin/app-admin-shell";
 import { BillingView } from "@/components/admin/billing-view";
@@ -177,6 +178,27 @@ const SAMPLE_EXPORT_ROWS: ExportRow[] = [
   { ...EXPORT_BASE, seq: 3, item_id: "it000003", expense_date: "2026-09-14", merchant_name: null, amount: 150800, company_supported_amount: 150800, category: "trip", trip_type: "own_car", account_title_name: "여비교통비", start_location: "판교역", end_location: "부산역", is_round_trip: true, route_one_way_km: 377, distance_km: 754, distance_source: "api", receipt_path: null, route_card_path: "x/route.png" },
   { ...EXPORT_BASE, seq: 4, kind: "carryover", item_id: "it000004", expense_date: "2026-08-29", merchant_name: "스타벅스", amount: 9000, company_supported_amount: 9000, category: "meeting", account_title_name: "기업업무추진비", receipt_path: "x/4.jpg" },
 ];
+const SAMPLE_DASHBOARD: Dashboard = {
+  month: "2026-10",
+  kpi: { spend: 2450000, spend_prev: 2130000, pending_claims: 5, pending_oldest_days: 8, unpaid_payout: 1820000, unpaid_payback: 12000 },
+  todo: { pending_members: 1, unmapped_items: 3, settle_claims: 4, failed_notifications: 2 },
+  checklist: { approved_members: 8, departments: 3, policy_confirmed: true, review_steps: 0 },
+  categories: [
+    { category: "trip", trip_type: "public_transport", amount: 640000, count: 8 },
+    { category: "trip", trip_type: "own_car", amount: 450000, count: 5 },
+    { category: "trip", trip_type: "lodging", amount: 360000, count: 3 },
+    { category: "meal", trip_type: null, amount: 520000, count: 41 },
+    { category: "meeting", trip_type: null, amount: 300000, count: 6 },
+    { category: "purchase", trip_type: null, amount: 180000, count: 9 },
+  ],
+  top_members: [
+    { name: "김개발", department: "개발팀", amount: 820000, count: 14 },
+    { name: "박영업", department: "영업팀 (서울·부산 지사 담당 아주 긴 부서 이름)", amount: 610000, count: 9 },
+    { name: "이디자인", department: "디자인팀", amount: 320000, count: 11 },
+    { name: "최기획", department: null, amount: 210000, count: 6 },
+    { name: "정인사", department: "경영지원", amount: 90000, count: 4 },
+  ],
+};
 const SAMPLE_DETAIL_CLAIM: ClaimDetail = {
   claim: {
     id: "cl1", member_id: "p3", status: "submitted", title: "10/15 부산 출장 경비", description: "부산 지사 미팅 및 현장 점검 건", exception_memo: "토요일 오전 현장 점검 일정이라 전날 밤 이동", is_business_trip: true, trip_destination: "부산",
@@ -620,8 +642,7 @@ async function Preview({
             adminName="김대표"
             companyName="포켓컴퍼니 주식회사"
             inviteCode="ABCD2345"
-            pendingCount={2}
-            approvedCount={1}
+            dashboard={{ ...SAMPLE_DASHBOARD, kpi: { spend: 0, spend_prev: 0, pending_claims: 0, pending_oldest_days: null, unpaid_payout: 0, unpaid_payback: 0 }, todo: { pending_members: 2, unmapped_items: 0, settle_claims: 0, failed_notifications: 0 }, checklist: { approved_members: 1, departments: 2, policy_confirmed: false, review_steps: 0 }, categories: [], top_members: [] }}
             creditsLeft={100}
             creditsGranted={100}
             basePath="#"
@@ -638,9 +659,8 @@ async function Preview({
             adminName="김대표"
             companyName="포켓컴퍼니 주식회사"
             inviteCode="ABCD2345"
-            pendingCount={0}
-            approvedCount={8}
-            creditsLeft={73}
+            dashboard={SAMPLE_DASHBOARD}
+            creditsLeft={18}
             creditsGranted={100}
             basePath="#"
             preview
