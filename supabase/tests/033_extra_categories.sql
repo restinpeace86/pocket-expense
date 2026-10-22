@@ -10,13 +10,13 @@ insert into public.companies (id, name, invite_code, business_number, meal_limit
   ('c3300000-0000-0000-0000-00000000000a', '추가카테고리', 'XCATAAAA', '1000000331', 10000, 'split');
 insert into public.members (id, auth_user_id, company_id, name, phone, role, status, privacy_agreed_at) values
   ('a3310000-0000-0000-0000-000000000001', 'a3300000-0000-0000-0000-000000000001', 'c3300000-0000-0000-0000-00000000000a', '직원', '01093301001', 'employee', 'approved', now());
--- 관리자가 이미 '도서인쇄비'를 만들어 둔 회사: 새로 만들지 않고 그것을 쓴다
+-- 관리자가 이미 '도서인쇄비'를 만들어 둔 회사: 새로 만들지 않고 그것을 쓴다(업무용 도서). 세미나·교육은 교육훈련비(D-107)
 insert into public.account_titles (company_id, name, sort_order) values ('c3300000-0000-0000-0000-00000000000a', '도서인쇄비', 9);
 select private.seed_account_defaults('c3300000-0000-0000-0000-00000000000a');
 select private.seed_account_defaults('c3300000-0000-0000-0000-00000000000a'); -- 두 번 해도 그대로
 
 do $$
-declare r record; v_expect jsonb := '{"team_dinner":"복리후생비","condolence":"기업업무추진비","seminar":"도서인쇄비","books":"도서인쇄비","training":"도서인쇄비","company_car":"차량유지비","saas":"지급수수료","meal":"복리후생비","meeting":"기업업무추진비"}';
+declare r record; v_expect jsonb := '{"team_dinner":"복리후생비","condolence":"기업업무추진비","seminar":"교육훈련비","books":"도서인쇄비","training":"교육훈련비","company_car":"차량유지비","saas":"지급수수료","meal":"복리후생비","meeting":"기업업무추진비"}';
 begin
   for r in select m.category::text as c, t.name from public.account_title_mappings m join public.account_titles t on t.id = m.account_title_id
             where m.company_id = 'c3300000-0000-0000-0000-00000000000a' and m.trip_type is null and m.purchase_type is null loop

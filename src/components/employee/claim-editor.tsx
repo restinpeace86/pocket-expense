@@ -1,7 +1,7 @@
 "use client";
 
 import { exceptionFlags, exceptionSummary } from "@/lib/expense/exceptions";
-import { ArrowLeft, Camera, Car, ChevronDown, FileText, ImageIcon, Loader2, Minus, PenLine, Plus, ReceiptText, TrainFront, Trash2, X } from "lucide-react";
+import { ArrowLeft, Building2, Camera, Car, ChevronDown, FileText, ImageIcon, Loader2, Minus, PenLine, Plus, ReceiptText, TrainFront, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
@@ -439,7 +439,9 @@ export function ClaimEditor({
   const title = titleTouched ? form.title : suggestion;
   const purposeDraft = suggestPurpose({ isBusinessTrip: isTrip, tripDestination: form.tripDestination, tripPurpose: form.tripPurpose }, items);
   const description = descTouched ? form.description : purposeDraft;
-  const current: ClaimHeaderInput = { ...form, category, isBusinessTrip: isTrip, vehicleId: category === "company_car" ? form.vehicleId : null, title, description };
+  // 차량: 회사차량 결의서 또는 회사차량으로 간 출장(D-105, D-106)
+  const usesVehicle = category === "company_car" || (category === "trip" && form.tripTransport === "company_car");
+  const current: ClaimHeaderInput = { ...form, category, isBusinessTrip: isTrip, vehicleId: usesVehicle ? form.vehicleId : null, title, description };
   const dirty = JSON.stringify(current) !== JSON.stringify(savedForm);
   const uploadingIds = new Set(uploader.rows.filter((r) => r.phase !== "done").map((r) => r.itemId).filter(Boolean));
   const { prune } = uploader;
@@ -568,7 +570,7 @@ export function ClaimEditor({
     const nextTitle = titleTouched ? form.title : suggestTitle({ isBusinessTrip: c === "trip", tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null, category: c }, items);
     setForm(nextForm);
     setMessage(null);
-    void persist({ ...nextForm, vehicleId: c === "company_car" ? form.vehicleId : null, title: nextTitle, description });
+    void persist({ ...nextForm, vehicleId: c === "company_car" || (c === "trip" && form.tripTransport === "company_car") ? form.vehicleId : null, title: nextTitle, description });
   };
 
   // 카테고리가 안 맞아 보이는 영수증 (D-104): 이 결의서가 맞음 / 새 결의서로 옮기기
@@ -662,6 +664,16 @@ export function ClaimEditor({
               ))}
             </div>
           </details>
+          {(category === "team_dinner" || category === "meeting" || category === "meal") && (
+            // 식사 영수증은 AI로 구분이 안 돼 고를 때 기준을 보여 준다 (D-107)
+            <p className="rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
+              {category === "meeting"
+                ? "거래처·외부 사람이 함께한 자리예요. 회사 사람끼리만 먹었다면 [일반 식대] 또는 [그 밖의 경비 › 회식비]를 골라 주세요."
+                : category === "team_dinner"
+                  ? "회사 사람끼리만 한 회식이에요. 거래처·외부 사람이 함께했다면 [외부 미팅비]를 골라 주세요."
+                  : "평소 점심·야근 식대예요(1식 한도 적용). 부서 회식은 [그 밖의 경비 › 회식비], 거래처와 함께면 [외부 미팅비]."}
+            </p>
+          )}
           {!category && <p className="text-xs text-amber-700">이 결의서의 지출 카테고리를 골라 주세요. 모든 영수증이 이 카테고리로 처리돼요.</p>}
           {aiCategory && (
             <p className="flex items-start gap-1.5 text-xs text-brand-700">
@@ -752,11 +764,12 @@ export function ClaimEditor({
               <DateRangePicker label="출장 기간" required start={form.tripStartDate} end={form.tripEndDate} onChange={(s, e) => setForm((f) => ({ ...f, tripStartDate: s, tripEndDate: e }))} />
               <div className="flex flex-col gap-1.5">
                 <span className="text-sm font-medium text-zinc-800">이동 수단</span>
-                <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="이동 수단">
+                <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-3" role="radiogroup" aria-label="이동 수단">
                   {(
                     [
                       ["own_car", "자차", Car],
-                      ["public_transport", "대중교통·KTX", TrainFront],
+                      ["public_transport", "대중교통", TrainFront],
+                      ["company_car", "회사차량", Building2],
                     ] as [TripTransport, string, typeof Car][]
                   ).map(([v, label, Icon]) => (
                     <button
@@ -777,6 +790,19 @@ export function ClaimEditor({
                   ))}
                 </div>
                 {form.tripTransport === "public_transport" && <p className="text-xs text-zinc-500">KTX·버스·항공권 영수증을 올리면 출장비 › 대중교통으로 분류돼요.</p>}
+                {form.tripTransport === "company_car" && (
+                  <div className="flex flex-col gap-1.5 rounded-xl border border-brand-200 bg-white p-2.5 sm:p-3" aria-label="출장에 쓴 회사차량">
+                    <span className="text-sm font-medium text-zinc-800">
+                      어느 차로 갔나요{data.vehicles.length > 0 && <span className="ml-0.5 text-red-600">*</span>}
+                    </span>
+                    {data.vehicles.length ? (
+                      <Chips label="출장 차량" options={data.vehicles.map((v) => ({ value: v.id, label: `${v.nickname} · ${v.plate_number}` }))} value={form.vehicleId} onChange={(v) => set("vehicleId", v)} />
+                    ) : (
+                      <p className="text-xs text-zinc-500">등록된 회사차량이 없어요. 관리자가 [설정 › 회사차량]에 등록하면 여기서 고를 수 있어요.</p>
+                    )}
+                    <p className="text-xs text-zinc-500">주유·통행료·주차 영수증은 회사차량 비용(차량유지비)으로, 숙박·식사·대중교통은 출장비(여비교통비)로 자동으로 나눠요.</p>
+                  </div>
+                )}
               </div>
               {form.tripTransport === "own_car" && (
                 <div className="flex flex-col gap-2 rounded-xl border border-brand-200 bg-white p-2.5 sm:p-3">
@@ -986,7 +1012,7 @@ export function ClaimEditor({
                 mismatch={!isOwnCar(item) && !item.category_mismatch_ack && categoryMismatch(category, item.aiCategory)}
               >
                 <ItemInlineForm
-                  key={`${item.id}:${item.parse_status}:${item.headcount}`} // AI로 다시 읽은 뒤·결의서 기본 인원이 반영된 뒤 새 값으로 다시 그린다
+                  key={`${item.id}:${item.parse_status}:${item.headcount}:${item.category}:${item.trip_type}`} // AI로 다시 읽은 뒤·결의서 값(인원·카테고리·출장 유형)이 영수증에 반영된 뒤 새 값으로 다시 그린다
                   claim={claim}
                   item={item}
                   cards={data.cards}
@@ -995,6 +1021,7 @@ export function ClaimEditor({
                   base={base}
                   deadline={data.deadline}
                   claimCategory={category}
+                  tripTransport={form.tripTransport}
                   mismatch={!item.category_mismatch_ack && categoryMismatch(category, item.aiCategory)}
                   busy={busy}
                   onAckCategory={() => ackItem(item.id)}

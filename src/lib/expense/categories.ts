@@ -1,7 +1,8 @@
 // 내부 분류(카테고리 + 세부 유형) 이름 — 관리자·직원 화면 공통 (spec/features/account-titles.md §3, trip-expense.md, D-076)
 // 4대 카테고리 + 추가 카테고리(D-102: 회식비·경조사비·세미나·도서·교육·회사차량·SaaS)
 export type ExpenseCategory = "meal" | "trip" | "meeting" | "purchase" | "team_dinner" | "condolence" | "seminar" | "books" | "training" | "company_car" | "saas";
-export type TripType = "meal" | "public_transport" | "taxi" | "toll_parking" | "lodging" | "own_car" | "other";
+// car_fuel·car_toll: 회사차량으로 간 출장의 주유·통행료·주차(차량유지비, D-106)
+export type TripType = "meal" | "public_transport" | "taxi" | "toll_parking" | "lodging" | "own_car" | "other" | "car_fuel" | "car_toll";
 export type PurchaseType = "pantry" | "office_supplies" | "small_equipment";
 
 export const CATEGORY_LABEL: Record<ExpenseCategory, string> = {
@@ -29,6 +30,8 @@ export const TRIP_TYPE_LABEL: Record<TripType, string> = {
   lodging: "숙박",
   own_car: "자차 유류비",
   other: "기타",
+  car_fuel: "회사차량 주유",
+  car_toll: "회사차량 통행료·주차",
 };
 export const PURCHASE_TYPE_LABEL: Record<PurchaseType, string> = {
   pantry: "탕비실·간식",
@@ -38,7 +41,7 @@ export const PURCHASE_TYPE_LABEL: Record<PurchaseType, string> = {
 
 export type Classification = { category: ExpenseCategory; tripType: TripType | null; purchaseType: PurchaseType | null };
 
-// 계정과목 매핑 표에 보여 줄 순서 (내부 분류 19종)
+// 계정과목 매핑 표에 보여 줄 순서 (내부 분류 21종)
 export const MAPPING_ROWS: Classification[] = [
   { category: "meal", tripType: null, purchaseType: null },
   ...(Object.keys(TRIP_TYPE_LABEL) as TripType[]).map((t) => ({ category: "trip" as const, tripType: t, purchaseType: null })),

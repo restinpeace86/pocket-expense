@@ -14,7 +14,7 @@ export type ParsedReceipt = {
   vat_amount: number | null;
   expense_date: string | null; // YYYY-MM-DD
   suggested_category: "meal" | "trip" | "meeting" | "purchase" | null;
-  suggested_trip_type: "meal" | "public_transport" | "taxi" | "toll_parking" | "lodging" | "other" | null;
+  suggested_trip_type: "meal" | "public_transport" | "taxi" | "toll_parking" | "lodging" | "other" | "car_fuel" | null;
   suggested_purchase_type: "pantry" | "office_supplies" | "small_equipment" | null;
   suggested_purpose: string | null; // 지출 사유 초안 한 줄(D-086) — 결의서 [지출 사유] 초안에 쓴다
   // 참고 정보(D-079): 지출결의서 양식에는 넣지 않고 화면에 보여 주기·중복 영수증 확인에 쓴다
@@ -26,7 +26,7 @@ export type ParsedReceipt = {
 
 const EVIDENCE = ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt"] as const;
 const CATEGORY = ["meal", "trip", "meeting", "purchase"] as const;
-const TRIP = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other"] as const; // 자차(own_car)는 영수증이 없어 추천하지 않는다
+const TRIP = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other", "car_fuel"] as const; // 자차(own_car)는 영수증이 없어 추천하지 않는다. car_fuel = 주유소(회사차량 출장이면 차량유지비, D-106)
 const PURCHASE = ["pantry", "office_supplies", "small_equipment"] as const;
 
 function oneOf<T extends string>(v: unknown, list: readonly T[]): T | null {

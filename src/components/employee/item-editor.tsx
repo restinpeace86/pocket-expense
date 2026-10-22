@@ -10,7 +10,7 @@ import { rereadReceiptAction, saveItemAction } from "@/app/workspace/[id]/employ
 import { receiptOriginalUrlAction } from "@/lib/claims/actions";
 import { AmountInput } from "@/components/ui/amount-input";
 import { inputClass } from "@/components/ui/page-shell";
-import type { EditorCard, EditorClaim, EditorItem, EvidenceType, ItemInput, PaymentMethod } from "@/lib/employee/editor-types";
+import type { EditorCard, EditorClaim, EditorItem, EvidenceType, ItemInput, PaymentMethod, TripTransport } from "@/lib/employee/editor-types";
 import { isMealLike, itemAmounts, type MealPolicy } from "@/lib/expense/amounts";
 import { CATEGORY_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, type PurchaseType, type TripType } from "@/lib/expense/categories";
 import { formatWon } from "@/lib/format";
@@ -19,7 +19,9 @@ import { measureAction } from "@/lib/perf/client";
 
 // 영수증 항목 편집 — 결의서 화면 안 인라인(아코디언) (worker-tax-processing.md §2·§3-3, smart-meal.md §4, corporate-cards.md §3, todo_improvement(2차) 3)
 export const CATEGORY_ICON: Record<ExpenseCategory, string> = { meal: "🍚", trip: "🧳", meeting: "🤝", purchase: "📦", team_dinner: "🍻", condolence: "💐", seminar: "🎤", books: "📚", training: "🎓", company_car: "🚙", saas: "💻" };
-const TRIP_TYPES: TripType[] = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other"]; // 자차 유류비는 T7
+// 회사차량으로 간 출장이면 톨비·주차 대신 회사차량 주유·통행료·주차(차량유지비, D-106)
+const TRIP_TYPES: TripType[] = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other"];
+const COMPANY_CAR_TRIP_TYPES: TripType[] = ["meal", "public_transport", "taxi", "car_fuel", "car_toll", "lodging", "other"]; // 자차 유류비는 T7
 export const PURCHASE_TYPES: PurchaseType[] = ["pantry", "office_supplies", "small_equipment"];
 const EVIDENCE: { value: EvidenceType; label: string }[] = [
   { value: "card_slip", label: "카드매출전표" },
@@ -207,6 +209,7 @@ export function ItemInlineForm({
   base,
   deadline = { type: "none", days: null },
   claimCategory,
+  tripTransport = null,
   mismatch = false,
   busy = false,
   onAckCategory,
@@ -216,6 +219,7 @@ export function ItemInlineForm({
 }: {
   claim: EditorClaim;
   claimCategory: ExpenseCategory | null; // 결의서 화면에서 지금 고른 대표 카테고리(D-098). 저장 전이라도 화면은 이것을 따른다
+  tripTransport?: TripTransport | null; // 출장 이동 수단(회사차량이면 세부 유형이 달라짐)
   mismatch?: boolean; // AI가 본 종류가 결의서 카테고리와 다르고 아직 확인 안 함(D-104)
   busy?: boolean;
   onAckCategory?: () => void;
@@ -471,7 +475,7 @@ export function ItemInlineForm({
         <Field label="출장비 세부 유형" required>
           <Chips
             label="출장비 세부 유형"
-            options={TRIP_TYPES.map((t) => ({ value: t, label: TRIP_TYPE_LABEL[t] }))}
+            options={(tripTransport === "company_car" ? COMPANY_CAR_TRIP_TYPES : TRIP_TYPES).map((t) => ({ value: t, label: TRIP_TYPE_LABEL[t] }))}
             value={input.category === "trip" ? input.tripType : null}
             onChange={(v) => change((f) => ({ ...f, category: "trip", tripType: v, purchaseType: null }))}
           />

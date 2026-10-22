@@ -1740,6 +1740,7 @@ export type Database = {
           p_purchase_items?: string
           p_purchase_purpose?: string
           p_purchase_type?: Database["public"]["Enums"]["purchase_type"]
+          p_trip_transport?: Database["public"]["Enums"]["trip_transport"]
           p_vehicle_id?: string
         }
         Returns: Json
@@ -1865,7 +1866,7 @@ export type Database = {
       parse_status: "none" | "parsing" | "success" | "failed"
       payment_method: "corporate_card" | "personal_card"
       purchase_type: "pantry" | "office_supplies" | "small_equipment"
-      trip_transport: "own_car" | "public_transport"
+      trip_transport: "own_car" | "public_transport" | "company_car"
       trip_type:
         | "meal"
         | "public_transport"
@@ -1874,6 +1875,8 @@ export type Database = {
         | "lodging"
         | "own_car"
         | "other"
+        | "car_fuel"
+        | "car_toll"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2047,7 +2050,7 @@ export const Constants = {
       parse_status: ["none", "parsing", "success", "failed"],
       payment_method: ["corporate_card", "personal_card"],
       purchase_type: ["pantry", "office_supplies", "small_equipment"],
-      trip_transport: ["own_car", "public_transport"],
+      trip_transport: ["own_car", "public_transport", "company_car"],
       trip_type: [
         "meal",
         "public_transport",
@@ -2056,6 +2059,8 @@ export const Constants = {
         "lodging",
         "own_car",
         "other",
+        "car_fuel",
+        "car_toll",
       ],
     },
   },

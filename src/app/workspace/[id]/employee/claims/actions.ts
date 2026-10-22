@@ -26,6 +26,7 @@ async function approvedMember() {
 
 const fail = (code: string): { ok: false; error: string } => ({ ok: false, error: messageForDbError({ message: code }) });
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const TRANSPORTS: readonly string[] = ["own_car", "public_transport", "company_car"]; // 출장 이동 수단 (D-085, D-106)
 
 // 헤더 임시저장. 필수 여부는 상신 때 확인한다(임시저장은 빈 칸 허용).
 export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderInput): Promise<Result> {
@@ -62,7 +63,8 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
       p_purchase_purpose: input.purchasePurpose,
       p_purchase_items: input.purchaseItems,
       p_headcount: headcount ?? undefined,
-      p_vehicle_id: category === "company_car" && input.vehicleId && isUuid(input.vehicleId) ? input.vehicleId : undefined,
+      p_vehicle_id: (category === "company_car" || (category === "trip" && input.tripTransport === "company_car")) && input.vehicleId && isUuid(input.vehicleId) ? input.vehicleId : undefined,
+      p_trip_transport: category === "trip" && input.tripTransport && TRANSPORTS.includes(input.tripTransport) ? input.tripTransport : undefined,
     });
     if (catError) return { ok: false, error: messageForDbError(catError) };
   }
@@ -79,7 +81,7 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
       trip_start_date: isTrip ? start : null,
       trip_end_date: isTrip ? end : null,
       trip_purpose: isTrip ? purpose || null : null,
-      trip_transport: isTrip && (input.tripTransport === "own_car" || input.tripTransport === "public_transport") ? input.tripTransport : null,
+      trip_transport: isTrip && input.tripTransport && TRANSPORTS.includes(input.tripTransport) ? input.tripTransport : null,
     })
     .eq("id", claimId)
     .eq("company_id", m.company_id)
@@ -264,7 +266,7 @@ export async function createManualItemAction(claimId: string): Promise<Result<{ 
 }
 
 const CATEGORIES = ALL_CATEGORIES;
-const TRIP_TYPES = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other"] as const; // 자차(own_car)는 T7에서
+const TRIP_TYPES = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other", "car_fuel", "car_toll"] as const; // 자차(own_car)는 T7에서
 const PURCHASE_TYPES = ["pantry", "office_supplies", "small_equipment"] as const;
 const EVIDENCE_TYPES = ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt", "other"] as const;
 const pickOne = <T extends string>(v: string | null, list: readonly T[]): T | null => (v && (list as readonly string[]).includes(v) ? (v as T) : null);

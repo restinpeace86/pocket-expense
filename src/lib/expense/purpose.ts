@@ -25,6 +25,7 @@ export function templatePurpose(i: PurposeItem): string | null {
       if (i.trip_type === "meal") return "출장 중 식사";
       if (i.trip_type === "lodging") return "출장 숙박";
       if (i.trip_type === "own_car") return "출장 자차 이동 유류비";
+      if (i.trip_type === "car_fuel" || i.trip_type === "car_toll") return "출장 회사차량 운행비";
       return i.trip_type ? "출장 교통비" : "출장 경비";
     case "team_dinner":
       return "부서 회식 진행";
