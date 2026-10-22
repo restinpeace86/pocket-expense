@@ -20,6 +20,7 @@ import { submitClaimAction } from "@/lib/claims/actions";
 import { HEADER_PROBLEM_LABEL, ITEM_PROBLEM_LABEL, type ClaimProblems } from "@/lib/claims/problems";
 import { measureAction } from "@/lib/perf/client";
 import { MAX_PER_CLAIM, useReceiptUpload, type UploadRow } from "./use-receipt-upload";
+import { useElementHeight } from "@/lib/ui/use-element-height";
 
 // 화면 E-02 지출결의서 작성 (spec/screens/worker-tax-processing.md §1·§3-1·§3-2·§3-4·§4)
 
@@ -294,6 +295,13 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
   const [descTouched, setDescTouched] = useState((claim.description ?? "") !== "");
   const [savedForm, setSavedForm] = useState<ClaimHeaderInput>(initial);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const { ref: barRef, height: barHeight } = useElementHeight<HTMLDivElement>();
+  // 저장 성공 안내는 4초 뒤 사라진다(오류는 고칠 때까지 남김)
+  useEffect(() => {
+    if (message?.kind !== "ok") return;
+    const t = setTimeout(() => setMessage(null), 4000);
+    return () => clearTimeout(t);
+  }, [message]);
   const [sheet, setSheet] = useState(openAdd && items.length === 0);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [saving, startSave] = useTransition();
@@ -386,7 +394,8 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-3 md:max-w-2xl">
+    // 아래 여백 = 하단 바의 실제 높이 + 여유(안내 문구가 생겨도 [결의서 삭제]가 가려지지 않게, 개선사항(2차) 2)
+    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-4 pt-3 md:max-w-2xl" style={{ paddingBottom: Math.max(barHeight + 24, 96) }}>
       <div className="flex items-center justify-between gap-2">
         <Link href={base} className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100">
           <ArrowLeft className="size-4" />내 결의서
@@ -734,7 +743,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
       )}
 
       {/* 하단 액션 바 (§4) */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+      <div ref={barRef} className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         <div className="mx-auto flex max-w-md flex-col gap-2 md:max-w-2xl">
           <UploadSummary rows={uploader.rows} />
           {message && (
