@@ -586,6 +586,9 @@ export type Database = {
       expense_claims: {
         Row: {
           approved_at: string | null
+          attendees: string | null
+          category: Database["public"]["Enums"]["expense_category"] | null
+          client_name: string | null
           company_id: string
           created_at: string
           current_round: number
@@ -593,13 +596,18 @@ export type Database = {
           description: string | null
           exception_memo: string | null
           form_template_id: string | null
+          headcount: number | null
           header_custom_payload: Json
           id: string
           is_business_trip: boolean
           item_count: number
+          meeting_purpose: string | null
           member_id: string
           paid_at: string | null
           paid_by_member_id: string | null
+          purchase_items: string | null
+          purchase_purpose: string | null
+          purchase_type: Database["public"]["Enums"]["purchase_type"] | null
           rejected_at: string | null
           rejection_reason: string | null
           self_approved: boolean
@@ -619,6 +627,9 @@ export type Database = {
         }
         Insert: {
           approved_at?: string | null
+          attendees?: string | null
+          category?: Database["public"]["Enums"]["expense_category"] | null
+          client_name?: string | null
           company_id: string
           created_at?: string
           current_round?: number
@@ -626,13 +637,18 @@ export type Database = {
           description?: string | null
           exception_memo?: string | null
           form_template_id?: string | null
+          headcount?: number | null
           header_custom_payload?: Json
           id?: string
           is_business_trip?: boolean
           item_count?: number
+          meeting_purpose?: string | null
           member_id: string
           paid_at?: string | null
           paid_by_member_id?: string | null
+          purchase_items?: string | null
+          purchase_purpose?: string | null
+          purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
           rejected_at?: string | null
           rejection_reason?: string | null
           self_approved?: boolean
@@ -652,6 +668,9 @@ export type Database = {
         }
         Update: {
           approved_at?: string | null
+          attendees?: string | null
+          category?: Database["public"]["Enums"]["expense_category"] | null
+          client_name?: string | null
           company_id?: string
           created_at?: string
           current_round?: number
@@ -659,13 +678,18 @@ export type Database = {
           description?: string | null
           exception_memo?: string | null
           form_template_id?: string | null
+          headcount?: number | null
           header_custom_payload?: Json
           id?: string
           is_business_trip?: boolean
           item_count?: number
+          meeting_purpose?: string | null
           member_id?: string
           paid_at?: string | null
           paid_by_member_id?: string | null
+          purchase_items?: string | null
+          purchase_purpose?: string | null
+          purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
           rejected_at?: string | null
           rejection_reason?: string | null
           self_approved?: boolean
@@ -1648,6 +1672,20 @@ export type Database = {
       save_approval_line: {
         Args: { p_approver_ids: string[]; p_department_id: string }
         Returns: string
+      }
+      set_claim_category: {
+        Args: {
+          p_attendees?: string
+          p_category: Database["public"]["Enums"]["expense_category"]
+          p_claim_id: string
+          p_client_name?: string
+          p_headcount?: number
+          p_meeting_purpose?: string
+          p_purchase_items?: string
+          p_purchase_purpose?: string
+          p_purchase_type?: Database["public"]["Enums"]["purchase_type"]
+        }
+        Returns: Json
       }
       set_member_role: {
         Args: {

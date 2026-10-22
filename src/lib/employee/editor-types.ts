@@ -26,6 +26,15 @@ export type EditorClaim = {
   total_company_supported: number;
   total_personal_burden: number;
   rejection_reason: string | null;
+  // 결의서 대표 카테고리와 카테고리별 입력값 (D-098). 예전 결의서는 category가 비어 있을 수 있다
+  category: ExpenseCategory | null;
+  purchase_type: PurchaseType | null;
+  meeting_purpose: string | null;
+  client_name: string | null;
+  attendees: string | null;
+  purchase_purpose: string | null;
+  purchase_items: string | null;
+  headcount: number | null;
 };
 
 export type EditorItem = {
@@ -131,4 +140,12 @@ export type ClaimHeaderInput = {
   tripEndDate: string;
   tripPurpose: string;
   tripTransport: TripTransport | null;
+  category: ExpenseCategory | null; // 결의서 대표 카테고리 (D-098)
+  purchaseType: PurchaseType | null;
+  meetingPurpose: string;
+  clientName: string;
+  attendees: string;
+  purchasePurpose: string;
+  purchaseItems: string;
+  headcount: number | null;
 };

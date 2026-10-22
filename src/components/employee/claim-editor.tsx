@@ -1,7 +1,7 @@
 "use client";
 
 import { exceptionFlags, exceptionSummary } from "@/lib/expense/exceptions";
-import { ArrowLeft, Camera, Car, ChevronDown, FileText, ImageIcon, Loader2, PenLine, Plus, ReceiptText, TrainFront, Trash2, X } from "lucide-react";
+import { ArrowLeft, Camera, Car, ChevronDown, FileText, ImageIcon, Loader2, Minus, PenLine, Plus, ReceiptText, TrainFront, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
@@ -11,7 +11,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { inputClass } from "@/components/ui/page-shell";
 import type { ClaimHeaderInput, EditorData, EditorItem, PaymentMethod, TripTransport } from "@/lib/employee/editor-types";
 import { routeCardFrom } from "@/lib/expense/route";
-import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL } from "@/lib/expense/categories";
+import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory } from "@/lib/expense/categories";
 import { claimStatusBadge } from "@/lib/expense/status";
 import { suggestPurpose } from "@/lib/expense/purpose";
 import { isAutoTitle, suggestTitle } from "@/lib/expense/title";
@@ -21,7 +21,7 @@ import { HEADER_PROBLEM_LABEL, ITEM_PROBLEM_LABEL, type ClaimProblems } from "@/
 import { measureAction } from "@/lib/perf/client";
 import { MAX_PER_CLAIM, useReceiptUpload, type UploadRow } from "./use-receipt-upload";
 import { useElementHeight } from "@/lib/ui/use-element-height";
-import { ItemInlineForm, type ItemFormHandle } from "./item-editor";
+import { CATEGORY_ICON, Chips, ItemInlineForm, PURCHASE_TYPES, type ItemFormHandle } from "./item-editor";
 import { OwnCarInline } from "./own-car-editor";
 
 // 화면 E-02 지출결의서 작성 (spec/screens/worker-tax-processing.md §1·§3-1·§3-2·§3-4·§4)
@@ -37,6 +37,13 @@ function useTouchDevice() {
     () => window.matchMedia("(pointer: coarse)").matches,
     () => false,
   );
+}
+
+// 카테고리가 없는 예전 결의서의 처음 값: 출장 결의서면 출장비, 영수증 카테고리가 하나뿐이면 그것(섞여 있으면 직원이 고른다)
+function initialCategory(claim: EditorData["claim"], items: EditorItem[]): ExpenseCategory | null {
+  if (claim.is_business_trip) return "trip";
+  const cats = new Set(items.map((i) => i.category).filter((c): c is ExpenseCategory => !!c));
+  return cats.size === 1 ? [...cats][0] : null;
 }
 
 export function itemNeedsCheck(item: EditorItem): boolean {
@@ -345,12 +352,20 @@ export function ClaimEditor({
       tripEndDate: claim.trip_end_date ?? "",
       tripPurpose: claim.trip_purpose ?? "",
       tripTransport: claim.trip_transport,
+      category: claim.category ?? initialCategory(claim, items),
+      purchaseType: claim.purchase_type,
+      meetingPurpose: claim.meeting_purpose ?? "",
+      clientName: claim.client_name ?? "",
+      attendees: claim.attendees ?? "",
+      purchasePurpose: claim.purchase_purpose ?? "",
+      purchaseItems: claim.purchase_items ?? "",
+      headcount: claim.headcount,
     }),
-    [claim],
+    [claim, items],
   );
   const [form, setForm] = useState<ClaimHeaderInput>(initial);
   // 저장된 제목이 자동 제안 모양이면 계속 자동(카테고리를 고르면 [카테고리]가 붙는다, D-087). 직원이 직접 쓴 제목만 고정
-  const [titleTouched, setTitleTouched] = useState(() => !isAutoTitle(claim.title, { isBusinessTrip: claim.is_business_trip, tripDestination: claim.trip_destination, tripStartDate: claim.trip_start_date }, items));
+  const [titleTouched, setTitleTouched] = useState(() => !isAutoTitle(claim.title, { isBusinessTrip: claim.is_business_trip, tripDestination: claim.trip_destination, tripStartDate: claim.trip_start_date, category: claim.category }, items));
   // 지출 사유: 직원이 쓰기 전까지는 AI 초안을 보여 주고 그대로 저장·상신된다(D-086)
   const [descTouched, setDescTouched] = useState((claim.description ?? "") !== "");
   const [savedForm, setSavedForm] = useState<ClaimHeaderInput>(initial);
@@ -408,7 +423,7 @@ export function ClaimEditor({
   // 그 사이 입력한 제목·지출 사유가 지워졌다(2026-10-21 로그인 E2E에서 재현).
 
   const exceptionText = exceptionSummary(exceptionFlags(items));
-  const suggestion = suggestTitle({ isBusinessTrip: form.isBusinessTrip, tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null }, items);
+  const suggestion = suggestTitle({ isBusinessTrip: form.isBusinessTrip, tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null, category: form.category }, items);
   const title = titleTouched ? form.title : suggestion;
   const purposeDraft = suggestPurpose({ isBusinessTrip: form.isBusinessTrip, tripDestination: form.tripDestination, tripPurpose: form.tripPurpose }, items);
   const description = descTouched ? form.description : purposeDraft;
@@ -486,6 +501,26 @@ export function ClaimEditor({
       router.refresh();
     });
 
+  // 대표 카테고리를 고르면 바로 저장해 영수증에도 반영한다(D-098). 자차 이동이 있으면 출장비 밖으로 못 바꾼다
+  const chooseCategory = (c: ExpenseCategory) => {
+    if (c === form.category) return;
+    if (c !== "trip" && ownCarItems.length) {
+      setMessage({ kind: "error", text: "자차 이동이 있는 출장 결의서예요. 다른 카테고리로 바꾸려면 자차 이동을 먼저 지워 주세요." });
+      return;
+    }
+    const nextForm = { ...form, category: c, isBusinessTrip: c === "trip" };
+    const nextTitle = titleTouched ? form.title : suggestTitle({ isBusinessTrip: c === "trip", tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null, category: c }, items);
+    const next = { ...nextForm, title: nextTitle, description };
+    setForm(nextForm);
+    setMessage(null);
+    startSave(async () => {
+      if (!(await flushItems())) return;
+      const res = await measureAction("employee.save_claim_category", () => saveClaimHeaderAction(claim.id, next));
+      if (res.ok) setSavedForm(next);
+      else setMessage({ kind: "error", text: res.error });
+    });
+  };
+
   const pick = (input: HTMLInputElement | null) => {
     setSheet(false);
     input?.click();
@@ -510,96 +545,87 @@ export function ClaimEditor({
 
       <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4">
         <h1 className="text-lg font-bold">지출결의서</h1>
+        {/* 지출 카테고리: 결의서에 1개 (D-098, 한 전표 = 한 계정과목). 고르면 그 카테고리에 맞는 칸만 나온다 */}
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="claim-title" required>
-            제목
-          </Label>
-          <input
-            id="claim-title"
-            className={inputClass}
-            value={title}
-            maxLength={100}
-            placeholder="예: 클라이언트 미팅 간식 구입"
-            onChange={(e) => {
-              setTitleTouched(true);
-              set("title", e.target.value);
-            }}
-          />
-          {!titleTouched && suggestion && <p className="text-xs text-zinc-500">영수증 내용으로 자동 제안했어요. 고쳐 써도 돼요.</p>}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="claim-desc" required>
-            지출 사유
-          </Label>
-          <textarea
-            id="claim-desc"
-            className={`${inputClass} min-h-20 py-2`}
-            value={description}
-            maxLength={1000}
-            placeholder="예: A사 프로젝트 킥오프 미팅 시 참석자 음료 제공"
-            onChange={(e) => {
-              setDescTouched(true);
-              set("description", e.target.value);
-            }}
-          />
-          {!descTouched && purposeDraft && (
-            <p className="flex items-start gap-1.5 text-xs text-brand-700">
-              <span className="shrink-0 whitespace-nowrap rounded-full bg-brand-50 px-2 py-0.5 font-semibold">✨ AI 초안</span>
-              영수증 내용으로 써 뒀어요. 다르면 눌러서 고쳐 주세요.
-            </p>
-          )}
-          <p className="text-xs text-zinc-500">관리자가 &ldquo;이 돈을 왜 썼지?&rdquo; 하고 묻지 않도록 한 줄로 적어 주세요.</p>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="claim-memo">예외 소명 사유 (선택)</Label>
-          {exceptionText && (
-            <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              {exceptionText}이 있어요. 왜 이때 썼는지 적어 두면 결재가 빨라져요.
-            </p>
-          )}
-          <textarea
-            id="claim-memo"
-            className={`${inputClass} min-h-16 py-2`}
-            value={form.exceptionMemo}
-            maxLength={500}
-            placeholder="예: 토요일 고객사 장애 긴급 대응 후 식사"
-            onChange={(e) => set("exceptionMemo", e.target.value)}
-          />
-          <p className="text-xs text-zinc-500">주말·심야 사용처럼 평소와 다른 지출이 있을 때만 적어요.</p>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">결제수단 기본값</span>
-          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="결제수단 기본값">
-            {(
-              [
-                ["corporate_card", "💳 법인카드"],
-                ["personal_card", "🧾 개인(사비)"],
-              ] as [PaymentMethod, string][]
-            ).map(([v, label]) => (
+          <span className="text-sm font-medium text-zinc-800">
+            지출 카테고리<span className="ml-0.5 text-red-600">*</span>
+          </span>
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="지출 카테고리">
+            {(["meal", "meeting", "purchase", "trip"] as ExpenseCategory[]).map((c) => (
               <button
-                key={v}
+                key={c}
                 type="button"
                 role="radio"
-                aria-checked={form.defaultPaymentMethod === v}
-                onClick={() => set("defaultPaymentMethod", v)}
-                className={`min-h-11 rounded-xl border text-sm font-medium ${form.defaultPaymentMethod === v ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
+                aria-checked={form.category === c}
+                disabled={!editable}
+                onClick={() => chooseCategory(c)}
+                className={`min-h-11 rounded-xl border px-2 text-sm font-medium ${form.category === c ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
               >
-                {label}
+                {CATEGORY_ICON[c]} {CATEGORY_LABEL[c]}
               </button>
             ))}
           </div>
-          <p className="text-xs text-zinc-500">새로 올리는 영수증에 먼저 적용돼요. 영수증마다 바꿀 수 있어요.</p>
+          {!form.category && <p className="text-xs text-amber-700">이 결의서의 지출 카테고리를 골라 주세요. 모든 영수증이 이 카테고리로 처리돼요.</p>}
         </div>
-        <div className="flex flex-col gap-3 rounded-xl bg-zinc-50 p-3">
-          <label className="flex min-h-11 items-center justify-between gap-3">
-            <span>
-              <span className="text-sm font-medium">출장 경비</span>
-              <span className="block text-xs text-zinc-500">켜면 올리는 영수증이 출장비로 분류돼요.</span>
-            </span>
-            <input type="checkbox" role="switch" className="peer sr-only" checked={form.isBusinessTrip} onChange={(e) => set("isBusinessTrip", e.target.checked)} />
-            <span aria-hidden className="relative h-7 w-12 shrink-0 rounded-full bg-zinc-300 transition peer-checked:bg-brand-600 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 after:absolute after:left-1 after:top-1 after:size-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
-          </label>
-          {form.isBusinessTrip && (
+        {(form.category === "meal" || form.category === "meeting") && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-zinc-800">인원 (기본값)</span>
+            <div className="flex items-center gap-3">
+              <button type="button" aria-label="기본 인원 줄이기" disabled={(form.headcount ?? 1) <= 1} onClick={() => set("headcount", Math.max(1, (form.headcount ?? 1) - 1))} className="inline-flex size-11 items-center justify-center rounded-xl border border-zinc-300 bg-white disabled:opacity-40">
+                <Minus className="size-4" />
+              </button>
+              <span className="min-w-12 text-center text-lg font-semibold tabular-nums" aria-live="polite">
+                {form.headcount ?? 1}명
+              </span>
+              <button type="button" aria-label="기본 인원 늘리기" disabled={(form.headcount ?? 1) >= 99} onClick={() => set("headcount", Math.min(99, (form.headcount ?? 1) + 1))} className="inline-flex size-11 items-center justify-center rounded-xl border border-zinc-300 bg-white disabled:opacity-40">
+                <Plus className="size-4" />
+              </button>
+            </div>
+            <p className="text-xs text-zinc-500">저장하면 모든 영수증 인원에 들어가요. 영수증마다 다르면 펼쳐서 고쳐요.</p>
+          </div>
+        )}
+        {form.category === "meeting" && (
+          <div className="flex flex-col gap-3 rounded-xl bg-zinc-50 p-3" aria-label="미팅 정보">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="claim-meeting-purpose" required>
+                미팅 목적
+              </Label>
+              <input id="claim-meeting-purpose" className={inputClass} value={form.meetingPurpose} maxLength={200} placeholder="예: A사 신규 계약 협의" onChange={(e) => set("meetingPurpose", e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="claim-client">거래처명</Label>
+              <input id="claim-client" className={inputClass} value={form.clientName} maxLength={100} placeholder="예: (주)에이컴퍼니" onChange={(e) => set("clientName", e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="claim-attendees">참석자</Label>
+              <input id="claim-attendees" className={inputClass} value={form.attendees} maxLength={200} placeholder="예: A사 김부장, 우리 회사 박과장" onChange={(e) => set("attendees", e.target.value)} />
+            </div>
+          </div>
+        )}
+        {form.category === "purchase" && (
+          <div className="flex flex-col gap-3 rounded-xl bg-zinc-50 p-3" aria-label="구매 정보">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-zinc-800">
+                구매 세부 유형<span className="ml-0.5 text-red-600">*</span>
+              </span>
+              <Chips label="구매 세부 유형" options={PURCHASE_TYPES.map((t) => ({ value: t, label: PURCHASE_TYPE_LABEL[t] }))} value={form.purchaseType} onChange={(v) => set("purchaseType", v)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="claim-purchase-purpose" required>
+                구매 목적
+              </Label>
+              <input id="claim-purchase-purpose" className={inputClass} value={form.purchasePurpose} maxLength={200} placeholder="예: 탕비실 비품 보충" onChange={(e) => set("purchasePurpose", e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="claim-purchase-items">품목</Label>
+              <input id="claim-purchase-items" className={inputClass} value={form.purchaseItems} maxLength={200} placeholder="예: 커피 원두, 생수 2박스" onChange={(e) => set("purchaseItems", e.target.value)} />
+            </div>
+            <p className="text-xs text-zinc-500">회사 물품은 전액 지원돼요.</p>
+          </div>
+        )}
+        {form.category === "trip" && (
+        <div className="flex flex-col gap-3 rounded-xl bg-zinc-50 p-3" aria-label="출장 정보">
+          {(
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="trip-dest" required>
@@ -711,6 +737,88 @@ export function ClaimEditor({
             </div>
           )}
         </div>
+        )}
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="claim-title" required>
+            제목
+          </Label>
+          <input
+            id="claim-title"
+            className={inputClass}
+            value={title}
+            maxLength={100}
+            placeholder="예: 클라이언트 미팅 간식 구입"
+            onChange={(e) => {
+              setTitleTouched(true);
+              set("title", e.target.value);
+            }}
+          />
+          {!titleTouched && suggestion && <p className="text-xs text-zinc-500">영수증 내용으로 자동 제안했어요. 고쳐 써도 돼요.</p>}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="claim-desc" required>
+            지출 사유
+          </Label>
+          <textarea
+            id="claim-desc"
+            className={`${inputClass} min-h-20 py-2`}
+            value={description}
+            maxLength={1000}
+            placeholder="예: A사 프로젝트 킥오프 미팅 시 참석자 음료 제공"
+            onChange={(e) => {
+              setDescTouched(true);
+              set("description", e.target.value);
+            }}
+          />
+          {!descTouched && purposeDraft && (
+            <p className="flex items-start gap-1.5 text-xs text-brand-700">
+              <span className="shrink-0 whitespace-nowrap rounded-full bg-brand-50 px-2 py-0.5 font-semibold">✨ AI 초안</span>
+              영수증 내용으로 써 뒀어요. 다르면 눌러서 고쳐 주세요.
+            </p>
+          )}
+          <p className="text-xs text-zinc-500">관리자가 &ldquo;이 돈을 왜 썼지?&rdquo; 하고 묻지 않도록 한 줄로 적어 주세요.</p>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="claim-memo">예외 소명 사유 (선택)</Label>
+          {exceptionText && (
+            <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              {exceptionText}이 있어요. 왜 이때 썼는지 적어 두면 결재가 빨라져요.
+            </p>
+          )}
+          <textarea
+            id="claim-memo"
+            className={`${inputClass} min-h-16 py-2`}
+            value={form.exceptionMemo}
+            maxLength={500}
+            placeholder="예: 토요일 고객사 장애 긴급 대응 후 식사"
+            onChange={(e) => set("exceptionMemo", e.target.value)}
+          />
+          <p className="text-xs text-zinc-500">주말·심야 사용처럼 평소와 다른 지출이 있을 때만 적어요.</p>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-zinc-800">결제수단 기본값</span>
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="결제수단 기본값">
+            {(
+              [
+                ["corporate_card", "💳 법인카드"],
+                ["personal_card", "🧾 개인(사비)"],
+              ] as [PaymentMethod, string][]
+            ).map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                role="radio"
+                aria-checked={form.defaultPaymentMethod === v}
+                onClick={() => set("defaultPaymentMethod", v)}
+                className={`min-h-11 rounded-xl border text-sm font-medium ${form.defaultPaymentMethod === v ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-zinc-500">새로 올리는 영수증에 먼저 적용돼요. 영수증마다 바꿀 수 있어요.</p>
+        </div>
+
       </section>
 
       <section className="flex flex-col gap-3">
@@ -754,7 +862,7 @@ export function ClaimEditor({
                 onToggle={() => toggleItem(item.id)}
               >
                 <ItemInlineForm
-                  key={`${item.id}:${item.parse_status}`} // AI로 다시 읽은 뒤 새 값으로 다시 그린다
+                  key={`${item.id}:${item.parse_status}:${item.headcount}`} // AI로 다시 읽은 뒤·결의서 기본 인원이 반영된 뒤 새 값으로 다시 그린다
                   claim={claim}
                   item={item}
                   cards={data.cards}
@@ -762,6 +870,7 @@ export function ClaimEditor({
                   mealOverride={data.mealOverride}
                   base={base}
                   deadline={data.deadline}
+                  claimCategory={form.category}
                   register={register}
                   onError={onItemError}
                 />

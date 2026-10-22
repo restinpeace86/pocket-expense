@@ -43,6 +43,27 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
   if (input.defaultPaymentMethod !== "corporate_card" && input.defaultPaymentMethod !== "personal_card") return fail("NOT_ALLOWED");
 
   const supabase = await createClient();
+  // 결의서 대표 카테고리(D-098): 영수증 반영·재계산까지 DB가 한다. 출장비를 고르면 출장 결의서
+  const CATS = ["meal", "trip", "meeting", "purchase"] as const;
+  const PURCHASES = ["pantry", "office_supplies", "small_equipment"] as const;
+  const category = (CATS as readonly string[]).includes(input.category ?? "") ? (input.category as (typeof CATS)[number]) : null;
+  const isTrip = category ? category === "trip" : input.isBusinessTrip;
+  if (category) {
+    const headcount = input.headcount == null ? null : Number(input.headcount);
+    if (headcount !== null && (!Number.isInteger(headcount) || headcount < 1 || headcount > 99)) return fail("INVALID_HEADCOUNT");
+    const { error: catError } = await supabase.rpc("set_claim_category", {
+      p_claim_id: claimId,
+      p_category: category,
+      p_purchase_type: (PURCHASES as readonly string[]).includes(input.purchaseType ?? "") ? (input.purchaseType as (typeof PURCHASES)[number]) : undefined,
+      p_meeting_purpose: input.meetingPurpose,
+      p_client_name: input.clientName,
+      p_attendees: input.attendees,
+      p_purchase_purpose: input.purchasePurpose,
+      p_purchase_items: input.purchaseItems,
+      p_headcount: headcount ?? undefined,
+    });
+    if (catError) return { ok: false, error: messageForDbError(catError) };
+  }
   const { data, error } = await supabase
     .from("expense_claims")
     .update({
@@ -50,13 +71,13 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
       description: description || null,
       exception_memo: memo || null,
       default_payment_method: input.defaultPaymentMethod,
-      is_business_trip: input.isBusinessTrip,
+      is_business_trip: isTrip,
       // 출장을 끄면 출장 정보도 비운다(다시 켜면 새로 입력)
-      trip_destination: input.isBusinessTrip ? dest || null : null,
-      trip_start_date: input.isBusinessTrip ? start : null,
-      trip_end_date: input.isBusinessTrip ? end : null,
-      trip_purpose: input.isBusinessTrip ? purpose || null : null,
-      trip_transport: input.isBusinessTrip && (input.tripTransport === "own_car" || input.tripTransport === "public_transport") ? input.tripTransport : null,
+      trip_destination: isTrip ? dest || null : null,
+      trip_start_date: isTrip ? start : null,
+      trip_end_date: isTrip ? end : null,
+      trip_purpose: isTrip ? purpose || null : null,
+      trip_transport: isTrip && (input.tripTransport === "own_car" || input.tripTransport === "public_transport") ? input.tripTransport : null,
     })
     .eq("id", claimId)
     .eq("company_id", m.company_id)

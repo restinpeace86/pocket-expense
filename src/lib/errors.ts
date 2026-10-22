@@ -51,6 +51,8 @@ const MESSAGES: Record<string, string> = {
   INVALID_EXPENSE_DATE: "사용일자가 오늘보다 뒤일 수 없어요. 날짜를 확인해 주세요.",
   INVALID_ITEM_TEXT: "가맹점·거래처는 100자, 목적·참석자는 200자 이내로 입력해 주세요.",
   INVALID_HEADCOUNT: "인원수는 1~99명 사이로 입력해 주세요.",
+  INVALID_CATEGORY: "지출 카테고리를 골라 주세요.",
+  OWN_CAR_ITEMS_EXIST: "자차 이동이 있는 출장 결의서예요. 다른 카테고리로 바꾸려면 자차 이동을 먼저 지워 주세요.",
   CLAIM_INCOMPLETE: "빠진 칸이 있어 상신할 수 없어요. 표시된 항목을 채워 주세요.",
   INVALID_STATUS: "이미 처리된 결의서예요. 화면을 새로고침해 주세요.",
   ALREADY_PROCESSED: "이미 처리된 결재입니다. 화면을 새로고침해 주세요.",

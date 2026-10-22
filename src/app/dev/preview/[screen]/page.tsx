@@ -96,6 +96,7 @@ const SAMPLE_EDITOR: EditorData = {
     id: "claim1", status: "draft", title: "", description: "", exception_memo: null, trip_transport: null, default_payment_method: "corporate_card", is_business_trip: false,
     trip_destination: null, trip_start_date: null, trip_end_date: null, trip_purpose: null, item_count: 4, total_amount: 172000,
     total_company_supported: 161000, total_personal_burden: 11000, rejection_reason: null,
+    category: "meal", purchase_type: null, meeting_purpose: null, client_name: null, attendees: null, purchase_purpose: null, purchase_items: null, headcount: null,
   },
   items: [
     { ...SAMPLE_ITEM, duplicate: { mine: [], others: 1 } },
@@ -228,7 +229,7 @@ const SAMPLE_DETAIL_CLAIM: ClaimDetail = {
   pendingStep: { id: "a2", round: 2, step_order: 1, step_kind: "final", status: "pending", approver_member_id: null, approver_name: null, acted_by_name: null, acted_at: null, comment: null, flagged_item_ids: [] },
 };
 const SAMPLE_ADMIN_ROWS = [
-  { id: "cl1", title: "10/15 부산 출장 경비", status: "submitted" as const, is_business_trip: true, item_count: 3, total_amount: 72000, settlement_required: null, self_approved: false, submitted_at: "2026-10-16T01:00:00Z", member_id: "p3", member_name: "김개발", reviewing: null },
+  { id: "cl1", title: "10/15 부산 출장 경비", status: "submitted" as const, is_business_trip: true, category: "trip" as const, item_count: 3, total_amount: 72000, settlement_required: null, self_approved: false, submitted_at: "2026-10-16T01:00:00Z", member_id: "p3", member_name: "김개발", reviewing: null },
   { id: "cl2", title: "10/14 간식 구입", status: "submitted" as const, is_business_trip: false, item_count: 1, total_amount: 25000, settlement_required: null, self_approved: false, submitted_at: "2026-10-16T03:00:00Z", member_id: "p4", member_name: "이디자인", reviewing: "박팀장" },
 ];
 
@@ -383,7 +384,7 @@ async function Preview({
                 : screen === "employee-claim-edit-owncar"
                   ? {
                       ...SAMPLE_EDITOR,
-                      claim: { ...SAMPLE_EDITOR.claim, is_business_trip: true, trip_destination: "부산", trip_start_date: "2026-10-15", trip_end_date: "2026-10-16", trip_purpose: "지사 점검", trip_transport: "own_car" },
+                      claim: { ...SAMPLE_EDITOR.claim, is_business_trip: true, category: "trip" as const, trip_destination: "부산", trip_start_date: "2026-10-15", trip_end_date: "2026-10-16", trip_purpose: "지사 점검", trip_transport: "own_car" },
                       items: [
                         {
                           ...SAMPLE_ITEM, id: "oc1", category: "trip", trip_type: "own_car", payment_method: "personal_card", corporate_card_id: null, receipt_path: null, thumbUrl: null, merchant_name: null, amount: 64200,
@@ -394,7 +395,7 @@ async function Preview({
                       ],
                     }
                   : screen === "employee-claim-edit-trip"
-                  ? { ...SAMPLE_EDITOR, claim: { ...SAMPLE_EDITOR.claim, status: "rejected", rejection_reason: "KTX 영수증의 날짜가 출장 기간과 달라요.", is_business_trip: true, trip_destination: "부산", trip_start_date: "2026-10-15", trip_end_date: "2026-10-16", trip_purpose: "지사 점검", default_payment_method: "personal_card" } }
+                  ? { ...SAMPLE_EDITOR, claim: { ...SAMPLE_EDITOR.claim, status: "rejected", rejection_reason: "KTX 영수증의 날짜가 출장 기간과 달라요.", is_business_trip: true, category: "trip" as const, trip_destination: "부산", trip_start_date: "2026-10-15", trip_end_date: "2026-10-16", trip_purpose: "지사 점검", default_payment_method: "personal_card" } }
                   : SAMPLE_EDITOR
             }
             base="#"
@@ -416,7 +417,7 @@ async function Preview({
                   : screen === "employee-item-edit-manual"
                     ? { ...SAMPLE_ITEM, receipt_path: null, aiFilled: false, aiCardMasked: null, parse_status: "none", category: "meeting", merchant_name: "", amount: null, purpose: "", payment_method: "personal_card", corporate_card_id: null }
                     : { ...SAMPLE_ITEM, duplicate: { mine: [{ claim_id: "c0", title: "10/16 팀 점심", status: "draft" }], others: 1 } };
-              const claim = screen === "employee-item-edit-trip" ? { ...SAMPLE_EDITOR.claim, is_business_trip: true, trip_destination: "부산", trip_start_date: "2026-10-15", trip_end_date: "2026-10-16" } : SAMPLE_EDITOR.claim;
+              const claim = screen === "employee-item-edit-trip" ? { ...SAMPLE_EDITOR.claim, is_business_trip: true, category: "trip" as const, trip_destination: "부산", trip_start_date: "2026-10-15", trip_end_date: "2026-10-16" } : SAMPLE_EDITOR.claim;
               return { ...SAMPLE_EDITOR, claim, items: [it, ...SAMPLE_EDITOR.items.slice(1)] };
             })()}
             base="#"

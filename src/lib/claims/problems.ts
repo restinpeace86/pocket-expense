@@ -3,6 +3,10 @@ export type ClaimProblems = { header: string[]; items: { item_id: string; sort_o
 
 export const HEADER_PROBLEM_LABEL: Record<string, string> = {
   title: "제목",
+  category: "지출 카테고리(영수증 카테고리가 섞여 있어요)",
+  meeting_purpose: "미팅 목적",
+  purchase_type: "구매 세부 유형",
+  purchase_purpose: "구매 목적",
   description: "지출 사유",
   trip_destination: "출장지",
   trip_period: "출장 기간",

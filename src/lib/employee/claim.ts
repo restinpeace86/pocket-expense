@@ -37,7 +37,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
   const [claimRes, itemsRes, cardsRes, companyRes, meRes, dupRes] = await Promise.all([
     supabase
       .from("expense_claims")
-      .select("id, status, title, description, exception_memo, trip_transport, default_payment_method, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, rejection_reason")
+      .select("id, status, title, description, exception_memo, trip_transport, default_payment_method, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, rejection_reason, category, purchase_type, meeting_purpose, client_name, attendees, purchase_purpose, purchase_items, headcount")
       .eq("id", claimId)
       .eq("company_id", membership.company_id)
       .eq("member_id", membership.member_id)

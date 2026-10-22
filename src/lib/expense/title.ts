@@ -1,6 +1,6 @@
 // 지출결의서 제목 자동 제안 (worker-tax-processing.md §3-1, trip-expense.md §2, D-087)
-// 영수증 1장: "[카테고리] {가맹점}" / 여러 장: "[카테고리] {대표 가맹점} 외 n건" / 출장: "{시작일 M/D} {출장지} 출장"
-// 대표 = 사용일이 가장 빠른 영수증, 카테고리 = 대표 영수증의 지출 카테고리(아직 없으면 대괄호 없이).
+// 영수증 1장: "[카테고리] {가맹점}" / 여러 장: "[카테고리] {대표 가맹점} 외 n건" / 출장인데 영수증이 아직 없으면: "{시작일 M/D} {출장지} 출장"
+// 대표 = 사용일이 가장 빠른 영수증. 카테고리 = 결의서 대표 카테고리(D-098, 출장 결의서는 출장비), 없으면 대표 영수증의 카테고리(그것도 없으면 대괄호 없이).
 import { CATEGORY_LABEL, type ExpenseCategory, type TripType } from "./categories";
 
 export function monthDay(date: string): string {
@@ -8,7 +8,7 @@ export function monthDay(date: string): string {
   return `${Number(m)}/${Number(d)}`;
 }
 
-type TitleClaim = { isBusinessTrip: boolean; tripDestination: string | null; tripStartDate: string | null };
+type TitleClaim = { isBusinessTrip: boolean; tripDestination: string | null; tripStartDate: string | null; category?: ExpenseCategory | null };
 type TitleItem = { merchant_name: string | null; expense_date: string | null; category?: ExpenseCategory | null; trip_type?: TripType | null };
 
 function representative<T extends TitleItem>(items: readonly T[]): T {
@@ -21,11 +21,14 @@ const body = (merchant: string, count: number) => (count > 1 ? `${merchant} 외 
 
 export function suggestTitle(claim: TitleClaim, items: readonly TitleItem[]): string {
   const dest = claim.tripDestination?.trim();
-  if (claim.isBusinessTrip && dest) return claim.tripStartDate ? `${monthDay(claim.tripStartDate)} ${dest} 출장` : `${dest} 출장`;
-  if (items.length === 0) return "";
+  if (items.length === 0) {
+    if (claim.isBusinessTrip && dest) return claim.tripStartDate ? `${monthDay(claim.tripStartDate)} ${dest} 출장` : `${dest} 출장`;
+    return "";
+  }
   const first = representative(items);
   const text = body(merchantOf(first), items.length);
-  return first.category ? `[${CATEGORY_LABEL[first.category]}] ${text}` : text;
+  const cat = claim.category ?? (claim.isBusinessTrip ? "trip" : first.category);
+  return cat ? `[${CATEGORY_LABEL[cat]}] ${text}` : text;
 }
 
 // 저장된 제목이 자동 제안 모양이면(직원이 직접 쓴 게 아니면) 계속 자동으로 바꾼다 — 카테고리를 고르면 앞에 붙도록.

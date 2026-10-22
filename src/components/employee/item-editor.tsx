@@ -12,16 +12,14 @@ import { AmountInput } from "@/components/ui/amount-input";
 import { inputClass } from "@/components/ui/page-shell";
 import type { EditorCard, EditorClaim, EditorItem, EvidenceType, ItemInput, PaymentMethod } from "@/lib/employee/editor-types";
 import { isMealLike, itemAmounts, type MealPolicy } from "@/lib/expense/amounts";
-import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, type PurchaseType, type TripType } from "@/lib/expense/categories";
+import { CATEGORY_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, type PurchaseType, type TripType } from "@/lib/expense/categories";
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
 
 // 영수증 항목 편집 — 결의서 화면 안 인라인(아코디언) (worker-tax-processing.md §2·§3-3, smart-meal.md §4, corporate-cards.md §3, todo_improvement(2차) 3)
-// 출장비는 영수증 카테고리가 아니라 결의서 상단 [출장 경비] 모드(개선사항(2차) 4): 출장 결의서의 영수증은 모두 출장비이고 세부 유형만 고른다
-const CATEGORIES: ExpenseCategory[] = ["meal", "meeting", "purchase"];
-const CATEGORY_ICON: Record<ExpenseCategory, string> = { meal: "🍚", trip: "🧳", meeting: "🤝", purchase: "📦" };
+export const CATEGORY_ICON: Record<ExpenseCategory, string> = { meal: "🍚", trip: "🧳", meeting: "🤝", purchase: "📦" };
 const TRIP_TYPES: TripType[] = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other"]; // 자차 유류비는 T7
-const PURCHASE_TYPES: PurchaseType[] = ["pantry", "office_supplies", "small_equipment"];
+export const PURCHASE_TYPES: PurchaseType[] = ["pantry", "office_supplies", "small_equipment"];
 const EVIDENCE: { value: EvidenceType; label: string }[] = [
   { value: "card_slip", label: "카드매출전표" },
   { value: "cash_receipt", label: "현금영수증" },
@@ -66,7 +64,7 @@ function Field({ label, required, htmlFor, children, hint }: { label: string; re
   );
 }
 
-function Chips<T extends string>({ label, options, value, onChange }: { label: string; options: { value: T; label: string }[]; value: T | null; onChange: (v: T) => void }) {
+export function Chips<T extends string>({ label, options, value, onChange }: { label: string; options: { value: T; label: string }[]; value: T | null; onChange: (v: T) => void }) {
   return (
     <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={label}>
       {options.map((o) => (
@@ -207,10 +205,12 @@ export function ItemInlineForm({
   mealOverride,
   base,
   deadline = { type: "none", days: null },
+  claimCategory,
   register,
   onError,
 }: {
   claim: EditorClaim;
+  claimCategory: ExpenseCategory | null; // 결의서 화면에서 지금 고른 대표 카테고리(D-098). 저장 전이라도 화면은 이것을 따른다
   item: EditorItem;
   cards: EditorCard[];
   mealPolicy: MealPolicy;
@@ -289,14 +289,15 @@ export function ItemInlineForm({
   const vat = input.vatAmount === "" ? null : Number(input.vatAmount);
   const sumMismatch = amount !== null && supply !== null && vat !== null && supply + vat !== amount;
   const overdueAt = isOverdue(input.expenseDate || null, deadline, todayKst()) ? deadlineDate(input.expenseDate, deadline) : null;
+  // 화면에서 쓰는 카테고리 = 결의서 카테고리(저장하면 DB 트리거가 영수증에도 같은 값을 넣는다)
+  const cat = claimCategory ?? (claim.is_business_trip ? "trip" : null);
   const outsideTrip =
-    claim.is_business_trip &&
-    input.category === "trip" &&
+    cat === "trip" &&
     !!input.expenseDate &&
     ((claim.trip_start_date && input.expenseDate < claim.trip_start_date) || (claim.trip_end_date && input.expenseDate > claim.trip_end_date));
   const cardMatch = matchCard(item.aiCardMasked, cards);
   const matchedCard = cardMatch.kind === "unique" ? cards.find((c) => c.id === cardMatch.cardId) : undefined;
-  const mealLike = isMealLike(input.category, input.tripType);
+  const mealLike = isMealLike(cat, cat === "trip" ? input.tripType : null);
   const fid = (k: string) => `${k}-${item.id}`;
 
   return (
@@ -419,8 +420,9 @@ export function ItemInlineForm({
 
       <ReceiptDetails item={item} />
 
-      {claim.is_business_trip ? (
-        <Field label="출장비 세부 유형" required hint={input.category !== "trip" ? "출장 결의서라 출장비로 처리돼요. 세부 유형을 골라 주세요." : undefined}>
+      {/* 지출 카테고리는 결의서 위에서 한 번만 고른다(D-098). 영수증에서는 출장비 세부 유형처럼 영수증마다 다른 것만 */}
+      {cat === "trip" ? (
+        <Field label="출장비 세부 유형" required>
           <Chips
             label="출장비 세부 유형"
             options={TRIP_TYPES.map((t) => ({ value: t, label: TRIP_TYPE_LABEL[t] }))}
@@ -428,48 +430,14 @@ export function ItemInlineForm({
             onChange={(v) => change((f) => ({ ...f, category: "trip", tripType: v, purchaseType: null }))}
           />
         </Field>
+      ) : cat ? (
+        <p className="text-sm text-zinc-600">
+          {CATEGORY_ICON[cat]} {CATEGORY_LABEL[cat]} 영수증이에요{cat === "meeting" ? " · 미팅 목적·거래처·참석자는 결의서 위에서 한 번만 써요." : cat === "purchase" ? " · 구매 유형·목적·품목은 결의서 위에서 한 번만 써요." : "."}
+        </p>
       ) : (
-      <Field label="지출 카테고리" required hint={input.category === "trip" ? "출장 경비를 끈 결의서예요. 카테고리를 다시 골라 주세요." : undefined}>
-        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="지출 카테고리">
-          {CATEGORIES.map((c) => (
-            <button
-              key={c}
-              type="button"
-              role="radio"
-              aria-checked={input.category === c}
-              onClick={() => change((f) => ({ ...f, category: c, tripType: c === "trip" ? f.tripType : null, purchaseType: c === "purchase" ? f.purchaseType : null }))}
-              className={`min-h-11 rounded-xl border px-2 text-sm font-medium ${input.category === c ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
-            >
-              {CATEGORY_ICON[c]} {CATEGORY_LABEL[c]}
-            </button>
-          ))}
-        </div>
-      </Field>
+        <Warn>결의서 위에서 지출 카테고리를 먼저 골라 주세요.</Warn>
       )}
-      {input.category === "purchase" && (
-        <>
-          <Field label="구매 세부 유형" required>
-            <Chips label="구매 세부 유형" options={PURCHASE_TYPES.map((t) => ({ value: t, label: PURCHASE_TYPE_LABEL[t] }))} value={input.purchaseType} onChange={(v) => set("purchaseType", v)} />
-          </Field>
-          <Field label="구매 목적·품목" required htmlFor={fid("purpose")} hint="회사 물품은 전액 지원돼요.">
-            <input id={fid("purpose")} className={inputClass} value={input.purpose} maxLength={200} placeholder="예: 탕비실 커피·생수" onChange={(e) => set("purpose", e.target.value)} />
-          </Field>
-        </>
-      )}
-      {input.category === "meeting" && (
-        <>
-          <Field label="미팅 목적" required htmlFor={fid("purpose")}>
-            <input id={fid("purpose")} className={inputClass} value={input.purpose} maxLength={200} placeholder="예: A사 신규 계약 협의" onChange={(e) => set("purpose", e.target.value)} />
-          </Field>
-          <Field label="거래처명" htmlFor={fid("client")}>
-            <input id={fid("client")} className={inputClass} value={input.clientName} maxLength={100} placeholder="예: (주)에이컴퍼니" onChange={(e) => set("clientName", e.target.value)} />
-          </Field>
-          <Field label="참석자" htmlFor={fid("attendees")}>
-            <input id={fid("attendees")} className={inputClass} value={input.attendees} maxLength={200} placeholder="예: A사 김부장, 우리 회사 박과장" onChange={(e) => set("attendees", e.target.value)} />
-          </Field>
-        </>
-      )}
-      {input.category === "trip" && input.tripType === "lodging" && (
+      {cat === "trip" && input.tripType === "lodging" && (
         <Field label="숙박 기간 (체크인 ~ 체크아웃)" required>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
             <input type="date" aria-label="체크인" className={`${inputClass} min-w-0`} value={input.tripStartDate} onChange={(e) => set("tripStartDate", e.target.value)} />
@@ -478,12 +446,12 @@ export function ItemInlineForm({
           </div>
         </Field>
       )}
-      {input.category === "trip" && input.tripType === "other" && (
+      {cat === "trip" && input.tripType === "other" && (
         <Field label="적요" required htmlFor={fid("purpose")}>
           <input id={fid("purpose")} className={inputClass} value={input.purpose} maxLength={200} placeholder="예: 출장 중 자료 출력비" onChange={(e) => set("purpose", e.target.value)} />
         </Field>
       )}
-      {(mealLike || input.category === "meeting") && (
+      {(mealLike || cat === "meeting") && (
         <Field label="인원수" required>
           <div className="flex items-center gap-3">
             <button type="button" aria-label="인원 줄이기" disabled={input.headcount <= 1} onClick={() => set("headcount", Math.max(1, input.headcount - 1))} className="inline-flex size-11 items-center justify-center rounded-xl border border-zinc-300 bg-white disabled:opacity-40">

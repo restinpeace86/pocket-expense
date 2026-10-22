@@ -51,3 +51,23 @@ describe("isAutoTitle — 자동 제목이면 카테고리를 고를 때 따라 
     expect(isAutoTitle("10/14 부산 출장", { isBusinessTrip: true, tripDestination: "부산", tripStartDate: "2026-10-15" }, [])).toBe(true);
   });
 });
+
+describe("suggestTitle — 결의서 대표 카테고리 (D-098)", () => {
+  const items = [
+    { merchant_name: "메가커피 판교점", expense_date: "2026-10-16", category: "meal" as const },
+    { merchant_name: "스타벅스", expense_date: "2026-10-17", category: "meal" as const },
+  ];
+  it("결의서 카테고리가 영수증 카테고리보다 먼저", () => {
+    expect(suggestTitle({ ...normal, category: "meeting" }, items)).toBe("[외부 미팅비] 메가커피 판교점 외 1건");
+    expect(suggestTitle({ ...normal, category: "purchase" }, items.slice(0, 1))).toBe("[회사 물품 구매] 메가커피 판교점");
+  });
+  it("출장: 영수증이 있으면 [출장비] 가맹점, 없으면 날짜·출장지", () => {
+    const trip = { isBusinessTrip: true, tripDestination: "부산", tripStartDate: "2026-10-15", category: "trip" as const };
+    expect(suggestTitle(trip, items)).toBe("[출장비] 메가커피 판교점 외 1건");
+    expect(suggestTitle(trip, [])).toBe("10/15 부산 출장");
+  });
+  it("예전 자동 제목(출장·다른 카테고리)은 계속 자동", () => {
+    expect(isAutoTitle("10/15 부산 출장", { isBusinessTrip: true, tripDestination: "부산", tripStartDate: "2026-10-15", category: "trip" }, items)).toBe(true);
+    expect(isAutoTitle("[일반 식대] 메가커피 판교점 외 1건", { ...normal, category: "meeting" }, items)).toBe(true);
+  });
+});
