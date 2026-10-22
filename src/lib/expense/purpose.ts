@@ -26,6 +26,20 @@ export function templatePurpose(i: PurposeItem): string | null {
       if (i.trip_type === "lodging") return "출장 숙박";
       if (i.trip_type === "own_car") return "출장 자차 이동 유류비";
       return i.trip_type ? "출장 교통비" : "출장 경비";
+    case "team_dinner":
+      return "부서 회식 진행";
+    case "condolence":
+      return "임직원·거래처 경조사 지출";
+    case "seminar":
+      return "업무 관련 세미나·컨퍼런스 참가";
+    case "books":
+      return "업무용 도서 구입";
+    case "training":
+      return "직무 교육·훈련 참가";
+    case "company_car":
+      return "회사 차량 유지 관리";
+    case "saas":
+      return "업무용 온라인 서비스 구독";
     default:
       return null;
   }

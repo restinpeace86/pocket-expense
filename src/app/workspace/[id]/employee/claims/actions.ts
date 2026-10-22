@@ -1,5 +1,6 @@
 "use server";
 
+import { ALL_CATEGORIES, type ExpenseCategory } from "@/lib/expense/categories";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { getMembership } from "@/lib/auth/session";
@@ -44,9 +45,9 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
 
   const supabase = await createClient();
   // 결의서 대표 카테고리(D-098): 영수증 반영·재계산까지 DB가 한다. 출장비를 고르면 출장 결의서
-  const CATS = ["meal", "trip", "meeting", "purchase"] as const;
+  const CATS = ALL_CATEGORIES;
   const PURCHASES = ["pantry", "office_supplies", "small_equipment"] as const;
-  const category = (CATS as readonly string[]).includes(input.category ?? "") ? (input.category as (typeof CATS)[number]) : null;
+  const category = (CATS as readonly string[]).includes(input.category ?? "") ? (input.category as ExpenseCategory) : null;
   const isTrip = category ? category === "trip" : input.isBusinessTrip;
   if (category) {
     const headcount = input.headcount == null ? null : Number(input.headcount);
@@ -261,7 +262,7 @@ export async function createManualItemAction(claimId: string): Promise<Result<{ 
   return { ok: true, itemId: data.id };
 }
 
-const CATEGORIES = ["meal", "trip", "meeting", "purchase"] as const;
+const CATEGORIES = ALL_CATEGORIES;
 const TRIP_TYPES = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other"] as const; // 자차(own_car)는 T7에서
 const PURCHASE_TYPES = ["pantry", "office_supplies", "small_equipment"] as const;
 const EVIDENCE_TYPES = ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt", "other"] as const;

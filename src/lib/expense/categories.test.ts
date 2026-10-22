@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { classificationLabel, MAPPING_ROWS } from "./categories";
 
 describe("내부 분류", () => {
-  it("매핑 표는 12개 (식대 1 + 출장 7 + 미팅 1 + 물품 구매 3)", () => {
-    expect(MAPPING_ROWS).toHaveLength(12);
+  it("매핑 표는 19개 (식대 1 + 출장 7 + 미팅 1 + 물품 구매 3 + 추가 7, D-102)", () => {
+    expect(MAPPING_ROWS).toHaveLength(19);
     expect(MAPPING_ROWS.filter((r) => r.category === "purchase").map((r) => r.purchaseType)).toEqual(["pantry", "office_supplies", "small_equipment"]);
   });
   it("이름", () => {

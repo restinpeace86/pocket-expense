@@ -11,7 +11,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { inputClass } from "@/components/ui/page-shell";
 import type { ClaimHeaderInput, EditorData, EditorItem, PaymentMethod, TripTransport } from "@/lib/employee/editor-types";
 import { routeCardFrom } from "@/lib/expense/route";
-import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory } from "@/lib/expense/categories";
+import { CATEGORY_LABEL, EXTRA_CATEGORIES, MAIN_CATEGORIES, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory } from "@/lib/expense/categories";
 import { claimStatusBadge } from "@/lib/expense/status";
 import { suggestPurpose } from "@/lib/expense/purpose";
 import { isAutoTitle, suggestTitle } from "@/lib/expense/title";
@@ -551,7 +551,7 @@ export function ClaimEditor({
             지출 카테고리<span className="ml-0.5 text-red-600">*</span>
           </span>
           <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="지출 카테고리">
-            {(["meal", "meeting", "purchase", "trip"] as ExpenseCategory[]).map((c) => (
+            {MAIN_CATEGORIES.map((c) => (
               <button
                 key={c}
                 type="button"
@@ -565,6 +565,28 @@ export function ClaimEditor({
               </button>
             ))}
           </div>
+          {/* 그 밖의 경비 (D-102): 4대 카테고리 밖의 계정과목용 */}
+          <details className="group rounded-xl border border-zinc-200 px-3" open={EXTRA_CATEGORIES.includes(form.category as ExpenseCategory) || undefined}>
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm text-zinc-700 [&::-webkit-details-marker]:hidden">
+              그 밖의 경비 (회식·경조사·교육 등)
+              <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="flex flex-wrap gap-2 pb-3" role="radiogroup" aria-label="그 밖의 경비">
+              {EXTRA_CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  role="radio"
+                  aria-checked={form.category === c}
+                  disabled={!editable}
+                  onClick={() => chooseCategory(c)}
+                  className={`min-h-11 rounded-full border px-3 text-sm ${form.category === c ? "border-brand-600 bg-brand-50 font-medium text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
+                >
+                  {CATEGORY_ICON[c]} {CATEGORY_LABEL[c]}
+                </button>
+              ))}
+            </div>
+          </details>
           {!form.category && <p className="text-xs text-amber-700">이 결의서의 지출 카테고리를 골라 주세요. 모든 영수증이 이 카테고리로 처리돼요.</p>}
         </div>
         {(form.category === "meal" || form.category === "meeting") && (

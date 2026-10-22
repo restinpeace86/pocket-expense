@@ -1788,7 +1788,18 @@ export type Database = {
         | "tax_invoice"
         | "simple_receipt"
         | "other"
-      expense_category: "meal" | "trip" | "meeting" | "purchase"
+      expense_category:
+        | "meal"
+        | "trip"
+        | "meeting"
+        | "purchase"
+        | "team_dinner"
+        | "condolence"
+        | "seminar"
+        | "books"
+        | "training"
+        | "company_car"
+        | "saas"
       invitation_status: "invited" | "accepted" | "canceled"
       meal_limit_mode: "split" | "notify"
       member_role: "super_admin" | "admin" | "employee"
@@ -1958,7 +1969,19 @@ export const Constants = {
         "simple_receipt",
         "other",
       ],
-      expense_category: ["meal", "trip", "meeting", "purchase"],
+      expense_category: [
+        "meal",
+        "trip",
+        "meeting",
+        "purchase",
+        "team_dinner",
+        "condolence",
+        "seminar",
+        "books",
+        "training",
+        "company_car",
+        "saas",
+      ],
       invitation_status: ["invited", "accepted", "canceled"],
       meal_limit_mode: ["split", "notify"],
       member_role: ["super_admin", "admin", "employee"],

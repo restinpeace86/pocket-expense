@@ -18,7 +18,7 @@ import { evidenceReason } from "@/lib/receipts/evidence-reason";
 import { measureAction } from "@/lib/perf/client";
 
 // 영수증 항목 편집 — 결의서 화면 안 인라인(아코디언) (worker-tax-processing.md §2·§3-3, smart-meal.md §4, corporate-cards.md §3, todo_improvement(2차) 3)
-export const CATEGORY_ICON: Record<ExpenseCategory, string> = { meal: "🍚", trip: "🧳", meeting: "🤝", purchase: "📦" };
+export const CATEGORY_ICON: Record<ExpenseCategory, string> = { meal: "🍚", trip: "🧳", meeting: "🤝", purchase: "📦", team_dinner: "🍻", condolence: "💐", seminar: "🎤", books: "📚", training: "🎓", company_car: "🚙", saas: "💻" };
 const TRIP_TYPES: TripType[] = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other"]; // 자차 유류비는 T7
 export const PURCHASE_TYPES: PurchaseType[] = ["pantry", "office_supplies", "small_equipment"];
 const EVIDENCE: { value: EvidenceType; label: string }[] = [

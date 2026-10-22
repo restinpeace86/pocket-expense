@@ -13,7 +13,7 @@ import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
 
 // 화면 E-01 직원 메인 (spec/screens/worker-dashboard.md)
-const CATEGORY_ICON: Record<ExpenseCategory, string> = { meal: "🍚", trip: "🧳", meeting: "🤝", purchase: "📦" };
+const CATEGORY_ICON: Record<ExpenseCategory, string> = { meal: "🍚", trip: "🧳", meeting: "🤝", purchase: "📦", team_dinner: "🍻", condolence: "💐", seminar: "🎤", books: "📚", training: "🎓", company_car: "🚙", saas: "💻" };
 
 function dot(d: string) {
   return d.replaceAll("-", ".");
