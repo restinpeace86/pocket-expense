@@ -8,3 +8,4 @@
 - 검증
   - tsc / test 135 / lint / build 통과.
   - 로그인 E2E(`.responsive/live/e2e-share-origin.mjs`, localhost:3100에서 실행, 카카오 SDK는 가짜로 바꿔 공유 내용만 확인): 공용 초대 링크·복사된 링크·카톡 공유 링크/버튼·개별 초대 링크 모두 `https://pocket-expense-ruby.vercel.app/...`, 공유 이미지 운영 주소 공개 접근 200 image/png, 개별 초대 링크 운영에서 열기 200. 임시 회사 정리 확인.
+  - 운영(https://pocket-expense-ruby.vercel.app) 배포 뒤 같은 E2E 재실행: 공용·복사·카톡 공유·개별 초대 링크 모두 운영 주소, 공유 이미지 200, 개별 초대 링크 200, 임시 회사 정리 확인.
