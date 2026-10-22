@@ -42,7 +42,7 @@ export function EmployeeShell({
       <WorkspaceHeader membership={membership} mode="employee" />
       <div className={`flex flex-1 flex-col ${showNav ? "pb-[calc(4rem+env(safe-area-inset-bottom))]" : ""}`}>{children}</div>
       {showNav && (
-        <nav aria-label="직원 메뉴" className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)]">
+        <nav aria-label="직원 메뉴" className="kb-hide fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)]">
           <ul className="mx-auto grid h-16 max-w-md" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
             {tabs.map(({ href, label, icon: Icon, ready, badge }) => {
               const active = href === `${ws}/employee` ? pathname === href : pathname.startsWith(href);

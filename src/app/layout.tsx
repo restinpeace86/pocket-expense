@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { WebVitals } from "@/components/perf/web-vitals";
+import { KeyboardAware } from "@/components/ui/keyboard-aware";
 import { THEME_KEYS, THEME_STORAGE_KEY } from "@/lib/theme";
 
 const geistSans = Geist({
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <WebVitals />
         {children}
+        <KeyboardAware />
       </body>
     </html>
   );

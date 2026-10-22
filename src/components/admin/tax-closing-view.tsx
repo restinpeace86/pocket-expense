@@ -270,7 +270,7 @@ export function TaxClosingView({
         </button>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur md:left-64">
+      <div className="kb-hide fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur md:left-64">
         <div className="mx-auto flex max-w-5xl flex-col gap-2">
           {progress && (
             <div role="status" aria-live="polite" className="flex flex-col gap-1 text-sm text-zinc-700">

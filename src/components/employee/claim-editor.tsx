@@ -528,7 +528,7 @@ export function ClaimEditor({
 
   return (
     // 아래 여백 = 하단 바의 실제 높이 + 여유(안내 문구가 생겨도 [결의서 삭제]가 가려지지 않게, 개선사항(2차) 2)
-    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-4 pt-3 md:max-w-2xl" style={{ paddingBottom: Math.max(barHeight + 24, 96) }}>
+    <main className="kb-pad mx-auto flex w-full max-w-md flex-col gap-5 px-4 pt-3 md:max-w-2xl" style={{ paddingBottom: Math.max(barHeight + 48, 128) }}>
       <div className="flex items-center justify-between gap-2">
         <Link href={base} className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100">
           <ArrowLeft className="size-4" />내 결의서
@@ -1006,7 +1006,7 @@ export function ClaimEditor({
       )}
 
       {/* 하단 액션 바 (§4) */}
-      <div ref={barRef} className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+      <div ref={barRef} className="kb-hide fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         <div className="mx-auto flex max-w-md flex-col gap-2 md:max-w-2xl">
           <UploadSummary rows={uploader.rows} />
           {message && (

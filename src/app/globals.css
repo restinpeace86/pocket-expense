@@ -225,3 +225,13 @@ body {
     animation: none;
   }
 }
+
+/* 휴대폰 가상 키보드가 올라와 있을 때 (src/components/ui/keyboard-aware.tsx, D-101)
+   - 하단 고정 바(.kb-hide)는 숨겨 입력칸을 가리지 않게(바 안의 칸에 입력 중이면 그대로)
+   - 긴 입력 화면(.kb-pad)은 아래 여백을 키보드 높이만큼 더 줘 마지막 칸까지 올려 볼 수 있게 */
+html[data-keyboard="open"] .kb-hide:not(:focus-within) {
+  display: none;
+}
+html[data-keyboard="open"] .kb-pad {
+  padding-bottom: calc(var(--kb, 0px) + 7rem) !important;
+}

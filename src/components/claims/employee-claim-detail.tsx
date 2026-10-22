@@ -82,7 +82,7 @@ export function EmployeeClaimDetail({ detail, base }: { detail: ClaimDetail; bas
       </section>
 
       {(claim.status === "draft" || claim.status === "rejected") && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+        <div className="kb-hide fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
           <div className="mx-auto max-w-md md:max-w-3xl">
             <Link href={`${base}/claims/${claim.id}/edit`} className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700">
               {claim.status === "rejected" ? "수정 후 재상신하기" : "편집"}
