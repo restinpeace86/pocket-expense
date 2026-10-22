@@ -1,4 +1,5 @@
 import "server-only";
+import { configuredSiteUrl } from "@/lib/site-url";
 
 // 알림톡 발송 어댑터 (kakao-alimtalk.md §2). 드라이버는 ALIMTALK_DRIVER로 고른다.
 // - log(기본): 실제로 보내지 않고 서버 로그에 남긴다. notification_logs에는 provider='log', status='sent'
@@ -31,6 +32,7 @@ export function getSender(): NotificationSender {
   };
 }
 
+// 알림 버튼 링크 앞주소: NEXT_PUBLIC_SITE_URL → 없으면 Vercel 운영 도메인(D-099)
 export function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  return configuredSiteUrl();
 }

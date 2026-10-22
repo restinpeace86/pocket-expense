@@ -1,5 +1,6 @@
 "use client";
 
+import { publicOrigin } from "@/lib/site-url";
 import { Check, Copy, Loader2, MessageCircle, Send, UserPlus, X } from "lucide-react";
 import { useState, useTransition, type ReactNode } from "react";
 import { cancelInvitationAction, createInvitationAction, resendInvitationAction } from "@/app/workspace/[id]/admin/members/invite-actions";
@@ -11,7 +12,8 @@ import { measureAction } from "@/lib/perf/client";
 // 링크로 가입하면 승인 없이 바로 활성. 가입 전에는 "초대 대기"로 보이고 링크 복사·다시 보내기·취소를 할 수 있다.
 export type InviteRow = { id: string; name: string; phone: string | null; department: string | null; position: string | null; token: string; last_sent_at: string | null; created_at: string };
 
-const linkOf = (token: string) => `${typeof window === "undefined" ? "" : window.location.origin}/join/i/${token}`;
+// 로컬에서 만든 링크도 운영 주소로(D-099)
+const linkOf = (token: string) => `${publicOrigin()}/join/i/${token}`;
 const mdhm = (iso: string) => new Date(iso).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 function CopyLink({ token, label = "링크 복사" }: { token: string; label?: string }) {

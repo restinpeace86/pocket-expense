@@ -10,6 +10,7 @@ import {
 } from "react";
 import { regenerateInviteCodeAction } from "@/app/workspace/[id]/admin/actions";
 import { SectionHeading } from "@/components/ui/help";
+import { configuredSiteUrl, publicOrigin } from "@/lib/site-url";
 import { KakaoShareButton } from "./kakao-share-button";
 
 const noop = () => () => {};
@@ -27,12 +28,8 @@ export function InviteLinkCard({
   preview?: boolean;
   compact?: boolean;
 }) {
-  // 서버 렌더에서는 배포 주소, 브라우저에서는 실제 접속 주소(로컬·프리뷰 배포 포함)
-  const origin = useSyncExternalStore(
-    noop,
-    () => window.location.origin,
-    () => process.env.NEXT_PUBLIC_SITE_URL ?? "",
-  );
+  // 서버 렌더에서는 배포 주소, 브라우저에서는 접속 주소(로컬에서 열었으면 배포 주소 — 카톡으로 보낸 링크가 localhost가 되지 않게, D-099)
+  const origin = useSyncExternalStore(noop, () => publicOrigin(), configuredSiteUrl);
   const [qr, setQr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
