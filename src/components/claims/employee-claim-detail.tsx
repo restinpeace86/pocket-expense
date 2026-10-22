@@ -1,4 +1,5 @@
 import { ArrowLeft } from "lucide-react";
+import { CATEGORY_LABEL } from "@/lib/expense/categories";
 import { ExceptionNote } from "./exception-note";
 import Link from "next/link";
 import type { ClaimDetail } from "@/lib/claims/types";
@@ -38,6 +39,12 @@ export function EmployeeClaimDetail({ detail, base }: { detail: ClaimDetail; bas
         <p className="mt-2 text-2xl font-bold tabular-nums">{formatWon(claim.total_amount)}</p>
         {claim.description && <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{claim.description}</p>}
         <ExceptionNote memo={claim.exception_memo} items={detail.items} />
+        {(claim.category || claim.vehicle) && (
+          <p className="mt-2 text-sm text-zinc-700">
+            {claim.category && `📂 ${CATEGORY_LABEL[claim.category]}`}
+            {claim.vehicle && ` · 🚙 ${claim.vehicle.nickname} (${claim.vehicle.plate_number})`}
+          </p>
+        )}
         {claim.is_business_trip && (
           <p className="mt-2 text-sm text-zinc-600">
             🧳 {claim.trip_destination} · {claim.trip_start_date?.replaceAll("-", ".")} ~ {claim.trip_end_date?.slice(5).replace("-", ".")} · {claim.trip_purpose}

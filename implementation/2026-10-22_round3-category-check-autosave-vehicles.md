@@ -1,0 +1,21 @@
+# 3차 개선 — AI 카테고리 추천·자동 저장 하나로·카테고리 불일치 확인·회사차량 (D-103, D-104, D-105)
+
+- 구현 일시: 2026-10-22 (사용자 지시: 구조·업무 흐름 검토 후 1·2·3 진행 + 관리자 화면 회사차량 설정)
+- DB: `supabase/migrations/052_category_check_vehicles.sql`(운영 DB 적용)
+  - `company_vehicles`(RLS 강제, 같은 회사 열람·관리자 쓰기, 사용 중 차량번호 중복 불가) + `expense_claims.vehicle_id`(회사 복합 FK).
+  - `expense_items.category_mismatch_ack`, `private.category_group`/`category_mismatch`, `ack_item_category()`, `move_item_to_new_claim()`(새 작성 중 결의서 + 영수증 이동 + 사용 기록 갱신 + 두 결의서 재계산).
+  - `set_claim_category` 재정의(차량, 카테고리를 바꾸면 확인 다시), `private.claim_problems` 재정의(카테고리 정할 수 없음·차량·불일치).
+  - 테스트 `supabase/tests/034_category_check_vehicles.sql`(규칙, 차량 권한·회사 격리·중복, 다른 회사·사용 중지 차량 거부, 차량 검증, 불일치→확인→카테고리 변경 시 다시, 옮기기 결과, 같은 회사 다른 직원·다른 회사 차단, 상신 뒤 불가). test:db 34 통과(기존 33개도 052와 함께 dry-run 통과).
+- 화면·코드
+  - 결의서 화면: AI 추천 카테고리(✨), 결의서 칸 자동 저장 큐(0.8초, 순서대로, 떠나기·앱 전환·상신 전 저장, 미저장 탭 닫기 경고), [임시저장] 버튼 → 저장 상태 표시, 회사차량 차량 칩, 불일치 배지·경고·[옮기기]/[이 결의서가 맞아요], 옮긴 뒤 "그 결의서 열기".
+  - 서버 액션 `ackItemCategoryAction`, `moveItemToNewClaimAction`(사진·썸네일을 새 결의서 폴더로 옮기고 경로 갱신, 세션 확인 뒤 service role).
+  - `src/lib/expense/category-check.ts`(+ 테스트 4개, DB와 같은 규칙).
+  - 관리자 `/admin/vehicles`(별칭·차량번호 등록·수정·사용 안 함, 이번 달 차량유지비), 메뉴 [설정 › 회사차량], 결재·직원 상세에 카테고리·차량 한 줄. 미리보기 `admin-vehicles(-empty)`.
+  - Spec: `spec/features/company-vehicles.md` 새로, `worker-tax-processing.md` 갱신.
+- 검증
+  - tsc / test 142 / lint / build 통과, check:responsive 전체 화면 넘침 없음.
+  - 로그인 E2E(`.responsive/live/e2e-round3.mjs`, 360·390):
+    - A. 실제 사진 업로드 → 카테고리 "일반 식대" ✨ AI 추천, DB 자동 저장 1.0초 · [임시저장] 버튼 없음 · 사유 입력 → "✓ 자동 저장됨" + DB(입력 멈춘 뒤 1.5초, 0.8초 대기 포함) · 제목 입력 직후 [내 결의서]로 나가도 DB 저장.
+    - B. 식대 결의서의 AI 물품 영수증 2장 → "카테고리 확인" 배지, 상신 막힘·안내 → [이 결의서가 맞아요] → 배지 사라짐·DB ack → [새 회사 물품 구매 결의서로 옮기기] → 새 결의서(purchase/office_supplies, draft, 본인), 사진 파일 새 폴더로 이동·경로 갱신, 원래 결의서에서 사라짐, 새 결의서 열림.
+    - C. 관리자 차량 등록("12가 3456"→"12가3456") → 직원 회사차량·차량 선택 자동 저장 → 상신(차량유지비) → 결재 화면 "📂 회사차량 · 🚙 영업 1호차 (12가3456)" → 차량 화면 이번 달 차량유지비 80,000원. 가로 넘침 0.
+  - 이전 E2E 6개(카테고리·아코디언·하단 바·자차·증빙·키보드)는 [임시저장] 대신 자동 저장 기준으로 고쳐 재실행 통과. 임시 회사 정리 확인.

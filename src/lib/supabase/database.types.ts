@@ -445,6 +445,44 @@ export type Database = {
         }
         Relationships: []
       }
+      company_vehicles: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          nickname: string
+          plate_number: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          nickname: string
+          plate_number: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          nickname?: string
+          plate_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_vehicles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       corporate_cards: {
         Row: {
           bin6: string | null
@@ -624,6 +662,7 @@ export type Database = {
           trip_start_date: string | null
           trip_transport: Database["public"]["Enums"]["trip_transport"] | null
           updated_at: string
+          vehicle_id: string | null
         }
         Insert: {
           approved_at?: string | null
@@ -665,6 +704,7 @@ export type Database = {
           trip_start_date?: string | null
           trip_transport?: Database["public"]["Enums"]["trip_transport"] | null
           updated_at?: string
+          vehicle_id?: string | null
         }
         Update: {
           approved_at?: string | null
@@ -706,6 +746,7 @@ export type Database = {
           trip_start_date?: string | null
           trip_transport?: Database["public"]["Enums"]["trip_transport"] | null
           updated_at?: string
+          vehicle_id?: string | null
         }
         Relationships: [
           {
@@ -736,6 +777,13 @@ export type Database = {
             referencedRelation: "members"
             referencedColumns: ["id", "company_id"]
           },
+          {
+            foreignKeyName: "expense_claims_vehicle_fk"
+            columns: ["vehicle_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "company_vehicles"
+            referencedColumns: ["id", "company_id"]
+          },
         ]
       }
       expense_items: {
@@ -755,6 +803,7 @@ export type Database = {
           attendees: string | null
           card_last4: string | null
           category: Database["public"]["Enums"]["expense_category"] | null
+          category_mismatch_ack: boolean
           claim_id: string
           client_name: string | null
           closed_month: string | null
@@ -818,6 +867,7 @@ export type Database = {
           attendees?: string | null
           card_last4?: string | null
           category?: Database["public"]["Enums"]["expense_category"] | null
+          category_mismatch_ack?: boolean
           claim_id: string
           client_name?: string | null
           closed_month?: string | null
@@ -883,6 +933,7 @@ export type Database = {
           attendees?: string | null
           card_last4?: string | null
           category?: Database["public"]["Enums"]["expense_category"] | null
+          category_mismatch_ack?: boolean
           claim_id?: string
           client_name?: string | null
           closed_month?: string | null
@@ -1529,6 +1580,10 @@ export type Database = {
         }
         Returns: string
       }
+      ack_item_category: {
+        Args: { p_ack?: boolean; p_item_id: string }
+        Returns: undefined
+      }
       admin_dashboard: { Args: { p_month: string }; Returns: Json }
       app_admin_company_overview: {
         Args: { p_month: string }
@@ -1635,6 +1690,7 @@ export type Database = {
         Args: { p_member_id: string }
         Returns: Json
       }
+      move_item_to_new_claim: { Args: { p_item_id: string }; Returns: Json }
       my_employee_summary: { Args: never; Returns: Json }
       my_membership: { Args: never; Returns: Json }
       override_item_account_title: {
@@ -1684,6 +1740,7 @@ export type Database = {
           p_purchase_items?: string
           p_purchase_purpose?: string
           p_purchase_type?: Database["public"]["Enums"]["purchase_type"]
+          p_vehicle_id?: string
         }
         Returns: Json
       }

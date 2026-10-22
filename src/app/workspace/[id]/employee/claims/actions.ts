@@ -62,6 +62,7 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
       p_purchase_purpose: input.purchasePurpose,
       p_purchase_items: input.purchaseItems,
       p_headcount: headcount ?? undefined,
+      p_vehicle_id: category === "company_car" && input.vehicleId && isUuid(input.vehicleId) ? input.vehicleId : undefined,
     });
     if (catError) return { ok: false, error: messageForDbError(catError) };
   }
@@ -422,4 +423,51 @@ export async function rereadReceiptAction(itemId: string) {
   const res = await finishReceiptUploadAction(itemId);
   refresh();
   return res;
+}
+
+// 카테고리가 안 맞아 보이는 영수증: "이 결의서가 맞아요" (D-104)
+export async function ackItemCategoryAction(itemId: string): Promise<Result> {
+  const m = await approvedMember();
+  if (!m) return fail("NOT_A_MEMBER");
+  if (!isUuid(itemId)) return fail("NOT_FOUND");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ack_item_category", { p_item_id: itemId });
+  if (error) return { ok: false, error: messageForDbError(error) };
+  refresh();
+  return { ok: true };
+}
+
+// 카테고리가 안 맞아 보이는 영수증을 AI가 본 종류의 새 결의서(작성 중)로 옮긴다 (D-104).
+// 결의서 이동·권한 확인은 DB 함수가, 사진 파일을 새 결의서 폴더로 옮기는 일은 서버(세션 확인 뒤 service role)가 한다.
+// 파일 이동이 실패해도 열람은 항목에 적힌 경로 기준이라 사진은 그대로 보인다.
+export async function moveItemToNewClaimAction(itemId: string): Promise<Result<{ claimId: string }>> {
+  const m = await approvedMember();
+  if (!m) return fail("NOT_A_MEMBER");
+  if (!isUuid(itemId)) return fail("NOT_FOUND");
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("move_item_to_new_claim", { p_item_id: itemId });
+  if (error || !data) return { ok: false, error: messageForDbError(error ?? { message: "NOT_FOUND" }) };
+  const r = data as { claim_id: string; receipt_path: string | null; thumb_path: string | null };
+  const admin = createAdminClient();
+  if (admin) {
+    const moved: { receipt_path?: string; receipt_thumb_path?: string } = {};
+    for (const [col, path] of [["receipt_path", r.receipt_path], ["receipt_thumb_path", r.thumb_path]] as const) {
+      const parts = path?.split("/") ?? [];
+      // {회사}/{직원}/{결의서}/{파일} — 내 회사·내 폴더일 때만
+      if (!path || parts.length !== 4 || parts[0] !== m.company_id || parts[1] !== m.member_id) continue;
+      const next = [parts[0], parts[1], r.claim_id, parts[3]].join("/");
+      const { error: mvError } = await admin.storage.from("receipts").move(path, next);
+      if (!mvError) moved[col] = next;
+    }
+    if (moved.receipt_path || moved.receipt_thumb_path) {
+      await admin.from("expense_items").update(moved).eq("id", itemId).eq("company_id", m.company_id).eq("claim_id", r.claim_id);
+      await admin
+        .from("receipt_usage_records")
+        .update({ ...(moved.receipt_path ? { receipt_path: moved.receipt_path } : {}), ...(moved.receipt_thumb_path ? { thumb_path: moved.receipt_thumb_path } : {}) })
+        .eq("item_id", itemId)
+        .eq("company_id", m.company_id);
+    }
+  }
+  refresh();
+  return { ok: true, claimId: r.claim_id };
 }

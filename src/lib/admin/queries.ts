@@ -172,3 +172,25 @@ export async function getCompanyMealLimit(companyId: string): Promise<number | n
   const { data } = await supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person").eq("id", companyId).maybeSingle();
   return data?.meal_limit_enabled ? data.meal_limit_per_person : null;
 }
+
+// 회사차량 (D-105): 목록 + 이번 달 차량유지비(그 차량을 고른 결의서의 영수증 합계, 사용일 기준)
+export type CompanyVehicleRow = { id: string; nickname: string; plate_number: string; is_active: boolean; month_total: number };
+export async function getCompanyVehicles(companyId: string, monthStart: string, monthEnd: string): Promise<CompanyVehicleRow[]> {
+  const supabase = await createClient();
+  const [{ data: vehicles }, { data: items }] = await Promise.all([
+    supabase.from("company_vehicles").select("id, nickname, plate_number, is_active").eq("company_id", companyId).order("is_active", { ascending: false }).order("created_at"),
+    supabase
+      .from("expense_items")
+      .select("amount, claim:expense_claims!inner(vehicle_id)")
+      .eq("company_id", companyId)
+      .not("claim.vehicle_id", "is", null)
+      .gte("expense_date", monthStart)
+      .lt("expense_date", monthEnd),
+  ]);
+  const totals = new Map<string, number>();
+  for (const i of items ?? []) {
+    const vid = (i.claim as { vehicle_id: string | null } | null)?.vehicle_id;
+    if (vid) totals.set(vid, (totals.get(vid) ?? 0) + (i.amount ?? 0));
+  }
+  return (vehicles ?? []).map((v) => ({ ...v, month_total: totals.get(v.id) ?? 0 }));
+}

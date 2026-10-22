@@ -5,7 +5,8 @@ import { ArrowLeft, Camera, Car, ChevronDown, FileText, ImageIcon, Loader2, Minu
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
-import { createManualItemAction, createOwnCarItemAction, deleteDraftClaimAction, deleteItemAction, saveClaimHeaderAction } from "@/app/workspace/[id]/employee/claims/actions";
+import { ackItemCategoryAction, createManualItemAction, createOwnCarItemAction, deleteDraftClaimAction, deleteItemAction, moveItemToNewClaimAction, saveClaimHeaderAction } from "@/app/workspace/[id]/employee/claims/actions";
+import { categoryMismatch } from "@/lib/expense/category-check";
 import { RouteEvidenceCard } from "@/components/claims/route-evidence-card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { inputClass } from "@/components/ui/page-shell";
@@ -85,6 +86,7 @@ function ItemRow({
   problem,
   open,
   onToggle,
+  mismatch,
   children,
 }: {
   item: EditorItem;
@@ -94,6 +96,7 @@ function ItemRow({
   problem?: boolean;
   open: boolean;
   onToggle: () => void;
+  mismatch?: boolean;
   children?: ReactNode;
 }) {
   const [confirm, setConfirm] = useState(false);
@@ -129,6 +132,7 @@ function ItemRow({
               {item.payment_method === "corporate_card" ? "💳 법인" : "🧾 사비"}
             </span>
             {item.duplicate && <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900">중복 의심</span>}
+            {mismatch && <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900">카테고리 확인</span>}
             {item.overdueDeadline && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">기한 초과</span>}
             {parsing ? (
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-600">분석 중</span>
@@ -360,6 +364,7 @@ export function ClaimEditor({
       purchasePurpose: claim.purchase_purpose ?? "",
       purchaseItems: claim.purchase_items ?? "",
       headcount: claim.headcount,
+      vehicleId: claim.vehicle_id,
     }),
     [claim, items],
   );
@@ -367,7 +372,11 @@ export function ClaimEditor({
   // 저장된 제목이 자동 제안 모양이면 계속 자동(카테고리를 고르면 [카테고리]가 붙는다, D-087). 직원이 직접 쓴 제목만 고정
   const [titleTouched, setTitleTouched] = useState(() => !isAutoTitle(claim.title, { isBusinessTrip: claim.is_business_trip, tripDestination: claim.trip_destination, tripStartDate: claim.trip_start_date, category: claim.category }, items));
   // 지출 사유: 직원이 쓰기 전까지는 AI 초안을 보여 주고 그대로 저장·상신된다(D-086)
-  const [descTouched, setDescTouched] = useState((claim.description ?? "") !== "");
+  // 자동 저장이 AI 초안을 저장해도 직원이 쓴 것으로 보지 않는다: 저장된 사유가 지금 영수증으로 만든 초안과 같으면 계속 초안(D-103)
+  const [descTouched, setDescTouched] = useState(() => {
+    const saved = (claim.description ?? "").trim();
+    return saved !== "" && saved !== suggestPurpose({ isBusinessTrip: claim.is_business_trip, tripDestination: claim.trip_destination ?? "", tripPurpose: claim.trip_purpose ?? "" }, items);
+  });
   const [savedForm, setSavedForm] = useState<ClaimHeaderInput>(initial);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const { ref: barRef, height: barHeight } = useElementHeight<HTMLDivElement>();
@@ -379,7 +388,6 @@ export function ClaimEditor({
   }, [message]);
   const [sheet, setSheet] = useState(openAdd && items.length === 0);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [saving, startSave] = useTransition();
   const [busy, startBusy] = useTransition();
   const [problems, setProblems] = useState<ClaimProblems | null>(null);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
@@ -423,11 +431,15 @@ export function ClaimEditor({
   // 그 사이 입력한 제목·지출 사유가 지워졌다(2026-10-21 로그인 E2E에서 재현).
 
   const exceptionText = exceptionSummary(exceptionFlags(items));
-  const suggestion = suggestTitle({ isBusinessTrip: form.isBusinessTrip, tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null, category: form.category }, items);
+  // 결의서 카테고리: 직원이 고른 값, 없으면 AI 추천(올린 영수증의 AI 카테고리가 하나로 모이면, D-103). 자동 저장되며 "✨ AI 추천"으로 보인다
+  const aiCategory = form.category ? null : initialCategory({ ...claim, is_business_trip: form.isBusinessTrip }, items);
+  const category = form.category ?? aiCategory;
+  const isTrip = category ? category === "trip" : form.isBusinessTrip;
+  const suggestion = suggestTitle({ isBusinessTrip: isTrip, tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null, category }, items);
   const title = titleTouched ? form.title : suggestion;
-  const purposeDraft = suggestPurpose({ isBusinessTrip: form.isBusinessTrip, tripDestination: form.tripDestination, tripPurpose: form.tripPurpose }, items);
+  const purposeDraft = suggestPurpose({ isBusinessTrip: isTrip, tripDestination: form.tripDestination, tripPurpose: form.tripPurpose }, items);
   const description = descTouched ? form.description : purposeDraft;
-  const current = { ...form, title, description };
+  const current: ClaimHeaderInput = { ...form, category, isBusinessTrip: isTrip, vehicleId: category === "company_car" ? form.vehicleId : null, title, description };
   const dirty = JSON.stringify(current) !== JSON.stringify(savedForm);
   const uploadingIds = new Set(uploader.rows.filter((r) => r.phase !== "done").map((r) => r.itemId).filter(Boolean));
   const { prune } = uploader;
@@ -447,19 +459,63 @@ export function ClaimEditor({
 
   const set = <K extends keyof ClaimHeaderInput>(k: K, v: ClaimHeaderInput[K]) => setForm((f) => ({ ...f, [k]: v }));
 
-  const save = async () => {
-    if (!(await flushItems())) return false;
-    const res = await measureAction("employee.save_claim", () => saveClaimHeaderAction(claim.id, current));
-    if (res.ok) {
-      setSavedForm(current);
-      setForm(current);
-      if (current.description.trim()) setDescTouched(true);
-      setMessage({ kind: "ok", text: "임시저장했어요. 다른 기기(PC)에서도 이어서 쓸 수 있어요." });
-    } else {
-      setMessage({ kind: "error", text: res.error });
-    }
-    return res.ok;
+  // 저장은 하나로(D-103): 결의서 칸도 영수증처럼 고치면 0.8초 뒤 자동 저장. 저장은 순서대로 한 줄로 처리하고(겹치지 않게),
+  // 상신·영수증 추가·화면 떠나기 전에는 기다렸다가 넘어간다. 펼친 영수증의 남은 수정도 함께 저장한다.
+  const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
+  const latest = useRef(current);
+  const savedKey = useRef(JSON.stringify(savedForm));
+  const queue = useRef<Promise<boolean>>(Promise.resolve(true));
+  useEffect(() => {
+    latest.current = current;
+  });
+  const persist = (value?: ClaimHeaderInput): Promise<boolean> => {
+    const run = async () => {
+      if (!(await flushItems())) return false;
+      const next = value ?? latest.current;
+      const key = JSON.stringify(next);
+      if (!editable || key === savedKey.current) return true;
+      setSaveState("saving");
+      const res = await measureAction("employee.save_claim", () => saveClaimHeaderAction(claim.id, next));
+      if (!res.ok) {
+        setSaveState("error");
+        setMessage({ kind: "error", text: res.error });
+        return false;
+      }
+      savedKey.current = key;
+      setSavedForm(next);
+      setSaveState("saved");
+      return true;
+    };
+    const p = queue.current.then(run, run);
+    queue.current = p;
+    return p;
   };
+  const currentKey = JSON.stringify(current);
+  useEffect(() => {
+    if (!editable || currentKey === savedKey.current) return;
+    const t = setTimeout(() => void persist(), 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- currentKey가 입력 변화를 대표하고 persist는 latest를 읽는다
+  }, [currentKey, editable]);
+  // 앱을 바꾸거나 탭을 닫기 직전에도 저장. 아직 저장 안 된 내용이 있으면 닫기 전에 한 번 묻는다
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden") void persist();
+    };
+    const onUnload = (e: BeforeUnloadEvent) => {
+      if (JSON.stringify(latest.current) !== savedKey.current) {
+        void persist();
+        e.preventDefault();
+      }
+    };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("beforeunload", onUnload);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("beforeunload", onUnload);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 한 번만 등록, persist는 ref를 읽는다
+  }, []);
 
   // 자차 유류비는 출장 영역에서 바로 펼쳐 입력한다(개선사항(2차) 4). 새 경로 칸(carDraft)은 첫 장소를 고를 때 항목을 만들고,
   // 만들어진 항목은 같은 칸(key)에 그대로 이어서 그려 입력 중이던 출발지·도착지가 지워지지 않게 한다
@@ -473,7 +529,7 @@ export function ClaimEditor({
   };
   const ensureOwnCar = async (): Promise<string | null> => {
     // 헤더를 먼저 저장해 출장 시작일이 사용일 기본값이 되게
-    if (dirty && !(await save())) return null;
+    if (!(await persist())) return null;
     const res = await measureAction("employee.create_own_car", () => createOwnCarItemAction(claim.id));
     if (!res.ok) {
       setMessage({ kind: "error", text: res.error });
@@ -486,7 +542,7 @@ export function ClaimEditor({
   const addManual = () =>
     startBusy(async () => {
       setSheet(false);
-      if (dirty && !(await save())) return;
+      if (!(await persist())) return;
       const res = await measureAction("employee.add_manual_item", () => createManualItemAction(claim.id));
       if (!res.ok) return setMessage({ kind: "error", text: res.error });
       // 직접 입력 항목은 그 자리에서 펼쳐 채운다
@@ -510,16 +566,25 @@ export function ClaimEditor({
     }
     const nextForm = { ...form, category: c, isBusinessTrip: c === "trip" };
     const nextTitle = titleTouched ? form.title : suggestTitle({ isBusinessTrip: c === "trip", tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null, category: c }, items);
-    const next = { ...nextForm, title: nextTitle, description };
     setForm(nextForm);
     setMessage(null);
-    startSave(async () => {
-      if (!(await flushItems())) return;
-      const res = await measureAction("employee.save_claim_category", () => saveClaimHeaderAction(claim.id, next));
-      if (res.ok) setSavedForm(next);
-      else setMessage({ kind: "error", text: res.error });
-    });
+    void persist({ ...nextForm, vehicleId: c === "company_car" ? form.vehicleId : null, title: nextTitle, description });
   };
+
+  // 카테고리가 안 맞아 보이는 영수증 (D-104): 이 결의서가 맞음 / 새 결의서로 옮기기
+  const [moved, setMoved] = useState<{ claimId: string; label: string } | null>(null);
+  const ackItem = (itemId: string) =>
+    startBusy(async () => {
+      const res = await measureAction("employee.ack_item_category", () => ackItemCategoryAction(itemId));
+      if (!res.ok) setMessage({ kind: "error", text: res.error });
+    });
+  const moveItem = (item: EditorItem) =>
+    startBusy(async () => {
+      if (!(await persist())) return;
+      const res = await measureAction("employee.move_item", () => moveItemToNewClaimAction(item.id));
+      if (!res.ok) return setMessage({ kind: "error", text: res.error });
+      setMoved({ claimId: res.claimId, label: `${item.merchant_name || "영수증"} → 새 [${item.aiCategory ? CATEGORY_LABEL[item.aiCategory] : "결의서"}] 결의서` });
+    });
 
   const pick = (input: HTMLInputElement | null) => {
     setSheet(false);
@@ -530,7 +595,17 @@ export function ClaimEditor({
     // 아래 여백 = 하단 바의 실제 높이 + 여유(안내 문구가 생겨도 [결의서 삭제]가 가려지지 않게, 개선사항(2차) 2)
     <main className="kb-pad mx-auto flex w-full max-w-md flex-col gap-5 px-4 pt-3 md:max-w-2xl" style={{ paddingBottom: Math.max(barHeight + 48, 128) }}>
       <div className="flex items-center justify-between gap-2">
-        <Link href={base} className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100">
+        <Link
+          href={base}
+          onClick={(e) => {
+            // 남은 수정을 저장한 뒤 이동(저장 실패 시 머문다)
+            e.preventDefault();
+            startBusy(async () => {
+              if (await persist()) router.push(base);
+            });
+          }}
+          className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+        >
           <ArrowLeft className="size-4" />내 결의서
         </Link>
         <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
@@ -556,7 +631,7 @@ export function ClaimEditor({
                 key={c}
                 type="button"
                 role="radio"
-                aria-checked={form.category === c}
+                aria-checked={category === c}
                 disabled={!editable}
                 onClick={() => chooseCategory(c)}
                 className={`min-h-11 rounded-xl border px-2 text-sm font-medium ${form.category === c ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
@@ -566,7 +641,7 @@ export function ClaimEditor({
             ))}
           </div>
           {/* 그 밖의 경비 (D-102): 4대 카테고리 밖의 계정과목용 */}
-          <details className="group rounded-xl border border-zinc-200 px-3" open={EXTRA_CATEGORIES.includes(form.category as ExpenseCategory) || undefined}>
+          <details className="group rounded-xl border border-zinc-200 px-3" open={EXTRA_CATEGORIES.includes(category as ExpenseCategory) || undefined}>
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm text-zinc-700 [&::-webkit-details-marker]:hidden">
               그 밖의 경비 (회식·경조사·교육 등)
               <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
@@ -577,7 +652,7 @@ export function ClaimEditor({
                   key={c}
                   type="button"
                   role="radio"
-                  aria-checked={form.category === c}
+                  aria-checked={category === c}
                   disabled={!editable}
                   onClick={() => chooseCategory(c)}
                   className={`min-h-11 rounded-full border px-3 text-sm ${form.category === c ? "border-brand-600 bg-brand-50 font-medium text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
@@ -587,9 +662,15 @@ export function ClaimEditor({
               ))}
             </div>
           </details>
-          {!form.category && <p className="text-xs text-amber-700">이 결의서의 지출 카테고리를 골라 주세요. 모든 영수증이 이 카테고리로 처리돼요.</p>}
+          {!category && <p className="text-xs text-amber-700">이 결의서의 지출 카테고리를 골라 주세요. 모든 영수증이 이 카테고리로 처리돼요.</p>}
+          {aiCategory && (
+            <p className="flex items-start gap-1.5 text-xs text-brand-700">
+              <span className="shrink-0 whitespace-nowrap rounded-full bg-brand-50 px-2 py-0.5 font-semibold">✨ AI 추천</span>
+              영수증을 보고 &lsquo;{CATEGORY_LABEL[aiCategory]}&rsquo;로 골라 뒀어요. 다르면 바꿔 주세요.
+            </p>
+          )}
         </div>
-        {(form.category === "meal" || form.category === "meeting") && (
+        {(category === "meal" || category === "meeting") && (
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-800">인원 (기본값)</span>
             <div className="flex items-center gap-3">
@@ -606,7 +687,19 @@ export function ClaimEditor({
             <p className="text-xs text-zinc-500">저장하면 모든 영수증 인원에 들어가요. 영수증마다 다르면 펼쳐서 고쳐요.</p>
           </div>
         )}
-        {form.category === "meeting" && (
+        {category === "company_car" && (
+          <div className="flex flex-col gap-1.5" aria-label="차량">
+            <span className="text-sm font-medium text-zinc-800">
+              차량{data.vehicles.length > 0 && <span className="ml-0.5 text-red-600">*</span>}
+            </span>
+            {data.vehicles.length ? (
+              <Chips label="차량" options={data.vehicles.map((v) => ({ value: v.id, label: `${v.nickname} · ${v.plate_number}` }))} value={form.vehicleId} onChange={(v) => set("vehicleId", v)} />
+            ) : (
+              <p className="text-xs text-zinc-500">등록된 회사차량이 없어요. 관리자가 [설정 › 회사차량]에 등록하면 여기서 고를 수 있어요.</p>
+            )}
+          </div>
+        )}
+        {category === "meeting" && (
           <div className="flex flex-col gap-3 rounded-xl bg-zinc-50 p-3" aria-label="미팅 정보">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="claim-meeting-purpose" required>
@@ -624,7 +717,7 @@ export function ClaimEditor({
             </div>
           </div>
         )}
-        {form.category === "purchase" && (
+        {category === "purchase" && (
           <div className="flex flex-col gap-3 rounded-xl bg-zinc-50 p-3" aria-label="구매 정보">
             <div className="flex flex-col gap-1.5">
               <span className="text-sm font-medium text-zinc-800">
@@ -645,7 +738,7 @@ export function ClaimEditor({
             <p className="text-xs text-zinc-500">회사 물품은 전액 지원돼요.</p>
           </div>
         )}
-        {form.category === "trip" && (
+        {category === "trip" && (
         <div className="flex flex-col gap-3 rounded-xl bg-zinc-50 p-3" aria-label="출장 정보">
           {(
             <div className="flex flex-col gap-3">
@@ -860,6 +953,14 @@ export function ClaimEditor({
             </button>
           )}
         </div>
+        {moved && (
+          <p className="flex flex-wrap items-center gap-x-2 rounded-xl bg-sky-50 px-3 py-2 text-sm text-sky-800" role="status">
+            {moved.label}로 옮겼어요.
+            <Link href={`${base}/claims/${moved.claimId}/edit`} className="font-semibold underline underline-offset-2">
+              그 결의서 열기
+            </Link>
+          </p>
+        )}
         {uploader.notice && (
           <p className="rounded-xl bg-sky-50 px-3 py-2 text-sm text-sky-800" role="status">
             {uploader.notice}
@@ -882,6 +983,7 @@ export function ClaimEditor({
                 problem={!!problems?.items.some((p) => p.item_id === item.id)}
                 open={openIds.has(item.id)}
                 onToggle={() => toggleItem(item.id)}
+                mismatch={!isOwnCar(item) && !item.category_mismatch_ack && categoryMismatch(category, item.aiCategory)}
               >
                 <ItemInlineForm
                   key={`${item.id}:${item.parse_status}:${item.headcount}`} // AI로 다시 읽은 뒤·결의서 기본 인원이 반영된 뒤 새 값으로 다시 그린다
@@ -892,7 +994,11 @@ export function ClaimEditor({
                   mealOverride={data.mealOverride}
                   base={base}
                   deadline={data.deadline}
-                  claimCategory={form.category}
+                  claimCategory={category}
+                  mismatch={!item.category_mismatch_ack && categoryMismatch(category, item.aiCategory)}
+                  busy={busy}
+                  onAckCategory={() => ackItem(item.id)}
+                  onMoveCategory={() => moveItem(item)}
                   register={register}
                   onError={onItemError}
                 />
@@ -1036,15 +1142,21 @@ export function ClaimEditor({
               {message.text}
             </p>
           )}
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              disabled={saving || !editable}
-              onClick={() => startSave(async () => void (await save()))}
-              className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl border border-zinc-300 bg-white font-semibold text-zinc-800 hover:bg-zinc-50 disabled:opacity-60"
-            >
-              {saving && <Loader2 className="size-4 animate-spin" />}💾 임시저장{dirty ? " •" : ""}
-            </button>
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] items-center gap-2">
+            {/* 저장은 자동(D-103): 버튼 대신 상태만 */}
+            <p className="flex min-h-12 items-center gap-1.5 text-sm text-zinc-600" aria-live="polite">
+              {saveState === "saving" || (dirty && saveState !== "error") ? (
+                <>
+                  <Loader2 className="size-4 shrink-0 animate-spin" /> 저장 중…
+                </>
+              ) : saveState === "error" ? (
+                <button type="button" onClick={() => void persist()} className="font-medium text-red-700 underline underline-offset-2">
+                  저장 실패 · 다시 저장
+                </button>
+              ) : (
+                <>✓ 자동 저장됨</>
+              )}
+            </p>
             <button
               type="button"
               disabled={!editable || submitting || uploader.rows.some((r) => r.phase !== "failed")}
@@ -1052,8 +1164,7 @@ export function ClaimEditor({
                 startSubmit(async () => {
                   setMessage(null);
                   // 펼쳐 고친 영수증과 바뀐 헤더를 먼저 저장하고, 서버에서 빠진 칸을 확인한 뒤 확인 창을 연다
-                  if (!(await flushItems())) return;
-                  if (dirty && !(await save())) return;
+                  if (!(await persist())) return;
                   setProblems(null);
                   setConfirmSubmit(true);
                 })

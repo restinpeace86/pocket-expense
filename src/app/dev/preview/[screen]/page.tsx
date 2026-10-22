@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VehiclesHeading, VehiclesView } from "@/components/admin/vehicles-view";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -89,6 +90,8 @@ const SAMPLE_ITEM: EditorItem = {
     { name: "쿠폰 할인", quantity: null, unit_price: null, amount: -1000 },
   ],
   duplicate: null,
+  aiCategory: "meal",
+  category_mismatch_ack: false,
   ...NO_ROUTE,
 };
 const SAMPLE_EDITOR: EditorData = {
@@ -96,7 +99,7 @@ const SAMPLE_EDITOR: EditorData = {
     id: "claim1", status: "draft", title: "", description: "", exception_memo: null, trip_transport: null, default_payment_method: "corporate_card", is_business_trip: false,
     trip_destination: null, trip_start_date: null, trip_end_date: null, trip_purpose: null, item_count: 4, total_amount: 172000,
     total_company_supported: 161000, total_personal_burden: 11000, rejection_reason: null,
-    category: "meal", purchase_type: null, meeting_purpose: null, client_name: null, attendees: null, purchase_purpose: null, purchase_items: null, headcount: null,
+    category: "meal", purchase_type: null, meeting_purpose: null, client_name: null, attendees: null, purchase_purpose: null, purchase_items: null, headcount: null, vehicle_id: null,
   },
   items: [
     { ...SAMPLE_ITEM, duplicate: { mine: [], others: 1 } },
@@ -108,6 +111,7 @@ const SAMPLE_EDITOR: EditorData = {
   mealPolicy: { enabled: true, perPerson: 10000, mode: "split" },
   mealOverride: null,
   fuel: { enabled: true, ratePerKm: 200, blocked: null, vehicleNumber: "12가3456" },
+  vehicles: [{ id: "v1", nickname: "영업 1호차", plate_number: "12가3456", is_active: true }],
   deadline: { type: "next_month_day", days: 5 },
 };
 
@@ -204,7 +208,7 @@ const SAMPLE_DETAIL_CLAIM: ClaimDetail = {
   claim: {
     id: "cl1", member_id: "p3", status: "submitted", title: "10/15 부산 출장 경비", description: "부산 지사 미팅 및 현장 점검 건", exception_memo: "토요일 오전 현장 점검 일정이라 전날 밤 이동", is_business_trip: true, trip_destination: "부산",
     trip_start_date: "2026-10-14", trip_end_date: "2026-10-15", trip_purpose: "부산 지사 미팅", item_count: 3, total_amount: 72000, total_company_supported: 65000, total_personal_burden: 7000,
-    settlement_required: null, self_approved: false, current_round: 2, rejection_reason: null, created_at: "2026-10-14T01:00:00Z", submitted_at: "2026-10-16T01:00:00Z", approved_at: null, rejected_at: null, paid_at: null,
+    settlement_required: null, self_approved: false, current_round: 2, rejection_reason: null, created_at: "2026-10-14T01:00:00Z", submitted_at: "2026-10-16T01:00:00Z", approved_at: null, rejected_at: null, paid_at: null, category: "trip", vehicle: null,
   },
   owner: { name: "김개발", department: "개발팀", position: "대리" },
   items: [
@@ -714,6 +718,25 @@ async function Preview({
               { id: "m11", category: "purchase", trip_type: null, purchase_type: "office_supplies", account_title_id: "t5" },
               { id: "m12", category: "purchase", trip_type: null, purchase_type: "small_equipment", account_title_id: "t5" },
             ]}
+            preview
+          />
+        </AdminShell>
+      );
+    case "admin-vehicles":
+    case "admin-vehicles-empty":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/vehicles">
+          <VehiclesHeading />
+          <VehiclesView
+            vehicles={
+              screen === "admin-vehicles-empty"
+                ? []
+                : [
+                    { id: "v1", nickname: "영업 1호차", plate_number: "12가3456", is_active: true, month_total: 384000 },
+                    { id: "v2", nickname: "대표 차량 (제네시스 G80, 아주 긴 별칭 줄바꿈 확인)", plate_number: "123가4567", is_active: true, month_total: 0 },
+                    { id: "v3", nickname: "처분한 예전 차량", plate_number: "34나5678", is_active: false, month_total: 0 },
+                  ]
+            }
             preview
           />
         </AdminShell>

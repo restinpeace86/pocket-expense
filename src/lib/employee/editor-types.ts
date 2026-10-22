@@ -36,6 +36,7 @@ export type EditorClaim = {
   purchase_purpose: string | null;
   purchase_items: string | null;
   headcount: number | null;
+  vehicle_id: string | null; // 회사차량 결의서의 차량 (D-105)
 };
 
 export type EditorItem = {
@@ -69,6 +70,8 @@ export type EditorItem = {
   aiCardMasked: string | null; // AI가 읽은 카드번호(가린 자리 *, 법인카드 판별 안내용, D-083)
   aiIncomeDeduction: boolean; // 현금영수증이 소득공제용으로 발행됨
   aiPurpose: string | null; // AI가 쓴 지출 사유 한 줄(D-086)
+  aiCategory: ExpenseCategory | null; // AI가 본 4대 카테고리(결의서와 다르면 확인, D-104)
+  category_mismatch_ack: boolean; // 직원이 "이 결의서가 맞아요"를 고름
   aiEvidence: EvidenceAi | null; // 증빙 구분 AI 판별 근거(D-100). AI가 읽지 않은 항목(직접 입력·자차)은 null
   // 참고 정보(D-079, AI가 읽음·보여 주기만)
   paid_time: string | null;
@@ -100,6 +103,8 @@ export type RoutePlaceInput = { name: string; address: string | null; lat: numbe
 
 export type EditorCard = { id: string; nickname: string; bin6: string | null; last4: string };
 
+export type EditorVehicle = { id: string; nickname: string; plate_number: string; is_active: boolean };
+
 export type EditorData = {
   claim: EditorClaim;
   items: EditorItem[];
@@ -107,6 +112,7 @@ export type EditorData = {
   mealPolicy: MealPolicy;
   mealOverride: number | null;
   fuel: FuelPolicy;
+  vehicles: EditorVehicle[]; // 고를 수 있는 회사차량(사용 중 + 이 결의서가 이미 고른 차량)
   deadline: { type: "none" | "end_of_month" | "days_after" | "next_month_day"; days: number | null }; // 회사 청구 기한 (D-031)
 };
 
@@ -150,4 +156,5 @@ export type ClaimHeaderInput = {
   purchasePurpose: string;
   purchaseItems: string;
   headcount: number | null;
+  vehicleId: string | null; // 회사차량 결의서의 차량 (D-105)
 };

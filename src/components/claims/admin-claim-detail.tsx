@@ -1,5 +1,6 @@
 "use client";
 
+import { CATEGORY_LABEL } from "@/lib/expense/categories";
 import { ReceiptGallery } from "./receipt-gallery";
 import { ExceptionNote } from "./exception-note";
 import { ArrowLeft, Check, ChevronRight, Images, Loader2, X } from "lucide-react";
@@ -113,6 +114,12 @@ export function AdminClaimDetail({
           {owner.department && ` (${owner.department})`}
           {owner.position && ` · ${owner.position}`} · 상신 {formatDateTimeKst(claim.submitted_at)}
         </p>
+        {(claim.category || claim.vehicle) && (
+          <p className="mt-2 text-sm text-zinc-700">
+            {claim.category && `📂 ${CATEGORY_LABEL[claim.category]}`}
+            {claim.vehicle && ` · 🚙 ${claim.vehicle.nickname} (${claim.vehicle.plate_number})`}
+          </p>
+        )}
         {claim.is_business_trip && (
           <p className="mt-2 text-sm text-zinc-700">
             🧳 출장지·기간·목적: {claim.trip_destination} / {claim.trip_start_date?.replaceAll("-", ".")}~{claim.trip_end_date?.slice(5).replace("-", ".")} / {claim.trip_purpose}

@@ -7,6 +7,7 @@ export const HEADER_PROBLEM_LABEL: Record<string, string> = {
   meeting_purpose: "미팅 목적",
   purchase_type: "구매 세부 유형",
   purchase_purpose: "구매 목적",
+  vehicle: "차량",
   description: "지출 사유",
   trip_destination: "출장지",
   trip_period: "출장 기간",
@@ -18,6 +19,7 @@ export const HEADER_PROBLEM_LABEL: Record<string, string> = {
 
 export const ITEM_PROBLEM_LABEL: Record<string, string> = {
   parsing: "AI가 아직 읽는 중",
+  category_mismatch: "다른 종류로 보이는 영수증(옮기거나 \"이 결의서가 맞아요\")",
   category: "지출 카테고리",
   corporate_card: "사용한 법인카드",
   evidence_type: "증빙 구분",

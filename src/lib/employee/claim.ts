@@ -1,4 +1,5 @@
 import "server-only";
+import { aiCategoryOf } from "@/lib/expense/category-check";
 import { deadlineDate, isOverdue, type DeadlinePolicy } from "@/lib/expense/deadline";
 import { todayKst } from "@/lib/dates";
 import { maskCardNumber } from "@/lib/cards/match";
@@ -11,7 +12,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: string) => UUID.test(v);
 
 const ITEM_COLUMNS =
-  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items, start_location, start_lat, start_lng, end_location, end_lat, end_lng, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km";
+  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items, start_location, start_lat, start_lng, end_location, end_lat, end_lng, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, category_mismatch_ack";
 
 const EVIDENCE_TYPES = ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt", "other"] as const;
 
@@ -45,10 +46,10 @@ export async function signOriginalUrl(path: string | null): Promise<string | nul
 export async function getMyClaimForEdit(membership: Membership, claimId: string): Promise<EditorData | null> {
   if (!isUuid(claimId)) return null;
   const supabase = await createClient();
-  const [claimRes, itemsRes, cardsRes, companyRes, meRes, dupRes] = await Promise.all([
+  const [claimRes, itemsRes, cardsRes, companyRes, meRes, dupRes, vehiclesRes] = await Promise.all([
     supabase
       .from("expense_claims")
-      .select("id, status, title, description, exception_memo, trip_transport, default_payment_method, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, rejection_reason, category, purchase_type, meeting_purpose, client_name, attendees, purchase_purpose, purchase_items, headcount")
+      .select("id, status, title, description, exception_memo, trip_transport, default_payment_method, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, rejection_reason, category, purchase_type, meeting_purpose, client_name, attendees, purchase_purpose, purchase_items, headcount, vehicle_id")
       .eq("id", claimId)
       .eq("company_id", membership.company_id)
       .eq("member_id", membership.member_id)
@@ -58,6 +59,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
     supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, claim_deadline_type, claim_deadline_days").eq("id", membership.company_id).single(),
     supabase.from("members").select("meal_limit_override, receives_car_allowance, vehicle_number").eq("id", membership.member_id).single(),
     supabase.rpc("claim_duplicate_receipts", { p_claim_id: claimId }),
+    supabase.from("company_vehicles").select("id, nickname, plate_number, is_active").eq("company_id", membership.company_id).order("created_at"),
   ]);
   const dups = (dupRes.data ?? {}) as Record<string, EditorItem["duplicate"]>;
   const claim = claimRes.data;
@@ -74,6 +76,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
     isPdf: !!r.receipt_path?.endsWith(".pdf"),
     aiFilled: ai_parsed_payload !== null,
     ...aiFlags(ai_parsed_payload, r.parse_status),
+    aiCategory: aiCategoryOf(ai_parsed_payload),
     overdueDeadline: isOverdue(r.expense_date, deadline, todayKst()) ? deadlineDate(r.expense_date, deadline) : null,
   }));
   const c = companyRes.data;
@@ -81,6 +84,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
     claim: claim as EditorClaim,
     items,
     cards: cardsRes.data ?? [],
+    vehicles: (vehiclesRes.data ?? []).filter((v) => v.is_active || v.id === claim.vehicle_id),
     mealPolicy: { enabled: !!c?.meal_limit_enabled, perPerson: c?.meal_limit_per_person ?? 0, mode: c?.meal_limit_mode ?? "split" },
     mealOverride: meRes.data?.meal_limit_override ?? null,
     deadline,

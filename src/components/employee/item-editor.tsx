@@ -207,11 +207,19 @@ export function ItemInlineForm({
   base,
   deadline = { type: "none", days: null },
   claimCategory,
+  mismatch = false,
+  busy = false,
+  onAckCategory,
+  onMoveCategory,
   register,
   onError,
 }: {
   claim: EditorClaim;
   claimCategory: ExpenseCategory | null; // 결의서 화면에서 지금 고른 대표 카테고리(D-098). 저장 전이라도 화면은 이것을 따른다
+  mismatch?: boolean; // AI가 본 종류가 결의서 카테고리와 다르고 아직 확인 안 함(D-104)
+  busy?: boolean;
+  onAckCategory?: () => void;
+  onMoveCategory?: () => void;
   item: EditorItem;
   cards: EditorCard[];
   mealPolicy: MealPolicy;
@@ -340,6 +348,25 @@ export function ItemInlineForm({
       )}
 
       {item.duplicate && <DuplicateWarning dup={item.duplicate} base={base} />}
+      {/* 조용히 바꾸지 않는다(D-104): AI가 본 종류가 결의서와 다르면 직원이 정한다 */}
+      {mismatch && item.aiCategory && claimCategory && (
+        <div className="flex flex-col gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" role="alert">
+          <p className="flex gap-2">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <span>
+              AI는 이 영수증을 <b>{CATEGORY_LABEL[item.aiCategory]}</b>(으)로 봤어요. 이 결의서는 <b>{CATEGORY_LABEL[claimCategory]}</b>라 그대로 두면 {CATEGORY_LABEL[claimCategory]}(으)로 처리돼요.
+            </span>
+          </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button type="button" disabled={busy} onClick={onMoveCategory} className="min-h-11 rounded-xl bg-amber-600 px-3 font-semibold text-white disabled:opacity-60">
+              새 {CATEGORY_LABEL[item.aiCategory]} 결의서로 옮기기
+            </button>
+            <button type="button" disabled={busy} onClick={onAckCategory} className="min-h-11 rounded-xl border border-amber-400 bg-white px-3 font-medium text-amber-900 disabled:opacity-60">
+              이 결의서가 맞아요
+            </button>
+          </div>
+        </div>
+      )}
 
       <Field label="가맹점명" required htmlFor={fid("merchant")}>
         <input id={fid("merchant")} className={inputClass} value={input.merchantName} maxLength={100} placeholder="예: 스타벅스 강남점" onChange={(e) => set("merchantName", e.target.value)} />

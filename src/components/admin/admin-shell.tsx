@@ -6,6 +6,7 @@ import {
   BookOpen,
   Building2,
   ChevronDown,
+  Car,
   CreditCard,
   FileDown,
   FileText,
@@ -41,6 +42,7 @@ const NAV: NavItem[] = [
 const SETTINGS_NAV: NavItem[] = [
   { href: "/settings", label: "지출 한도·정책", icon: SlidersHorizontal, ready: true },
   { href: "/corporate-cards", label: "법인카드", icon: CreditCard, ready: true },
+  { href: "/vehicles", label: "회사차량", icon: Car, ready: true },
   { href: "/form-template", label: "사내 양식", icon: FileText, ready: false },
   { href: "/departments", label: "부서", icon: Building2, ready: true },
   { href: "/approval-lines", label: "사전 검토 결재라인", icon: Route, ready: true },
