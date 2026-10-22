@@ -1,6 +1,7 @@
 import type { MealPolicy } from "@/lib/expense/amounts";
 import type { ExpenseCategory, PurchaseType, TripType } from "@/lib/expense/categories";
 import type { ClaimStatus } from "@/lib/expense/status";
+import type { EvidenceAi } from "@/lib/receipts/evidence-reason";
 import type { LineItem } from "@/lib/receipts/parse-result";
 
 // 결의서 편집 화면(E-02)이 주고받는 데이터
@@ -68,6 +69,7 @@ export type EditorItem = {
   aiCardMasked: string | null; // AI가 읽은 카드번호(가린 자리 *, 법인카드 판별 안내용, D-083)
   aiIncomeDeduction: boolean; // 현금영수증이 소득공제용으로 발행됨
   aiPurpose: string | null; // AI가 쓴 지출 사유 한 줄(D-086)
+  aiEvidence: EvidenceAi | null; // 증빙 구분 AI 판별 근거(D-100). AI가 읽지 않은 항목(직접 입력·자차)은 null
   // 참고 정보(D-079, AI가 읽음·보여 주기만)
   paid_time: string | null;
   approval_number: string | null;

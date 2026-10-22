@@ -14,6 +14,7 @@ import type { EditorCard, EditorClaim, EditorItem, EvidenceType, ItemInput, Paym
 import { isMealLike, itemAmounts, type MealPolicy } from "@/lib/expense/amounts";
 import { CATEGORY_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, type PurchaseType, type TripType } from "@/lib/expense/categories";
 import { formatWon } from "@/lib/format";
+import { evidenceReason } from "@/lib/receipts/evidence-reason";
 import { measureAction } from "@/lib/perf/client";
 
 // 영수증 항목 편집 — 결의서 화면 안 인라인(아코디언) (worker-tax-processing.md §2·§3-3, smart-meal.md §4, corporate-cards.md §3, todo_improvement(2차) 3)
@@ -225,6 +226,7 @@ export function ItemInlineForm({
   const latest = useRef(input); // 자동 저장이 읽는 최신 입력(change에서만 바꾼다)
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [zoomUrl, setZoomUrl] = useState<string | null>(null);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [rereading, startReread] = useTransition();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -299,6 +301,7 @@ export function ItemInlineForm({
   const matchedCard = cardMatch.kind === "unique" ? cards.find((c) => c.id === cardMatch.cardId) : undefined;
   const mealLike = isMealLike(cat, cat === "trip" ? input.tripType : null);
   const fid = (k: string) => `${k}-${item.id}`;
+  const reason = evidenceReason(input.evidenceType, item.aiEvidence);
 
   return (
     <div className="flex flex-col gap-4 border-t border-zinc-100 px-3 pb-4 pt-3">
@@ -370,9 +373,25 @@ export function ItemInlineForm({
           {sumMismatch && <Warn>공급가액 + 부가세가 합계 금액과 달라요. 영수증을 확인해 주세요.</Warn>}
         </div>
       </details>
-      <Field label="증빙 구분" required>
-        <Chips label="증빙 구분" options={EVIDENCE} value={input.evidenceType} onChange={(v) => set("evidenceType", v)} />
-      </Field>
+      {/* 증빙 구분: AI가 정하고(없으면 카드매출전표) 이유를 연하게 보여 준다. 드물게 틀리면 [바꾸기] (D-100) */}
+      {input.evidenceType && !evidenceOpen ? (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-medium text-zinc-800">
+              증빙 구분 <b className="ml-1 font-semibold text-zinc-900">{EVIDENCE.find((e) => e.value === input.evidenceType)?.label}</b>
+            </span>
+            <button type="button" onClick={() => setEvidenceOpen(true)} className="min-h-11 shrink-0 rounded-lg px-3 text-sm text-zinc-600 underline underline-offset-2 hover:bg-zinc-50">
+              바꾸기
+            </button>
+          </div>
+          {reason && <p className="text-xs text-zinc-400">└ ✨ {reason}</p>}
+        </div>
+      ) : (
+        <Field label="증빙 구분" required>
+          <Chips label="증빙 구분" options={EVIDENCE} value={input.evidenceType} onChange={(v) => set("evidenceType", v)} />
+          {reason && <p className="mt-1 text-xs text-zinc-400">└ ✨ {reason}</p>}
+        </Field>
+      )}
       {item.aiIncomeDeduction && input.evidenceType === "cash_receipt" && <Warn>소득공제용 현금영수증이에요. 지출증빙용이 아니라 회사 경비 처리 시 불이익이 있을 수 있어요.</Warn>}
 
       <Field label="결제수단" required>

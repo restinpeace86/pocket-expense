@@ -80,7 +80,7 @@ const SAMPLE_ITEM: EditorItem = {
   evidence_type: "card_slip", expense_date: "2026-10-16", merchant_name: "김밥천국 강남역점", merchant_business_number: "2208162517",
   amount: 31000, supply_amount: 28182, vat_amount: 2818, headcount: 2, purpose: null, attendees: null, client_name: null,
   trip_start_date: null, trip_end_date: null, parse_status: "success", receipt_path: "x/receipt.jpg", company_supported_amount: 20000,
-  personal_burden_amount: 11000, thumbUrl: null, isPdf: false, aiFilled: true, aiCardMasked: "532712******7890", aiIncomeDeduction: false, aiPurpose: "부서 정기 점심 식사 진행",
+  personal_burden_amount: 11000, thumbUrl: null, isPdf: false, aiFilled: true, aiCardMasked: "532712******7890", aiIncomeDeduction: false, aiPurpose: "부서 정기 점심 식사 진행", aiEvidence: { suggested: "card_slip", hasApproval: true, hasCardNumber: true },
   paid_time: "12:41", approval_number: "30012345", merchant_address: "서울 강남구 테헤란로 123 강남역 지하상가 B1층 (아주 긴 주소 줄바꿈 확인)",
   line_items: [
     { name: "참치김밥", quantity: 2, unit_price: 4500, amount: 9000 },

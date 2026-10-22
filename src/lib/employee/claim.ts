@@ -13,13 +13,24 @@ export const isUuid = (v: string) => UUID.test(v);
 const ITEM_COLUMNS =
   "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items, start_location, start_lat, start_lng, end_location, end_lat, end_lng, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km";
 
-function aiFlags(payload: unknown): { aiCardMasked: string | null; aiIncomeDeduction: boolean; aiPurpose: string | null } {
+const EVIDENCE_TYPES = ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt", "other"] as const;
+
+function aiFlags(payload: unknown, parseStatus: string | null): { aiCardMasked: string | null; aiIncomeDeduction: boolean; aiPurpose: string | null; aiEvidence: EditorItem["aiEvidence"] } {
   const p = (payload && typeof payload === "object" ? payload : {}) as Record<string, unknown>;
   return {
     // 서버가 앞 6자리·뒤 4자리 말고는 가려 저장한 번호. 예전 기록은 card_last4만 있다
     aiCardMasked: maskCardNumber(p.card_number_masked ?? p.card_last4),
     aiIncomeDeduction: p.suggested_evidence_type === "cash_receipt" && p.cash_receipt_income_deduction === true,
     aiPurpose: typeof p.suggested_purpose === "string" && p.suggested_purpose.trim() ? p.suggested_purpose.trim().slice(0, 40) : null,
+    // 읽기에 성공했거나 실패해 기본값(카드매출전표)이 들어간 항목만 이유를 보여 준다
+    aiEvidence:
+      parseStatus === "success" || parseStatus === "failed"
+        ? {
+            suggested: (EVIDENCE_TYPES as readonly string[]).includes(String(p.suggested_evidence_type)) ? (p.suggested_evidence_type as EditorItem["evidence_type"]) : null,
+            hasApproval: typeof p.approval_number === "string" && p.approval_number.trim() !== "",
+            hasCardNumber: typeof (p.card_number_masked ?? p.card_last4) === "string" && String(p.card_number_masked ?? p.card_last4).trim() !== "",
+          }
+        : null,
   };
 }
 
@@ -62,7 +73,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
     thumbUrl: receipt_thumb_path ? (urls.get(receipt_thumb_path) ?? null) : null,
     isPdf: !!r.receipt_path?.endsWith(".pdf"),
     aiFilled: ai_parsed_payload !== null,
-    ...aiFlags(ai_parsed_payload),
+    ...aiFlags(ai_parsed_payload, r.parse_status),
     overdueDeadline: isOverdue(r.expense_date, deadline, todayKst()) ? deadlineDate(r.expense_date, deadline) : null,
   }));
   const c = companyRes.data;
