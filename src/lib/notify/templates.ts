@@ -1,5 +1,5 @@
 // 알림톡 템플릿 6종 문구 (spec/screens/notification-rule.md §2 — 문구의 단일 기준). 링크에는 토큰을 넣지 않는다(D-013).
-export type TemplateCode = "APPROVAL_REQUEST" | "APPROVAL_COMPLETED" | "APPROVAL_REJECTED" | "PAYOUT_COMPLETED" | "INVITE" | "REMINDER";
+export type TemplateCode = "APPROVAL_REQUEST" | "APPROVAL_COMPLETED" | "APPROVAL_REJECTED" | "PAYOUT_COMPLETED" | "INVITE" | "REMINDER" | "RECURRING_READY";
 
 export type BuiltMessage = { template: TemplateCode; text: string; buttonLabel: string; buttonPath: string };
 
@@ -74,6 +74,16 @@ export function reminder(p: { companyId: string; companyName: string; pending: n
     text: `${p.companyName} 아직 제출하지 않은 지출결의서가 있어요 (작성중·반려 ${p.pending}건). 확인 후 상신해 주세요.`,
     buttonLabel: "제출하러 가기",
     buttonPath: `/workspace/${p.companyId}/employee`,
+  };
+}
+
+// 정기 결제 결의서 준비 (D-110): 담당자에게 "증빙 1장만 붙여 상신"
+export function recurringReady(p: { companyId: string; claimId: string; serviceName: string; periodLabel: string; amount: number }): BuiltMessage {
+  return {
+    template: "RECURRING_READY",
+    text: `${p.serviceName} ${p.periodLabel} 구독료(${p.amount.toLocaleString("ko-KR")}원) 결의서가 준비됐어요. 결제 내역(인보이스·카드 결제 내역) 1장만 붙여 상신해 주세요.`,
+    buttonLabel: "결의서 열기",
+    buttonPath: `/workspace/${p.companyId}/employee/claims/${p.claimId}/edit`,
   };
 }
 

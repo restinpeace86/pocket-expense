@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { ReconcileLink } from "@/components/admin/reconcile-link";
 import { TaxClosingView } from "@/components/admin/tax-closing-view";
 import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
@@ -43,7 +44,10 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   const res = await getTaxMonth(month);
   if (!res.ok) notFound();
   return (
-    <TaxClosingView
+    <div className="flex flex-col gap-4">
+      {/* 마감 전에 결의서 없는 법인카드 결제가 없는지 (D-111) */}
+      <ReconcileLink href={`/workspace/${id}/admin/corporate-cards/reconcile`} />
+      <TaxClosingView
       key={month}
       data={res.data}
       months={months.includes(month) ? months : [month, ...months]}
@@ -52,5 +56,6 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
       companyName={membership.company_name}
       isSuper={membership.role === "super_admin"}
     />
+    </div>
   );
 }

@@ -2,7 +2,7 @@ import "server-only";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSender, siteUrl } from "./sender";
-import { approvalCompleted, approvalRejected, approvalRequest, invite, normalizePhone, payoutCompleted, reminder, type BuiltMessage } from "./templates";
+import { approvalCompleted, approvalRejected, approvalRequest, invite, normalizePhone, payoutCompleted, recurringReady, reminder, type BuiltMessage } from "./templates";
 
 // 결재 알림 보내기 (kakao-alimtalk.md §2, notification-rule.md §2).
 // - 결재 처리(DB 트랜잭션)가 끝난 뒤에 부른다. 실패해도 결재는 되돌리지 않는다.
@@ -218,4 +218,26 @@ export async function resendLog(companyId: string, logId: string): Promise<"sent
     message: { template: log.template_code as BuiltMessage["template"], text: p.text ?? "", buttonLabel: p.button_label ?? "", buttonPath },
   });
   return ok ? "sent" : "failed";
+}
+
+// 정기 결제 결의서가 만들어졌다고 담당자에게 (D-110). cron이 generate_recurring_claims() 결과로 부른다
+export async function sendRecurringReady(rows: { claim_id: string; company_id: string; member_id: string; service_name: string; period_label: string; amount: number }[]): Promise<number> {
+  const admin = createAdminClient();
+  if (!admin || !rows.length) return 0;
+  const { data: members } = await admin.from("members").select("id, company_id, phone").in("id", [...new Set(rows.map((r) => r.member_id))]);
+  const byId = new Map((members ?? []).map((m) => [m.id, m]));
+  let n = 0;
+  for (const r of rows) {
+    const m = byId.get(r.member_id);
+    if (!m || m.company_id !== r.company_id) continue; // 같은 회사 담당자만
+    await deliver(admin, {
+      companyId: r.company_id,
+      claimId: r.claim_id,
+      memberId: r.member_id,
+      phone: m.phone,
+      message: recurringReady({ companyId: r.company_id, claimId: r.claim_id, serviceName: r.service_name, periodLabel: r.period_label, amount: r.amount }),
+    });
+    n++;
+  }
+  return n;
 }

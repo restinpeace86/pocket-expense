@@ -38,6 +38,7 @@ export type EditorClaim = {
   purchase_items: string | null;
   headcount: number | null;
   vehicle_id: string | null; // 회사차량 결의서의 차량 (D-105)
+  recurring_payment_id: string | null; // 정기 결제로 자동으로 만든 결의서 (D-110)
 };
 
 export type EditorItem = {

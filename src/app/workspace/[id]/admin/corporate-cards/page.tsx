@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { CorporateCardsHeading, CorporateCardsView } from "@/components/admin/corporate-cards-view";
+import { ReconcileLink } from "@/components/admin/reconcile-link";
 import { getCorporateCards } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { currentMonthKst, monthRange } from "@/lib/dates";
@@ -23,5 +24,10 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/co
   const membership = await requireWorkspace(id, { admin: true });
   const { start, end } = monthRange(currentMonthKst());
   const { cards, members } = await getCorporateCards(membership.company_id, start, end);
-  return <CorporateCardsView cards={cards} members={members} />;
+  return (
+    <div className="flex flex-col gap-4">
+      <ReconcileLink href={`/workspace/${id}/admin/corporate-cards/reconcile`} />
+      <CorporateCardsView cards={cards} members={members} />
+    </div>
+  );
 }

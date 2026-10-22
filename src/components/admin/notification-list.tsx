@@ -11,6 +11,7 @@ const TEMPLATE_LABEL: Record<string, string> = {
   PAYOUT_COMPLETED: "지급 완료",
   INVITE: "초대",
   REMINDER: "독촉",
+  RECURRING_READY: "정기 결제 준비",
 };
 
 export type NotificationRow = {

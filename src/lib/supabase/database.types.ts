@@ -646,6 +646,8 @@ export type Database = {
           purchase_items: string | null
           purchase_purpose: string | null
           purchase_type: Database["public"]["Enums"]["purchase_type"] | null
+          recurring_payment_id: string | null
+          recurring_period: string | null
           rejected_at: string | null
           rejection_reason: string | null
           self_approved: boolean
@@ -688,6 +690,8 @@ export type Database = {
           purchase_items?: string | null
           purchase_purpose?: string | null
           purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
+          recurring_payment_id?: string | null
+          recurring_period?: string | null
           rejected_at?: string | null
           rejection_reason?: string | null
           self_approved?: boolean
@@ -730,6 +734,8 @@ export type Database = {
           purchase_items?: string | null
           purchase_purpose?: string | null
           purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
+          recurring_payment_id?: string | null
+          recurring_period?: string | null
           rejected_at?: string | null
           rejection_reason?: string | null
           self_approved?: boolean
@@ -775,6 +781,13 @@ export type Database = {
             columns: ["paid_by_member_id", "company_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "expense_claims_recurring_fk"
+            columns: ["recurring_payment_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_payments"
             referencedColumns: ["id", "company_id"]
           },
           {
@@ -1563,6 +1576,82 @@ export type Database = {
           },
         ]
       }
+      recurring_payments: {
+        Row: {
+          amount: number
+          assignee_member_id: string
+          billing_day: number
+          billing_month: number | null
+          company_id: string
+          corporate_card_id: string | null
+          created_at: string
+          cycle: Database["public"]["Enums"]["recurring_cycle"]
+          id: string
+          is_active: boolean
+          memo: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          service_name: string
+          starts_on: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          assignee_member_id: string
+          billing_day: number
+          billing_month?: number | null
+          company_id: string
+          corporate_card_id?: string | null
+          created_at?: string
+          cycle?: Database["public"]["Enums"]["recurring_cycle"]
+          id?: string
+          is_active?: boolean
+          memo?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          service_name: string
+          starts_on?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          assignee_member_id?: string
+          billing_day?: number
+          billing_month?: number | null
+          company_id?: string
+          corporate_card_id?: string | null
+          created_at?: string
+          cycle?: Database["public"]["Enums"]["recurring_cycle"]
+          id?: string
+          is_active?: boolean
+          memo?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          service_name?: string
+          starts_on?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_payments_assignee_member_id_company_id_fkey"
+            columns: ["assignee_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "recurring_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_payments_corporate_card_id_company_id_fkey"
+            columns: ["corporate_card_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "corporate_cards"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1668,6 +1757,7 @@ export type Database = {
       }
       deactivate_member: { Args: { p_member_id: string }; Returns: undefined }
       detach_item_evidence: { Args: { p_item_id: string }; Returns: Json }
+      generate_recurring_claims: { Args: { p_today?: string }; Returns: Json }
       get_invitation_detail: { Args: { p_token: string }; Returns: Json }
       get_invitation_public: { Args: { p_token: string }; Returns: Json }
       get_invite_company: { Args: { p_code: string }; Returns: string }
@@ -1885,6 +1975,7 @@ export type Database = {
       parse_status: "none" | "parsing" | "success" | "failed"
       payment_method: "corporate_card" | "personal_card"
       purchase_type: "pantry" | "office_supplies" | "small_equipment"
+      recurring_cycle: "monthly" | "yearly"
       trip_transport: "own_car" | "public_transport" | "company_car"
       trip_type:
         | "meal"
@@ -2078,6 +2169,7 @@ export const Constants = {
       parse_status: ["none", "parsing", "success", "failed"],
       payment_method: ["corporate_card", "personal_card"],
       purchase_type: ["pantry", "office_supplies", "small_equipment"],
+      recurring_cycle: ["monthly", "yearly"],
       trip_transport: ["own_car", "public_transport", "company_car"],
       trip_type: [
         "meal",

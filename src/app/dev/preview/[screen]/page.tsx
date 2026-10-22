@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ReconcileHeading, ReconcileView } from "@/components/admin/reconcile-view";
+import { RecurringHeading, RecurringView } from "@/components/admin/recurring-view";
 import { VehiclesHeading, VehiclesView } from "@/components/admin/vehicles-view";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
@@ -101,7 +103,7 @@ const SAMPLE_EDITOR: EditorData = {
     id: "claim1", status: "draft", title: "", description: "", exception_memo: null, trip_transport: null, default_payment_method: "corporate_card", is_business_trip: false,
     trip_destination: null, trip_start_date: null, trip_end_date: null, trip_purpose: null, item_count: 4, total_amount: 172000,
     total_company_supported: 161000, total_personal_burden: 11000, rejection_reason: null,
-    category: "meal", purchase_type: null, meeting_purpose: null, client_name: null, attendees: null, purchase_purpose: null, purchase_items: null, headcount: null, vehicle_id: null,
+    category: "meal", purchase_type: null, meeting_purpose: null, client_name: null, attendees: null, purchase_purpose: null, purchase_items: null, headcount: null, vehicle_id: null, recurring_payment_id: null,
   },
   items: [
     { ...SAMPLE_ITEM, duplicate: { mine: [], others: 1 } },
@@ -720,6 +722,35 @@ async function Preview({
               { id: "m11", category: "purchase", trip_type: null, purchase_type: "office_supplies", account_title_id: "t5" },
               { id: "m12", category: "purchase", trip_type: null, purchase_type: "small_equipment", account_title_id: "t5" },
             ]}
+            preview
+          />
+        </AdminShell>
+      );
+    case "admin-reconcile":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/corporate-cards/reconcile">
+          <ReconcileHeading />
+          <ReconcileView base="#" holders={{ "7890": "대표 법인카드 · 김대표" }} />
+        </AdminShell>
+      );
+    case "admin-recurring":
+    case "admin-recurring-empty":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/recurring">
+          <RecurringHeading />
+          <RecurringView
+            rows={
+              screen === "admin-recurring-empty"
+                ? []
+                : [
+                    { id: "r1", service_name: "노션 팀 플랜", amount: 48000, cycle: "monthly", billing_day: 5, billing_month: null, payment_method: "corporate_card", corporate_card_id: "c1", assignee_member_id: "p1", memo: null, starts_on: "2026-09-01", is_active: true, last: { claim_id: "x", period: "2026-10-05", status: "submitted" } },
+                    { id: "r2", service_name: "구글 워크스페이스 비즈니스 스탠다드 (아주 긴 서비스명 줄바꿈 확인)", amount: 216000, cycle: "monthly", billing_day: 31, billing_month: null, payment_method: "corporate_card", corporate_card_id: null, assignee_member_id: "p2", memo: null, starts_on: "2026-09-01", is_active: true, last: null },
+                    { id: "r3", service_name: "도메인 연장", amount: 22000, cycle: "yearly", billing_day: 10, billing_month: 3, payment_method: "personal_card", corporate_card_id: null, assignee_member_id: "p1", memo: null, starts_on: "2026-01-01", is_active: false, last: { claim_id: "y", period: "2026-03-10", status: "paid" } },
+                  ]
+            }
+            members={[{ id: "p1", name: "김대표" }, { id: "p2", name: "박관리" }]}
+            cards={[{ id: "c1", nickname: "대표 법인카드", last4: "7890" }]}
+            today="2026-10-23"
             preview
           />
         </AdminShell>

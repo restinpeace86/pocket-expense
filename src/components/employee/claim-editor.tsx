@@ -639,6 +639,12 @@ export function ClaimEditor({
         </div>
       )}
 
+      {claim.recurring_payment_id && claim.status === "draft" && (
+        <p className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+          🔁 정기 결제로 자동으로 만든 결의서예요. 금액이 달라졌으면 고치고, 아래 영수증에 <b>결제 내역(인보이스·카드 결제 내역) 1장</b>만 붙여 상신해 주세요.
+        </p>
+      )}
+
       {claim.status === "rejected" && (
         <section className="rounded-2xl border border-red-200 bg-red-50 p-4">
           <p className="text-sm font-semibold text-red-700">반려 사유</p>

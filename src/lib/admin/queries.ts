@@ -1,4 +1,5 @@
 import "server-only";
+import type { ClaimStatus } from "@/lib/expense/status";
 import type { MemberRow } from "@/components/admin/members-view";
 import { createClient } from "@/lib/supabase/server";
 
@@ -194,4 +195,42 @@ export async function getCompanyVehicles(companyId: string, monthStart: string, 
     if (vid && carCost) totals.set(vid, (totals.get(vid) ?? 0) + (i.amount ?? 0));
   }
   return (vehicles ?? []).map((v) => ({ ...v, month_total: totals.get(v.id) ?? 0 }));
+}
+
+// 정기 결제 (D-110): 목록 + 담당자 후보(활성 멤버) + 법인카드 + 각 정기 결제의 최근 결의서
+export type RecurringRow = {
+  id: string;
+  service_name: string;
+  amount: number;
+  cycle: "monthly" | "yearly";
+  billing_day: number;
+  billing_month: number | null;
+  payment_method: "corporate_card" | "personal_card";
+  corporate_card_id: string | null;
+  assignee_member_id: string;
+  memo: string | null;
+  starts_on: string;
+  is_active: boolean;
+  last: { claim_id: string; period: string; status: ClaimStatus } | null;
+};
+export async function getRecurringPayments(companyId: string) {
+  const supabase = await createClient();
+  const [{ data: rows }, { data: members }, { data: cards }, { data: claims }] = await Promise.all([
+    supabase
+      .from("recurring_payments")
+      .select("id, service_name, amount, cycle, billing_day, billing_month, payment_method, corporate_card_id, assignee_member_id, memo, starts_on, is_active")
+      .eq("company_id", companyId)
+      .order("is_active", { ascending: false })
+      .order("created_at"),
+    supabase.from("members").select("id, name").eq("company_id", companyId).eq("status", "approved").order("name"),
+    supabase.from("corporate_cards").select("id, nickname, last4").eq("company_id", companyId).eq("is_active", true).order("created_at"),
+    supabase.from("expense_claims").select("id, recurring_payment_id, recurring_period, status").eq("company_id", companyId).not("recurring_payment_id", "is", null).order("recurring_period", { ascending: false }).limit(500),
+  ]);
+  const last = new Map<string, RecurringRow["last"]>();
+  for (const c of claims ?? []) if (c.recurring_payment_id && !last.has(c.recurring_payment_id)) last.set(c.recurring_payment_id, { claim_id: c.id, period: c.recurring_period ?? "", status: c.status });
+  return {
+    rows: (rows ?? []).map((r) => ({ ...r, last: last.get(r.id) ?? null })) as RecurringRow[],
+    members: members ?? [],
+    cards: cards ?? [],
+  };
 }
