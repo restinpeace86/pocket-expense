@@ -17,7 +17,8 @@ import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
 
 // 영수증 항목 편집 — 결의서 화면 안 인라인(아코디언) (worker-tax-processing.md §2·§3-3, smart-meal.md §4, corporate-cards.md §3, todo_improvement(2차) 3)
-const CATEGORIES: ExpenseCategory[] = ["meal", "trip", "meeting", "purchase"];
+// 출장비는 영수증 카테고리가 아니라 결의서 상단 [출장 경비] 모드(개선사항(2차) 4): 출장 결의서의 영수증은 모두 출장비이고 세부 유형만 고른다
+const CATEGORIES: ExpenseCategory[] = ["meal", "meeting", "purchase"];
 const CATEGORY_ICON: Record<ExpenseCategory, string> = { meal: "🍚", trip: "🧳", meeting: "🤝", purchase: "📦" };
 const TRIP_TYPES: TripType[] = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other"]; // 자차 유류비는 T7
 const PURCHASE_TYPES: PurchaseType[] = ["pantry", "office_supplies", "small_equipment"];
@@ -418,7 +419,17 @@ export function ItemInlineForm({
 
       <ReceiptDetails item={item} />
 
-      <Field label="지출 카테고리" required>
+      {claim.is_business_trip ? (
+        <Field label="출장비 세부 유형" required hint={input.category !== "trip" ? "출장 결의서라 출장비로 처리돼요. 세부 유형을 골라 주세요." : undefined}>
+          <Chips
+            label="출장비 세부 유형"
+            options={TRIP_TYPES.map((t) => ({ value: t, label: TRIP_TYPE_LABEL[t] }))}
+            value={input.category === "trip" ? input.tripType : null}
+            onChange={(v) => change((f) => ({ ...f, category: "trip", tripType: v, purchaseType: null }))}
+          />
+        </Field>
+      ) : (
+      <Field label="지출 카테고리" required hint={input.category === "trip" ? "출장 경비를 끈 결의서예요. 카테고리를 다시 골라 주세요." : undefined}>
         <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="지출 카테고리">
           {CATEGORIES.map((c) => (
             <button
@@ -434,10 +445,6 @@ export function ItemInlineForm({
           ))}
         </div>
       </Field>
-      {input.category === "trip" && (
-        <Field label="출장비 세부 유형" required>
-          <Chips label="출장비 세부 유형" options={TRIP_TYPES.map((t) => ({ value: t, label: TRIP_TYPE_LABEL[t] }))} value={input.tripType} onChange={(v) => set("tripType", v)} />
-        </Field>
       )}
       {input.category === "purchase" && (
         <>

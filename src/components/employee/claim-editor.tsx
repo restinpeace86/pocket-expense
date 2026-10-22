@@ -22,6 +22,7 @@ import { measureAction } from "@/lib/perf/client";
 import { MAX_PER_CLAIM, useReceiptUpload, type UploadRow } from "./use-receipt-upload";
 import { useElementHeight } from "@/lib/ui/use-element-height";
 import { ItemInlineForm, type ItemFormHandle } from "./item-editor";
+import { OwnCarInline } from "./own-car-editor";
 
 // 화면 E-02 지출결의서 작성 (spec/screens/worker-tax-processing.md §1·§3-1·§3-2·§3-4·§4)
 
@@ -68,7 +69,7 @@ function Thumb({ item }: { item: EditorItem }) {
   );
 }
 
-// 영수증 카드: 누르거나 아래 탭을 누르면 그 자리에서 펼쳐 고친다(원페이지 아코디언, 개선사항(2차) 3). 자차 유류비만 경로 화면으로 간다
+// 영수증 카드: 누르거나 아래 탭을 누르면 그 자리에서 펼쳐 고친다(원페이지 아코디언, 개선사항(2차) 3). 자차 유류비는 위 출장 영역의 경로 칸을 펼친다(개선사항(2차) 4)
 function ItemRow({
   item,
   href,
@@ -81,7 +82,7 @@ function ItemRow({
 }: {
   item: EditorItem;
   href: string;
-  onOpen: (href: string) => void;
+  onOpen: () => void;
   onDelete: () => void;
   problem?: boolean;
   open: boolean;
@@ -103,7 +104,7 @@ function ItemRow({
         onClick={(e) => {
           e.preventDefault();
           if (inline) onToggle();
-          else onOpen(href);
+          else onOpen();
         }}
         className="flex min-w-0 flex-1 items-center gap-3"
       >
@@ -392,14 +393,14 @@ export function ClaimEditor({
     // 새로 만든 항목은 화면 갱신 뒤에 나타나므로 잠깐(최대 3초) 기다렸다가 그 카드로 내린다
     let tries = 0;
     const go = () => {
-      const el = document.getElementById(`item-${id}`);
+      const el = document.getElementById(`owncar-${id}`) ?? document.getElementById(`item-${id}`);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       else if (++tries < 30) setTimeout(go, 100);
     };
     requestAnimationFrame(go);
   };
   useEffect(() => {
-    if (openItemId) document.getElementById(`item-${openItemId}`)?.scrollIntoView({ block: "start" });
+    if (openItemId) (document.getElementById(`owncar-${openItemId}`) ?? document.getElementById(`item-${openItemId}`))?.scrollIntoView({ block: "start" });
   }, [openItemId]);
 
   // ?add=1(새 결의서)이면 처음에만 추가 시트를 연다(영수증이 생기면 다시 열리지 않음).
@@ -445,22 +446,27 @@ export function ClaimEditor({
     return res.ok;
   };
 
-  // 자차 항목을 만들고 경로 입력 화면으로 (헤더를 먼저 저장해 출장 시작일이 사용일 기본값이 되게)
+  // 자차 유류비는 출장 영역에서 바로 펼쳐 입력한다(개선사항(2차) 4). 새 경로 칸(carDraft)은 첫 장소를 고를 때 항목을 만들고,
+  // 만들어진 항목은 같은 칸(key)에 그대로 이어서 그려 입력 중이던 출발지·도착지가 지워지지 않게 한다
   const ownCarItems = items.filter(isOwnCar);
-  const addOwnCar = () =>
-    startBusy(async () => {
-      if (dirty && !(await save())) return;
-      const res = await measureAction("employee.create_own_car", () => createOwnCarItemAction(claim.id));
-      if (!res.ok) return setMessage({ kind: "error", text: res.error });
-      router.push(`${base}/claims/${claim.id}/items/${res.itemId}`);
-    });
-
-  // 항목 화면으로 가기 전에 바뀐 헤더를 먼저 저장한다
-  const openItem = (href: string) =>
-    startBusy(async () => {
-      if (dirty && !(await save())) return;
-      router.push(href);
-    });
+  const draftSeq = useRef(0);
+  const [carDraft, setCarDraft] = useState<{ key: number; id: string | null } | null>(null);
+  const newOwnCar = () => {
+    if (carDraft && !carDraft.id) return;
+    draftSeq.current += 1;
+    setCarDraft({ key: draftSeq.current, id: null });
+  };
+  const ensureOwnCar = async (): Promise<string | null> => {
+    // 헤더를 먼저 저장해 출장 시작일이 사용일 기본값이 되게
+    if (dirty && !(await save())) return null;
+    const res = await measureAction("employee.create_own_car", () => createOwnCarItemAction(claim.id));
+    if (!res.ok) {
+      setMessage({ kind: "error", text: res.error });
+      return null;
+    }
+    setCarDraft((d) => (d ? { ...d, id: res.itemId } : d));
+    return res.itemId;
+  };
 
   const addManual = () =>
     startBusy(async () => {
@@ -617,7 +623,11 @@ export function ClaimEditor({
                       type="button"
                       role="radio"
                       aria-checked={form.tripTransport === v}
-                      onClick={() => set("tripTransport", v)}
+                      onClick={() => {
+                        set("tripTransport", v);
+                        // 자차를 고르면 그 자리에서 경로 입력 칸이 펼쳐진다
+                        if (v === "own_car" && editable && !data.fuel.blocked && ownCarItems.length === 0) newOwnCar();
+                      }}
                       className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border text-sm font-medium ${form.tripTransport === v ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
                     >
                       <Icon className="size-4" />
@@ -628,7 +638,7 @@ export function ClaimEditor({
                 {form.tripTransport === "public_transport" && <p className="text-xs text-zinc-500">KTX·버스·항공권 영수증을 올리면 출장비 › 대중교통으로 분류돼요.</p>}
               </div>
               {form.tripTransport === "own_car" && (
-                <div className="flex flex-col gap-2 rounded-xl border border-brand-200 bg-white p-3">
+                <div className="flex flex-col gap-2 rounded-xl border border-brand-200 bg-white p-2.5 sm:p-3">
                   <p className="text-sm font-semibold">🚗 자차 유류비</p>
                   {data.fuel.blocked ? (
                     <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -639,31 +649,52 @@ export function ClaimEditor({
                   ) : (
                     <>
                       <p className="text-xs text-zinc-500">출발지·도착지를 고르면 거리 × km당 {data.fuel.ratePerKm.toLocaleString("ko-KR")}원으로 자동 계산하고, 경로 요약 카드를 증빙으로 붙여요.</p>
-                      {ownCarItems.map((i) => {
-                        const card = routeCardFrom(i, data.fuel.ratePerKm);
-                        const href = `${base}/claims/${claim.id}/items/${i.id}`;
+                      {[
+                        ...ownCarItems.map((i) => ({ item: i as EditorItem | null, key: carDraft?.id === i.id ? `draft-${carDraft.key}` : i.id })),
+                        ...(carDraft && !(carDraft.id && ownCarItems.some((i) => i.id === carDraft.id)) ? [{ item: null as EditorItem | null, key: `draft-${carDraft.key}` }] : []),
+                      ].map(({ item: i, key }) => {
+                        const isDraft = key.startsWith("draft-");
+                        const open = isDraft || (!!i && openIds.has(i.id));
+                        const card = i ? routeCardFrom(i, data.fuel.ratePerKm) : null;
                         return (
-                          <a
-                            key={i.id}
-                            href={href}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              openItem(href);
-                            }}
-                            className="block"
-                          >
-                            {card ? <RouteEvidenceCard card={card} compact /> : <span className="block rounded-lg border border-dashed border-zinc-300 px-3 py-3 text-sm text-zinc-600">경로를 아직 입력하지 않았어요 — 눌러서 입력</span>}
-                          </a>
+                          <div key={key} id={i ? `owncar-${i.id}` : undefined} className={`scroll-mt-4 rounded-xl ${open ? "sm:border sm:border-brand-200 sm:bg-brand-50/40 sm:p-3" : ""}`}>
+                            {open ? (
+                              <>
+                                <OwnCarInline claim={claim} item={i} fuel={data.fuel} ensureItem={ensureOwnCar} register={register} onError={onItemError} />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (isDraft) setCarDraft(null);
+                                    if (i) setOpenIds((s) => {
+                                      const n = new Set(s);
+                                      n.delete(i.id);
+                                      return n;
+                                    });
+                                  }}
+                                  className="mx-auto mt-3 flex min-h-9 items-center gap-1 rounded-xl border border-zinc-200 bg-white px-5 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
+                                >
+                                  {i ? "접기" : "닫기"}
+                                  <ChevronDown className="size-4 rotate-180" />
+                                </button>
+                              </>
+                            ) : (
+                              <button type="button" onClick={() => i && toggleItem(i.id)} aria-expanded={false} className="block w-full text-left">
+                                {card ? <RouteEvidenceCard card={card} compact /> : <span className="block rounded-lg border border-dashed border-zinc-300 px-3 py-3 text-sm text-zinc-600">경로를 아직 입력하지 않았어요 — 눌러서 입력</span>}
+                                <span className="mt-1 flex items-center justify-center gap-1 text-xs text-zinc-500">
+                                  펼쳐서 고치기 <ChevronDown className="size-4" />
+                                </span>
+                              </button>
+                            )}
+                          </div>
                         );
                       })}
-                      {editable && (
+                      {editable && !(carDraft && !carDraft.id) && (
                         <button
                           type="button"
-                          disabled={busy}
-                          onClick={addOwnCar}
-                          className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-brand-300 bg-brand-50 px-3 text-sm font-semibold text-brand-800 disabled:opacity-60"
+                          onClick={newOwnCar}
+                          className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-brand-300 bg-brand-50 px-3 text-sm font-semibold text-brand-800"
                         >
-                          {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+                          <Plus className="size-4" />
                           {ownCarItems.length ? "자차 이동 하나 더 (다른 경로)" : "경로 입력하고 유류비 계산"}
                         </button>
                       )}
@@ -716,7 +747,7 @@ export function ClaimEditor({
                 key={item.id}
                 item={item}
                 href={`${base}/claims/${claim.id}/items/${item.id}`}
-                onOpen={openItem}
+                onOpen={() => showItem(item.id)}
                 onDelete={() => removeItem(item.id)}
                 problem={!!problems?.items.some((p) => p.item_id === item.id)}
                 open={openIds.has(item.id)}
@@ -810,7 +841,7 @@ export function ClaimEditor({
               <button
                 key={p.item_id}
                 type="button"
-                onClick={() => (it && isOwnCar(it) ? openItem(`${base}/claims/${claim.id}/items/${p.item_id}`) : showItem(p.item_id))}
+                onClick={() => showItem(p.item_id)}
                 className="text-left underline-offset-2 hover:underline">
                 영수증 {n} ({it?.merchant_name || "가맹점 미입력"}): {p.fields.map((f) => ITEM_PROBLEM_LABEL[f] ?? f).join(", ")} →
               </button>

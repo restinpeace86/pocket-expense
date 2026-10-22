@@ -373,18 +373,33 @@ async function Preview({
     case "employee-claim-edit":
     case "employee-claim-edit-empty":
     case "employee-claim-edit-trip":
+    case "employee-claim-edit-owncar":
       return (
         <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee/claims/claim1/edit">
           <ClaimEditor
             data={
               screen === "employee-claim-edit-empty"
                 ? { ...SAMPLE_EDITOR, items: [], claim: { ...SAMPLE_EDITOR.claim, item_count: 0, total_amount: 0, total_company_supported: 0, total_personal_burden: 0 } }
-                : screen === "employee-claim-edit-trip"
+                : screen === "employee-claim-edit-owncar"
+                  ? {
+                      ...SAMPLE_EDITOR,
+                      claim: { ...SAMPLE_EDITOR.claim, is_business_trip: true, trip_destination: "부산", trip_start_date: "2026-10-15", trip_end_date: "2026-10-16", trip_purpose: "지사 점검", trip_transport: "own_car" },
+                      items: [
+                        {
+                          ...SAMPLE_ITEM, id: "oc1", category: "trip", trip_type: "own_car", payment_method: "personal_card", corporate_card_id: null, receipt_path: null, thumbUrl: null, merchant_name: null, amount: 64200,
+                          start_location: "판교역 신분당선", end_location: "부산역", start_lat: 37.39, start_lng: 127.11, end_lat: 35.11, end_lng: 129.04, route_one_way_km: 321, distance_km: 321, distance_source: "api", is_round_trip: false, applied_fuel_rate_per_km: 200,
+                          route_evidence: { start_address: "경기 성남시 분당구 판교역로 160", end_address: "부산 동구 중앙대로 206", computed_at: "2026-10-15T09:00:00+09:00" },
+                        },
+                        ...SAMPLE_EDITOR.items.slice(1, 3).map((i) => ({ ...i, category: "trip" as const, trip_type: "public_transport" as const })),
+                      ],
+                    }
+                  : screen === "employee-claim-edit-trip"
                   ? { ...SAMPLE_EDITOR, claim: { ...SAMPLE_EDITOR.claim, status: "rejected", rejection_reason: "KTX 영수증의 날짜가 출장 기간과 달라요.", is_business_trip: true, trip_destination: "부산", trip_start_date: "2026-10-15", trip_end_date: "2026-10-16", trip_purpose: "지사 점검", default_payment_method: "personal_card" } }
                   : SAMPLE_EDITOR
             }
             base="#"
             openAdd={screen === "employee-claim-edit-empty"}
+            openItemId={screen === "employee-claim-edit-owncar" ? "oc1" : null}
           />
         </EmployeeShell>
       );

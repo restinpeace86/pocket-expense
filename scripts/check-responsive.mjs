@@ -15,7 +15,7 @@ const DEFAULT_PATHS = [
   "/dev/preview/admin-members-all", "/dev/preview/admin-member-detail", "/dev/preview/admin-member-readonly", "/dev/preview/admin-member-inactive", "/dev/preview/admin-departments", "/dev/preview/admin-settings", "/dev/preview/admin-settings?theme=wine",
   "/dev/preview/admin-account-titles", "/dev/preview/admin-corporate-cards", "/dev/preview/admin-corporate-cards-empty",
   "/dev/preview/employee-home", "/dev/preview/employee-home-empty", "/dev/preview/employee-home-blocked", "/dev/preview/employee-home-rejected", "/dev/preview/employee-home?theme=emerald",
-  "/dev/preview/employee-claim-edit", "/dev/preview/employee-claim-edit-empty", "/dev/preview/employee-claim-edit-trip",
+  "/dev/preview/employee-claim-edit", "/dev/preview/employee-claim-edit-empty", "/dev/preview/employee-claim-edit-trip", "/dev/preview/employee-claim-edit-owncar",
   "/dev/preview/employee-item-edit", "/dev/preview/employee-item-edit-trip", "/dev/preview/employee-item-edit-manual",
   "/dev/preview/admin-claims-detail", "/dev/preview/admin-claims-own", "/dev/preview/admin-payouts", "/dev/preview/employee-claim-detail", "/dev/preview/employee-claim-detail-rejected",
   "/dev/preview/employee-profile", "/dev/preview/employee-profile-new", "/dev/preview/employee-settlements", "/dev/preview/admin-approval-lines", "/dev/preview/approvals-inbox", "/dev/preview/approval-reviewer", "/dev/preview/admin-notifications", "/dev/preview/admin-billing", "/dev/preview/admin-billing-banner", "/dev/preview/admin-billing-empty", "/dev/preview/admin-export", "/dev/preview/admin-export-closed",

@@ -10,7 +10,7 @@ export function RouteEvidenceCard({ card, compact = false }: { card: RouteCard; 
     <figure className="overflow-hidden rounded-xl border border-brand-200 bg-white" aria-label="출장 경로 및 거리 산정 요약">
       <figcaption className="flex flex-wrap items-center gap-x-2 gap-y-1 bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-800">
         <Car className="size-4 shrink-0" />
-        <span className="min-w-0 flex-1 whitespace-nowrap">출장 경로 및 거리 산정 요약</span>
+        <span className="min-w-0 flex-1 break-keep">출장 경로 및 거리 산정 요약</span>
         {card.source === "manual" ? (
           <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">직접 입력 거리</span>
         ) : (
