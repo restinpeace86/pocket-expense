@@ -3,11 +3,11 @@
 import { deadlineDate, isOverdue, type DeadlinePolicy } from "@/lib/expense/deadline";
 import { todayKst } from "@/lib/dates";
 import { formatMaskedCard, matchCard } from "@/lib/cards/match";
-import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, FileText, ImageOff, Loader2, Minus, Plus, RefreshCw, Sparkles, X } from "lucide-react";
+import { AlertTriangle, FileText, ImageOff, Loader2, Minus, Plus, RefreshCw, Sparkles, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { rereadReceiptAction, saveItemAction } from "@/app/workspace/[id]/employee/claims/actions";
+import { receiptOriginalUrlAction } from "@/lib/claims/actions";
 import { AmountInput } from "@/components/ui/amount-input";
 import { inputClass } from "@/components/ui/page-shell";
 import type { EditorCard, EditorClaim, EditorItem, EvidenceType, ItemInput, PaymentMethod } from "@/lib/employee/editor-types";
@@ -16,7 +16,7 @@ import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCateg
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
 
-// 화면 E-02 항목 편집 (worker-tax-processing.md §2·§3-3, smart-meal.md §4, corporate-cards.md §3)
+// 영수증 항목 편집 — 결의서 화면 안 인라인(아코디언) (worker-tax-processing.md §2·§3-3, smart-meal.md §4, corporate-cards.md §3, todo_improvement(2차) 3)
 const CATEGORIES: ExpenseCategory[] = ["meal", "trip", "meeting", "purchase"];
 const CATEGORY_ICON: Record<ExpenseCategory, string> = { meal: "🍚", trip: "🧳", meeting: "🤝", purchase: "📦" };
 const TRIP_TYPES: TripType[] = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other"]; // 자차 유류비는 T7
@@ -194,74 +194,94 @@ function MealCalc({ input, policy, override }: { input: ItemInput; policy: MealP
   );
 }
 
-export function ItemEditor({
+// 영수증 한 장의 인라인 편집 (todo_improvement(2차) [개선사항 3]: 원페이지 아코디언).
+// 결의서 화면의 영수증 카드 안에서 펼쳐진다. 고치면 0.8초 뒤 자동 저장하고, 접거나·임시저장·상신할 때 남은 것을 바로 저장한다(flush).
+export type ItemFormHandle = { flush: () => Promise<boolean> };
+
+export function ItemInlineForm({
   claim,
   item,
-  index,
-  total,
-  prevId,
-  nextId,
   cards,
   mealPolicy,
   mealOverride,
-  originalUrl,
   base,
   deadline = { type: "none", days: null },
+  register,
+  onError,
 }: {
   claim: EditorClaim;
   item: EditorItem;
-  index: number;
-  total: number;
-  prevId: string | null;
-  nextId: string | null;
   cards: EditorCard[];
   mealPolicy: MealPolicy;
   mealOverride: number | null;
-  originalUrl: string | null;
   base: string;
   deadline?: DeadlinePolicy;
+  register: (id: string, h: ItemFormHandle | null) => void; // 결의서 화면이 상신 전에 모든 펼친 영수증을 저장하려고 쓴다
+  onError: (message: string | null) => void;
 }) {
-  const router = useRouter();
   const [input, setInput] = useState<ItemInput>(() => toInput(item));
-  const [saved, setSaved] = useState(() => JSON.stringify(toInput(item)));
-  const [error, setError] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(false);
-  const [pending, start] = useTransition();
+  const saved = useRef(JSON.stringify(toInput(item)));
+  const latest = useRef(input); // 자동 저장이 읽는 최신 입력(change에서만 바꾼다)
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [zoomUrl, setZoomUrl] = useState<string | null>(null);
   const [rereading, startReread] = useTransition();
-  const dirty = JSON.stringify(input) !== saved;
-  const claimHref = `${base}/claims/${claim.id}/edit`;
-  const itemHref = (id: string) => `${base}/claims/${claim.id}/items/${id}`;
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const set = <K extends keyof ItemInput>(k: K, v: ItemInput[K]) => setInput((f) => ({ ...f, [k]: v }));
+  const save = useCallback(async (): Promise<boolean> => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+    const snapshot = JSON.stringify(latest.current);
+    if (snapshot === saved.current) return true;
+    setStatus("saving");
+    const res = await measureAction("employee.save_item", () => saveItemAction(item.id, latest.current));
+    if (!res.ok) {
+      setStatus("error");
+      onError(res.error);
+      return false;
+    }
+    saved.current = snapshot;
+    setStatus("saved");
+    onError(null);
+    return true;
+  }, [item.id, onError]);
+
+  useEffect(() => {
+    register(item.id, { flush: save });
+    return () => {
+      register(item.id, null);
+      void save(); // 접을 때 남은 것 저장
+    };
+  }, [item.id, register, save]);
+
+  const change = (next: (f: ItemInput) => ItemInput) => {
+    const v = next(latest.current);
+    latest.current = v;
+    setInput(v);
+    setStatus("idle");
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => void save(), 800);
+  };
+  const set = <K extends keyof ItemInput>(k: K, v: ItemInput[K]) => change((f) => ({ ...f, [k]: v }));
   const setPayment = (pm: PaymentMethod) =>
-    setInput((f) => ({ ...f, paymentMethod: pm, corporateCardId: pm === "corporate_card" ? (f.corporateCardId ?? (cards.length === 1 ? cards[0].id : null)) : null }));
-
-  const go = (href: string) =>
-    start(async () => {
-      setError(null);
-      if (dirty) {
-        const res = await measureAction("employee.save_item", () => saveItemAction(item.id, input));
-        if (!res.ok) {
-          setError(res.error);
-          return;
-        }
-        setSaved(JSON.stringify(input));
-      }
-      router.push(href);
-    });
+    change((f) => ({ ...f, paymentMethod: pm, corporateCardId: pm === "corporate_card" ? (f.corporateCardId ?? (cards.length === 1 ? cards[0].id : null)) : null }));
 
   const reread = () =>
     startReread(async () => {
-      setError(null);
-      // 입력 중인 값을 먼저 저장해 둔다(다시 읽기는 빈 칸만 채운다)
-      if (dirty) {
-        const saveRes = await saveItemAction(item.id, input);
-        if (!saveRes.ok) return setError(saveRes.error);
-      }
+      if (!(await save())) return;
       const res = await measureAction("employee.reread_receipt", () => rereadReceiptAction(item.id));
-      if (!res.ok) setError(res.error);
-      else if (!res.parsed) setError("자동 인식에 실패했어요. 직접 입력해 주세요.");
+      if (!res.ok) onError(res.error);
+      else if (!res.parsed) onError("자동 인식에 실패했어요. 직접 입력해 주세요.");
     });
+
+  const openOriginal = async () => {
+    const r = await receiptOriginalUrlAction(item.id);
+    if (r.ok && r.url) {
+      if (item.isPdf) window.open(r.url, "_blank", "noopener");
+      else setZoomUrl(r.url);
+    }
+  };
 
   const amount = input.amount === "" ? null : Number(input.amount);
   const supply = input.supplyAmount === "" ? null : Number(input.supplyAmount);
@@ -276,105 +296,84 @@ export function ItemEditor({
   const cardMatch = matchCard(item.aiCardMasked, cards);
   const matchedCard = cardMatch.kind === "unique" ? cards.find((c) => c.id === cardMatch.cardId) : undefined;
   const mealLike = isMealLike(input.category, input.tripType);
+  const fid = (k: string) => `${k}-${item.id}`;
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-5 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-3 md:max-w-2xl">
-      <div className="flex items-center justify-between gap-2">
-        <button type="button" onClick={() => go(claimHref)} className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100">
-          <ArrowLeft className="size-4" />
-          결의서로
-        </button>
-        <span className="text-sm text-zinc-500">
-          영수증 {index + 1} / {total}
-        </span>
-      </div>
-
-      {/* 1. 영수증 사진 — 화면 너비 그대로 잘림 없이(개선사항 1-3). 입력 칸과 겹치지 않게 사진 영역을 따로 둔다 */}
+    <div className="flex flex-col gap-4 border-t border-zinc-100 px-3 pb-4 pt-3">
+      {/* 사진: 작게 + 눌러서 원본 크게 */}
       {item.receipt_path ? (
-        <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-3">
-          {item.isPdf ? (
-            <a href={originalUrl ?? undefined} target="_blank" rel="noreferrer" className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl bg-zinc-100 text-sm text-zinc-600">
-              <FileText className="size-8" />
-              PDF 영수증 열기
-            </a>
-          ) : originalUrl || item.thumbUrl ? (
-            <button type="button" onClick={() => setZoom(true)} className="relative block w-full overflow-hidden rounded-xl bg-zinc-100" aria-label="영수증 크게 보기">
-              {/* eslint-disable-next-line @next/next/no-img-element -- 10분짜리 서명 링크 */}
-              <img src={originalUrl ?? item.thumbUrl ?? undefined} alt="영수증" className="mx-auto block max-h-[60vh] w-auto max-w-full object-contain" />
-              <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white">눌러서 크게 보기</span>
-            </button>
-          ) : (
-            <span className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl bg-zinc-100 text-sm text-zinc-500">
-              <ImageOff className="size-6" />
-              사진을 불러오지 못했어요
-            </span>
-          )}
-          {item.parse_status === "success" && (
-            <p className="inline-flex items-start gap-1.5 text-sm text-brand-700">
-              <Sparkles className="mt-0.5 size-4 shrink-0" />
-              AI가 채운 값이에요. 사진과 아래 내용이 맞는지 확인해 주세요.
-            </p>
-          )}
-          {(item.parse_status === "failed" || item.parse_status === "parsing") && (
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <p className="text-zinc-600">{item.parse_status === "failed" ? "자동 인식에 실패했어요. 직접 입력해 주세요." : "AI가 아직 읽지 못했어요."}</p>
-              <button type="button" onClick={reread} disabled={rereading} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-zinc-300 px-3 text-sm hover:bg-zinc-50 disabled:opacity-60">
-                {rereading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-                AI로 다시 읽기
-              </button>
-            </div>
-          )}
-        </section>
+        <div className="flex items-start gap-3">
+          <button type="button" onClick={openOriginal} className="relative shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100" aria-label="영수증 크게 보기">
+            {item.thumbUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- 10분짜리 서명 링크
+              <img src={item.thumbUrl} alt="영수증" className="h-24 w-20 object-cover" />
+            ) : (
+              <span className="flex h-24 w-20 items-center justify-center text-zinc-400">{item.isPdf ? <FileText className="size-6" /> : <ImageOff className="size-6" />}</span>
+            )}
+            <span className="absolute inset-x-0 bottom-0 bg-black/55 py-0.5 text-center text-[11px] text-white">크게 보기</span>
+          </button>
+          <div className="min-w-0 flex-1 text-sm">
+            {item.parse_status === "success" && (
+              <p className="inline-flex items-start gap-1.5 text-brand-700">
+                <Sparkles className="mt-0.5 size-4 shrink-0" />
+                AI가 채운 값이에요. 사진과 맞는지 확인해 주세요.
+              </p>
+            )}
+            {(item.parse_status === "failed" || item.parse_status === "parsing") && (
+              <div className="flex flex-col items-start gap-2">
+                <p className="text-zinc-600">{item.parse_status === "failed" ? "자동 인식에 실패했어요. 직접 입력해 주세요." : "AI가 아직 읽지 못했어요."}</p>
+                <button type="button" onClick={reread} disabled={rereading} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-zinc-300 px-3 hover:bg-zinc-50 disabled:opacity-60">
+                  {rereading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                  AI로 다시 읽기
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       ) : (
-        <p className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-600">영수증 없이 추가한 항목이에요. 사용 내용을 직접 입력해 주세요.</p>
+        <p className="rounded-xl border border-dashed border-zinc-300 px-3 py-2 text-sm text-zinc-600">영수증 없이 추가한 항목이에요. 사용 내용을 직접 입력해 주세요.</p>
       )}
 
       {item.duplicate && <DuplicateWarning dup={item.duplicate} base={base} />}
 
-      {/* 2. 영수증 정보 — 사진 바로 아래에서 대조 */}
-      <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4">
-        <h2 className="font-semibold">영수증 정보</h2>
-        <Field label="가맹점명" required htmlFor="merchant">
-          <input id="merchant" className={inputClass} value={input.merchantName} maxLength={100} placeholder="예: 스타벅스 강남점" onChange={(e) => set("merchantName", e.target.value)} />
+      <Field label="가맹점명" required htmlFor={fid("merchant")}>
+        <input id={fid("merchant")} className={inputClass} value={input.merchantName} maxLength={100} placeholder="예: 스타벅스 강남점" onChange={(e) => set("merchantName", e.target.value)} />
+      </Field>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="사용일자" required htmlFor={fid("date")}>
+          <input id={fid("date")} type="date" className={inputClass} value={input.expenseDate} onChange={(e) => set("expenseDate", e.target.value)} />
         </Field>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="사용일자" required htmlFor="date">
-            <input id="date" type="date" className={inputClass} value={input.expenseDate} onChange={(e) => set("expenseDate", e.target.value)} />
+        <Field label="합계 금액" required>
+          <AmountInput name={fid("amount")} ariaLabel="합계 금액" value={input.amount} onChange={(v) => set("amount", v)} />
+        </Field>
+      </div>
+      {outsideTrip && <Warn>출장 기간 밖의 날짜예요. 날짜를 확인해 주세요(그대로 상신할 수도 있어요).</Warn>}
+      {overdueAt && <Warn>청구 기한({overdueAt.replaceAll("-", ".")}까지)이 지났어요. 상신은 할 수 있지만 관리자 화면에 &ldquo;기한 초과&rdquo;로 표시돼요.</Warn>}
+      <details className="group rounded-xl bg-zinc-50 px-3 py-2" open={!!(input.merchantBusinessNumber || input.supplyAmount || input.vatAmount) || undefined}>
+        <summary className="flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-zinc-700 [&::-webkit-details-marker]:hidden">
+          사업자등록번호·공급가액·부가세 <span className="ml-1 text-xs font-normal text-zinc-500">(세무사 전달용 · AI가 채워요)</span>
+        </summary>
+        <div className="mt-2 flex flex-col gap-3 pb-2">
+          <Field label="가맹점 사업자등록번호" htmlFor={fid("bn")}>
+            <input id={fid("bn")} className={inputClass} inputMode="numeric" value={input.merchantBusinessNumber} maxLength={12} placeholder="숫자 10자리" onChange={(e) => set("merchantBusinessNumber", e.target.value.replace(/[^0-9-]/g, ""))} />
           </Field>
-          <Field label="합계 금액" required>
-            <AmountInput name="amount" ariaLabel="합계 금액" value={input.amount} onChange={(v) => set("amount", v)} />
-          </Field>
-        </div>
-        {outsideTrip && <Warn>출장 기간 밖의 날짜예요. 날짜를 확인해 주세요(그대로 상신할 수도 있어요).</Warn>}
-        {overdueAt && <Warn>청구 기한({overdueAt.replaceAll("-", ".")}까지)이 지났어요. 상신은 할 수 있지만 관리자 화면에 &ldquo;기한 초과&rdquo;로 표시돼요.</Warn>}
-        <details className="group rounded-xl bg-zinc-50 px-3 py-2" open={!!(input.merchantBusinessNumber || input.supplyAmount || input.vatAmount) || undefined}>
-          <summary className="flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-zinc-700 [&::-webkit-details-marker]:hidden">
-            사업자등록번호·공급가액·부가세 <span className="ml-1 text-xs font-normal text-zinc-500">(세무사 전달용 · AI가 채워요)</span>
-          </summary>
-          <div className="mt-2 flex flex-col gap-3 pb-2">
-            <Field label="가맹점 사업자등록번호" htmlFor="bn">
-              <input id="bn" className={inputClass} inputMode="numeric" value={input.merchantBusinessNumber} maxLength={12} placeholder="숫자 10자리" onChange={(e) => set("merchantBusinessNumber", e.target.value.replace(/[^0-9-]/g, ""))} />
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="공급가액">
+              <AmountInput name={fid("supply")} ariaLabel="공급가액" value={input.supplyAmount} onChange={(v) => set("supplyAmount", v)} />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="공급가액">
-                <AmountInput name="supply" ariaLabel="공급가액" value={input.supplyAmount} onChange={(v) => set("supplyAmount", v)} />
-              </Field>
-              <Field label="부가세">
-                <AmountInput name="vat" ariaLabel="부가세" value={input.vatAmount} onChange={(v) => set("vatAmount", v)} />
-              </Field>
-            </div>
-            {sumMismatch && <Warn>공급가액 + 부가세가 합계 금액과 달라요. 영수증을 확인해 주세요.</Warn>}
+            <Field label="부가세">
+              <AmountInput name={fid("vat")} ariaLabel="부가세" value={input.vatAmount} onChange={(v) => set("vatAmount", v)} />
+            </Field>
           </div>
-        </details>
-        <Field label="증빙 구분" required>
-          <Chips label="증빙 구분" options={EVIDENCE} value={input.evidenceType} onChange={(v) => set("evidenceType", v)} />
-        </Field>
-        {item.aiIncomeDeduction && input.evidenceType === "cash_receipt" && <Warn>소득공제용 현금영수증이에요. 지출증빙용이 아니라 회사 경비 처리 시 불이익이 있을 수 있어요.</Warn>}
-      </section>
+          {sumMismatch && <Warn>공급가액 + 부가세가 합계 금액과 달라요. 영수증을 확인해 주세요.</Warn>}
+        </div>
+      </details>
+      <Field label="증빙 구분" required>
+        <Chips label="증빙 구분" options={EVIDENCE} value={input.evidenceType} onChange={(v) => set("evidenceType", v)} />
+      </Field>
+      {item.aiIncomeDeduction && input.evidenceType === "cash_receipt" && <Warn>소득공제용 현금영수증이에요. 지출증빙용이 아니라 회사 경비 처리 시 불이익이 있을 수 있어요.</Warn>}
 
-      {/* 3. 결제수단 (D-048, D-055) */}
-      <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
-        <h2 className="font-semibold">결제수단</h2>
+      <Field label="결제수단" required>
         <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="결제수단">
           {(
             [
@@ -394,37 +393,32 @@ export function ItemEditor({
             </button>
           ))}
         </div>
-        <p className="text-xs text-zinc-500">{input.paymentMethod === "corporate_card" ? "회사 카드로 결제했어요. 따로 돌려받을 돈은 없어요." : "내 돈(개인카드·현금)으로 냈어요. 승인되면 회사가 돌려줘요."}</p>
-        {item.aiCardMasked && cards.length > 0 && cardMatch.kind !== "unknown" && (
-          <p className="rounded-xl bg-sky-50 px-3 py-2 text-sm text-sky-800">
-            {matchedCard
-              ? `💳 ${matchedCard.nickname}(${matchedCard.last4})로 인식했어요.`
-              : cardMatch.kind === "ambiguous"
-                ? `영수증 카드번호(${formatMaskedCard(item.aiCardMasked)})와 맞는 법인카드가 여러 장이에요. 사용한 카드를 골라 주세요.`
-                : `영수증 카드번호(${formatMaskedCard(item.aiCardMasked)})가 등록된 법인카드와 달라 개인(사비)으로 골랐어요. 법인카드였다면 바꿔 주세요.`}
-          </p>
-        )}
-        {input.paymentMethod === "corporate_card" && cards.length > 1 && (
-          <Field label="사용한 카드" htmlFor="card">
-            <select id="card" className={inputClass} value={input.corporateCardId ?? ""} onChange={(e) => set("corporateCardId", e.target.value || null)}>
-              <option value="">선택해 주세요</option>
-              {cards.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nickname} ({c.last4})
-                </option>
-              ))}
-            </select>
-          </Field>
-        )}
-      </section>
+      </Field>
+      {item.aiCardMasked && cards.length > 0 && cardMatch.kind !== "unknown" && (
+        <p className="rounded-xl bg-sky-50 px-3 py-2 text-sm text-sky-800">
+          {matchedCard
+            ? `💳 ${matchedCard.nickname}(${matchedCard.last4})로 인식했어요.`
+            : cardMatch.kind === "ambiguous"
+              ? `영수증 카드번호(${formatMaskedCard(item.aiCardMasked)})와 맞는 법인카드가 여러 장이에요. 사용한 카드를 골라 주세요.`
+              : `영수증 카드번호(${formatMaskedCard(item.aiCardMasked)})가 등록된 법인카드와 달라 개인(사비)으로 골랐어요. 법인카드였다면 바꿔 주세요.`}
+        </p>
+      )}
+      {input.paymentMethod === "corporate_card" && cards.length > 1 && (
+        <Field label="사용한 카드" htmlFor={fid("card")}>
+          <select id={fid("card")} className={inputClass} value={input.corporateCardId ?? ""} onChange={(e) => set("corporateCardId", e.target.value || null)}>
+            <option value="">선택해 주세요</option>
+            {cards.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nickname} ({c.last4})
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
 
       <ReceiptDetails item={item} />
 
-      {/* 4. 카테고리 + 조건부 항목 */}
-      <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4">
-        <h2 className="font-semibold">
-          지출 카테고리<span className="ml-0.5 text-red-600">*</span>
-        </h2>
+      <Field label="지출 카테고리" required>
         <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="지출 카테고리">
           {CATEGORIES.map((c) => (
             <button
@@ -432,108 +426,86 @@ export function ItemEditor({
               type="button"
               role="radio"
               aria-checked={input.category === c}
-              onClick={() => setInput((f) => ({ ...f, category: c, tripType: c === "trip" ? f.tripType : null, purchaseType: c === "purchase" ? f.purchaseType : null }))}
-              className={`min-h-12 rounded-xl border px-2 text-sm font-medium ${input.category === c ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
+              onClick={() => change((f) => ({ ...f, category: c, tripType: c === "trip" ? f.tripType : null, purchaseType: c === "purchase" ? f.purchaseType : null }))}
+              className={`min-h-11 rounded-xl border px-2 text-sm font-medium ${input.category === c ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
             >
               {CATEGORY_ICON[c]} {CATEGORY_LABEL[c]}
             </button>
           ))}
         </div>
-        {input.category === "trip" && (
-          <Field label="출장비 세부 유형" required>
-            <Chips label="출장비 세부 유형" options={TRIP_TYPES.map((t) => ({ value: t, label: TRIP_TYPE_LABEL[t] }))} value={input.tripType} onChange={(v) => set("tripType", v)} />
+      </Field>
+      {input.category === "trip" && (
+        <Field label="출장비 세부 유형" required>
+          <Chips label="출장비 세부 유형" options={TRIP_TYPES.map((t) => ({ value: t, label: TRIP_TYPE_LABEL[t] }))} value={input.tripType} onChange={(v) => set("tripType", v)} />
+        </Field>
+      )}
+      {input.category === "purchase" && (
+        <>
+          <Field label="구매 세부 유형" required>
+            <Chips label="구매 세부 유형" options={PURCHASE_TYPES.map((t) => ({ value: t, label: PURCHASE_TYPE_LABEL[t] }))} value={input.purchaseType} onChange={(v) => set("purchaseType", v)} />
           </Field>
-        )}
-        {input.category === "purchase" && (
-          <>
-            <Field label="구매 세부 유형" required>
-              <Chips label="구매 세부 유형" options={PURCHASE_TYPES.map((t) => ({ value: t, label: PURCHASE_TYPE_LABEL[t] }))} value={input.purchaseType} onChange={(v) => set("purchaseType", v)} />
-            </Field>
-            <Field label="구매 목적·품목" required htmlFor="purpose" hint="회사 물품은 전액 지원돼요.">
-              <input id="purpose" className={inputClass} value={input.purpose} maxLength={200} placeholder="예: 탕비실 커피·생수" onChange={(e) => set("purpose", e.target.value)} />
-            </Field>
-          </>
-        )}
-        {input.category === "meeting" && (
-          <>
-            <Field label="미팅 목적" required htmlFor="purpose">
-              <input id="purpose" className={inputClass} value={input.purpose} maxLength={200} placeholder="예: A사 신규 계약 협의" onChange={(e) => set("purpose", e.target.value)} />
-            </Field>
-            <Field label="거래처명" htmlFor="client">
-              <input id="client" className={inputClass} value={input.clientName} maxLength={100} placeholder="예: (주)에이컴퍼니" onChange={(e) => set("clientName", e.target.value)} />
-            </Field>
-            <Field label="참석자" htmlFor="attendees">
-              <input id="attendees" className={inputClass} value={input.attendees} maxLength={200} placeholder="예: A사 김부장, 우리 회사 박과장" onChange={(e) => set("attendees", e.target.value)} />
-            </Field>
-          </>
-        )}
-        {input.category === "trip" && input.tripType === "lodging" && (
-          <Field label="숙박 기간 (체크인 ~ 체크아웃)" required>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
-              <input type="date" aria-label="체크인" className={`${inputClass} min-w-0`} value={input.tripStartDate} onChange={(e) => set("tripStartDate", e.target.value)} />
-              <span className="hidden text-zinc-500 sm:inline">~</span>
-              <input type="date" aria-label="체크아웃" className={`${inputClass} min-w-0`} value={input.tripEndDate} min={input.tripStartDate || undefined} onChange={(e) => set("tripEndDate", e.target.value)} />
-            </div>
+          <Field label="구매 목적·품목" required htmlFor={fid("purpose")} hint="회사 물품은 전액 지원돼요.">
+            <input id={fid("purpose")} className={inputClass} value={input.purpose} maxLength={200} placeholder="예: 탕비실 커피·생수" onChange={(e) => set("purpose", e.target.value)} />
           </Field>
-        )}
-        {input.category === "trip" && input.tripType === "other" && (
-          <Field label="적요" required htmlFor="purpose">
-            <input id="purpose" className={inputClass} value={input.purpose} maxLength={200} placeholder="예: 출장 중 자료 출력비" onChange={(e) => set("purpose", e.target.value)} />
+        </>
+      )}
+      {input.category === "meeting" && (
+        <>
+          <Field label="미팅 목적" required htmlFor={fid("purpose")}>
+            <input id={fid("purpose")} className={inputClass} value={input.purpose} maxLength={200} placeholder="예: A사 신규 계약 협의" onChange={(e) => set("purpose", e.target.value)} />
           </Field>
-        )}
-        {(mealLike || input.category === "meeting") && (
-          <Field label="인원수" required>
-            <div className="flex items-center gap-3">
-              <button type="button" aria-label="인원 줄이기" disabled={input.headcount <= 1} onClick={() => set("headcount", Math.max(1, input.headcount - 1))} className="inline-flex size-11 items-center justify-center rounded-xl border border-zinc-300 bg-white disabled:opacity-40">
-                <Minus className="size-4" />
-              </button>
-              <span className="min-w-12 text-center text-lg font-semibold tabular-nums" aria-live="polite">
-                {input.headcount}명
-              </span>
-              <button type="button" aria-label="인원 늘리기" disabled={input.headcount >= 99} onClick={() => set("headcount", Math.min(99, input.headcount + 1))} className="inline-flex size-11 items-center justify-center rounded-xl border border-zinc-300 bg-white disabled:opacity-40">
-                <Plus className="size-4" />
-              </button>
-            </div>
+          <Field label="거래처명" htmlFor={fid("client")}>
+            <input id={fid("client")} className={inputClass} value={input.clientName} maxLength={100} placeholder="예: (주)에이컴퍼니" onChange={(e) => set("clientName", e.target.value)} />
           </Field>
-        )}
-        {mealLike && <MealCalc input={input} policy={mealPolicy} override={mealOverride} />}
-      </section>
+          <Field label="참석자" htmlFor={fid("attendees")}>
+            <input id={fid("attendees")} className={inputClass} value={input.attendees} maxLength={200} placeholder="예: A사 김부장, 우리 회사 박과장" onChange={(e) => set("attendees", e.target.value)} />
+          </Field>
+        </>
+      )}
+      {input.category === "trip" && input.tripType === "lodging" && (
+        <Field label="숙박 기간 (체크인 ~ 체크아웃)" required>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+            <input type="date" aria-label="체크인" className={`${inputClass} min-w-0`} value={input.tripStartDate} onChange={(e) => set("tripStartDate", e.target.value)} />
+            <span className="hidden text-zinc-500 sm:inline">~</span>
+            <input type="date" aria-label="체크아웃" className={`${inputClass} min-w-0`} value={input.tripEndDate} min={input.tripStartDate || undefined} onChange={(e) => set("tripEndDate", e.target.value)} />
+          </div>
+        </Field>
+      )}
+      {input.category === "trip" && input.tripType === "other" && (
+        <Field label="적요" required htmlFor={fid("purpose")}>
+          <input id={fid("purpose")} className={inputClass} value={input.purpose} maxLength={200} placeholder="예: 출장 중 자료 출력비" onChange={(e) => set("purpose", e.target.value)} />
+        </Field>
+      )}
+      {(mealLike || input.category === "meeting") && (
+        <Field label="인원수" required>
+          <div className="flex items-center gap-3">
+            <button type="button" aria-label="인원 줄이기" disabled={input.headcount <= 1} onClick={() => set("headcount", Math.max(1, input.headcount - 1))} className="inline-flex size-11 items-center justify-center rounded-xl border border-zinc-300 bg-white disabled:opacity-40">
+              <Minus className="size-4" />
+            </button>
+            <span className="min-w-12 text-center text-lg font-semibold tabular-nums" aria-live="polite">
+              {input.headcount}명
+            </span>
+            <button type="button" aria-label="인원 늘리기" disabled={input.headcount >= 99} onClick={() => set("headcount", Math.min(99, input.headcount + 1))} className="inline-flex size-11 items-center justify-center rounded-xl border border-zinc-300 bg-white disabled:opacity-40">
+              <Plus className="size-4" />
+            </button>
+          </div>
+        </Field>
+      )}
+      {mealLike && <MealCalc input={input} policy={mealPolicy} override={mealOverride} />}
 
-      {zoom && originalUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" role="dialog" aria-modal aria-label="영수증 크게 보기" onClick={() => setZoom(false)}>
+      <p className="text-right text-xs text-zinc-500" aria-live="polite">
+        {status === "saving" ? "저장 중…" : status === "saved" ? "✓ 저장됨" : status === "error" ? "저장하지 못했어요" : "고치면 자동으로 저장돼요"}
+      </p>
+
+      {zoomUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" role="dialog" aria-modal aria-label="영수증 크게 보기" onClick={() => setZoomUrl(null)}>
           <button type="button" aria-label="닫기" className="absolute right-3 top-3 inline-flex size-11 items-center justify-center rounded-full bg-white/15 text-white">
             <X className="size-5" />
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element -- 10분짜리 서명 링크 */}
-          <img src={originalUrl} alt="영수증 원본" className="max-h-full max-w-full object-contain" />
+          <img src={zoomUrl} alt="영수증 원본" className="max-h-full max-w-full object-contain" />
         </div>
       )}
-
-      {/* 하단: 이전 / 다음 / 완료 (§3-3 6) */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-        <div className="mx-auto flex max-w-md flex-col gap-2 md:max-w-2xl">
-          {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-              {error}
-            </p>
-          )}
-          <div className="grid grid-cols-[auto_1fr_auto] gap-2">
-            <button type="button" disabled={!prevId || pending} onClick={() => prevId && go(itemHref(prevId))} aria-label="이전 영수증" className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-xl border border-zinc-300 bg-white disabled:opacity-40">
-              <ChevronLeft className="size-5" />
-            </button>
-            <button type="button" disabled={pending} onClick={() => go(nextId ? itemHref(nextId) : claimHref)} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700 disabled:opacity-70">
-              {pending && <Loader2 className="size-4 animate-spin" />}
-              {nextId ? "저장하고 다음 영수증" : "저장하고 완료"}
-            </button>
-            <button type="button" disabled={!nextId || pending} onClick={() => nextId && go(itemHref(nextId))} aria-label="다음 영수증" className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-xl border border-zinc-300 bg-white disabled:opacity-40">
-              <ChevronRight className="size-5" />
-            </button>
-          </div>
-          <Link href={claimHref} className="sr-only">
-            결의서로 돌아가기
-          </Link>
-        </div>
-      </div>
-    </main>
+    </div>
   );
 }

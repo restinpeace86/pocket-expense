@@ -29,7 +29,6 @@ import type { ClaimDetail, DetailItem } from "@/lib/claims/types";
 import { CompaniesView } from "@/components/app-admin/companies-view";
 import { CompanyDetailView, type CompanyDetail } from "@/components/app-admin/company-detail-view";
 import { ReceiptRecordView, type ReceiptRecordData } from "@/components/app-admin/receipt-record-view";
-import { ItemEditor } from "@/components/employee/item-editor";
 import type { EditorData, EditorItem } from "@/lib/employee/editor-types";
 import type { MyClaimRow } from "@/lib/employee/types";
 import { DepartmentsHeading, DepartmentsView } from "@/components/admin/departments-view";
@@ -393,25 +392,21 @@ async function Preview({
     case "employee-item-edit-trip":
     case "employee-item-edit-manual":
       return (
-        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee/claims/claim1/items/i1">
-          <ItemEditor
-            claim={screen === "employee-item-edit-trip" ? { ...SAMPLE_EDITOR.claim, is_business_trip: true, trip_start_date: "2026-10-15", trip_end_date: "2026-10-16" } : SAMPLE_EDITOR.claim}
-            item={
-              screen === "employee-item-edit-trip"
-                ? { ...SAMPLE_ITEM, category: "trip", trip_type: "lodging", expense_date: "2026-10-18", merchant_name: "부산호텔", amount: 90000, supply_amount: 80000, vat_amount: 8182, parse_status: "failed" }
-                : screen === "employee-item-edit-manual"
-                  ? { ...SAMPLE_ITEM, receipt_path: null, aiFilled: false, aiCardMasked: null, parse_status: "none", category: "meeting", merchant_name: "", amount: null, purpose: "", payment_method: "personal_card", corporate_card_id: null }
-                  : { ...SAMPLE_ITEM, duplicate: { mine: [{ claim_id: "c0", title: "10/16 팀 점심", status: "draft" }], others: 1 } }
-            }
-            index={0}
-            total={4}
-            prevId={null}
-            nextId="i2"
-            cards={SAMPLE_EDITOR.cards}
-            mealPolicy={SAMPLE_EDITOR.mealPolicy}
-            mealOverride={null}
-            originalUrl={null}
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee/claims/claim1/edit">
+          <ClaimEditor
+            data={(() => {
+              const it: EditorItem =
+                screen === "employee-item-edit-trip"
+                  ? { ...SAMPLE_ITEM, category: "trip", trip_type: "lodging", expense_date: "2026-10-18", merchant_name: "부산호텔", amount: 90000, supply_amount: 80000, vat_amount: 8182, parse_status: "failed" }
+                  : screen === "employee-item-edit-manual"
+                    ? { ...SAMPLE_ITEM, receipt_path: null, aiFilled: false, aiCardMasked: null, parse_status: "none", category: "meeting", merchant_name: "", amount: null, purpose: "", payment_method: "personal_card", corporate_card_id: null }
+                    : { ...SAMPLE_ITEM, duplicate: { mine: [{ claim_id: "c0", title: "10/16 팀 점심", status: "draft" }], others: 1 } };
+              const claim = screen === "employee-item-edit-trip" ? { ...SAMPLE_EDITOR.claim, is_business_trip: true, trip_destination: "부산", trip_start_date: "2026-10-15", trip_end_date: "2026-10-16" } : SAMPLE_EDITOR.claim;
+              return { ...SAMPLE_EDITOR, claim, items: [it, ...SAMPLE_EDITOR.items.slice(1)] };
+            })()}
             base="#"
+            openAdd={false}
+            openItemId="i1"
           />
         </EmployeeShell>
       );

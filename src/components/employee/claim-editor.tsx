@@ -1,10 +1,10 @@
 "use client";
 
 import { exceptionFlags, exceptionSummary } from "@/lib/expense/exceptions";
-import { ArrowLeft, Camera, Car, FileText, ImageIcon, Loader2, PenLine, Plus, ReceiptText, TrainFront, Trash2, X } from "lucide-react";
+import { ArrowLeft, Camera, Car, ChevronDown, FileText, ImageIcon, Loader2, PenLine, Plus, ReceiptText, TrainFront, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import { createManualItemAction, createOwnCarItemAction, deleteDraftClaimAction, deleteItemAction, saveClaimHeaderAction } from "@/app/workspace/[id]/employee/claims/actions";
 import { RouteEvidenceCard } from "@/components/claims/route-evidence-card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
@@ -21,6 +21,7 @@ import { HEADER_PROBLEM_LABEL, ITEM_PROBLEM_LABEL, type ClaimProblems } from "@/
 import { measureAction } from "@/lib/perf/client";
 import { MAX_PER_CLAIM, useReceiptUpload, type UploadRow } from "./use-receipt-upload";
 import { useElementHeight } from "@/lib/ui/use-element-height";
+import { ItemInlineForm, type ItemFormHandle } from "./item-editor";
 
 // 화면 E-02 지출결의서 작성 (spec/screens/worker-tax-processing.md §1·§3-1·§3-2·§3-4·§4)
 
@@ -67,17 +68,42 @@ function Thumb({ item }: { item: EditorItem }) {
   );
 }
 
-function ItemRow({ item, href, onOpen, onDelete, problem }: { item: EditorItem; href: string; onOpen: (href: string) => void; onDelete: () => void; problem?: boolean }) {
+// 영수증 카드: 누르거나 아래 탭을 누르면 그 자리에서 펼쳐 고친다(원페이지 아코디언, 개선사항(2차) 3). 자차 유류비만 경로 화면으로 간다
+function ItemRow({
+  item,
+  href,
+  onOpen,
+  onDelete,
+  problem,
+  open,
+  onToggle,
+  children,
+}: {
+  item: EditorItem;
+  href: string;
+  onOpen: (href: string) => void;
+  onDelete: () => void;
+  problem?: boolean;
+  open: boolean;
+  onToggle: () => void;
+  children?: ReactNode;
+}) {
   const [confirm, setConfirm] = useState(false);
   const check = itemNeedsCheck(item);
   const parsing = item.parse_status === "parsing";
+  const inline = !isOwnCar(item);
+  const panelId = `item-panel-${item.id}`;
   return (
-    <li className={`flex items-center gap-2 rounded-2xl border bg-white p-3 ${problem ? "border-red-400 ring-1 ring-red-300" : "border-zinc-200"}`}>
+    <li id={`item-${item.id}`} className={`flex scroll-mt-4 flex-col rounded-2xl border bg-white ${problem ? "border-red-400 ring-1 ring-red-300" : open ? "border-brand-300" : "border-zinc-200"}`}>
+      <div className="flex items-center gap-2 p-3">
       <a
         href={href}
+        aria-expanded={inline ? open : undefined}
+        aria-controls={inline ? panelId : undefined}
         onClick={(e) => {
           e.preventDefault();
-          onOpen(href);
+          if (inline) onToggle();
+          else onOpen(href);
         }}
         className="flex min-w-0 flex-1 items-center gap-3"
       >
@@ -118,6 +144,25 @@ function ItemRow({ item, href, onOpen, onDelete, problem }: { item: EditorItem; 
       ) : (
         <button type="button" onClick={() => setConfirm(true)} aria-label="이 영수증 삭제" className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-zinc-400 hover:bg-zinc-100 hover:text-red-600">
           <Trash2 className="size-5" />
+        </button>
+      )}
+      </div>
+      {inline && open && (
+        <div id={panelId} role="region" aria-label="영수증 상세 입력">
+          {children}
+        </div>
+      )}
+      {inline && (
+        // 노치 탭: 카드 아래 가운데에서 펼치고 접는다
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          aria-controls={panelId}
+          className="mx-auto flex min-h-9 items-center gap-1 rounded-t-xl border border-b-0 border-zinc-200 bg-zinc-50 px-5 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
+        >
+          {open ? "접기" : check ? "펼쳐서 확인하기" : "펼쳐서 고치기"}
+          <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
       )}
     </li>
@@ -269,7 +314,21 @@ function Label({ children, required, htmlFor }: { children: React.ReactNode; req
 }
 
 // selfApprove: 최고 관리자 본인 결의서는 결재 없이 바로 승인된다(D-026) — 확인 문구에만 쓴다
-export function ClaimEditor({ data, base, openAdd, selfApprove = false, approvalPreview = "관리자 승인" }: { data: EditorData; base: string; openAdd: boolean; selfApprove?: boolean; approvalPreview?: string }) {
+export function ClaimEditor({
+  data,
+  base,
+  openAdd,
+  openItemId = null,
+  selfApprove = false,
+  approvalPreview = "관리자 승인",
+}: {
+  data: EditorData;
+  base: string;
+  openAdd: boolean;
+  openItemId?: string | null; // ?item=<id>: 그 영수증을 펼친 채로 연다
+  selfApprove?: boolean;
+  approvalPreview?: string;
+}) {
   const { claim, items } = data;
   const router = useRouter();
   const touch = useTouchDevice();
@@ -312,6 +371,36 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const uploader = useReceiptUpload(claim.id, items.length);
+  // 펼친 영수증과 그 저장 손잡이(임시저장·상신 전에 고친 내용을 모두 먼저 저장한다)
+  const [openIds, setOpenIds] = useState<Set<string>>(() => new Set(openItemId ? [openItemId] : []));
+  const handles = useRef(new Map<string, ItemFormHandle>());
+  const register = useCallback((id: string, h: ItemFormHandle | null) => {
+    if (h) handles.current.set(id, h);
+    else handles.current.delete(id);
+  }, []);
+  const flushItems = async () => (await Promise.all([...handles.current.values()].map((h) => h.flush()))).every(Boolean);
+  const onItemError = useCallback((text: string | null) => setMessage(text ? { kind: "error", text } : null), []);
+  const toggleItem = (id: string) =>
+    setOpenIds((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const showItem = (id: string) => {
+    setOpenIds((s) => new Set(s).add(id));
+    // 새로 만든 항목은 화면 갱신 뒤에 나타나므로 잠깐(최대 3초) 기다렸다가 그 카드로 내린다
+    let tries = 0;
+    const go = () => {
+      const el = document.getElementById(`item-${id}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      else if (++tries < 30) setTimeout(go, 100);
+    };
+    requestAnimationFrame(go);
+  };
+  useEffect(() => {
+    if (openItemId) document.getElementById(`item-${openItemId}`)?.scrollIntoView({ block: "start" });
+  }, [openItemId]);
 
   // ?add=1(새 결의서)이면 처음에만 추가 시트를 연다(영수증이 생기면 다시 열리지 않음).
   // 주소에서 ?add=1을 지우지 않는다: 주소를 바꾸면 업로드 뒤 화면 갱신 때 Next가 이 화면을 새로 만들어
@@ -343,6 +432,7 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
   const set = <K extends keyof ClaimHeaderInput>(k: K, v: ClaimHeaderInput[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   const save = async () => {
+    if (!(await flushItems())) return false;
     const res = await measureAction("employee.save_claim", () => saveClaimHeaderAction(claim.id, current));
     if (res.ok) {
       setSavedForm(current);
@@ -377,8 +467,10 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
       setSheet(false);
       if (dirty && !(await save())) return;
       const res = await measureAction("employee.add_manual_item", () => createManualItemAction(claim.id));
-      if (res.ok) router.push(`${base}/claims/${claim.id}/items/${res.itemId}`);
-      else setMessage({ kind: "error", text: res.error });
+      if (!res.ok) return setMessage({ kind: "error", text: res.error });
+      // 직접 입력 항목은 그 자리에서 펼쳐 채운다
+      router.refresh();
+      showItem(res.itemId);
     });
 
   const removeItem = (itemId: string) =>
@@ -620,7 +712,29 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
         ) : (
           <ul className="flex flex-col gap-2">
             {visibleItems.map((item) => (
-              <ItemRow key={item.id} item={item} href={`${base}/claims/${claim.id}/items/${item.id}`} onOpen={openItem} onDelete={() => removeItem(item.id)} problem={!!problems?.items.some((p) => p.item_id === item.id)} />
+              <ItemRow
+                key={item.id}
+                item={item}
+                href={`${base}/claims/${claim.id}/items/${item.id}`}
+                onOpen={openItem}
+                onDelete={() => removeItem(item.id)}
+                problem={!!problems?.items.some((p) => p.item_id === item.id)}
+                open={openIds.has(item.id)}
+                onToggle={() => toggleItem(item.id)}
+              >
+                <ItemInlineForm
+                  key={`${item.id}:${item.parse_status}`} // AI로 다시 읽은 뒤 새 값으로 다시 그린다
+                  claim={claim}
+                  item={item}
+                  cards={data.cards}
+                  mealPolicy={data.mealPolicy}
+                  mealOverride={data.mealOverride}
+                  base={base}
+                  deadline={data.deadline}
+                  register={register}
+                  onError={onItemError}
+                />
+              </ItemRow>
             ))}
             {uploader.rows.map((row) => (
               <UploadingRow key={row.key} row={row} onDismiss={() => uploader.dismiss(row.key)} />
@@ -693,7 +807,11 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
             const it = items.find((x) => x.id === p.item_id);
             const n = items.findIndex((x) => x.id === p.item_id) + 1;
             return (
-              <button key={p.item_id} type="button" onClick={() => openItem(`${base}/claims/${claim.id}/items/${p.item_id}`)} className="text-left underline-offset-2 hover:underline">
+              <button
+                key={p.item_id}
+                type="button"
+                onClick={() => (it && isOwnCar(it) ? openItem(`${base}/claims/${claim.id}/items/${p.item_id}`) : showItem(p.item_id))}
+                className="text-left underline-offset-2 hover:underline">
                 영수증 {n} ({it?.merchant_name || "가맹점 미입력"}): {p.fields.map((f) => ITEM_PROBLEM_LABEL[f] ?? f).join(", ")} →
               </button>
             );
@@ -722,13 +840,18 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
                 disabled={submitting}
                 onClick={() =>
                   startSubmit(async () => {
+                    if (!(await flushItems())) return setConfirmSubmit(false);
                     const res = await measureAction("employee.submit_claim", () => submitClaimAction(claim.id));
                     setConfirmSubmit(false);
                     if (res.ok) {
                       router.push(base);
                       return;
                     }
-                    if ("problems" in res) setProblems(res.problems);
+                    if ("problems" in res) {
+                      setProblems(res.problems);
+                      // 빠진 칸이 있는 영수증은 펼쳐 둔다
+                      setOpenIds((s) => new Set([...s, ...res.problems.items.map((x) => x.item_id)]));
+                    }
                     setMessage({ kind: "error", text: res.error });
                   })
                 }
@@ -766,7 +889,8 @@ export function ClaimEditor({ data, base, openAdd, selfApprove = false, approval
               onClick={() =>
                 startSubmit(async () => {
                   setMessage(null);
-                  // 바뀐 헤더를 먼저 저장하고, 서버에서 빠진 칸을 확인한 뒤 확인 창을 연다
+                  // 펼쳐 고친 영수증과 바뀐 헤더를 먼저 저장하고, 서버에서 빠진 칸을 확인한 뒤 확인 창을 연다
+                  if (!(await flushItems())) return;
                   if (dirty && !(await save())) return;
                   setProblems(null);
                   setConfirmSubmit(true);

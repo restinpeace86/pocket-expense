@@ -1,13 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-import { ItemEditor } from "@/components/employee/item-editor";
 import { OwnCarEditor } from "@/components/employee/own-car-editor";
 import { requireWorkspace } from "@/lib/auth/guards";
-import { getMyClaimForEdit, signOriginalUrl } from "@/lib/employee/claim";
+import { getMyClaimForEdit } from "@/lib/employee/claim";
 
 export const metadata = { title: "영수증 항목 · PocketExpense" };
 
-// 화면 E-02 항목 편집 (spec/screens/worker-tax-processing.md §3-3)
+// 화면 E-02 항목 편집 (spec/screens/worker-tax-processing.md §3-3): 자차 유류비만 이 화면, 나머지는 결의서 화면의 펼침으로
 export default function ItemEditPage({ params }: PageProps<"/workspace/[id]/employee/claims/[claimId]/items/[itemId]">) {
   return (
     <Suspense fallback={<div className="mx-auto my-4 h-96 w-[calc(100%-2rem)] max-w-md animate-pulse rounded-2xl bg-zinc-100" />}>
@@ -41,22 +40,6 @@ async function ItemEdit({ params }: Pick<PageProps<"/workspace/[id]/employee/cla
       />
     );
   }
-  const originalUrl = await signOriginalUrl(item.receipt_path);
-  return (
-    <ItemEditor
-      key={`${item.id}:${item.parse_status}`} // AI로 다시 읽은 뒤 새 값으로 다시 그린다
-      claim={data.claim}
-      item={item}
-      index={index}
-      total={data.items.length}
-      prevId={data.items[index - 1]?.id ?? null}
-      nextId={data.items[index + 1]?.id ?? null}
-      cards={data.cards}
-      mealPolicy={data.mealPolicy}
-      mealOverride={data.mealOverride}
-      originalUrl={originalUrl}
-      base={base}
-      deadline={data.deadline}
-    />
-  );
+  // 영수증은 결의서 화면 안에서 펼쳐 고친다(개선사항(2차) 3). 예전 주소·알림 링크로 들어오면 그 영수증을 펼친 결의서 화면으로
+  redirect(`${base}/claims/${claimId}/edit?item=${item.id}`);
 }
