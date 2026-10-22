@@ -269,6 +269,7 @@ const CATEGORIES = ALL_CATEGORIES;
 const TRIP_TYPES = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other", "car_fuel", "car_toll"] as const; // 자차(own_car)는 T7에서
 const PURCHASE_TYPES = ["pantry", "office_supplies", "small_equipment"] as const;
 const EVIDENCE_TYPES = ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt", "other"] as const;
+const EVIDENCE_KINDS = ["receipt", "invoice", "app_history", "card_history", "invitation", "other", "none"] as const;
 const pickOne = <T extends string>(v: string | null, list: readonly T[]): T | null => (v && (list as readonly string[]).includes(v) ? (v as T) : null);
 const wonOrNull = (v: string) => (/^\d{1,9}$/.test(v) ? Number(v) : null);
 
@@ -324,6 +325,9 @@ export async function saveItemAction(itemId: string, input: ItemInput): Promise<
       attendees: category === "meeting" ? texts[3] || null : null,
       trip_start_date: inDate,
       trip_end_date: outDate,
+      // 증빙 자료 종류·증빙 없음 사유 (D-108)
+      evidence_kind: pickOne(input.evidenceKind, EVIDENCE_KINDS),
+      no_evidence_reason: input.evidenceKind === "none" ? input.noEvidenceReason.trim().slice(0, 300) || null : null,
     })
     .eq("id", itemId)
     .select("id");
@@ -472,4 +476,36 @@ export async function moveItemToNewClaimAction(itemId: string): Promise<Result<{
   }
   refresh();
   return { ok: true, claimId: r.claim_id };
+}
+
+// 영수증 없이 추가한 항목에 증빙 자료(사진·PDF) 붙이기 (D-108). 경로는 DB가 정하고, 직원 브라우저가 그 경로에 올린다(AI 인식·크레딧 없음)
+export async function attachItemEvidenceAction(itemId: string, file: { isPdf: boolean; thumbExt: "webp" | "jpg" }): Promise<Result<{ receiptPath: string; thumbPath: string | null }>> {
+  const m = await approvedMember();
+  if (!m) return fail("NOT_A_MEMBER");
+  if (!isUuid(itemId)) return fail("NOT_FOUND");
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("attach_item_evidence", { p_item_id: itemId, p_is_pdf: file.isPdf, p_thumb_ext: file.thumbExt });
+  if (error || !data) return { ok: false, error: messageForDbError(error ?? { message: "NOT_FOUND" }) };
+  const d = data as { receipt_path: string; thumb_path: string | null };
+  return { ok: true, receiptPath: d.receipt_path, thumbPath: d.thumb_path };
+}
+
+// 붙인 자료 떼기(직원이 붙인 자료만) — 파일을 먼저 지우고(저장소 열람이 항목 행의 경로 기준이라) 행을 비운다
+export async function detachItemEvidenceAction(itemId: string, opts: { quiet?: boolean } = {}): Promise<Result> {
+  const m = await approvedMember();
+  if (!m) return fail("NOT_A_MEMBER");
+  if (!isUuid(itemId)) return fail("NOT_FOUND");
+  const supabase = await createClient();
+  const { data: item } = await supabase.from("expense_items").select("receipt_path, receipt_thumb_path, parse_status").eq("id", itemId).eq("company_id", m.company_id).maybeSingle();
+  if (!item) return fail("NOT_FOUND");
+  if (item.parse_status !== "none") return fail("NOT_ALLOWED"); // AI로 읽은 영수증은 영수증 삭제로만
+  await removeReceiptFiles(supabase, [item.receipt_path, item.receipt_thumb_path]);
+  const { error } = await supabase.rpc("detach_item_evidence", { p_item_id: itemId });
+  if (error) return { ok: false, error: messageForDbError(error) };
+  if (!opts.quiet) refresh();
+  return { ok: true };
+}
+
+export async function evidenceUploadedAction(): Promise<void> {
+  refresh();
 }

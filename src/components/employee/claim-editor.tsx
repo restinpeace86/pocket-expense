@@ -52,6 +52,8 @@ export function itemNeedsCheck(item: EditorItem): boolean {
   if (item.amount === null || !item.expense_date || !item.category || !item.evidence_type) return true;
   if (item.category === "trip" && !item.trip_type) return true;
   if (item.category === "purchase" && !item.purchase_type) return true;
+  // 증빙 자료가 없으면(자차 제외) 확인 필요 — 증빙 없음은 사유 5자 이상일 때만 통과 (D-108)
+  if (!item.receipt_path && !(item.category === "trip" && item.trip_type === "own_car") && !(item.evidence_kind === "none" && (item.no_evidence_reason ?? "").trim().length >= 5)) return true;
   return false;
 }
 
@@ -388,6 +390,7 @@ export function ClaimEditor({
   }, [message]);
   const [sheet, setSheet] = useState(openAdd && items.length === 0);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
   const [busy, startBusy] = useTransition();
   const [problems, setProblems] = useState<ClaimProblems | null>(null);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
@@ -453,6 +456,12 @@ export function ClaimEditor({
   }, [itemKey, prune]);
   const visibleItems = items.filter((i) => !uploadingIds.has(i.id));
   const editable = claim.status === "draft" || claim.status === "rejected";
+  // 확인이 필요한 영수증: 빈 칸·증빙 자료 없음(itemNeedsCheck) / 카테고리 확인
+  const needsCheck = items.filter(
+    (i) =>
+      itemNeedsCheck(i) ||
+      (!isOwnCar(i) && !i.category_mismatch_ack && categoryMismatch(form.category ?? initialCategory({ ...claim, is_business_trip: form.isBusinessTrip }, items), i.aiCategory)),
+  );
   const badge = claimStatusBadge(claim.status);
 
   // 정산 미리보기 (§3-4): 서버가 저장한 항목 금액 기준
@@ -612,6 +621,23 @@ export function ClaimEditor({
         </Link>
         <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
       </div>
+
+      {/* 요약 한 줄(D-109): 몇 장 · 확인할 것 · 합계. [확인 필요]를 누르면 그 영수증으로 */}
+      {items.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm" role="status" aria-label="결의서 요약">
+          <span>
+            영수증 <b className="tabular-nums">{items.length}</b>장
+          </span>
+          {needsCheck.length > 0 ? (
+            <button type="button" onClick={() => showItem(needsCheck[0].id)} className="font-semibold text-amber-700 underline underline-offset-2">
+              확인 필요 {needsCheck.length}장
+            </button>
+          ) : (
+            <span className="font-medium text-green-700">✓ 모두 입력 완료</span>
+          )}
+          <span className="ml-auto font-bold tabular-nums">{formatWon(claim.total_amount)}</span>
+        </div>
+      )}
 
       {claim.status === "rejected" && (
         <section className="rounded-2xl border border-red-200 bg-red-50 p-4">
@@ -919,6 +945,8 @@ export function ClaimEditor({
           )}
           <p className="text-xs text-zinc-500">관리자가 &ldquo;이 돈을 왜 썼지?&rdquo; 하고 묻지 않도록 한 줄로 적어 주세요.</p>
         </div>
+        {/* 예외 소명 사유(D-084): 주말·심야 사용이 있을 때만 보인다(가독성, D-109) */}
+        {(exceptionText || form.exceptionMemo.trim()) && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="claim-memo">예외 소명 사유 (선택)</Label>
           {exceptionText && (
@@ -936,28 +964,41 @@ export function ClaimEditor({
           />
           <p className="text-xs text-zinc-500">주말·심야 사용처럼 평소와 다른 지출이 있을 때만 적어요.</p>
         </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-zinc-800">결제수단 기본값</span>
-          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="결제수단 기본값">
-            {(
-              [
-                ["corporate_card", "💳 법인카드"],
-                ["personal_card", "🧾 개인(사비)"],
-              ] as [PaymentMethod, string][]
-            ).map(([v, label]) => (
-              <button
-                key={v}
-                type="button"
-                role="radio"
-                aria-checked={form.defaultPaymentMethod === v}
-                onClick={() => set("defaultPaymentMethod", v)}
-                className={`min-h-11 rounded-xl border text-sm font-medium ${form.defaultPaymentMethod === v ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
-              >
-                {label}
-              </button>
-            ))}
+        )}
+        {/* 결제수단 기본값: 새로 올리는 영수증에 먼저 들어가는 값일 뿐 — 영수증마다 따로 고르고, 카드번호가 보이면 자동으로 고른다. 한 줄로 접어 둔다(D-109) */}
+        <div className="flex flex-col gap-2 text-sm">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-zinc-700">
+              새 영수증 결제수단 <b className="ml-1 whitespace-nowrap text-zinc-900">{form.defaultPaymentMethod === "corporate_card" ? "💳 법인카드" : "🧾 개인(사비)"}</b>
+            </span>
+            <button type="button" onClick={() => setPayOpen((v) => !v)} className="min-h-11 shrink-0 rounded-lg px-2 text-zinc-600 underline underline-offset-2 hover:bg-zinc-50">
+              {payOpen ? "닫기" : "바꾸기"}
+            </button>
           </div>
-          <p className="text-xs text-zinc-500">새로 올리는 영수증에 먼저 적용돼요. 영수증마다 바꿀 수 있어요.</p>
+          {payOpen && (
+            <>
+              <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="결제수단 기본값">
+                {(
+                  [
+                    ["corporate_card", "💳 법인카드"],
+                    ["personal_card", "🧾 개인(사비)"],
+                  ] as [PaymentMethod, string][]
+                ).map(([v, label]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    role="radio"
+                    aria-checked={form.defaultPaymentMethod === v}
+                    onClick={() => set("defaultPaymentMethod", v)}
+                    className={`min-h-11 rounded-xl border text-sm font-medium ${form.defaultPaymentMethod === v ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-zinc-500">영수증마다 따로 고를 수 있고, 영수증에 카드번호가 보이면 등록된 법인카드인지 자동으로 골라요.</p>
+            </>
+          )}
         </div>
 
       </section>
@@ -1012,7 +1053,7 @@ export function ClaimEditor({
                 mismatch={!isOwnCar(item) && !item.category_mismatch_ack && categoryMismatch(category, item.aiCategory)}
               >
                 <ItemInlineForm
-                  key={`${item.id}:${item.parse_status}:${item.headcount}:${item.category}:${item.trip_type}`} // AI로 다시 읽은 뒤·결의서 값(인원·카테고리·출장 유형)이 영수증에 반영된 뒤 새 값으로 다시 그린다
+                  key={`${item.id}:${item.parse_status}:${item.headcount}:${item.category}:${item.trip_type}:${item.receipt_path ?? ""}`} // AI로 다시 읽은 뒤·결의서 값(인원·카테고리·출장 유형)이 영수증에 반영된 뒤 새 값으로 다시 그린다
                   claim={claim}
                   item={item}
                   cards={data.cards}

@@ -52,6 +52,7 @@ const MESSAGES: Record<string, string> = {
   INVALID_ITEM_TEXT: "가맹점·거래처는 100자, 목적·참석자는 200자 이내로 입력해 주세요.",
   INVALID_HEADCOUNT: "인원수는 1~99명 사이로 입력해 주세요.",
   INVALID_CATEGORY: "지출 카테고리를 골라 주세요.",
+  ALREADY_HAS_EVIDENCE: "이미 증빙 자료가 붙어 있어요. 화면을 새로고침해 주세요.",
   INVALID_VEHICLE: "고를 수 없는 차량이에요. 다시 골라 주세요.",
   NO_SUGGESTED_CATEGORY: "AI가 이 영수증의 종류를 알아보지 못해 옮길 결의서를 정할 수 없어요. 새 결의서에 직접 올려 주세요.",
   OWN_CAR_ITEMS_EXIST: "자차 이동이 있는 출장 결의서예요. 다른 카테고리로 바꾸려면 자차 이동을 먼저 지워 주세요.",

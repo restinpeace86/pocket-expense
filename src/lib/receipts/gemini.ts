@@ -18,6 +18,7 @@ const RESPONSE_SCHEMA = {
     merchant_business_number: nullable("string"),
     card_number_masked: nullable("string"),
     suggested_evidence_type: nullable("string", { enum: ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt"] }),
+    suggested_evidence_kind: nullable("string", { enum: ["receipt", "invoice", "app_history", "card_history", "invitation", "other"] }),
     cash_receipt_income_deduction: nullable("boolean"),
     amount: nullable("integer"),
     supply_amount: nullable("integer"),
@@ -48,6 +49,7 @@ function prompt(isBusinessTrip: boolean, today: string) {
 - merchant_business_number: 가맹점 사업자등록번호(숫자 10자리)
 - card_number_masked: 영수증에 찍힌 카드번호를 보이는 그대로. *·X 등으로 가려진 자리는 *로 적고, 가려진 숫자를 추측해 채우지 마세요(예: "5327-12**-****-432*"). 카드번호가 없으면 null
 - suggested_evidence_type: "신용승인·카드번호 마스킹"이면 card_slip, "현금영수증"이면 cash_receipt, "세금계산서·공급받는자"면 tax_invoice, 사업자 정보 없는 수기 영수증이면 simple_receipt
+- suggested_evidence_kind: 자료 종류. 종이·전자 영수증 receipt, 해외 서비스 인보이스·결제 확인 메일 invoice, 택시·배달·교통 앱의 이용 내역 화면 invoice가 아니면 app_history, 카드사 앱·문자의 결제 내역 card_history, 청첩장·부고 안내 invitation, 그 밖 other
 - cash_receipt_income_deduction: 현금영수증이 "소득공제용"이면 true, "지출증빙용"이면 false
 - amount: 총 결제금액(합계, 원 단위 정수)
 - supply_amount / vat_amount: 공급가액 / 부가세. 표기가 없으면 null

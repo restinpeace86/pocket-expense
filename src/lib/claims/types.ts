@@ -1,4 +1,5 @@
 import type { EvidenceType, ParseStatus, PaymentMethod } from "@/lib/employee/editor-types";
+import type { EvidenceKind } from "@/lib/receipts/evidence-kind";
 import type { RouteCard } from "@/lib/expense/route";
 import type { ExpenseCategory, PurchaseType, TripType } from "@/lib/expense/categories";
 import type { ClaimStatus } from "@/lib/expense/status";
@@ -15,6 +16,8 @@ export type DetailItem = {
   corporate_card_id: string | null;
   card_last4: string | null;
   evidence_type: EvidenceType | null;
+  evidence_kind: EvidenceKind | null; // 증빙 자료 종류(D-108)
+  no_evidence_reason: string | null;
   expense_date: string | null;
   merchant_name: string | null;
   merchant_business_number: string | null;

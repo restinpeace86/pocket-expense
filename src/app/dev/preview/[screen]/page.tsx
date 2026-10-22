@@ -92,6 +92,8 @@ const SAMPLE_ITEM: EditorItem = {
   duplicate: null,
   aiCategory: "meal",
   category_mismatch_ack: false,
+  evidence_kind: "receipt",
+  no_evidence_reason: null,
   ...NO_ROUTE,
 };
 const SAMPLE_EDITOR: EditorData = {
@@ -162,7 +164,7 @@ const SAMPLE_CREDIT = { granted: 200, used: 163, freeTrial: 100, eventCount: 1, 
 
 const DI: DetailItem = {
   id: "d1", sort_order: 1, category: "trip", trip_type: "public_transport", purchase_type: null, payment_method: "corporate_card", corporate_card_id: "card1", card_last4: "7890",
-  evidence_type: "card_slip", expense_date: "2026-10-14", merchant_name: "코레일 KTX", merchant_business_number: "2208162517", amount: 50000, supply_amount: 45455, vat_amount: 4545,
+  evidence_type: "card_slip", evidence_kind: "receipt", no_evidence_reason: null, expense_date: "2026-10-14", merchant_name: "코레일 KTX", merchant_business_number: "2208162517", amount: 50000, supply_amount: 45455, vat_amount: 4545,
   headcount: 1, purpose: null, attendees: null, client_name: null, trip_start_date: null, trip_end_date: null, parse_status: "success", receipt_path: "x/1.jpg",
   company_supported_amount: 50000, personal_burden_amount: 0, applied_meal_limit_per_person: null, applied_meal_limit_mode: null, account_title_id: "t2", account_title_name: "여비교통비", account_title_code: null, closed_month: null,
   account_title_overridden: false, paid_time: "08:10", approval_number: "30012345", merchant_address: "서울 용산구 한강대로 405", line_items: [], ai: { merchant_name: "코레일 KTX", amount: 50000, expense_date: "2026-10-14" },

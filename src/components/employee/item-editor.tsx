@@ -3,10 +3,13 @@
 import { deadlineDate, isOverdue, type DeadlinePolicy } from "@/lib/expense/deadline";
 import { todayKst } from "@/lib/dates";
 import { formatMaskedCard, matchCard } from "@/lib/cards/match";
-import { AlertTriangle, FileText, ImageOff, Loader2, Minus, Plus, RefreshCw, Sparkles, X } from "lucide-react";
+import { AlertTriangle, FileText, ImageOff, Loader2, Minus, Plus, RefreshCw, Sparkles, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { rereadReceiptAction, saveItemAction } from "@/app/workspace/[id]/employee/claims/actions";
+import { attachItemEvidenceAction, detachItemEvidenceAction, evidenceUploadedAction, rereadReceiptAction, saveItemAction } from "@/app/workspace/[id]/employee/claims/actions";
+import { EVIDENCE_KIND_LABEL, FILE_EVIDENCE_KINDS, NO_EVIDENCE_MIN, type EvidenceKind } from "@/lib/receipts/evidence-kind";
+import { processReceiptFile } from "@/lib/receipts/image";
+import { createClient } from "@/lib/supabase/client";
 import { receiptOriginalUrlAction } from "@/lib/claims/actions";
 import { AmountInput } from "@/components/ui/amount-input";
 import { inputClass } from "@/components/ui/page-shell";
@@ -51,6 +54,8 @@ function toInput(i: EditorItem): ItemInput {
     attendees: i.attendees ?? "",
     tripStartDate: i.trip_start_date ?? "",
     tripEndDate: i.trip_end_date ?? "",
+    evidenceKind: i.evidence_kind ?? (i.receipt_path ? "receipt" : null),
+    noEvidenceReason: i.no_evidence_reason ?? "",
   };
 }
 
@@ -239,6 +244,9 @@ export function ItemInlineForm({
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [zoomUrl, setZoomUrl] = useState<string | null>(null);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [kindOpen, setKindOpen] = useState(false);
+  const [attaching, startAttach] = useTransition();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [rereading, startReread] = useTransition();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -288,6 +296,32 @@ export function ItemInlineForm({
       const res = await measureAction("employee.reread_receipt", () => rereadReceiptAction(item.id));
       if (!res.ok) onError(res.error);
       else if (!res.parsed) onError("자동 인식에 실패했어요. 직접 입력해 주세요.");
+    });
+
+  // 영수증 없이 추가한 항목에 증빙 자료 붙이기 (D-108): 경로는 DB가 정하고 여기서 올린다. AI로 읽지 않는다(직접 입력한 값 유지)
+  const attach = (file: File) =>
+    startAttach(async () => {
+      if (!(await save())) return;
+      const processed = await processReceiptFile(file).catch(() => null);
+      if (!processed) return onError("올릴 수 없는 파일이에요. 사진 또는 PDF를 골라 주세요.");
+      const r = await attachItemEvidenceAction(item.id, { isPdf: processed.kind === "pdf", thumbExt: processed.kind === "image" ? processed.thumbExt : "webp" });
+      if (!r.ok) return onError(r.error);
+      const bucket = createClient().storage.from("receipts");
+      const up = await bucket.upload(r.receiptPath, processed.original, { contentType: processed.kind === "pdf" ? "application/pdf" : "image/jpeg", upsert: true });
+      if (up.error) {
+        await detachItemEvidenceAction(item.id, { quiet: true }).catch(() => undefined);
+        return onError("자료를 올리지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+      }
+      if (processed.kind === "image" && r.thumbPath) {
+        await bucket.upload(r.thumbPath, processed.thumb, { contentType: processed.thumbExt === "webp" ? "image/webp" : "image/jpeg", upsert: true }).catch(() => undefined);
+      }
+      onError(null);
+      await evidenceUploadedAction();
+    });
+  const detach = () =>
+    startAttach(async () => {
+      const r = await detachItemEvidenceAction(item.id);
+      if (!r.ok) onError(r.error);
     });
 
   const openOriginal = async () => {
@@ -348,7 +382,80 @@ export function ItemInlineForm({
           </div>
         </div>
       ) : (
-        <p className="rounded-xl border border-dashed border-zinc-300 px-3 py-2 text-sm text-zinc-600">영수증 없이 추가한 항목이에요. 사용 내용을 직접 입력해 주세요.</p>
+        // 영수증이 없어도 증빙 자료는 있어야 한다 (D-108)
+        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-zinc-300 p-3 text-sm">
+          <p className="font-medium text-zinc-800">
+            증빙 자료<span className="ml-0.5 text-red-600">*</span>
+          </p>
+          {input.evidenceKind !== "none" ? (
+            <>
+              <p className="text-zinc-600">영수증이 없으면 대신할 자료를 올려 주세요. 인보이스·결제 메일, 앱 이용 내역, 카드 결제 내역, 청첩장·부고 안내(문자·모바일 초대장) 캡처도 돼요.</p>
+              <button
+                type="button"
+                disabled={attaching}
+                onClick={() => fileRef.current?.click()}
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-brand-600 px-3 font-semibold text-brand-700 hover:bg-brand-50 disabled:opacity-60"
+              >
+                {attaching ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                사진·PDF 올리기
+              </button>
+              <button type="button" onClick={() => set("evidenceKind", "none")} className="self-start text-zinc-500 underline underline-offset-2">
+                자료가 정말 없어요
+              </button>
+            </>
+          ) : (
+            <>
+              <label htmlFor={fid("noev")} className="font-medium text-zinc-800">
+                증빙이 없는 사유<span className="ml-0.5 text-red-600">*</span>
+              </label>
+              <textarea
+                id={fid("noev")}
+                className={`${inputClass} min-h-16 py-2`}
+                value={input.noEvidenceReason}
+                maxLength={300}
+                placeholder="예: 현금으로 낸 축의금이라 받은 자료가 없음"
+                onChange={(e) => set("noEvidenceReason", e.target.value)}
+              />
+              {input.noEvidenceReason.trim().length < NO_EVIDENCE_MIN && <p className="text-xs text-zinc-500">{NO_EVIDENCE_MIN}자 이상 적어 주세요.</p>}
+              <Warn>결재 화면에 &ldquo;증빙 없음&rdquo;으로 표시되고, 세무사 자료에도 사유가 함께 넘어가요. 3만 원이 넘는 지출은 증빙이 없으면 회사가 가산세를 낼 수 있어요.</Warn>
+              <button type="button" onClick={() => set("evidenceKind", null)} className="self-start text-zinc-500 underline underline-offset-2">
+                자료 올리기로 돌아가기
+              </button>
+            </>
+          )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) attach(f);
+              e.target.value = "";
+            }}
+          />
+        </div>
+      )}
+      {/* 사진이 있으면 그 자료가 무엇인지(영수증이 아닐 때 결재자·세무사가 알 수 있게, D-108) */}
+      {item.receipt_path && (
+        <div className="flex flex-col gap-2 text-sm">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-medium text-zinc-800">
+              증빙 자료 <b className="ml-1 font-semibold text-zinc-900">{EVIDENCE_KIND_LABEL[(input.evidenceKind ?? "receipt") as EvidenceKind]}</b>
+            </span>
+            <span className="flex shrink-0 items-center">
+              {item.parse_status === "none" && (
+                <button type="button" disabled={attaching} onClick={detach} className="min-h-11 rounded-lg px-2 text-zinc-500 underline underline-offset-2 hover:bg-zinc-50">
+                  자료 떼기
+                </button>
+              )}
+              <button type="button" onClick={() => setKindOpen((v) => !v)} className="min-h-11 rounded-lg px-2 text-zinc-600 underline underline-offset-2 hover:bg-zinc-50">
+                {kindOpen ? "닫기" : "바꾸기"}
+              </button>
+            </span>
+          </div>
+          {kindOpen && <Chips label="증빙 자료 종류" options={FILE_EVIDENCE_KINDS.map((k) => ({ value: k, label: EVIDENCE_KIND_LABEL[k] }))} value={input.evidenceKind ?? "receipt"} onChange={(v) => set("evidenceKind", v)} />}
+        </div>
       )}
 
       {item.duplicate && <DuplicateWarning dup={item.duplicate} base={base} />}

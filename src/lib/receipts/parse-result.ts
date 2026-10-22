@@ -8,6 +8,7 @@ export type ParsedReceipt = {
   card_number_masked: string | null; // 영수증에 보이는 카드번호(가린 자리 *). 앞 6자리·뒤 4자리 말고는 가려 둔다(D-083)
   card_last4: string | null; // 위 번호의 뒤 4자리가 모두 숫자일 때만
   suggested_evidence_type: "card_slip" | "cash_receipt" | "tax_invoice" | "simple_receipt" | null;
+  suggested_evidence_kind: "receipt" | "invoice" | "app_history" | "card_history" | "invitation" | "other" | null; // 자료 종류(D-108)
   cash_receipt_income_deduction: boolean | null; // 현금영수증이 "소득공제용"으로 발행됐는지
   amount: number | null;
   supply_amount: number | null;
@@ -25,6 +26,7 @@ export type ParsedReceipt = {
 };
 
 const EVIDENCE = ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt"] as const;
+const EVIDENCE_KINDS = ["receipt", "invoice", "app_history", "card_history", "invitation", "other"] as const;
 const CATEGORY = ["meal", "trip", "meeting", "purchase"] as const;
 const TRIP = ["meal", "public_transport", "taxi", "toll_parking", "lodging", "other", "car_fuel"] as const; // 자차(own_car)는 영수증이 없어 추천하지 않는다. car_fuel = 주유소(회사차량 출장이면 차량유지비, D-106)
 const PURCHASE = ["pantry", "office_supplies", "small_equipment"] as const;
@@ -83,6 +85,7 @@ export function normalizeParsed(raw: unknown, today: string): ParsedReceipt {
     card_number_masked: masked,
     card_last4: masked && /^\d{4}$/.test(masked.slice(-4)) ? masked.slice(-4) : null,
     suggested_evidence_type: oneOf(r.suggested_evidence_type, EVIDENCE),
+    suggested_evidence_kind: oneOf(r.suggested_evidence_kind, EVIDENCE_KINDS),
     cash_receipt_income_deduction: typeof r.cash_receipt_income_deduction === "boolean" ? r.cash_receipt_income_deduction : null,
     amount: won(r.amount),
     supply_amount: won(r.supply_amount),

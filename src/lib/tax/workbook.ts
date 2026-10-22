@@ -1,4 +1,5 @@
 import "server-only";
+import { EVIDENCE_KIND_LABEL, type EvidenceKind } from "@/lib/receipts/evidence-kind";
 import ExcelJS from "exceljs";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, evidenceFile, evidenceNo, isOwnCar, settlement, statusLabel, supplyVat, upload적요, type ExportRow } from "./export-rows";
 
@@ -28,6 +29,8 @@ const SHEET1: Col[] = [
   { header: "가맹점명", width: 22, value: (r) => (isOwnCar(r) ? `자차 ${r.start_location ?? ""}→${r.end_location ?? ""}` : (r.merchant_name ?? "")) },
   { header: "사업자등록번호", width: 14, value: (r) => bizNo(r.merchant_business_number) },
   { header: "증빙구분", width: 12, value: (r) => (r.evidence_type ? (EVIDENCE_LABEL[r.evidence_type] ?? r.evidence_type) : "") },
+  // 영수증 대신 자료·증빙 없음 사유(D-108)
+  { header: "증빙 자료", width: 18, value: (r) => (r.evidence_kind === "none" ? `증빙 없음: ${r.no_evidence_reason ?? ""}` : r.evidence_kind ? (EVIDENCE_KIND_LABEL[r.evidence_kind as EvidenceKind] ?? "") : "") },
   { header: "공급가액", width: 12, kind: "won", value: (r) => r.supply_amount },
   { header: "부가세", width: 10, kind: "won", value: (r) => r.vat_amount },
   { header: "합계금액", width: 12, kind: "won", value: (r) => r.amount },

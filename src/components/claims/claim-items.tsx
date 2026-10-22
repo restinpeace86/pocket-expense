@@ -1,5 +1,6 @@
 "use client";
 
+import { EVIDENCE_KIND_LABEL, effectiveEvidenceKind } from "@/lib/receipts/evidence-kind";
 import { AlertTriangle, Car, ChevronLeft, ChevronRight, FileText, ImageIcon, Loader2, PenLine, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { receiptOriginalUrlAction } from "@/lib/claims/actions";
@@ -57,6 +58,8 @@ export function settlementNote(i: DetailItem): { text: string; warn: string | nu
 function ItemBadges({ i, flagged }: { i: DetailItem; flagged: boolean }) {
   const badges: [string, string][] = [];
   if (flagged) badges.push(["반려 시 지목됨", "bg-red-100 text-red-700"]);
+  if (i.evidence_kind === "none") badges.push(["증빙 없음", "bg-red-100 text-red-700"]);
+  else if (i.evidence_kind && i.evidence_kind !== "receipt") badges.push([EVIDENCE_KIND_LABEL[i.evidence_kind], "bg-sky-100 text-sky-800"]);
   if (i.duplicate) badges.push(["중복 의심", "bg-amber-200 text-amber-900"]);
   if (i.overdueDeadline) badges.push([`기한 초과(${Number(i.overdueDeadline.slice(5, 7))}/${Number(i.overdueDeadline.slice(8))}까지)`, "bg-amber-100 text-amber-800"]);
   const edited = editedFields(i);
@@ -64,7 +67,7 @@ function ItemBadges({ i, flagged }: { i: DetailItem; flagged: boolean }) {
   if (i.amount !== null && i.supply_amount !== null && i.vat_amount !== null && i.supply_amount + i.vat_amount !== i.amount) badges.push(["합계≠공급가+부가세", "bg-amber-100 text-amber-800"]);
   if (i.route?.source === "manual") badges.push(["직접 입력 거리", "bg-amber-100 text-amber-800"]);
   if (!i.routeLabel && !i.merchant_business_number) badges.push(["사업자번호 없음", "bg-zinc-100 text-zinc-500"]);
-  if (!i.routeLabel && !i.receipt_path) badges.push(["영수증 없음", "bg-zinc-100 text-zinc-500"]);
+  if (!i.routeLabel && !i.receipt_path && i.evidence_kind !== "none") badges.push(["영수증 없음", "bg-zinc-100 text-zinc-500"]);
   if (badges.length === 0) return null;
   return (
     <span className="flex flex-wrap gap-1">
@@ -116,6 +119,7 @@ function ReceiptPanel({ items, index, cards, onIndex, onClose, showAccount }: { 
     ["합계", i.amount !== null ? formatWon(i.amount) : null, ai.amount],
     ["공급가액 / 부가세", `${i.supply_amount !== null ? formatWon(i.supply_amount) : "-"} / ${i.vat_amount !== null ? formatWon(i.vat_amount) : "-"}`],
     ["증빙 구분", i.evidence_type ? EVIDENCE_LABEL[i.evidence_type] : null],
+    ["증빙 자료", i.evidence_kind === "none" ? `증빙 없음 — ${i.no_evidence_reason ?? ""}` : EVIDENCE_KIND_LABEL[effectiveEvidenceKind(i) ?? "receipt"]],
     ["결제수단", paymentBadge(i, cards)],
     ["카테고리", classLabel(i)],
     ...(showAccount ? ([["계정과목", i.account_title_name ? `${i.account_title_name}${i.account_title_code ? ` (${i.account_title_code})` : ""}${i.account_title_overridden ? " · 계정 조정됨" : ""}` : "미지정"]] as [string, React.ReactNode][]) : []),

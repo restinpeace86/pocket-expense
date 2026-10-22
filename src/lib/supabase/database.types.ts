@@ -819,6 +819,7 @@ export type Database = {
           end_lat: number | null
           end_lng: number | null
           end_location: string | null
+          evidence_kind: Database["public"]["Enums"]["evidence_kind"] | null
           evidence_type: Database["public"]["Enums"]["evidence_type"] | null
           expense_date: string | null
           headcount: number | null
@@ -829,6 +830,7 @@ export type Database = {
           merchant_address: string | null
           merchant_business_number: string | null
           merchant_name: string | null
+          no_evidence_reason: string | null
           paid_time: string | null
           parse_status: Database["public"]["Enums"]["parse_status"]
           payment_method: Database["public"]["Enums"]["payment_method"]
@@ -885,6 +887,7 @@ export type Database = {
           end_lat?: number | null
           end_lng?: number | null
           end_location?: string | null
+          evidence_kind?: Database["public"]["Enums"]["evidence_kind"] | null
           evidence_type?: Database["public"]["Enums"]["evidence_type"] | null
           expense_date?: string | null
           headcount?: number | null
@@ -895,6 +898,7 @@ export type Database = {
           merchant_address?: string | null
           merchant_business_number?: string | null
           merchant_name?: string | null
+          no_evidence_reason?: string | null
           paid_time?: string | null
           parse_status?: Database["public"]["Enums"]["parse_status"]
           payment_method?: Database["public"]["Enums"]["payment_method"]
@@ -951,6 +955,7 @@ export type Database = {
           end_lat?: number | null
           end_lng?: number | null
           end_location?: string | null
+          evidence_kind?: Database["public"]["Enums"]["evidence_kind"] | null
           evidence_type?: Database["public"]["Enums"]["evidence_type"] | null
           expense_date?: string | null
           headcount?: number | null
@@ -961,6 +966,7 @@ export type Database = {
           merchant_address?: string | null
           merchant_business_number?: string | null
           merchant_name?: string | null
+          no_evidence_reason?: string | null
           paid_time?: string | null
           parse_status?: Database["public"]["Enums"]["parse_status"]
           payment_method?: Database["public"]["Enums"]["payment_method"]
@@ -1624,6 +1630,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["claim_status"]
       }
       approve_member: { Args: { p_member_id: string }; Returns: undefined }
+      attach_item_evidence: {
+        Args: { p_is_pdf?: boolean; p_item_id: string; p_thumb_ext?: string }
+        Returns: Json
+      }
       business_verify_mode: { Args: never; Returns: string }
       check_claim_for_submit: { Args: { p_claim_id: string }; Returns: Json }
       claim_duplicate_receipts: { Args: { p_claim_id: string }; Returns: Json }
@@ -1657,6 +1667,7 @@ export type Database = {
         Returns: Json
       }
       deactivate_member: { Args: { p_member_id: string }; Returns: undefined }
+      detach_item_evidence: { Args: { p_item_id: string }; Returns: Json }
       get_invitation_detail: { Args: { p_token: string }; Returns: Json }
       get_invitation_public: { Args: { p_token: string }; Returns: Json }
       get_invite_company: { Args: { p_code: string }; Returns: string }
@@ -1840,6 +1851,14 @@ export type Database = {
         | "next_month_day"
       claim_status: "draft" | "submitted" | "approved" | "rejected" | "paid"
       distance_source: "api" | "manual"
+      evidence_kind:
+        | "receipt"
+        | "invoice"
+        | "app_history"
+        | "card_history"
+        | "invitation"
+        | "other"
+        | "none"
       evidence_type:
         | "card_slip"
         | "cash_receipt"
@@ -2022,6 +2041,15 @@ export const Constants = {
       ],
       claim_status: ["draft", "submitted", "approved", "rejected", "paid"],
       distance_source: ["api", "manual"],
+      evidence_kind: [
+        "receipt",
+        "invoice",
+        "app_history",
+        "card_history",
+        "invitation",
+        "other",
+        "none",
+      ],
       evidence_type: [
         "card_slip",
         "cash_receipt",

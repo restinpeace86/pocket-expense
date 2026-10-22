@@ -1,4 +1,5 @@
 import type { MealPolicy } from "@/lib/expense/amounts";
+import type { EvidenceKind } from "@/lib/receipts/evidence-kind";
 import type { ExpenseCategory, PurchaseType, TripType } from "@/lib/expense/categories";
 import type { ClaimStatus } from "@/lib/expense/status";
 import type { EvidenceAi } from "@/lib/receipts/evidence-reason";
@@ -72,6 +73,8 @@ export type EditorItem = {
   aiPurpose: string | null; // AI가 쓴 지출 사유 한 줄(D-086)
   aiCategory: ExpenseCategory | null; // AI가 본 4대 카테고리(결의서와 다르면 확인, D-104)
   category_mismatch_ack: boolean; // 직원이 "이 결의서가 맞아요"를 고름
+  evidence_kind: EvidenceKind | null; // 증빙 자료 종류(D-108), 비어 있고 사진이 있으면 영수증
+  no_evidence_reason: string | null;
   aiEvidence: EvidenceAi | null; // 증빙 구분 AI 판별 근거(D-100). AI가 읽지 않은 항목(직접 입력·자차)은 null
   // 참고 정보(D-079, AI가 읽음·보여 주기만)
   paid_time: string | null;
@@ -135,6 +138,8 @@ export type ItemInput = {
   attendees: string;
   tripStartDate: string;
   tripEndDate: string;
+  evidenceKind: EvidenceKind | null; // 증빙 자료 종류(D-108)
+  noEvidenceReason: string;
 };
 
 export type ClaimHeaderInput = {

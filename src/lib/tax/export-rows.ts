@@ -27,6 +27,8 @@ export type ExportRow = {
   merchant_name: string | null;
   merchant_business_number: string | null;
   evidence_type: string | null;
+  evidence_kind?: string | null; // 증빙 자료 종류(D-108)
+  no_evidence_reason?: string | null;
   supply_amount: number | null;
   vat_amount: number | null;
   amount: number | null;
