@@ -88,7 +88,8 @@ async function canEditOwnClaim(supabase: Awaited<ReturnType<typeof createClient>
   return !!data;
 }
 
-export async function deleteDraftClaimAction(claimId: string): Promise<Result> {
+// stayOnPage: 홈 목록에서 밀어서 지울 때는 이동하지 않고 결과만 돌려준다
+export async function deleteDraftClaimAction(claimId: string, opts: { stayOnPage?: boolean } = {}): Promise<Result> {
   const m = await approvedMember();
   if (!m) return fail("NOT_A_MEMBER");
   if (!isUuid(claimId)) return fail("NOT_FOUND");
@@ -109,6 +110,10 @@ export async function deleteDraftClaimAction(claimId: string): Promise<Result> {
   const { data, error } = await supabase.from("expense_claims").delete().eq("id", claimId).eq("member_id", m.member_id).select("id");
   if (error) return { ok: false, error: messageForDbError(error) };
   if (!data?.length) return fail("NOT_EDITABLE");
+  if (opts.stayOnPage) {
+    refresh();
+    return { ok: true };
+  }
   redirect(`/workspace/${m.company_id}/employee`);
 }
 

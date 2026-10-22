@@ -4,6 +4,8 @@ import { AlertCircle, Camera, ChevronLeft, ChevronRight, Loader2, X } from "luci
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { createDraftClaimAction, loadMoreMyClaimsAction } from "@/app/workspace/[id]/employee/actions";
+import { deleteDraftClaimAction } from "@/app/workspace/[id]/employee/claims/actions";
+import { SwipeRow } from "./swipe-row";
 import { CATEGORY_LABEL, type ExpenseCategory } from "@/lib/expense/categories";
 import { CLAIM_FILTERS, claimStatusBadge, shiftMonth, type ClaimFilterKey } from "@/lib/expense/status";
 import type { EmployeeSummary, MyClaimRow } from "@/lib/employee/types";
@@ -38,7 +40,7 @@ function categoryTag(c: MyClaimRow) {
   return cats.map((k) => CATEGORY_ICON[k]).join("");
 }
 
-function ClaimCard({ claim, base, onRejected }: { claim: MyClaimRow; base: string; onRejected: (c: MyClaimRow) => void }) {
+function ClaimCard({ claim, base, onRejected, onDelete }: { claim: MyClaimRow; base: string; onRejected: (c: MyClaimRow) => void; onDelete: (c: MyClaimRow) => void }) {
   const badge = claimStatusBadge(claim.status, claim.settlement_required);
   const editable = claim.status === "draft" || claim.status === "rejected";
   const href = editable ? `${base}/claims/${claim.id}/edit` : `${base}/claims/${claim.id}`;
@@ -65,12 +67,49 @@ function ClaimCard({ claim, base, onRejected }: { claim: MyClaimRow; base: strin
         <button type="button" onClick={() => onRejected(claim)} className={cardClass}>
           {body}
         </button>
+      ) : claim.status === "draft" ? (
+        // 임시저장은 밀어서 바로 지울 수 있다 (todo_improvement [개선사항 1])
+        <SwipeRow onDelete={() => onDelete(claim)} label={claim.title || "제목 없는 결의서"}>
+          <Link href={href} className={cardClass}>
+            {body}
+          </Link>
+        </SwipeRow>
       ) : (
         <Link href={href} className={cardClass}>
           {body}
         </Link>
       )}
     </li>
+  );
+}
+
+function DeleteSheet({ claim, busy, error, onCancel, onConfirm }: { claim: MyClaimRow; busy: boolean; error: string | null; onCancel: () => void; onConfirm: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal aria-labelledby="delete-title">
+      <button type="button" className="absolute inset-0 bg-black/40" aria-label="닫기" onClick={onCancel} />
+      <div className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-2xl bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-4 shadow-xl">
+        <h2 id="delete-title" className="font-semibold">
+          임시저장된 결의서를 지울까요?
+        </h2>
+        <p className="mt-1 break-keep text-sm text-zinc-600 [overflow-wrap:anywhere]">
+          &ldquo;{claim.title || "제목 없는 결의서"}&rdquo;{claim.item_count ? ` · 영수증 ${claim.item_count}장` : ""}을 지우면 되돌릴 수 없어요.
+        </p>
+        {error && (
+          <p role="alert" className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        )}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button type="button" onClick={onCancel} className="min-h-12 rounded-xl border border-zinc-300 font-medium">
+            취소
+          </button>
+          <button type="button" disabled={busy} onClick={onConfirm} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-red-600 font-semibold text-white disabled:opacity-60">
+            {busy && <Loader2 className="size-4 animate-spin" />}
+            삭제
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -130,6 +169,18 @@ export function EmployeeHomeView({
   const [creating, startCreate] = useTransition();
   const [loading, startLoad] = useTransition();
   const [rejected, setRejected] = useState<MyClaimRow | null>(initialSheet ?? null);
+  const [toDelete, setToDelete] = useState<MyClaimRow | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, startDelete] = useTransition();
+  const confirmDelete = () =>
+    startDelete(async () => {
+      if (!toDelete) return;
+      setDeleteError(null);
+      const r = await measureAction("employee.delete_draft", () => deleteDraftClaimAction(toDelete.id, { stayOnPage: true }));
+      if (!r.ok) return setDeleteError(r.error);
+      setItems((list) => list.filter((c) => c.id !== toDelete.id));
+      setToDelete(null);
+    });
 
   const q = (m: string, f: ClaimFilterKey) => {
     const p = new URLSearchParams();
@@ -216,7 +267,7 @@ export function EmployeeHomeView({
         ) : (
           <ul className="flex flex-col gap-3">
             {items.map((c) => (
-              <ClaimCard key={c.id} claim={c} base={base} onRejected={setRejected} />
+              <ClaimCard key={c.id} claim={c} base={base} onRejected={setRejected} onDelete={(x) => { setDeleteError(null); setToDelete(x); }} />
             ))}
           </ul>
         )}
@@ -233,6 +284,7 @@ export function EmployeeHomeView({
       </section>
 
       {rejected && <RejectedSheet claim={rejected} base={base} onClose={() => setRejected(null)} />}
+      {toDelete && <DeleteSheet claim={toDelete} busy={deleting} error={deleteError} onCancel={() => setToDelete(null)} onConfirm={confirmDelete} />}
 
       {/* 하단 고정 CTA: 하단 메뉴 바로 위 (worker-dashboard.md §3) */}
       <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 bg-gradient-to-t from-page via-page/95 to-transparent px-4 pb-3 pt-6">
