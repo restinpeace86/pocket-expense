@@ -9,6 +9,7 @@ export type PurposeItem = {
   purchase_type: PurchaseType | null;
   paid_time: string | null;
   aiPurpose: string | null;
+  aiCategory?: ExpenseCategory | null; // AI가 본 4대 카테고리 — 결의서 카테고리와 같을 때만 AI 사유를 쓴다(D-114)
 };
 
 // 분류별 표준 문구 (회계 장부·관리자 검토용, 명사형)
@@ -47,7 +48,7 @@ export function templatePurpose(i: PurposeItem): string | null {
 }
 
 export function suggestPurpose(
-  claim: { isBusinessTrip: boolean; tripDestination: string | null; tripPurpose: string | null },
+  claim: { isBusinessTrip: boolean; tripDestination: string | null; tripPurpose: string | null; category?: ExpenseCategory | null },
   items: readonly PurposeItem[],
 ): string {
   if (claim.isBusinessTrip) {
@@ -57,8 +58,12 @@ export function suggestPurpose(
     if (dest) return `${dest} 출장 경비`;
   }
   const phrases: string[] = [];
+  // 결의서 카테고리가 있으면 그 카테고리 기준(D-114): AI가 같은 카테고리로 본 영수증만 AI 사유, 나머지는 결의서 카테고리의 표준 문구.
+  // 그래서 카테고리를 바꾸면(직원이 사유를 안 고쳤을 때) 초안도 따라 바뀐다
+  const cat = claim.category ?? null;
   for (const i of items) {
-    const p = i.aiPurpose?.trim() || templatePurpose(i);
+    const ai = i.aiPurpose?.trim();
+    const p = cat ? ((i.aiCategory === cat && ai) || templatePurpose({ ...i, category: cat, trip_type: cat === "trip" ? i.trip_type : null })) : ai || templatePurpose(i);
     if (p && !phrases.includes(p)) phrases.push(p);
   }
   if (phrases.length === 0) return "";

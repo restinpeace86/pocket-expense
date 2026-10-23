@@ -384,7 +384,7 @@ export function ClaimEditor({
   // 자동 저장이 AI 초안을 저장해도 직원이 쓴 것으로 보지 않는다: 저장된 사유가 지금 영수증으로 만든 초안과 같으면 계속 초안(D-103)
   const [descTouched, setDescTouched] = useState(() => {
     const saved = (claim.description ?? "").trim();
-    return saved !== "" && saved !== suggestPurpose({ isBusinessTrip: claim.is_business_trip, tripDestination: claim.trip_destination ?? "", tripPurpose: claim.trip_purpose ?? "" }, items);
+    return saved !== "" && saved !== suggestPurpose({ isBusinessTrip: claim.is_business_trip, tripDestination: claim.trip_destination ?? "", tripPurpose: claim.trip_purpose ?? "", category: claim.category }, items);
   });
   const [savedForm, setSavedForm] = useState<ClaimHeaderInput>(initial);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -447,7 +447,9 @@ export function ClaimEditor({
   const isTrip = category ? category === "trip" : form.isBusinessTrip;
   const suggestion = suggestTitle({ isBusinessTrip: isTrip, tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null, category }, items);
   const title = titleTouched ? form.title : suggestion;
-  const purposeDraft = suggestPurpose({ isBusinessTrip: isTrip, tripDestination: form.tripDestination, tripPurpose: form.tripPurpose }, items);
+  // 지출 사유 초안: 결의서 카테고리를 따른다 — 직원이 아직 안 고쳤으면(descTouched=false, 'isUserModified') 카테고리를 바꿀 때 초안도 바뀌고,
+  // 직원이 직접 고쳤으면 그대로 둔다(D-114)
+  const purposeDraft = suggestPurpose({ isBusinessTrip: isTrip, tripDestination: form.tripDestination, tripPurpose: form.tripPurpose, category }, items);
   const description = descTouched ? form.description : purposeDraft;
   // 차량: 회사차량 결의서 또는 회사차량으로 간 출장(D-105, D-106)
   const usesVehicle = category === "company_car" || (category === "trip" && form.tripTransport === "company_car");
@@ -704,6 +706,50 @@ export function ClaimEditor({
               ))}
             </div>
           </details>
+        </div>
+        {/* 제목·지출 사유: 카테고리 바로 아래 고정(D-114) */}
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="claim-title" required>
+            제목
+          </Label>
+          <input
+            id="claim-title"
+            className={inputClass}
+            value={title}
+            maxLength={100}
+            placeholder="예: 클라이언트 미팅 간식 구입"
+            onChange={(e) => {
+              setTitleTouched(true);
+              set("title", e.target.value);
+            }}
+          />
+          {!titleTouched && suggestion && <p className="text-xs text-zinc-500">영수증 내용으로 자동 제안했어요. 고쳐 써도 돼요.</p>}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="claim-desc" required>
+            지출 사유
+          </Label>
+          <textarea
+            id="claim-desc"
+            className={`${inputClass} min-h-20 py-2`}
+            value={description}
+            maxLength={1000}
+            placeholder="예: A사 프로젝트 킥오프 미팅 시 참석자 음료 제공"
+            onChange={(e) => {
+              setDescTouched(true);
+              set("description", e.target.value);
+            }}
+          />
+          {!descTouched && purposeDraft && (
+            <p className="flex items-start gap-1.5 text-xs text-brand-700">
+              <span className="shrink-0 whitespace-nowrap rounded-full bg-brand-50 px-2 py-0.5 font-semibold">✨ AI 초안</span>
+              영수증 내용으로 써 뒀어요. 다르면 눌러서 고쳐 주세요.
+            </p>
+          )}
+          <p className="text-xs text-zinc-500">관리자가 &ldquo;이 돈을 왜 썼지?&rdquo; 하고 묻지 않도록 한 줄로 적어 주세요.</p>
+        </div>
+        {/* ↓ 카테고리에 따라 바뀌는 영역(D-114): 안내·추가 정보 칸은 모두 제목·지출 사유 아래에 — 카테고리를 바꿔도 제목·사유 칸이 밀리지 않는다 */}
+        <div className="flex flex-col gap-1.5 empty:hidden">
           {(category === "team_dinner" || category === "meeting" || category === "meal") && (
             // 식사 영수증은 AI로 구분이 안 돼 고를 때 기준을 보여 준다 (D-107)
             <p className="rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
@@ -919,46 +965,6 @@ export function ClaimEditor({
           )}
         </div>
         )}
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="claim-title" required>
-            제목
-          </Label>
-          <input
-            id="claim-title"
-            className={inputClass}
-            value={title}
-            maxLength={100}
-            placeholder="예: 클라이언트 미팅 간식 구입"
-            onChange={(e) => {
-              setTitleTouched(true);
-              set("title", e.target.value);
-            }}
-          />
-          {!titleTouched && suggestion && <p className="text-xs text-zinc-500">영수증 내용으로 자동 제안했어요. 고쳐 써도 돼요.</p>}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="claim-desc" required>
-            지출 사유
-          </Label>
-          <textarea
-            id="claim-desc"
-            className={`${inputClass} min-h-20 py-2`}
-            value={description}
-            maxLength={1000}
-            placeholder="예: A사 프로젝트 킥오프 미팅 시 참석자 음료 제공"
-            onChange={(e) => {
-              setDescTouched(true);
-              set("description", e.target.value);
-            }}
-          />
-          {!descTouched && purposeDraft && (
-            <p className="flex items-start gap-1.5 text-xs text-brand-700">
-              <span className="shrink-0 whitespace-nowrap rounded-full bg-brand-50 px-2 py-0.5 font-semibold">✨ AI 초안</span>
-              영수증 내용으로 써 뒀어요. 다르면 눌러서 고쳐 주세요.
-            </p>
-          )}
-          <p className="text-xs text-zinc-500">관리자가 &ldquo;이 돈을 왜 썼지?&rdquo; 하고 묻지 않도록 한 줄로 적어 주세요.</p>
-        </div>
         {/* 예외 소명 사유(D-084): 주말·심야 사용이 있을 때만 보인다(가독성, D-109) */}
         {(exceptionText || form.exceptionMemo.trim()) && (
         <div className="flex flex-col gap-1.5">

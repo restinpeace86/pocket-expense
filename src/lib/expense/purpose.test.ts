@@ -26,3 +26,19 @@ describe("지출 사유 초안", () => {
     expect(suggestPurpose(normal, [item({})])).toBe("");
   });
 });
+
+describe("결의서 카테고리를 따르는 초안 (D-114)", () => {
+  const meal = { category: "meal" as const, trip_type: null, purchase_type: null, paid_time: "12:30", aiPurpose: "팀 점심 식사", aiCategory: "meal" as const };
+  const base = { isBusinessTrip: false, tripDestination: null, tripPurpose: null };
+  it("AI가 같은 카테고리로 본 영수증은 AI 사유", () => {
+    expect(suggestPurpose({ ...base, category: "meal" }, [meal])).toBe("팀 점심 식사");
+  });
+  it("카테고리를 바꾸면 그 카테고리 표준 문구로", () => {
+    expect(suggestPurpose({ ...base, category: "meeting" }, [meal])).toBe("거래처 업무 미팅 및 다과 진행");
+    expect(suggestPurpose({ ...base, category: "purchase" }, [meal])).toBe("사내 비품 및 소모품 구입");
+    expect(suggestPurpose({ ...base, category: "books" }, [meal])).toBe("업무용 도서 구입");
+  });
+  it("카테고리가 없으면 예전처럼(AI 사유 → 영수증 분류 문구)", () => {
+    expect(suggestPurpose(base, [meal])).toBe("팀 점심 식사");
+  });
+});
