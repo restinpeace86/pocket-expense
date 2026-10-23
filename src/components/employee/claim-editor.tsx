@@ -40,6 +40,13 @@ function useTouchDevice() {
   );
 }
 
+// 지출 카테고리 칸: 고른 칸은 브랜드색으로 채우고(흰 글씨), 안 고른 칸은 흰 바탕 — 한눈에 구분(D-115)
+function categoryChip(selected: boolean): string {
+  return `inline-flex min-h-12 items-center justify-center gap-1 break-keep rounded-xl border px-2 py-1.5 text-center text-sm leading-tight transition-colors disabled:opacity-60 ${
+    selected ? "border-brand-600 bg-brand-600 font-semibold text-white shadow-sm" : "border-zinc-300 bg-white font-medium text-zinc-700 hover:border-brand-300 hover:bg-brand-50"
+  }`;
+}
+
 // 카테고리가 없는 예전 결의서의 처음 값: 출장 결의서면 출장비, 영수증 카테고리가 하나뿐이면 그것(섞여 있으면 직원이 고른다)
 function initialCategory(claim: EditorData["claim"], items: EditorItem[]): ExpenseCategory | null {
   if (claim.is_business_trip) return "trip";
@@ -668,7 +675,7 @@ export function ClaimEditor({
                 aria-checked={category === c}
                 disabled={!editable}
                 onClick={() => chooseCategory(c)}
-                className={`min-h-11 rounded-xl border px-2 text-sm font-medium ${form.category === c ? "border-brand-600 bg-brand-50 text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
+                className={categoryChip(category === c)}
               >
                 {CATEGORY_ICON[c]} {CATEGORY_LABEL[c]}
               </button>
@@ -680,7 +687,8 @@ export function ClaimEditor({
               그 밖의 경비 (회식·경조사·교육 등)
               <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
             </summary>
-            <div className="flex flex-wrap gap-2 pb-3" role="radiogroup" aria-label="그 밖의 경비">
+            {/* 4대 카테고리와 같은 2열 칸(D-115) */}
+            <div className="grid grid-cols-2 gap-2 pb-3" role="radiogroup" aria-label="그 밖의 경비">
               {EXTRA_CATEGORIES.map((c) => (
                 <button
                   key={c}
@@ -689,7 +697,7 @@ export function ClaimEditor({
                   aria-checked={category === c}
                   disabled={!editable}
                   onClick={() => chooseCategory(c)}
-                  className={`min-h-11 rounded-full border px-3 text-sm ${form.category === c ? "border-brand-600 bg-brand-50 font-medium text-brand-800" : "border-zinc-300 bg-white text-zinc-700"}`}
+                  className={categoryChip(category === c)}
                 >
                   {CATEGORY_ICON[c]} {CATEGORY_LABEL[c]}
                 </button>
