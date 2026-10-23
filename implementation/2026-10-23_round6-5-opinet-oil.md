@@ -32,5 +32,5 @@
   - `e2e-trip.mjs`(커밋 안 된 옛 스크립트)는 옛 카테고리 이름 "출장 경비"를 눌러서 실패 — 이번 변경과 무관, 같은 흐름은 위 두 스크립트가 덮음
 
 ## 특이 사항
-- **실제 오피넷 호출은 아직 확인 못 함**: `OPINET_API_KEY`가 없음. opinet.co.kr에서 무료 발급 후 Vercel 환경변수에 넣어야 유가가 쌓인다. 쌓이기 전에는 유가 기준을 골라도 고정 단가로 계산된다.
+- **실제 오피넷 호출 확인(2026-10-23)**: 사용자가 `OPINET_API_KEY`를 `.env.local`·Vercel에 등록. 로컬에서 새벽 작업(`/api/cron/nightly`)을 1회 실행 → `{oil:{ok:true, logDate:"2026-10-23"}}`, `oil_price_history`에 2026-10-23 휘발유 1,855.97 · 경유 1,842.18 · LPG 1,143.86(source opinet) 저장, `oil_price_fetch_logs` 성공 기록. 호출 한도 하루 300건 중 1건 사용. 이후 매일 03:00(KST) Vercel cron이 쌓는다.
 - 유가 표는 회사와 무관한 공개 정보라 로그인 사용자 모두 읽기만 가능, 쓰기는 서버(service_role)만.
