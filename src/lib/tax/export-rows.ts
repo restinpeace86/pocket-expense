@@ -1,7 +1,7 @@
 // 세무 마감 엑셀·ZIP 행 규칙 (tax-export.md §3, tax-closing.md §4.B, tax-upload-format.md, D-052, D-088)
 // DB 함수 tax_month_export가 돌려준 행(순번 순)을 엑셀 시트·ZIP 파일명으로 바꾼다. 순수 함수 — 서버·브라우저 공용.
 import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, type PurchaseType, type TripType } from "@/lib/expense/categories";
-import { routeFormula } from "@/lib/expense/route";
+import { fuelOf, routeFormula } from "@/lib/expense/route";
 
 export type ExportRow = {
   seq: number;
@@ -28,6 +28,9 @@ export type ExportRow = {
   merchant_business_number: string | null;
   evidence_type: string | null;
   evidence_kind?: string | null; // 증빙 자료 종류(D-108)
+  applied_fuel_mode?: string | null; // 자차 유류비 계산 방식·유가(D-117)
+  applied_fuel_price?: number | string | null;
+  applied_fuel_type?: string | null;
   no_evidence_reason?: string | null;
   supply_amount: number | null;
   vat_amount: number | null;
@@ -129,7 +132,7 @@ export const bizNo = (v: string | null) => (v && /^\d{10}$/.test(v) ? `${v.slice
 // 세무 업로드 초안(시트3)의 적요: 결의서 지출 사유 + 항목 적요, 자차는 계산식
 export function upload적요(r: ExportRow): string {
   if (isOwnCar(r) && r.route_one_way_km != null) {
-    const f = routeFormula({ roundTrip: r.is_round_trip === true, oneWayKm: Number(r.route_one_way_km), rate: r.applied_fuel_rate_per_km ?? 0 });
+    const f = routeFormula({ roundTrip: r.is_round_trip === true, oneWayKm: Number(r.route_one_way_km), rate: r.applied_fuel_rate_per_km ?? 0, fuel: fuelOf(r) });
     return [`자차 ${r.start_location ?? ""}→${r.end_location ?? ""}`, f].join(" · ");
   }
   return [r.claim_description, r.purpose].filter((x) => x && x.trim()).join(" · ");

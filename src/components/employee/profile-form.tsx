@@ -36,6 +36,7 @@ export function ProfileForm({ profile }: { profile: MyProfile }) {
     position: profile.position ?? "",
     employeeNumber: profile.employee_number ?? "",
     vehicleNumber: profile.vehicle_number ?? "",
+    fuelType: profile.fuel_type as "gasoline" | "diesel" | "lpg" | null,
     bankName: profile.bank?.bank_name ?? "",
     accountNumber: profile.bank?.account_number ?? "",
     accountHolder: profile.bank?.account_holder ?? "",
@@ -44,7 +45,7 @@ export function ProfileForm({ profile }: { profile: MyProfile }) {
   const [agreed, setAgreed] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [pending, start] = useTransition();
-  const set = (k: keyof typeof init, v: string) => setF((x) => ({ ...x, [k]: v }));
+  const set = (k: Exclude<keyof typeof init, "fuelType" | "optionalAgreed">, v: string) => setF((x) => ({ ...x, [k]: v }));
   const dirty = JSON.stringify(f) !== JSON.stringify(init);
   // 선택 항목(정산 계좌·차량번호)을 처음 넣을 때만 선택 동의를 받는다 (D-059)
   const needsConsent = !profile.optionalConsented && !!(f.vehicleNumber.trim() || f.bankName.trim() || f.accountNumber.trim() || f.accountHolder.trim());
@@ -117,6 +118,29 @@ export function ProfileForm({ profile }: { profile: MyProfile }) {
         </h2>
         <Field label="차량번호" htmlFor="vehicle" hint="자차로 출장 다녀온 유류비를 청구할 때 써요.">
           <input id="vehicle" className={inputClass} value={f.vehicleNumber} maxLength={20} placeholder="예: 12가3456" onChange={(e) => set("vehicleNumber", e.target.value)} />
+        </Field>
+        {/* 차량 유종(D-117): 회사가 '전국 평균 유가 기준'으로 계산할 때 이 유종 가격을 써요 */}
+        <Field label="차량 유종" htmlFor="fuel-type" hint="회사가 전국 평균 유가로 자차 유류비를 계산할 때 이 유종 가격을 써요. 안 고르면 휘발유로 계산해요.">
+          <div id="fuel-type" className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="차량 유종">
+            {(
+              [
+                ["gasoline", "휘발유"],
+                ["diesel", "경유"],
+                ["lpg", "LPG"],
+              ] as const
+            ).map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                role="radio"
+                aria-checked={f.fuelType === v}
+                onClick={() => setF((x) => ({ ...x, fuelType: x.fuelType === v ? null : v }))}
+                className={`min-h-11 rounded-xl border text-sm font-medium ${f.fuelType === v ? "border-brand-600 bg-brand-600 text-white" : "border-zinc-300 bg-white text-zinc-700"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </Field>
       </section>
 

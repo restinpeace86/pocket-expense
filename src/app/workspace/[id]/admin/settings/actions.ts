@@ -14,6 +14,7 @@ export type CompanySettingsInput = {
   mealLimitMode: "split" | "notify";
   fuelEnabled: boolean;
   fuelRatePerKm: number;
+  fuelRateMode: "fixed" | "opinet"; // 자차 유류비 계산 방식(D-117)
   odometerPhotoRequired: boolean;
   claimDeadlineType: "none" | "end_of_month" | "days_after" | "next_month_day";
   claimDeadlineDays: number | null;
@@ -37,6 +38,9 @@ export async function saveCompanySettingsAction(input: CompanySettingsInput): Pr
     p_odometer_photo_required: input.odometerPhotoRequired,
   });
   if (error) return { error: messageForDbError(error) };
+  // 계산 방식은 따로 저장(관리자만, set_company_fuel_mode)
+  const { error: modeError } = await supabase.rpc("set_company_fuel_mode", { p_mode: input.fuelRateMode === "opinet" ? "opinet" : "fixed" });
+  if (modeError) return { error: messageForDbError(modeError) };
   refresh();
   return { error: null };
 }

@@ -1,4 +1,5 @@
 import "server-only";
+import type { FuelType } from "@/lib/expense/route";
 import { aiCategoryOf } from "@/lib/expense/category-check";
 import { deadlineDate, isOverdue, type DeadlinePolicy } from "@/lib/expense/deadline";
 import { todayKst } from "@/lib/dates";
@@ -12,7 +13,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: string) => UUID.test(v);
 
 const ITEM_COLUMNS =
-  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items, start_location, start_lat, start_lng, end_location, end_lat, end_lng, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, category_mismatch_ack, evidence_kind, no_evidence_reason";
+  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items, start_location, start_lat, start_lng, end_location, end_lat, end_lng, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, category_mismatch_ack, evidence_kind, no_evidence_reason, applied_fuel_mode, applied_fuel_price, applied_fuel_type";
 
 const EVIDENCE_TYPES = ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt", "other"] as const;
 
@@ -56,8 +57,8 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
       .maybeSingle(),
     supabase.from("expense_items").select(ITEM_COLUMNS).eq("claim_id", claimId).eq("company_id", membership.company_id).order("sort_order"),
     supabase.from("corporate_cards").select("id, nickname, bin6, last4").eq("company_id", membership.company_id).eq("is_active", true).order("created_at"),
-    supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, claim_deadline_type, claim_deadline_days").eq("id", membership.company_id).single(),
-    supabase.from("members").select("meal_limit_override, receives_car_allowance, vehicle_number").eq("id", membership.member_id).single(),
+    supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, fuel_rate_mode, claim_deadline_type, claim_deadline_days").eq("id", membership.company_id).single(),
+    supabase.from("members").select("meal_limit_override, receives_car_allowance, vehicle_number, fuel_type").eq("id", membership.member_id).single(),
     supabase.rpc("claim_duplicate_receipts", { p_claim_id: claimId }),
     supabase.from("company_vehicles").select("id, nickname, plate_number, is_active").eq("company_id", membership.company_id).order("created_at"),
   ]);
@@ -91,6 +92,8 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
     fuel: {
       enabled: !!c?.fuel_enabled,
       ratePerKm: c?.fuel_rate_per_km ?? 0,
+      mode: c?.fuel_rate_mode === "opinet" ? "opinet" : "fixed",
+      fuelType: (meRes.data?.fuel_type as FuelType | null) ?? "gasoline",
       blocked: !c?.fuel_enabled ? "disabled" : meRes.data?.receives_car_allowance ? "allowance" : null,
       vehicleNumber: meRes.data?.vehicle_number ?? null,
     },

@@ -1,4 +1,5 @@
 import type { MealPolicy } from "@/lib/expense/amounts";
+import type { FuelType } from "@/lib/expense/route";
 import type { EvidenceKind } from "@/lib/receipts/evidence-kind";
 import type { ExpenseCategory, PurchaseType, TripType } from "@/lib/expense/categories";
 import type { ClaimStatus } from "@/lib/expense/status";
@@ -100,7 +101,7 @@ export type EditorItem = {
 };
 
 // 자차 유류비를 쓸 수 있는지·단가·차량번호 (trip-expense.md §4, D-068·D-070)
-export type FuelPolicy = { enabled: boolean; ratePerKm: number; blocked: null | "disabled" | "allowance"; vehicleNumber: string | null };
+export type FuelPolicy = { mode: "fixed" | "opinet"; fuelType: FuelType; enabled: boolean; ratePerKm: number; blocked: null | "disabled" | "allowance"; vehicleNumber: string | null };
 
 export type TripTransport = "own_car" | "public_transport" | "company_car"; // company_car: 회사차량으로 간 출장 (D-106)
 export type RoutePlaceInput = { name: string; address: string | null; lat: number; lng: number };

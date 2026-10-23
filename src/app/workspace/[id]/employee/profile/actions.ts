@@ -11,6 +11,7 @@ export async function updateMyProfileAction(input: {
   position: string;
   employeeNumber: string;
   vehicleNumber: string;
+  fuelType: "gasoline" | "diesel" | "lpg" | null; // 차량 유종(D-117)
   bankName: string;
   accountNumber: string;
   accountHolder: string;
@@ -29,6 +30,8 @@ export async function updateMyProfileAction(input: {
     p_optional_agreed: input.optionalAgreed,
   });
   if (error) return { error: messageForDbError(error) };
+  const { error: fuelError } = await supabase.rpc("set_my_fuel_type", { p_fuel_type: (input.fuelType ?? null) as unknown as string /* 안 고르면 null = 휘발유로 계산 */ });
+  if (fuelError) return { error: messageForDbError(fuelError) };
   refresh();
   return { error: null };
 }

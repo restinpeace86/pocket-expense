@@ -8,6 +8,7 @@ export type MyProfile = {
   position: string | null;
   employee_number: string | null;
   vehicle_number: string | null;
+  fuel_type: "gasoline" | "diesel" | "lpg" | null; // 차량 유종(D-117)
   department: string | null;
   role: string;
   optionalConsented: boolean;
@@ -18,7 +19,7 @@ export type MyProfile = {
 export async function getMyProfile(memberId: string): Promise<MyProfile | null> {
   const supabase = await createClient();
   const [{ data: m }, { data: bank }, { data: auth }] = await Promise.all([
-    supabase.from("members").select("name, phone, position, employee_number, vehicle_number, department_id, role, optional_consent_at").eq("id", memberId).maybeSingle(),
+    supabase.from("members").select("name, phone, position, employee_number, vehicle_number, fuel_type, department_id, role, optional_consent_at").eq("id", memberId).maybeSingle(),
     supabase.from("member_bank_accounts").select("bank_name, account_number, account_holder").eq("member_id", memberId).maybeSingle(),
     supabase.auth.getUser(),
   ]);
@@ -31,6 +32,7 @@ export async function getMyProfile(memberId: string): Promise<MyProfile | null> 
     position: m.position,
     employee_number: m.employee_number,
     vehicle_number: m.vehicle_number,
+    fuel_type: m.fuel_type === "gasoline" || m.fuel_type === "diesel" || m.fuel_type === "lpg" ? m.fuel_type : null,
     department: dept?.name ?? null,
     role: m.role,
     optionalConsented: !!m.optional_consent_at,

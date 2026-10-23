@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fuelAmount, routeCardFrom, routeFormula } from "./route";
+import { cardAmount, fuelAmount, fuelAmountByPrice, fuelOf, routeCardFrom, routeFormula } from "./route";
 
 const base = {
   start_location: "판교역",
@@ -29,5 +29,21 @@ describe("자차 유류비 계산 (편도 금액 먼저, 왕복은 × 2)", () =>
     expect(routeCardFrom({ ...base, is_round_trip: null, distance_km: 377, amount: null }, 200)).toMatchObject({ roundTrip: false, amount: 75400 });
     expect(routeCardFrom({ ...base, distance_km: null, route_one_way_km: null, distance_source: null }, 200)).toBeNull();
     expect(routeCardFrom({ ...base, end_location: null }, 200)).toBeNull();
+  });
+});
+
+describe("전국 평균 유가 기준 (D-117) — DB recompute_claim과 같은 식", () => {
+  it("올림(유가 ÷ 12 × 총 거리)", () => {
+    expect(fuelAmountByPrice(100, 1540.5, true)).toBe(25675);
+    expect(fuelAmountByPrice(123.4, 1680.12, false)).toBe(17278); // 17,277.23 → 올림
+    expect(fuelAmountByPrice(120, 1680, false)).toBe(16800); // 딱 떨어지면 그대로
+  });
+  it("카드 금액·계산식은 유가가 있으면 유가 식", () => {
+    const fuel = { price: 1540.5, type: "diesel" as const };
+    expect(cardAmount({ oneWayKm: 100, rate: 128, fuel }, true)).toBe(25675);
+    expect(cardAmount({ oneWayKm: 100, rate: 200, fuel: null }, true)).toBe(40000);
+    expect(routeFormula({ roundTrip: true, oneWayKm: 100, rate: 128, fuel })).toBe("(경유 1,540.5원 ÷ 12km/L) × 200km(왕복) = 25,675원");
+    expect(fuelOf({ applied_fuel_mode: "opinet", applied_fuel_price: "1540.50", applied_fuel_type: "diesel" })).toEqual(fuel);
+    expect(fuelOf({ applied_fuel_mode: "fixed", applied_fuel_price: null, applied_fuel_type: null })).toBeNull();
   });
 });

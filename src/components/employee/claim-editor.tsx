@@ -11,7 +11,7 @@ import { RouteEvidenceCard } from "@/components/claims/route-evidence-card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { inputClass } from "@/components/ui/page-shell";
 import type { ClaimHeaderInput, EditorData, EditorItem, PaymentMethod, TripTransport } from "@/lib/employee/editor-types";
-import { routeCardFrom } from "@/lib/expense/route";
+import { FUEL_TYPE_LABEL, routeCardFrom, STANDARD_KM_PER_L } from "@/lib/expense/route";
 import { CATEGORY_LABEL, EXTRA_CATEGORIES, MAIN_CATEGORIES, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory } from "@/lib/expense/categories";
 import { claimStatusBadge } from "@/lib/expense/status";
 import { suggestPurpose } from "@/lib/expense/purpose";
@@ -901,7 +901,7 @@ export function ClaimEditor({
                     </p>
                   ) : (
                     <>
-                      <p className="text-xs text-zinc-500">출발지·도착지를 고르면 거리 × km당 {data.fuel.ratePerKm.toLocaleString("ko-KR")}원으로 자동 계산하고, 경로 요약 카드를 증빙으로 붙여요.</p>
+                      <p className="text-xs text-zinc-500">출발지·도착지를 고르면 거리 × {data.fuel.mode === "opinet" ? `(출장 당일 전국 평균 ${FUEL_TYPE_LABEL[data.fuel.fuelType]} 가격 ÷ ${STANDARD_KM_PER_L}km/L)` : `km당 ${data.fuel.ratePerKm.toLocaleString("ko-KR")}원`}으로 자동 계산하고, 경로 요약 카드를 증빙으로 붙여요.</p>
                       {[
                         ...ownCarItems.map((i) => ({ item: i as EditorItem | null, key: carDraft?.id === i.id ? `draft-${carDraft.key}` : i.id })),
                         ...(carDraft && !(carDraft.id && ownCarItems.some((i) => i.id === carDraft.id)) ? [{ item: null as EditorItem | null, key: `draft-${carDraft.key}` }] : []),

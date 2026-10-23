@@ -7,7 +7,7 @@ import { RouteEvidenceCard } from "@/components/claims/route-evidence-card";
 import { PlaceSearch } from "@/components/employee/place-search";
 import { inputClass } from "@/components/ui/page-shell";
 import type { EditorClaim, EditorItem, FuelPolicy, RoutePlaceInput } from "@/lib/employee/editor-types";
-import { fuelAmount, routeCardFrom, routeFormula } from "@/lib/expense/route";
+import { cardAmount, FUEL_TYPE_LABEL, routeCardFrom, routeFormula, STANDARD_KM_PER_L } from "@/lib/expense/route";
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
 import type { ItemFormHandle } from "./item-editor";
@@ -53,7 +53,7 @@ export function OwnCarInline({
 
   const saved = item ? routeCardFrom(item, fuel.ratePerKm) : null;
   // 왕복 × 2는 화면에서 바로 계산해 보여 주고(기다림 없음), 저장은 뒤에서 한다. 금액의 최종값은 DB가 같은 식으로 다시 계산한다
-  const card = saved && { ...saved, roundTrip, totalKm: saved.oneWayKm * (roundTrip ? 2 : 1), amount: fuelAmount(saved.oneWayKm, saved.rate, roundTrip) };
+  const card = saved && { ...saved, roundTrip, totalKm: saved.oneWayKm * (roundTrip ? 2 : 1), amount: cardAmount(saved, roundTrip) };
 
   // 사용일·적요: 고치면 0.8초 뒤 자동 저장, 임시저장·상신 전에 남은 것 저장
   const meta = useRef<{ expenseDate: string; purpose: string } | null>(null);
@@ -161,7 +161,7 @@ export function OwnCarInline({
               data-saving={savingRound || undefined}
               className={`inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl border px-4 text-sm font-semibold ${roundTrip ? "border-zinc-300 bg-white text-zinc-700" : "border-brand-300 bg-brand-50 text-brand-800"}`}
             >
-              {roundTrip ? "편도로 되돌리기" : `왕복으로 계산 (× 2 = ${formatWon(fuelAmount(card.oneWayKm, card.rate, true))})`}
+              {roundTrip ? "편도로 되돌리기" : `왕복으로 계산 (× 2 = ${formatWon(cardAmount(card, true))})`}
             </button>
           </>
         ) : (
@@ -207,7 +207,11 @@ export function OwnCarInline({
               적용
             </button>
           </div>
-          {manualPreview !== null && <p className="text-xs text-zinc-600 tabular-nums">{routeFormula({ roundTrip, oneWayKm: manualPreview, rate: fuel.ratePerKm })}</p>}
+          {manualPreview !== null && (
+            <p className="text-xs text-zinc-600 tabular-nums">
+              {fuel.mode === "opinet" ? `${manualPreview}km(편도) — 적용하면 출장 당일 전국 평균 ${FUEL_TYPE_LABEL[fuel.fuelType]} 가격 ÷ ${STANDARD_KM_PER_L}km/L로 계산돼요` : routeFormula({ roundTrip, oneWayKm: manualPreview, rate: fuel.ratePerKm })}
+            </p>
+          )}
           <p className="text-xs text-zinc-500">직접 입력한 거리는 결재 화면에 &ldquo;직접 입력 거리&rdquo;로 표시돼요.</p>
           {item?.distance_source !== "manual" && (
             <button type="button" onClick={() => setManualOpen(false)} className="self-start text-sm text-zinc-600 underline underline-offset-2">
@@ -242,7 +246,7 @@ export function OwnCarInline({
         </div>
       )}
       <p className="text-xs text-zinc-500">
-        차량번호 {fuel.vehicleNumber ? <b className="text-zinc-800">{fuel.vehicleNumber}</b> : "미등록 — [내 정보]에서 등록해 주세요"} · km당 {fuel.ratePerKm.toLocaleString("ko-KR")}원 · 결제수단은 개인(사비). 주유 영수증은 필요 없어요. 통행료·주차비는 영수증으로 따로 올려 주세요.
+        차량번호 {fuel.vehicleNumber ? <b className="text-zinc-800">{fuel.vehicleNumber}</b> : "미등록 — [내 정보]에서 등록해 주세요"} · {fuel.mode === "opinet" ? `출장 당일 전국 평균 ${FUEL_TYPE_LABEL[fuel.fuelType]} 가격 ÷ ${STANDARD_KM_PER_L}km/L` : `km당 ${fuel.ratePerKm.toLocaleString("ko-KR")}원`} · 결제수단은 개인(사비). 주유 영수증은 필요 없어요. 통행료·주차비는 영수증으로 따로 올려 주세요.
       </p>
     </div>
   );

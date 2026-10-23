@@ -83,6 +83,8 @@ export type CompanySettings = {
   meal_limit_mode: "split" | "notify";
   fuel_enabled: boolean;
   fuel_rate_per_km: number;
+  fuel_rate_mode: "fixed" | "opinet"; // 자차 유류비 계산 방식(D-117)
+  latest_oil: { log_date: string; gasoline: number | null; diesel: number | null; lpg: number | null } | null; // 최근 전국 평균 유가
   odometer_photo_required: boolean;
   claim_deadline_type: "none" | "end_of_month" | "days_after" | "next_month_day";
   claim_deadline_days: number | null;
@@ -93,11 +95,14 @@ export async function getCompanySettings(companyId: string): Promise<CompanySett
   const { data } = await supabase
     .from("companies")
     .select(
-      "name, business_number, invite_code, meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, odometer_photo_required, claim_deadline_type, claim_deadline_days",
+      "name, business_number, invite_code, meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, fuel_rate_mode, odometer_photo_required, claim_deadline_type, claim_deadline_days",
     )
     .eq("id", companyId)
     .maybeSingle();
-  return data;
+  if (!data) return null;
+  // 최근 전국 평균 유가(공개 정보, D-117)
+  const { data: oil } = await supabase.from("oil_price_history").select("log_date, gasoline, diesel, lpg").order("log_date", { ascending: false }).limit(1).maybeSingle();
+  return { ...data, fuel_rate_mode: data.fuel_rate_mode === "opinet" ? "opinet" : "fixed", latest_oil: oil ?? null };
 }
 
 export type AccountTitleRow = { id: string; name: string; code: string | null; sort_order: number; used: boolean };

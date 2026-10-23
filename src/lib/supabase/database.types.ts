@@ -429,6 +429,7 @@ export type Database = {
           created_at: string
           event_bonus_acknowledged_at: string | null
           fuel_enabled: boolean
+          fuel_rate_mode: string
           fuel_rate_per_km: number
           id: string
           invite_code: string
@@ -453,6 +454,7 @@ export type Database = {
           created_at?: string
           event_bonus_acknowledged_at?: string | null
           fuel_enabled?: boolean
+          fuel_rate_mode?: string
           fuel_rate_per_km?: number
           id?: string
           invite_code: string
@@ -477,6 +479,7 @@ export type Database = {
           created_at?: string
           event_bonus_acknowledged_at?: string | null
           fuel_enabled?: boolean
+          fuel_rate_mode?: string
           fuel_rate_per_km?: number
           id?: string
           invite_code?: string
@@ -855,7 +858,10 @@ export type Database = {
           account_title_overridden: boolean
           ai_parsed_payload: Json | null
           amount: number | null
+          applied_fuel_mode: string | null
+          applied_fuel_price: number | null
           applied_fuel_rate_per_km: number | null
+          applied_fuel_type: string | null
           applied_meal_limit_mode:
             | Database["public"]["Enums"]["meal_limit_mode"]
             | null
@@ -921,7 +927,10 @@ export type Database = {
           account_title_overridden?: boolean
           ai_parsed_payload?: Json | null
           amount?: number | null
+          applied_fuel_mode?: string | null
+          applied_fuel_price?: number | null
           applied_fuel_rate_per_km?: number | null
+          applied_fuel_type?: string | null
           applied_meal_limit_mode?:
             | Database["public"]["Enums"]["meal_limit_mode"]
             | null
@@ -989,7 +998,10 @@ export type Database = {
           account_title_overridden?: boolean
           ai_parsed_payload?: Json | null
           amount?: number | null
+          applied_fuel_mode?: string | null
+          applied_fuel_price?: number | null
           applied_fuel_rate_per_km?: number | null
+          applied_fuel_type?: string | null
           applied_meal_limit_mode?:
             | Database["public"]["Enums"]["meal_limit_mode"]
             | null
@@ -1259,6 +1271,7 @@ export type Database = {
           department_id: string | null
           email: string | null
           employee_number: string | null
+          fuel_type: string | null
           id: string
           joined_via: string
           last_reminded_at: string | null
@@ -1286,6 +1299,7 @@ export type Database = {
           department_id?: string | null
           email?: string | null
           employee_number?: string | null
+          fuel_type?: string | null
           id?: string
           joined_via?: string
           last_reminded_at?: string | null
@@ -1313,6 +1327,7 @@ export type Database = {
           department_id?: string | null
           email?: string | null
           employee_number?: string | null
+          fuel_type?: string | null
           id?: string
           joined_via?: string
           last_reminded_at?: string | null
@@ -1495,6 +1510,57 @@ export type Database = {
             referencedColumns: ["id", "company_id"]
           },
         ]
+      }
+      oil_price_fetch_logs: {
+        Row: {
+          id: string
+          log_date: string | null
+          message: string | null
+          ok: boolean
+          ran_at: string
+        }
+        Insert: {
+          id?: string
+          log_date?: string | null
+          message?: string | null
+          ok: boolean
+          ran_at?: string
+        }
+        Update: {
+          id?: string
+          log_date?: string | null
+          message?: string | null
+          ok?: boolean
+          ran_at?: string
+        }
+        Relationships: []
+      }
+      oil_price_history: {
+        Row: {
+          diesel: number | null
+          fetched_at: string
+          gasoline: number | null
+          log_date: string
+          lpg: number | null
+          source: string
+        }
+        Insert: {
+          diesel?: number | null
+          fetched_at?: string
+          gasoline?: number | null
+          log_date: string
+          lpg?: number | null
+          source?: string
+        }
+        Update: {
+          diesel?: number | null
+          fetched_at?: string
+          gasoline?: number | null
+          log_date?: string
+          lpg?: number | null
+          source?: string
+        }
+        Relationships: []
       }
       perf_events: {
         Row: {
@@ -1991,6 +2057,7 @@ export type Database = {
         }
         Returns: Json
       }
+      set_company_fuel_mode: { Args: { p_mode: string }; Returns: undefined }
       set_member_role: {
         Args: {
           p_member_id: string
@@ -1998,6 +2065,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_my_fuel_type: { Args: { p_fuel_type: string }; Returns: undefined }
       set_own_car_route: {
         Args: {
           p_end: Json

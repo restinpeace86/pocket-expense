@@ -20,6 +20,8 @@ const toInt = (v: string) => {
   return d ? Number(d) : -1;
 };
 
+const won2 = (n: number | string | null) => (n == null ? "-" : `${Number(n).toLocaleString("ko-KR", { maximumFractionDigits: 2 })}원`);
+
 // 회사 정보 · 정산 정책 (spec/screens/admin-settings.md §1·§2). 설명 구성은 ui-rules.md §6.
 export function CompanySettingsForm({ settings: s, preview = false }: { settings: CompanySettings; preview?: boolean }) {
   const [pending, startTransition] = useTransition();
@@ -31,6 +33,7 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
   const [odometer, setOdometer] = useState(s.odometer_photo_required);
   const [mode, setMode] = useState(s.meal_limit_mode);
   const [fuelRate, setFuelRate] = useState(String(s.fuel_rate_per_km));
+  const [fuelMode, setFuelMode] = useState<"fixed" | "opinet">(s.fuel_rate_mode);
   const [deadline, setDeadline] = useState<DeadlineType>(s.claim_deadline_type);
   const [deadlineDays, setDeadlineDays] = useState(String(s.claim_deadline_days ?? DEADLINE_DAYS.next_month_day.initial));
 
@@ -56,6 +59,7 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
         mealLimitMode: mode,
         fuelEnabled,
         fuelRatePerKm: toInt(fuelRate),
+        fuelRateMode: fuelMode,
         odometerPhotoRequired: odometer,
         claimDeadlineType: deadline,
         claimDeadlineDays: deadline === "days_after" || deadline === "next_month_day" ? toInt(deadlineDays) : null,
@@ -172,7 +176,7 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
       <section className={card}>
         <SectionHeading
           title="자차 유류비"
-          summary="직원이 자기 차로 출장 갔을 때 1km마다 회사가 주는 금액이에요."
+          summary="직원이 자기 차로 출장 갔을 때 주는 기름값이에요. km당 정해진 단가 또는 그날 전국 평균 유가로 계산해요."
           helpId="settings.fuel-rate"
           help={
             <>
@@ -197,15 +201,61 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
             choices={[
               {
                 value: "on",
-                label: "km당 단가로 지원",
-                description: "주행거리 × 단가로 계산해요.",
+                label: "자차 유류비 지원",
+                description: "주행거리로 계산해요. 계산 방식을 골라 주세요.",
                 extra: (
                   <div className="flex flex-col gap-4">
+                    {/* 계산 방식(D-117): 고정 단가 / 전국 평균 유가(오피넷) */}
+                    <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="자차 유류비 계산 방식">
+                      {(
+                        [
+                          ["fixed", "km당 고정 단가", `주행거리 × ${formatWon(rate)}`],
+                          ["opinet", "전국 평균 유가 기준", "(출장 당일 전국 평균 유가 ÷ 12km/L) × 주행거리, 원 단위 올림"],
+                        ] as const
+                      ).map(([v, label, desc]) => (
+                        <button
+                          key={v}
+                          type="button"
+                          role="radio"
+                          aria-checked={fuelMode === v}
+                          onClick={() => setFuelMode(v)}
+                          className={`flex min-h-11 flex-col items-start rounded-xl border px-3 py-2 text-left text-sm ${fuelMode === v ? "border-brand-600 bg-brand-50" : "border-zinc-300 bg-white hover:bg-zinc-50"}`}
+                        >
+                          <span className="font-semibold text-zinc-900">{label}</span>
+                          <span className="text-xs text-zinc-600">{desc}</span>
+                        </button>
+                      ))}
+                    </div>
                     <div className="sm:max-w-xs">
-                      <Field label="km당 유류비 단가" required hint={`예: 120km × ${formatWon(rate)} = ${formatWon(120 * rate)}`}>
+                      <Field
+                        label={fuelMode === "opinet" ? "km당 고정 단가 (유가 정보가 없을 때 대신 씀)" : "km당 유류비 단가"}
+                        required
+                        hint={`예: 120km × ${formatWon(rate)} = ${formatWon(120 * rate)}`}
+                      >
                         <AmountInput name="fuelRate" value={fuelRate} onChange={setFuelRate} required />
                       </Field>
+                      {/* 왜 200원인지(D-117) */}
+                      <p className="mt-1.5 text-xs text-zinc-500">
+                        기본 200원은 대략 휘발유 L당 1,700원 ÷ 연비 약 10km/L ≈ 170원에 타이어·엔진오일 같은 차량 소모를 조금 더한, 많이 쓰는 기준이에요. 회사 여비 규정에 맞게 바꾸세요.
+                      </p>
                     </div>
+                    {fuelMode === "opinet" && (
+                      <div className="rounded-xl bg-zinc-50 px-3 py-2 text-sm text-zinc-700">
+                        {s.latest_oil ? (
+                          <>
+                            <p>
+                              최근 전국 평균({s.latest_oil.log_date.slice(5).replace("-", "/")}): 휘발유 {won2(s.latest_oil.gasoline)} · 경유 {won2(s.latest_oil.diesel)} · LPG {won2(s.latest_oil.lpg)}
+                            </p>
+                            <p className="mt-1 text-xs text-zinc-500">
+                              예: 휘발유 120km → ({won2(s.latest_oil.gasoline)} ÷ 12km/L) × 120km = {s.latest_oil.gasoline ? formatWon(Math.ceil((Number(s.latest_oil.gasoline) * 120) / 12)) : "-"} · 유종은 직원 [내 정보]에서 골라요(안 고르면 휘발유)
+                            </p>
+                          </>
+                        ) : (
+                          <p>아직 받아 온 전국 평균 유가가 없어요. 오피넷 유가는 매일 새벽 자동으로 받아요 — 받기 전에는 위 고정 단가로 계산돼요.</p>
+                        )}
+                        <p className="mt-1 text-xs text-zinc-500">출처: 한국석유공사 오피넷 전국 주유소 평균 가격. 출장 당일 값이 없으면 7일 안 가장 최근 값, 그것도 없으면 고정 단가로 계산해요.</p>
+                      </div>
+                    )}
                     <label className="flex cursor-pointer items-start gap-3">
                       <input
                         type="checkbox"

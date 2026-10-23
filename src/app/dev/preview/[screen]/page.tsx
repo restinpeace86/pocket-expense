@@ -117,7 +117,7 @@ const SAMPLE_EDITOR: EditorData = {
   cards: [{ id: "card1", nickname: "대표 법인카드", bin6: "532712", last4: "7890" }, { id: "card2", nickname: "영업팀 카드", bin6: null, last4: "1234" }],
   mealPolicy: { enabled: true, perPerson: 10000, mode: "split" },
   mealOverride: null,
-  fuel: { enabled: true, ratePerKm: 200, blocked: null, vehicleNumber: "12가3456" },
+  fuel: { mode: "fixed", fuelType: "gasoline", enabled: true, ratePerKm: 200, blocked: null, vehicleNumber: "12가3456" },
   vehicles: [{ id: "v1", nickname: "영업 1호차", plate_number: "12가3456", is_active: true }],
   deadline: { type: "next_month_day", days: 5 },
 };
@@ -656,8 +656,8 @@ async function Preview({
             <ProfileForm
               profile={
                 screen === "employee-profile"
-                  ? { name: "김개발", phone: "01012345678", position: "대리", employee_number: "PK-2024-007", vehicle_number: "12가3456", department: "개발팀", role: "employee", optionalConsented: true, bank: { bank_name: "국민은행", account_number: "123456-01-234567", account_holder: "김개발" }, login: { provider: "kakao", email: "dev.long.address@pocketcompany.co.kr" } }
-                  : { name: "최신입", phone: "01033335555", position: null, employee_number: null, vehicle_number: null, department: null, role: "employee", optionalConsented: false, bank: null, login: { provider: "google", email: "new@example.com" } }
+                  ? { name: "김개발", phone: "01012345678", position: "대리", employee_number: "PK-2024-007", vehicle_number: "12가3456", fuel_type: "diesel", department: "개발팀", role: "employee", optionalConsented: true, bank: { bank_name: "국민은행", account_number: "123456-01-234567", account_holder: "김개발" }, login: { provider: "kakao", email: "dev.long.address@pocketcompany.co.kr" } }
+                  : { name: "최신입", phone: "01033335555", position: null, employee_number: null, vehicle_number: null, fuel_type: null, department: null, role: "employee", optionalConsented: false, bank: null, login: { provider: "google", email: "new@example.com" } }
               }
             />
           </main>
@@ -874,6 +874,8 @@ async function Preview({
               meal_limit_mode: "split",
               fuel_enabled: true,
               fuel_rate_per_km: 200,
+              fuel_rate_mode: "opinet",
+              latest_oil: { log_date: "2026-10-22", gasoline: 1680.12, diesel: 1540.5, lpg: 1010 },
               odometer_photo_required: false,
               claim_deadline_type: "next_month_day",
               claim_deadline_days: 5,

@@ -108,7 +108,7 @@ export async function attachRouteCards(claimId: string): Promise<void> {
   if (!claim || claim.status === "draft" || claim.status === "rejected") return;
   const { data: items } = await admin
     .from("expense_items")
-    .select("id, expense_date, start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, amount, applied_fuel_rate_per_km, route_card_path")
+    .select("id, expense_date, start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, amount, applied_fuel_rate_per_km, applied_fuel_mode, applied_fuel_price, applied_fuel_type, route_card_path")
     .eq("claim_id", claimId)
     .eq("category", "trip")
     .eq("trip_type", "own_car")
