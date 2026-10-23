@@ -91,10 +91,17 @@
 - [x] T4-2 청구자 기준 결재라인 선택 + 단계 스냅샷(review + final) 함수 + 단위 테스트 (2026-10-21, 함수는 004·033, `supabase/tests/018_approval_lines.sql`)
 
 ## T5. 사내 양식 — 기준: `spec/features/form-template.md`, `spec/screens/template-configuration.md`
-- [ ] T5-1 양식 업로드 + Gemini 분석 어댑터 (실패 Fallback)
-- [ ] T5-2 블록형 필드 편집기 + 바인딩 지정
-- [ ] T5-3 지출결의서 렌더러(공용) + 기본 양식(template-configuration §2) + 미리보기 + 기본 양식으로 되돌리기
-- [ ] T5-4 버전 저장/활성화
+- [x] T5-1 양식 업로드 + Gemini 분석 어댑터 (실패 Fallback) (2026-10-23, D-118 범위로 — T5-R5)
+- [x] T5-2 블록형 필드 편집기 + 바인딩 지정 (2026-10-23, D-118: 우리 데이터 항목만 — T5-R4)
+- [x] T5-3 지출결의서 렌더러(공용) + 기본 양식(template-configuration §2) + 미리보기 + 기본 양식으로 되돌리기 (2026-10-23, T5-R1·R3·R4)
+- [x] T5-4 버전 저장/활성화 (2026-10-23, migration 060 — T5-R2)
+- T5-R (2026-10-23, D-118 사용자 지시: 출력 문서 모양만, 우리 데이터로 채울 수 있는 칸만)
+  - [x] T5-R1 양식 틀(layout) 정의 + 채울 수 있는 항목 목록 + 기본 포맷 5종(기본·품목 표형·단건 요약형·월 청구형·내역·입금형) + 문서 모델 + 단위 테스트
+  - [x] T5-R2 DB: 양식 저장/되돌리기 RPC(관리자, 버전) + DB 테스트(회사 격리·권한)
+  - [x] T5-R3 PDF 그리기를 문서 모델 기준으로(세무 ZIP) + 결의서 상세 [지출결의서 PDF]
+  - [x] T5-R4 관리자 [사내 양식] 화면: 포맷 고르기·꾸미기(칸 이름·순서·빼기·추가)·미리보기·저장·기본으로 되돌리기
+  - [x] T5-R5 종이 양식 촬영/업로드 → AI가 칸 읽고 우리 데이터와 짝짓기(채울 수 없는 칸 안내) → 꾸미기
+  - [x] T5-R6 검증(반응형·E2E·tsc·test·db·build) + 문서
 
 ## T6. 지출소명서 작성 — 기준: `spec/features/expense-claim-flow.md`, `spec/screens/worker-dashboard.md`(E-01), `spec/screens/worker-tax-processing.md`(E-02), `spec/screens/employee-mobile.md` ④⑤, `spec/features/receipt-parser.md`, `spec/features/smart-meal.md`
 - [x] T6-0 성능 기반(D-073, D-074, `spec/common/performance.md` §9): 이미지 줄이기·썸네일, 동시 처리+재시도, 사진 링크 묶음, 커서 페이지네이션, 한국 시간 날짜, 썸네일 경로·열람 정책, 벤치 확대 재측정 (2026-10-17)

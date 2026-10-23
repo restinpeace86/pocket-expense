@@ -112,7 +112,7 @@ export function TaxClosingView({
               }),
             );
             try {
-              const pdf = await buildClaimsPdf({ docs: d.docs, companyName, month, evidence });
+              const pdf = await buildClaimsPdf({ docs: d.docs, companyName, month, evidence, layout: d.layout });
               return { name: `지출결의서_${month}.pdf`, data: pdf };
             } catch {
               pdfNote = " 지출결의서 PDF는 만들지 못했어요(글꼴을 받지 못함) — 다시 받기를 눌러 주세요.";

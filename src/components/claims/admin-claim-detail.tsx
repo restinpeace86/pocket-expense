@@ -3,6 +3,7 @@
 import { CATEGORY_LABEL } from "@/lib/expense/categories";
 import { ReceiptGallery } from "./receipt-gallery";
 import { ExceptionNote } from "./exception-note";
+import { ClaimPdfButton } from "./claim-pdf-button";
 import { ArrowLeft, Check, ChevronRight, Images, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -139,11 +140,15 @@ export function AdminClaimDetail({
           <h2 className="font-semibold">
             포함된 영수증 {detail.items.length}건{mode === "reject" && <span className="ml-2 text-sm font-normal text-red-700">문제 있는 영수증을 체크해 주세요(선택)</span>}
           </h2>
-          {detail.items.length > 0 && (
-            <button type="button" onClick={() => setGallery(true)} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 text-sm font-medium hover:bg-zinc-50">
-              <Images className="size-4" /> 영수증 모아보기
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* 회사 양식으로 결의서 PDF(관리자, D-118) */}
+            {!reviewer && detail.items.length > 0 && <ClaimPdfButton claimId={claim.id} />}
+            {detail.items.length > 0 && (
+              <button type="button" onClick={() => setGallery(true)} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 text-sm font-medium hover:bg-zinc-50">
+                <Images className="size-4" /> 영수증 모아보기
+              </button>
+            )}
+          </div>
         </div>
         {gallery && <ReceiptGallery claimId={claim.id} items={items} onClose={() => setGallery(false)} />}
         <ClaimItems

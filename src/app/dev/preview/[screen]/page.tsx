@@ -50,6 +50,9 @@ import { CreateCompanyForm } from "@/components/onboarding/create-company-form";
 import { InviteCodeForm } from "@/components/onboarding/invite-code-form";
 import { JoinForm } from "@/components/onboarding/join-form";
 import { buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
+import { SectionHeading } from "@/components/ui/help";
+import { FormTemplateView } from "@/components/admin/form-template-view";
+import { PRESETS as FORM_PRESETS, SAMPLE_DOC as FORM_SAMPLE_DOC } from "@/lib/forms/layout";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import type { Membership } from "@/lib/auth/paths";
 import { isThemeKey } from "@/lib/theme";
@@ -755,6 +758,22 @@ async function Preview({
         <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/corporate-cards/reconcile">
           <ReconcileHeading />
           <ReconcileView base="#" holders={{ "7890": "대표 법인카드 · 김대표" }} />
+        </AdminShell>
+      );
+    case "admin-form-template":
+    case "admin-form-template-monthly":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/form-template">
+          <SectionHeading as="h1" title="지출결의서 양식" summary="결재·보관용 지출결의서 문서 모양을 정해요. 결의서 상세의 [지출결의서 PDF]와 세무 마감 PDF가 이 양식으로 나가요." />
+          <FormTemplateView
+            companyId="c0000000-0000-0000-0000-000000000000"
+            companyName="포켓컴퍼니 주식회사"
+            active={screen === "admin-form-template-monthly" ? { version: 2, createdAt: "2026-10-23T00:00:00Z" } : null}
+            initialLayout={screen === "admin-form-template-monthly" ? FORM_PRESETS.monthly.layout : FORM_PRESETS.standard.layout}
+            previewDoc={FORM_SAMPLE_DOC}
+            previewLabel="예시 결의서"
+            preview
+          />
         </AdminShell>
       );
     case "admin-recurring":

@@ -27,6 +27,8 @@ insert into public.members (id, auth_user_id, company_id, name, phone, role, sta
 insert into public.expense_claims (id, company_id, member_id, title, is_business_trip, category, trip_start_date, trip_end_date, trip_transport) values
   ('a3920000-0000-0000-0000-000000000001', 'c3900000-0000-0000-0000-00000000000a', 'a3910000-0000-0000-0000-000000000002', '출장', true, 'trip', '2026-10-14', '2026-10-15', 'own_car');
 -- 서버가 넣은 유가(10/12만 있음 → 10/14 출장은 7일 안 가장 최근 10/12 값)
+-- 실제로 쌓인 유가는 이 트랜잭션 안에서만 빼 둔다(끝에 rollback으로 그대로 돌아옴)
+delete from public.oil_price_history;
 insert into public.oil_price_history (log_date, gasoline, diesel, lpg) values ('2026-10-12', 1680.12, 1540.50, 1010.00);
 
 -- 직원: 유가 쓰기 불가, 읽기 가능 / 유종 저장 / 계산 방식 변경 불가

@@ -13,6 +13,7 @@ export type ClaimDocItem = {
   trip_type: ExportRow["trip_type"];
   purchase_type: ExportRow["purchase_type"];
   payment_method: ExportRow["payment_method"];
+  evidence_type: string | null;
   supply_amount: number | null;
   vat_amount: number | null;
   amount: number | null;
@@ -45,16 +46,19 @@ export type ClaimDoc = {
   total_amount: number;
   total_company_supported: number;
   total_personal_burden: number;
-  member: { name: string; department: string | null; position: string | null };
+  member: { name: string; department: string | null; position: string | null; bank?: { bank_name: string; account_number: string; account_holder: string } | null };
   items: ClaimDocItem[];
   steps: ClaimDocStep[];
 };
 
 const ITEM_COLS =
-  "id, claim_id, sort_order, expense_date, merchant_name, category, trip_type, purchase_type, payment_method, supply_amount, vat_amount, amount, purpose, headcount, attendees, client_name, start_location, end_location, is_round_trip, route_one_way_km, company_supported_amount, personal_burden_amount, account_title_name";
+  "id, claim_id, sort_order, expense_date, merchant_name, category, trip_type, purchase_type, payment_method, evidence_type, supply_amount, vat_amount, amount, purpose, headcount, attendees, client_name, start_location, end_location, is_round_trip, route_one_way_km, company_supported_amount, personal_burden_amount, account_title_name";
 
-export async function getClaimDocs(companyId: string, rows: ExportRow[]): Promise<ClaimDoc[]> {
-  const ids = [...new Set(rows.map((r) => r.claim_id))];
+export async function getClaimDocs(companyId: string, rows: Pick<ExportRow, "claim_id">[]): Promise<ClaimDoc[]> {
+  return getClaimDocsByIds(companyId, [...new Set(rows.map((r) => r.claim_id))]);
+}
+
+export async function getClaimDocsByIds(companyId: string, ids: string[]): Promise<ClaimDoc[]> {
   if (!ids.length) return [];
   const supabase = await createClient();
   const claims: Record<string, unknown>[] = [];
@@ -80,6 +84,12 @@ export async function getClaimDocs(companyId: string, rows: ExportRow[]): Promis
     ? await supabase.from("members").select("id, name, position, department:departments(name)").eq("company_id", companyId).in("id", memberIds)
     : { data: [] };
   const mem = new Map((members ?? []).map((m) => [m.id, m]));
+  // 입금 정보(양식에 '입금 정보' 칸이 있을 때 씀, D-118) — 관리자는 같은 회사 직원 계좌를 읽을 수 있다(RLS bank_select)
+  const ownerIds = [...new Set(claims.map((c) => c.member_id as string))];
+  const { data: banks } = ownerIds.length
+    ? await supabase.from("member_bank_accounts").select("member_id, bank_name, account_number, account_holder").eq("company_id", companyId).in("member_id", ownerIds)
+    : { data: [] };
+  const bank = new Map((banks ?? []).map((b) => [b.member_id, { bank_name: b.bank_name, account_number: b.account_number, account_holder: b.account_holder }]));
   const order = new Map(ids.map((id, i) => [id, i]));
   return claims
     .map((c) => {
@@ -87,7 +97,7 @@ export async function getClaimDocs(companyId: string, rows: ExportRow[]): Promis
       const round = c.current_round as number;
       return {
         ...(c as unknown as Omit<ClaimDoc, "member" | "items" | "steps">),
-        member: { name: owner?.name ?? "", department: (owner?.department as { name: string } | null)?.name ?? null, position: owner?.position ?? null },
+        member: { name: owner?.name ?? "", department: (owner?.department as { name: string } | null)?.name ?? null, position: owner?.position ?? null, bank: bank.get(c.member_id as string) ?? null },
         items: items.filter((i) => i.claim_id === c.id) as unknown as ClaimDocItem[],
         steps: steps
           .filter((s) => s.claim_id === c.id && s.round === round)

@@ -2,6 +2,16 @@
 
 관련: D-006, D-019, D-034 / 데이터: `form_templates`, `expense_claims.form_template_id`, `expense_claims.header_custom_payload`, `expense_items.item_custom_payload`
 
+## 0. 현재 범위 (D-118, 2026-10-23) — 이 문서의 §1~§6보다 우선
+- 양식은 **출력 문서 모양만** 정한다. 직원 입력 화면은 바뀌지 않고, 회사 고유 입력 칸(`header_custom_payload`·`item_custom_payload`)은 만들지 않는다.
+- 칸은 **우리 데이터로 채울 수 있는 항목**에서만 고른다(`src/lib/forms/layout.ts`의 FIELD_CATALOG·COLUMN_CATALOG). §4 바인딩 표를 대신한다.
+- `form_templates.schema` 형식은 §3 대신 `FormLayout`: `{ v, base, title, header[], columns[], totalLabel, footer[], statement, showDate, signerLabel, showCompany }` (각 칸 `{ key, label }`).
+- 기본 포맷 5종: 기본 양식 / 품목 표형 / 단건 요약형 / 월 청구형 / 내역·입금형 (`PRESETS`).
+- AI 분석: 사진·PDF(10MB, `form-templates/{company_id}/{uuid}.jpg|pdf`) → Gemini가 칸 이름과 항목 키(없으면 none)를 돌려줌 → 짝 없는 칸은 '채울 수 없어 뺀 칸'으로 안내, 결재란은 결재라인 자동, 표 열을 못 찾으면 기본 표. 실패하면 "양식을 읽지 못했어요… 비슷한 기본 포맷을 골라 직접 꾸며 주세요".
+- 저장 `save_form_template(schema, source_path, ai_extracted)`(관리자, 새 버전·활성 1개), 되돌리기 `clear_form_template()`.
+- 렌더링: 문서 모델(`buildDocModel`) 하나를 화면 미리보기(`ClaimDocument`)와 PDF(`pdf-client.ts`)가 같이 그린다. 쓰는 곳: 관리자 결의서 상세 [지출결의서 PDF], 세무 마감 ZIP 지출결의서 PDF.
+- 버전(§6 조정): PDF는 만들 때의 활성 양식으로 그린다(모양만 다르고 데이터는 같음). 결의서별 `form_template_id` 고정은 하지 않는다.
+
 ## 1. 개요
 회사가 쓰던 지출결의서·지출결의서 양식을 관리자가 사진/PDF로 올리면 Gemini Vision이 필드를 추출해 웹 양식으로 만든다. 관리자는 노코드 편집기로 보정한다.
 양식은 **헤더 영역**(청구자, 제목, 프로젝트 코드 등 결의서에 한 번 나오는 항목)과 **항목 표**(영수증 한 장당 한 행으로 반복되는 열)로 나뉜다(D-034). 직원이 영수증을 올리면 파싱값이 항목 표에, 직원 정보가 헤더에 **자동으로 채워지고**, 직원은 남은 회사 고유 항목만 입력해 상신한다. 결재자와 월말 PDF는 이 양식 모양으로 결의서를 본다.

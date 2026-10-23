@@ -1932,6 +1932,7 @@ export type Database = {
       business_verify_mode: { Args: never; Returns: string }
       check_claim_for_submit: { Args: { p_claim_id: string }; Returns: Json }
       claim_duplicate_receipts: { Args: { p_claim_id: string }; Returns: Json }
+      clear_form_template: { Args: never; Returns: undefined }
       close_tax_month: { Args: { p_month: string }; Returns: Json }
       consume_receipt_credit: {
         Args: {
@@ -2039,6 +2040,14 @@ export type Database = {
       }
       save_approval_line: {
         Args: { p_approver_ids: string[]; p_department_id: string }
+        Returns: string
+      }
+      save_form_template: {
+        Args: {
+          p_ai_extracted?: Json
+          p_schema: Json
+          p_source_file_path?: string
+        }
         Returns: string
       }
       set_claim_category: {

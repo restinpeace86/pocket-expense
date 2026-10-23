@@ -46,7 +46,7 @@ const SETTINGS_NAV: NavItem[] = [
   { href: "/corporate-cards", label: "법인카드", icon: CreditCard, ready: true },
   { href: "/vehicles", label: "회사차량", icon: Car, ready: true },
   { href: "/recurring", label: "정기 결제", icon: Repeat, ready: true },
-  { href: "/form-template", label: "사내 양식", icon: FileText, ready: false },
+  { href: "/form-template", label: "지출결의서 양식", icon: FileText, ready: true },
   { href: "/departments", label: "부서", icon: Building2, ready: true },
   { href: "/approval-lines", label: "사전 검토 결재라인", icon: Route, ready: true },
   { href: "/account-titles", label: "계정과목", icon: BookOpen, ready: true },
