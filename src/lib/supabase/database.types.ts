@@ -100,6 +100,54 @@ export type Database = {
           },
         ]
       }
+      announcements: {
+        Row: {
+          body: string
+          company_id: string | null
+          created_at: string
+          created_by_member_id: string | null
+          id: string
+          pushed_count: number
+          scope: Database["public"]["Enums"]["announcement_scope"]
+          title: string
+        }
+        Insert: {
+          body: string
+          company_id?: string | null
+          created_at?: string
+          created_by_member_id?: string | null
+          id?: string
+          pushed_count?: number
+          scope: Database["public"]["Enums"]["announcement_scope"]
+          title: string
+        }
+        Update: {
+          body?: string
+          company_id?: string | null
+          created_at?: string
+          created_by_member_id?: string | null
+          id?: string
+          pushed_count?: number
+          scope?: Database["public"]["Enums"]["announcement_scope"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_created_by_member_id_company_id_fkey"
+            columns: ["created_by_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       app_admins: {
         Row: {
           auth_user_id: string
@@ -1493,6 +1541,98 @@ export type Database = {
         }
         Relationships: []
       }
+      push_logs: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          devices: number
+          id: string
+          kind: string
+          member_id: string | null
+          ref: string
+          sent_on: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          devices?: number
+          id?: string
+          kind: string
+          member_id?: string | null
+          ref?: string
+          sent_on?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          devices?: number
+          id?: string
+          kind?: string
+          member_id?: string | null
+          ref?: string
+          sent_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          company_id: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_sent_at: string | null
+          member_id: string
+          p256dh: string
+          user_agent: string | null
+        }
+        Insert: {
+          auth: string
+          company_id: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_sent_at?: string | null
+          member_id: string
+          p256dh: string
+          user_agent?: string | null
+        }
+        Update: {
+          auth?: string
+          company_id?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_sent_at?: string | null
+          member_id?: string
+          p256dh?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_subscriptions_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       receipt_usage_records: {
         Row: {
           ai_parsed_payload: Json | null
@@ -1798,6 +1938,11 @@ export type Database = {
         Args: { p_account_title_id: string; p_item_id: string }
         Returns: undefined
       }
+      push_approval_targets: {
+        Args: { p_hours?: number; p_now?: string }
+        Returns: Json
+      }
+      push_deadline_targets: { Args: { p_today?: string }; Returns: Json }
       reactivate_member: { Args: { p_member_id: string }; Returns: undefined }
       record_perf_events: { Args: { p_events: Json }; Returns: number }
       refresh_claim_totals: { Args: { p_claim_id: string }; Returns: Json }
@@ -1925,6 +2070,7 @@ export type Database = {
       }
     }
     Enums: {
+      announcement_scope: "platform" | "company"
       approval_step_kind: "review" | "final"
       approval_step_status:
         | "waiting"
@@ -2114,6 +2260,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      announcement_scope: ["platform", "company"],
       approval_step_kind: ["review", "final"],
       approval_step_status: [
         "waiting",

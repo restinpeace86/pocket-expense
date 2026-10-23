@@ -34,6 +34,7 @@ export function AdminHomeView({
   dashboard,
   policyToConfirm = null,
   preview = false,
+  notices,
 }: {
   adminName: string;
   companyName: string;
@@ -44,6 +45,7 @@ export function AdminHomeView({
   dashboard: Dashboard;
   policyToConfirm?: string[] | null; // 정산 정책을 아직 한 번도 저장하지 않았으면 현재(기본) 정책 요약 (D-068)
   preview?: boolean;
+  notices?: React.ReactNode; // 공지(D-116)
 }) {
   const { kpi, todo } = dashboard;
   const [y, m] = dashboard.month.split("-");
@@ -88,6 +90,7 @@ export function AdminHomeView({
           {y}년 {monthLabel} 기준 · 사용일자 기준, 작성중·반려 결의서는 빼고 셌어요
         </p>
       </div>
+      {notices}
 
       {showChecklist && (
         <section className={card} aria-labelledby="setup-title">

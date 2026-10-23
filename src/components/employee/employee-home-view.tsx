@@ -152,6 +152,7 @@ export function EmployeeHomeView({
   creditsBlocked,
   initial,
   initialSheet,
+  notices,
 }: {
   name: string;
   base: string;
@@ -162,6 +163,7 @@ export function EmployeeHomeView({
   creditsBlocked: boolean; // 회사 무료 사용량을 다 썼고 이벤트도 꺼져 있음 (D-046, D-054)
   initial: { items: MyClaimRow[]; nextCursor: string | null };
   initialSheet?: MyClaimRow; // 미리보기 전용: 반려 사유 시트를 연 상태로 그린다
+  notices?: React.ReactNode; // 공지(D-116) — 서버에서 그려 넘긴다
 }) {
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
@@ -209,6 +211,7 @@ export function EmployeeHomeView({
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 pb-28 pt-5">
       <h1 className="text-xl font-bold tracking-tight">안녕하세요, {name}님 👋</h1>
+      {notices}
 
       <section className="rounded-2xl bg-brand-600 p-5 text-white shadow-sm">
         <p className="text-sm text-white/85">사비 정산 대기금</p>

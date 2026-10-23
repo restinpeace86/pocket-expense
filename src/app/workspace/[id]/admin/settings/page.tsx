@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { PushToggle } from "@/components/push/push-toggle";
 import { Suspense } from "react";
 import { CompanySettingsForm } from "@/components/admin/company-settings-form";
 import { getCompanySettings } from "@/lib/admin/queries";
@@ -23,5 +24,10 @@ async function Settings({ params }: { params: PageProps<"/workspace/[id]/admin/s
   const membership = await requireWorkspace(id, { admin: true });
   const settings = await getCompanySettings(membership.company_id);
   if (!settings) notFound();
-  return <CompanySettingsForm settings={settings} />;
+  return (
+    <>
+      <PushToggle />
+      <CompanySettingsForm settings={settings} />
+    </>
+  );
 }

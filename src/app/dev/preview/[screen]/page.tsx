@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { AnnouncementForm, AnnouncementList } from "@/components/push/announcement-form";
+import { NoticeStrip } from "@/components/push/notice-strip";
+import type { Notice } from "@/lib/push/notices";
 import { ReconcileHeading, ReconcileView } from "@/components/admin/reconcile-view";
 import { RecurringHeading, RecurringView } from "@/components/admin/recurring-view";
 import { VehiclesHeading, VehiclesView } from "@/components/admin/vehicles-view";
@@ -161,6 +164,10 @@ const SAMPLE_PLANS = [
   { code: "starter", name: "스타터", monthly_price: 30000, annual_price: 324000, monthly_receipts: 150, recommended_size: "5인 미만", is_featured: false },
   { code: "standard", name: "스탠다드", monthly_price: 60000, annual_price: 648000, monthly_receipts: 400, recommended_size: "5~15인", is_featured: true },
   { code: "pro", name: "프로", monthly_price: 110000, annual_price: 1188000, monthly_receipts: 800, recommended_size: "영업·현장직이 많은 팀", is_featured: false },
+];
+const SAMPLE_NOTICES: Notice[] = [
+  { id: "n1", scope: "company", title: "11월부터 식대 1인 12,000원 (아주 긴 공지 제목이 들어가도 한 줄로 줄여 보이는지 확인)", body: "11월 1일 사용분부터 1인 한도가 12,000원으로 바뀝니다.\n야근 식대도 같아요.", created_at: "2026-10-22T01:00:00Z" },
+  { id: "n2", scope: "platform", title: "10/30(목) 02:00~03:00 정기 점검", body: "점검 시간에는 영수증 업로드가 잠시 안 돼요.", created_at: "2026-10-21T01:00:00Z" },
 ];
 const SAMPLE_CREDIT = { granted: 200, used: 163, freeTrial: 100, eventCount: 1, eventTotal: 100, eventEnabled: true, eventAmount: 100, showEventBanner: false };
 
@@ -373,6 +380,7 @@ async function Preview({
             thisMonth="2026-10"
             filter="all"
             summary={{ pending_payout: screen === "employee-home" ? 142000 : 0, rejected_count: screen === "employee-home" ? 1 : 0, credits_left: screen === "employee-home-blocked" ? 0 : 80 }}
+            notices={screen === "employee-home" ? <NoticeStrip notices={SAMPLE_NOTICES} /> : undefined}
             creditsBlocked={screen === "employee-home-blocked"}
             initial={{ items: screen === "employee-home" ? SAMPLE_CLAIMS : [], nextCursor: screen === "employee-home" ? "x" : null }}
             initialSheet={screen === "employee-home-rejected" ? SAMPLE_CLAIMS[3] : undefined}
@@ -433,6 +441,22 @@ async function Preview({
             openItemId="i1"
           />
         </EmployeeShell>
+      );
+    case "app-admin-announcements":
+      return (
+        <AppAdminShell>
+          <h1 className="text-2xl font-bold">전체 공지</h1>
+          <AnnouncementForm preview placeholderTitle="예: 10/30(목) 02:00~03:00 정기 점검" audience="모든 회사의 모든 사용자" />
+          <AnnouncementList rows={SAMPLE_NOTICES.map((n) => ({ ...n, pushed_count: 128 }))} />
+        </AppAdminShell>
+      );
+    case "admin-announcements":
+      return (
+        <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/announcements">
+          <h1 className="text-2xl font-bold">사내 공지</h1>
+          <AnnouncementForm preview placeholderTitle="예: 11월부터 식대 1인 12,000원" audience="우리 회사 직원" />
+          <AnnouncementList rows={SAMPLE_NOTICES.filter((n) => n.scope === "company").map((n) => ({ ...n, pushed_count: 7 }))} />
+        </AdminShell>
       );
     case "app-admin-companies":
       return (

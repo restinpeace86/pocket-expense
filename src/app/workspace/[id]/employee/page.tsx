@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { getRecentNotices } from "@/lib/push/notices";
+import { NoticeStrip } from "@/components/push/notice-strip";
 import { EmployeeHomeView } from "@/components/employee/employee-home-view";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { creditEventEnabled } from "@/lib/credits";
@@ -25,9 +27,10 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
   const parsed = parseMonth(typeof sp.month === "string" ? sp.month : null, thisMonth);
   const month = parsed > thisMonth ? thisMonth : parsed;
   const filter = parseFilter(typeof sp.status === "string" ? sp.status : null);
-  const [summary, page] = await Promise.all([
+  const [summary, page, notices] = await Promise.all([
     getMySummary(),
     getMyClaims(membership.company_id, membership.member_id, { month, statuses: filterStatuses(filter) }),
+    getRecentNotices(),
   ]);
   return (
     <EmployeeHomeView
@@ -40,6 +43,7 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
       summary={summary}
       creditsBlocked={summary.credits_left <= 0 && !creditEventEnabled()}
       initial={page}
+      notices={<NoticeStrip notices={notices} />}
     />
   );
 }

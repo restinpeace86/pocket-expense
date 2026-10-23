@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { getRecentNotices } from "@/lib/push/notices";
+import { NoticeStrip } from "@/components/push/notice-strip";
 import { AdminHomeView } from "@/components/admin/admin-home-view";
 import { EventBonusBanner } from "@/components/admin/event-bonus-banner";
 import { getCreditStatus } from "@/lib/admin/billing";
@@ -21,7 +23,7 @@ export default function AdminHomePage({ params }: PageProps<"/workspace/[id]/adm
 async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin">["params"] }) {
   const { id } = await params;
   const membership = await requireWorkspace(id, { admin: true });
-  const [{ company }, credit, dashboard] = await Promise.all([getCompanySummary(membership.company_id), getCreditStatus(membership.company_id), getDashboard(currentMonthKst())]);
+  const [{ company }, credit, dashboard, notices] = await Promise.all([getCompanySummary(membership.company_id), getCreditStatus(membership.company_id), getDashboard(currentMonthKst()), getRecentNotices()]);
   if (!company || !dashboard) return null;
   return (
     <>
@@ -36,6 +38,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
       creditsGranted={company.receipt_credits_granted}
       policyToConfirm={company.policy_confirmed_at ? null : describePolicy(company)}
       basePath={`/workspace/${membership.company_id}/admin`}
+      notices={<NoticeStrip notices={notices} />}
       />
     </>
   );

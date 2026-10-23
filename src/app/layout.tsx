@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PocketExpense",
   description: "소기업·스타트업을 위한 가장 가벼운 AI 경비 정산",
+  // 홈 화면에 추가했을 때 아이콘·이름(아이폰 웹 알림은 홈 화면 앱에서만, D-116)
+  icons: { apple: "/icons/180" },
+  appleWebApp: { capable: true, title: "PocketExpense", statusBarStyle: "default" },
 };
 
 // 화면 색상(D-066): 이 브라우저에 저장된 값을 첫 화면을 그리기 전에 적용해 색이 바뀌며 깜빡이지 않게 한다.

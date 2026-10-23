@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { PushToggle } from "@/components/push/push-toggle";
 import { Suspense } from "react";
 import { ProfileForm } from "@/components/employee/profile-form";
 import { requireWorkspace } from "@/lib/auth/guards";
@@ -23,5 +24,10 @@ async function Profile({ params }: { params: PageProps<"/workspace/[id]/employee
   const membership = await requireWorkspace(id);
   const profile = await getMyProfile(membership.member_id);
   if (!profile) notFound();
-  return <ProfileForm profile={profile} />;
+  return (
+    <>
+      <PushToggle />
+      <ProfileForm profile={profile} />
+    </>
+  );
 }

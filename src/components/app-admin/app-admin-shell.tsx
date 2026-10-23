@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-// 앱관리자(운영자) 화면 틀 (D-080) — PC 기준, 읽기 전용. 고객 화면 어디에도 링크하지 않는다.
+// 앱관리자(운영자) 화면 틀 (D-080) — PC 기준, 읽기 전용(전체 공지 쓰기만 예외, D-116). 고객 화면 어디에도 링크하지 않는다.
 export function AppAdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-1 flex-col bg-zinc-50">
@@ -11,7 +11,11 @@ export function AppAdminShell({ children }: { children: ReactNode }) {
             <span className="inline-flex size-7 items-center justify-center rounded-md bg-amber-400 text-sm text-zinc-900">P</span>
             PocketExpense 운영자
           </Link>
-          <span className="rounded-full bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300">읽기 전용</span>
+          <nav className="flex items-center gap-3 text-sm">
+            <Link href="/app-admin" className="text-zinc-300 hover:text-white">회사</Link>
+            <Link href="/app-admin/announcements" className="text-zinc-300 hover:text-white">전체 공지</Link>
+            <span className="hidden rounded-full bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 sm:inline">공지 외 읽기 전용</span>
+          </nav>
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 md:px-6">{children}</main>
