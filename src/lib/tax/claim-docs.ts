@@ -47,6 +47,7 @@ export type ClaimDoc = {
   total_amount: number;
   total_company_supported: number;
   total_personal_burden: number;
+  header_custom?: Record<string, string> | null; // 회사 추가 항목에 직원이 쓴 값(D-120)
   member: { name: string; department: string | null; position: string | null; bank?: { bank_name: string; account_number: string; account_holder: string } | null };
   items: ClaimDocItem[];
   steps: ClaimDocStep[];
@@ -70,7 +71,7 @@ export async function getClaimDocsByIds(companyId: string, ids: string[]): Promi
     const [c, it, st] = await Promise.all([
       supabase
         .from("expense_claims")
-        .select("id, member_id, title, description, exception_memo, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, submitted_at, approved_at, self_approved, total_amount, total_company_supported, total_personal_burden, current_round")
+        .select("id, member_id, title, description, exception_memo, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, submitted_at, approved_at, self_approved, total_amount, total_company_supported, total_personal_burden, current_round, header_custom_payload")
         .eq("company_id", companyId)
         .in("id", part),
       supabase.from("expense_items").select(ITEM_COLS).eq("company_id", companyId).in("claim_id", part).order("sort_order"),
@@ -98,6 +99,7 @@ export async function getClaimDocsByIds(companyId: string, ids: string[]): Promi
       const round = c.current_round as number;
       return {
         ...(c as unknown as Omit<ClaimDoc, "member" | "items" | "steps">),
+        header_custom: (c.header_custom_payload as Record<string, string> | null) ?? null,
         member: { name: owner?.name ?? "", department: (owner?.department as { name: string } | null)?.name ?? null, position: owner?.position ?? null, bank: bank.get(c.member_id as string) ?? null },
         items: items.filter((i) => i.claim_id === c.id) as unknown as ClaimDocItem[],
         steps: steps

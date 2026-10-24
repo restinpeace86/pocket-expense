@@ -7,7 +7,7 @@ import { messageForDbError } from "@/lib/errors";
 import { getActiveForm } from "@/lib/forms/active";
 import { layoutFromAi, type AiFormRead, type AiLayoutResult } from "@/lib/forms/ai-layout";
 import { readFormWithGemini } from "@/lib/forms/gemini-form";
-import { normalizeLayout, type FormLayout } from "@/lib/forms/layout";
+import { isCustom, normalizeLayout, type FormLayout } from "@/lib/forms/layout";
 import { createClient } from "@/lib/supabase/server";
 import { getClaimDocsByIds, type ClaimDoc } from "@/lib/tax/claim-docs";
 
@@ -29,6 +29,8 @@ export async function saveFormLayoutAction(input: { layout: FormLayout; sourceFi
   if (!m) return fail("NOT_ALLOWED");
   if (input.sourceFilePath && !sourcePathOk(m.company_id, input.sourceFilePath)) return fail("INVALID_FORM_SOURCE");
   const layout = normalizeLayout(input.layout);
+  // 우리 데이터로 못 채우는 칸은 관리자가 칸마다 정해야 저장(D-120)
+  if ([...layout.header, ...layout.columns, ...layout.footer].some((e) => isCustom(e) && e.pending)) return { ok: false, error: "정해야 할 칸이 남아 있어요. 칸마다 [직원이 작성]·[고정값]·[빈칸으로 남기기]·[빼기] 중에 골라 주세요." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("save_form_template", {
     p_schema: layout,

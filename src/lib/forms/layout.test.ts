@@ -35,6 +35,25 @@ describe("지출결의서 양식 틀 (D-118)", () => {
     expect(normalizeLayout(null)).toBe(DEFAULT_LAYOUT);
   });
 
+  it("회사 추가 칸: 직원 작성 값·고정값·빈칸, 직원 작성 칸은 최대 3개(넘으면 빈칸)", () => {
+    const l = normalizeLayout({
+      ...PRESETS.itemized.layout,
+      header: [
+        { key: "custom.proj0001", label: "프로젝트", mode: "input", required: true, options: ["A", "B", "A"] },
+        { key: "custom.keep0001", label: "보존기간", mode: "fixed", value: "5년" },
+        { key: "custom.stmp0001", label: "확인", mode: "blank" },
+        { key: "custom.in020001", label: "예산", mode: "input" },
+        { key: "custom.in030001", label: "코드", mode: "input" },
+        { key: "custom.in040001", label: "넷째", mode: "input" },
+        { key: "custom.BAD!", label: "x", mode: "input" },
+      ],
+    });
+    expect(l.header.map((h) => ("mode" in h ? `${h.label}:${h.mode}` : h.label))).toEqual(["프로젝트:input", "보존기간:fixed", "확인:blank", "예산:input", "코드:input", "넷째:blank"]);
+    expect(l.header[0]).toMatchObject({ required: true, options: ["A", "B"] });
+    const m = buildDocModel(l, { ...SAMPLE_DOC, header_custom: { "custom.proj0001": "A" } }, { companyName: "x" });
+    expect(m.header.map((h) => `${h.label}=${h.value}`)).toEqual(["프로젝트=A", "보존기간=5년", "확인=", "예산=", "코드=", "넷째="]);
+  });
+
   it("문서 모델: 합계는 표 항목을 더해서, 금액 한글·기간·맺음말", () => {
     const m = buildDocModel(PRESETS.single.layout, SAMPLE_DOC, { companyName: "가나다" });
     expect(m.header.find((h) => h.label === "금 액")?.value).toBe("일금 일십만삼천삼백원정 (₩103,300)");

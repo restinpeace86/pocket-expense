@@ -374,10 +374,22 @@ export function ClaimEditor({
       purchaseItems: claim.purchase_items ?? "",
       headcount: claim.headcount,
       vehicleId: claim.vehicle_id,
+      custom: Object.fromEntries(data.companyFields.map((f) => [f.key, claim.header_custom_payload?.[f.key] ?? ""])),
     }),
-    [claim, items],
+    [claim, items, data.companyFields],
   );
-  const [form, setForm] = useState<ClaimHeaderInput>(initial);
+  // 회사 추가 항목: 비어 있으면 내 지난 결의서 값으로 미리 채운다(자동 저장으로 저장됨, D-120). 고를 값 목록에 없는 옛 값은 채우지 않는다
+  const prefilled: ClaimHeaderInput = useMemo(() => {
+    const editableNow = claim.status === "draft" || claim.status === "rejected";
+    if (!editableNow) return initial;
+    const custom = { ...initial.custom };
+    for (const f of data.companyFields) {
+      const last = data.lastCustom[f.key];
+      if (!custom[f.key] && last && (!f.options || f.options.includes(last))) custom[f.key] = last;
+    }
+    return { ...initial, custom };
+  }, [initial, data.companyFields, data.lastCustom, claim.status]);
+  const [form, setForm] = useState<ClaimHeaderInput>(prefilled);
   // 저장된 제목이 자동 제안 모양이면 계속 자동(카테고리를 고르면 [카테고리]가 붙는다, D-087). 직원이 직접 쓴 제목만 고정
   const [titleTouched, setTitleTouched] = useState(() => !isAutoTitle(claim.title, { isBusinessTrip: claim.is_business_trip, tripDestination: claim.trip_destination, tripStartDate: claim.trip_start_date, category: claim.category }, items));
   // 지출 사유: 직원이 쓰기 전까지는 AI 초안을 보여 주고 그대로 저장·상신된다(D-086)
@@ -1099,6 +1111,55 @@ export function ClaimEditor({
         )}
       </section>
 
+      {data.companyFields.length > 0 && (
+        <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4" aria-labelledby="company-fields-title" id="company-fields">
+          <div>
+            <h2 id="company-fields-title" className="font-semibold">
+              회사 추가 항목
+            </h2>
+            <p className="mt-0.5 text-xs text-zinc-500">우리 회사 지출결의서 양식에 들어가는 칸이에요. 지난번 값이 있으면 미리 채워 둬요.</p>
+          </div>
+          {data.companyFields.map((f) => {
+            const v = form.custom[f.key] ?? "";
+            const missing = !!problems?.header.includes(`custom:${f.label}`) && !v.trim();
+            return (
+              <div key={f.key} className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-zinc-800" id={`cf-${f.key}`}>
+                  {f.label}
+                  {f.required ? <span className="text-red-600">*</span> : <span className="ml-1 text-xs font-normal text-zinc-500">(선택)</span>}
+                </span>
+                {f.options ? (
+                  <div className="flex flex-wrap gap-2" role="radiogroup" aria-labelledby={`cf-${f.key}`}>
+                    {f.options.map((o) => (
+                      <button
+                        key={o}
+                        type="button"
+                        role="radio"
+                        aria-checked={v === o}
+                        disabled={!editable}
+                        onClick={() => set("custom", { ...form.custom, [f.key]: v === o && !f.required ? "" : o })}
+                        className={`min-h-11 rounded-xl border px-3 text-sm font-medium break-keep ${v === o ? "border-brand-600 bg-brand-600 text-white" : missing ? "border-red-400 bg-white text-zinc-800" : "border-zinc-300 bg-white text-zinc-800"}`}
+                      >
+                        {o}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <input
+                    className={`${inputClass} ${missing ? "border-red-400" : ""}`}
+                    aria-labelledby={`cf-${f.key}`}
+                    maxLength={200}
+                    disabled={!editable}
+                    value={v}
+                    onChange={(e) => set("custom", { ...form.custom, [f.key]: e.target.value })}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </section>
+      )}
+
       <section className="rounded-2xl border border-zinc-200 bg-white p-4">
         <dl className="grid grid-cols-[1fr_auto] gap-y-1.5 text-sm">
           <dt className="text-zinc-600">합계</dt>
@@ -1158,7 +1219,7 @@ export function ClaimEditor({
       {problems && (
         <section className="flex flex-col gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
           <p className="font-semibold">아래 칸을 채우면 상신할 수 있어요</p>
-          {problems.header.length > 0 && <p>결의서: {problems.header.map((h) => HEADER_PROBLEM_LABEL[h] ?? h).join(", ")}</p>}
+          {problems.header.length > 0 && <p>결의서: {problems.header.map((h) => HEADER_PROBLEM_LABEL[h] ?? (h.startsWith("custom:") ? h.slice(7) : h)).join(", ")}</p>}
           {problems.items.map((p) => {
             const it = items.find((x) => x.id === p.item_id);
             const n = items.findIndex((x) => x.id === p.item_id) + 1;

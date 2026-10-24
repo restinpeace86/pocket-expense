@@ -96,7 +96,7 @@ function drawFields(c: Ctx, fields: DocField[]) {
   }
   for (const row of rows) {
     const cellW = row.length === 1 && row[0].wide ? W : W / 2;
-    const values = row.map((f) => wrap(f.value || "-", cellW - LABEL_W - 10, 9, c.reg));
+    const values = row.map((f) => wrap(f.value || (f.blank ? "" : "-"), cellW - LABEL_W - 10, 9, c.reg));
     const labels = row.map((f) => wrap(f.label, LABEL_W - 8, 8.5, c.reg));
     const h = Math.max(...values.map((l) => l.length), ...labels.map((l) => l.length)) * 13 + 8;
     ensure(c, h);

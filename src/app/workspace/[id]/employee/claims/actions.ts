@@ -14,6 +14,7 @@ import { parseReceiptWithGemini } from "@/lib/receipts/gemini";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { routeDistance } from "@/lib/maps/kakao";
 import { createClient } from "@/lib/supabase/server";
+import { inputFieldsOf, normalizeLayout } from "@/lib/forms/layout";
 
 // 결의서 편집(E-02) 서버 액션. 모든 쓰기는 사용자 세션으로 하고 RLS·DB 함수가 "본인 회사·본인 작성 중 결의서"만 허용한다.
 // 크레딧 차감(consume_receipt_credit)만 service role로 부르며, 그 전에 세션 사용자·소속을 확인한다(CLAUDE.md 제2장 제4조).
@@ -45,6 +46,24 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
   if (input.defaultPaymentMethod !== "corporate_card" && input.defaultPaymentMethod !== "personal_card") return fail("NOT_ALLOWED");
 
   const supabase = await createClient();
+  // 회사 추가 항목(D-120): 지금 양식의 '직원이 작성' 칸만, 값은 200자까지, 고를 값이 있으면 그중 하나. 다른 키(옛 양식 값)는 그대로 둔다
+  let customPayload: Record<string, string> | undefined;
+  if (input.custom && Object.keys(input.custom).length) {
+    const [{ data: form }, { data: cur }] = await Promise.all([
+      supabase.from("form_templates").select("schema").eq("company_id", m.company_id).eq("is_active", true).maybeSingle(),
+      supabase.from("expense_claims").select("header_custom_payload").eq("id", claimId).eq("member_id", m.member_id).maybeSingle(),
+    ]);
+    const fields = inputFieldsOf(form ? normalizeLayout(form.schema) : null);
+    const next: Record<string, string> = { ...((cur?.header_custom_payload as Record<string, string> | null) ?? {}) };
+    for (const f of fields) {
+      if (!(f.key in input.custom)) continue;
+      const v = String(input.custom[f.key] ?? "").replace(/\s+/g, " ").trim().slice(0, 200);
+      if (v && f.options?.length && !f.options.includes(v)) return { ok: false, error: `${f.label}: 목록에서 골라 주세요.` };
+      if (v) next[f.key] = v;
+      else delete next[f.key];
+    }
+    customPayload = next;
+  }
   // 결의서 대표 카테고리(D-098): 영수증 반영·재계산까지 DB가 한다. 출장비를 고르면 출장 결의서
   const CATS = ALL_CATEGORIES;
   const PURCHASES = ["pantry", "office_supplies", "small_equipment"] as const;
@@ -82,6 +101,7 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
       trip_end_date: isTrip ? end : null,
       trip_purpose: isTrip ? purpose || null : null,
       trip_transport: isTrip && input.tripTransport && TRANSPORTS.includes(input.tripTransport) ? input.tripTransport : null,
+      ...(customPayload ? { header_custom_payload: customPayload } : {}),
     })
     .eq("id", claimId)
     .eq("company_id", m.company_id)

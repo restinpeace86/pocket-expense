@@ -40,6 +40,7 @@ export type EditorClaim = {
   headcount: number | null;
   vehicle_id: string | null; // 회사차량 결의서의 차량 (D-105)
   recurring_payment_id: string | null; // 정기 결제로 자동으로 만든 결의서 (D-110)
+  header_custom_payload: Record<string, string>; // 회사 추가 항목 값 (D-120)
 };
 
 export type EditorItem = {
@@ -119,7 +120,11 @@ export type EditorData = {
   fuel: FuelPolicy;
   vehicles: EditorVehicle[]; // 고를 수 있는 회사차량(사용 중 + 이 결의서가 이미 고른 차량)
   deadline: { type: "none" | "end_of_month" | "days_after" | "next_month_day"; days: number | null }; // 회사 청구 기한 (D-031)
+  companyFields: CompanyField[]; // 회사 추가 항목(관리자가 양식에서 '직원이 작성'으로 정한 칸, D-120). 없으면 화면에 안 보임
+  lastCustom: Record<string, string>; // 내 지난 결의서의 값(미리 채움)
 };
+
+export type CompanyField = { key: string; label: string; required: boolean; options: string[] | null };
 
 export type ItemInput = {
   category: ExpenseCategory | null;
@@ -164,4 +169,5 @@ export type ClaimHeaderInput = {
   purchaseItems: string;
   headcount: number | null;
   vehicleId: string | null; // 회사차량 결의서의 차량 (D-105)
+  custom: Record<string, string>; // 회사 추가 항목 (D-120)
 };

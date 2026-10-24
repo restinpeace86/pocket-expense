@@ -56,15 +56,32 @@ export const COLUMN_CATALOG = {
 export type ColumnKey = keyof typeof COLUMN_CATALOG;
 
 export type LayoutField<K extends string> = { key: K; label: string };
+// 회사 추가 칸(D-120): 우리 데이터로 못 채우는 칸을 관리자가 칸마다 정한다
+// - input: 직원이 결의서 맨 아래 [회사 추가 항목]에서 씀(결의서 한 건에 한 번, 최대 3개) — 값은 expense_claims.header_custom_payload
+// - fixed: 관리자가 정한 같은 값이 모든 결의서에 / - blank: 양식 모양만 남기고 비워 둠
+// - pending: AI가 찾은 칸이라 아직 안 정함(저장 불가)
+export type CustomKey = `custom.${string}`;
+export type CustomMode = "input" | "fixed" | "blank";
+export type CustomField = { key: CustomKey; label: string; mode: CustomMode; required?: boolean; options?: string[]; value?: string; pending?: boolean };
+export type HeaderEntry = LayoutField<FieldKey> | CustomField;
+export type ColumnEntry = LayoutField<ColumnKey> | CustomField; // 표 열의 회사 추가 칸은 빈 열(blank)만
+export const isCustom = (e: { key: string }): e is CustomField => e.key.startsWith("custom.");
+export const MAX_INPUT_FIELDS = 3;
+export const newCustomKey = (): CustomKey => `custom.${Math.random().toString(36).slice(2, 10).padEnd(8, "0")}`;
+// 직원이 쓰는 칸(표 위·아래에서 mode=input, 저장된 것만)
+export function inputFieldsOf(layout: FormLayout | null): CustomField[] {
+  if (!layout) return [];
+  return [...layout.header, ...layout.footer].filter((e): e is CustomField => isCustom(e) && e.mode === "input" && !e.pending);
+}
 export type PresetId = "standard" | "itemized" | "single" | "monthly" | "detailed";
 export type FormLayout = {
   v: 1;
   base: PresetId | "custom";
   title: string;
-  header: LayoutField<FieldKey>[]; // 표 위 라벨–값
-  columns: LayoutField<ColumnKey>[]; // 항목 표(영수증 1장 = 1행)
+  header: HeaderEntry[]; // 표 위 라벨–값
+  columns: ColumnEntry[]; // 항목 표(영수증 1장 = 1행)
   totalLabel: string; // 합계 행 이름
-  footer: LayoutField<FieldKey>[]; // 표 아래 라벨–값(특이사항·입금 정보 등)
+  footer: HeaderEntry[]; // 표 아래 라벨–값(특이사항·입금 정보 등)
   statement: string | null; // 맺음말. {기간}은 지출 기간으로 바뀜
   showDate: boolean; // 맺음말 아래 날짜(상신일)
   signerLabel: string | null; // "작성자: 홍길동 (인)"
@@ -217,15 +234,38 @@ export const DEFAULT_LAYOUT = PRESETS.standard.layout;
 // ── 저장된 값 검사(DB·AI에서 온 값은 믿지 않는다) ─────────────────────
 const LIMIT = { title: 30, label: 30, statement: 200, header: 20, columns: 10, footer: 6 };
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
-function fields<K extends string>(v: unknown, catalog: Record<K, { label: string }>, max: number): LayoutField<K>[] {
+const CUSTOM_KEY = /^custom\.[a-z0-9]{4,16}$/;
+function customOf(x: Record<string, unknown>, columnOnly: boolean): CustomField | null {
+  const label = str(x.label, LIMIT.label);
+  if (!label) return null;
+  const mode: CustomMode = !columnOnly && (x.mode === "input" || x.mode === "fixed") ? x.mode : "blank";
+  const out: CustomField = { key: x.key as CustomKey, label, mode };
+  if (x.pending === true) out.pending = true;
+  if (mode === "input") {
+    out.required = x.required === true;
+    const opts = Array.isArray(x.options) ? [...new Set(x.options.map((o) => str(o, 30)).filter(Boolean))].slice(0, 10) : [];
+    if (opts.length) out.options = opts;
+  }
+  if (mode === "fixed") out.value = str(x.value, 100);
+  return out;
+}
+function fields<K extends string>(v: unknown, catalog: Record<K, { label: string }>, max: number, columnOnly = false): (LayoutField<K> | CustomField)[] {
   if (!Array.isArray(v)) return [];
   const seen = new Set<string>();
-  const out: LayoutField<K>[] = [];
+  const out: (LayoutField<K> | CustomField)[] = [];
   for (const x of v) {
     const key = (x as { key?: unknown })?.key;
-    if (typeof key !== "string" || !(key in catalog) || seen.has(key)) continue;
-    seen.add(key);
-    out.push({ key: key as K, label: str((x as { label?: unknown }).label, LIMIT.label) || catalog[key as K].label });
+    if (typeof key !== "string" || seen.has(key)) continue;
+    if (CUSTOM_KEY.test(key)) {
+      const c = customOf(x as Record<string, unknown>, columnOnly);
+      if (!c) continue;
+      seen.add(key);
+      out.push(c);
+    } else {
+      if (!(key in catalog)) continue;
+      seen.add(key);
+      out.push({ key: key as K, label: str((x as { label?: unknown }).label, LIMIT.label) || catalog[key as K].label });
+    }
     if (out.length >= max) break;
   }
   return out;
@@ -233,17 +273,22 @@ function fields<K extends string>(v: unknown, catalog: Record<K, { label: string
 
 export function normalizeLayout(v: unknown): FormLayout {
   const o = (v && typeof v === "object" ? v : {}) as Record<string, unknown>;
-  const columns = fields(o.columns, COLUMN_CATALOG, LIMIT.columns);
-  if (!columns.length) return DEFAULT_LAYOUT; // 표가 없으면 결의서가 안 되므로 기본 양식
+  const columns = fields(o.columns, COLUMN_CATALOG, LIMIT.columns, true);
+  if (!columns.some((c) => !isCustom(c))) return DEFAULT_LAYOUT; // 영수증 표가 없으면 결의서가 안 되므로 기본 양식
+  const header = fields(o.header, FIELD_CATALOG, LIMIT.header);
+  const footer = fields(o.footer, FIELD_CATALOG, LIMIT.footer);
+  // 직원이 쓰는 칸은 최대 3개 — 넘으면 빈칸으로(직원 품을 늘리지 않게)
+  let inputs = 0;
+  for (const e of [...header, ...footer]) if (isCustom(e) && e.mode === "input" && ++inputs > MAX_INPUT_FIELDS) Object.assign(e, { mode: "blank", required: undefined, options: undefined });
   const base = typeof o.base === "string" && (o.base === "custom" || o.base in PRESETS) ? (o.base as FormLayout["base"]) : "custom";
   return {
     v: 1,
     base,
     title: str(o.title, LIMIT.title) || "지출결의서",
-    header: fields(o.header, FIELD_CATALOG, LIMIT.header),
+    header,
     columns,
     totalLabel: str(o.totalLabel, 10) || "합계",
-    footer: fields(o.footer, FIELD_CATALOG, LIMIT.footer),
+    footer,
     statement: str(o.statement, LIMIT.statement) || null,
     showDate: o.showDate === true,
     signerLabel: str(o.signerLabel, 10) || null,
@@ -252,7 +297,7 @@ export function normalizeLayout(v: unknown): FormLayout {
 }
 
 // ── 문서 모델 ───────────────────────────────────────────────
-export type DocField = { label: string; value: string; wide: boolean };
+export type DocField = { label: string; value: string; wide: boolean; blank?: boolean }; // blank: 회사 추가 칸(비어도 "-" 대신 빈칸)
 export type DocModel = {
   title: string;
   company: string;
@@ -464,26 +509,31 @@ export function buildDocModel(layout: FormLayout, doc: ClaimDoc, ctx: DocContext
         return clean(doc.exception_memo) || null;
     }
   };
-  const toFields = (list: LayoutField<FieldKey>[]): DocField[] =>
+  const toFields = (list: HeaderEntry[]): DocField[] =>
     list.flatMap((x) => {
+      if (isCustom(x)) {
+        const v = x.mode === "input" ? clean(doc.header_custom?.[x.key] ?? "") : x.mode === "fixed" ? clean(x.value) : "";
+        return [{ label: x.label, value: v, wide: false, blank: true }];
+      }
       const v = value(x.key);
       return v === null ? [] : [{ label: x.label, value: v, wide: "wide" in FIELD_CATALOG[x.key] }];
     });
 
-  const cols = layout.columns.map((c) => ({ label: c.label, w: COLUMN_CATALOG[c.key].w, right: "money" in COLUMN_CATALOG[c.key] || "num" in COLUMN_CATALOG[c.key] }));
+  const meta = (c: ColumnEntry) => (isCustom(c) ? { w: 1 } : (COLUMN_CATALOG[c.key] as { w: number; money?: boolean; num?: boolean; line?: boolean }));
+  const cols = layout.columns.map((c) => ({ label: c.label, w: meta(c).w, right: !!(meta(c) as { money?: boolean }).money || !!(meta(c) as { num?: boolean }).num }));
   const ev = ctx.evidenceNo ?? null;
   // 품목 칸(품목·수량·단가)이 있으면 영수증 품목마다 한 줄(A안), 없으면 영수증 한 장이 한 줄
-  const lineMode = layout.columns.some((c) => "line" in COLUMN_CATALOG[c.key]);
+  const lineMode = layout.columns.some((c) => !isCustom(c) && "line" in COLUMN_CATALOG[c.key]);
   // 품목 이름 열: item.line_name, 없으면 적요 열(수량·단가만 있는 양식에서 적요가 품목 이름 자리)
-  const nameKey: ColumnKey = layout.columns.find((c) => c.key === "item.line_name")?.key ?? layout.columns.find((c) => c.key === "item.summary" || c.key === "item.purpose")?.key ?? "item.line_name";
+  const nameKey = (layout.columns.find((c) => c.key === "item.line_name")?.key ?? layout.columns.find((c) => c.key === "item.summary" || c.key === "item.purpose")?.key ?? "item.line_name") as ColumnKey;
   const rows: DocModel["table"]["rows"] = [];
   doc.items.forEach((i) => {
     const no = ev?.get(i.id) ?? (ev ? "다른 달" : undefined);
     const dim = ev ? !ev.get(i.id) : false;
     const parts: (DocLine | null)[] = lineMode ? linesOf(i) : [null];
-    parts.forEach((ln, j) => rows.push({ cells: layout.columns.map((c) => cell(c.key, i, rows.length, no, ln, j === 0, nameKey)), dim }));
+    parts.forEach((ln, j) => rows.push({ cells: layout.columns.map((c) => (isCustom(c) ? "" : cell(c.key, i, rows.length, no, ln, j === 0, nameKey))), dim }));
   });
-  const moneyCols = layout.columns.map((c) => MONEY_FIELD[c.key]);
+  const moneyCols = layout.columns.map((c) => (isCustom(c) ? undefined : MONEY_FIELD[c.key]));
   const totalRow = moneyCols.some(Boolean) ? layout.columns.map((c, i) => (moneyCols[i] ? won(sum(moneyCols[i]!)) : i === 0 ? layout.totalLabel : "")) : null;
   if (totalRow && moneyCols[0]) totalRow[0] = `${layout.totalLabel} ${totalRow[0]}`;
 

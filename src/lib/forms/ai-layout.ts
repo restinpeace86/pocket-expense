@@ -1,7 +1,9 @@
-// AI가 종이 양식에서 읽은 결과 → 양식 틀 (D-118)
-// AI는 칸 이름(label)과 "우리 데이터 중 무엇에 해당하는지(binding)"만 정한다. 해당 없으면 "none" → 채울 수 없는 칸으로 안내하고 뺀다.
+// AI가 종이 양식에서 읽은 결과 → 양식 틀 (D-118, D-120)
+// AI는 칸 이름(label)과 "우리 데이터 중 무엇에 해당하는지(binding)"만 정한다.
+// 해당 없음("none")·같은 데이터 중복 칸은 버리지 않고 제자리에 "회사 추가 칸(아직 안 정함)"으로 둔다 →
+// 관리자가 칸마다 [직원 작성] / [고정값] / [빈칸으로 남기기] / [빼기]를 정해야 저장된다(직원 품이 몰래 늘지 않게).
 // 결재란 칸 이름(담당·이사·대표 등)은 결재라인에서 자동으로 만들므로 칸으로 만들지 않는다(form-template.md §2).
-import { COLUMN_CATALOG, FIELD_CATALOG, normalizeLayout, PRESETS, type ColumnKey, type FieldKey, type FormLayout, type LayoutField } from "./layout";
+import { COLUMN_CATALOG, FIELD_CATALOG, newCustomKey, normalizeLayout, PRESETS, type CustomField, type FormLayout, type LayoutField } from "./layout";
 
 export type AiFormRead = {
   title?: string | null;
@@ -15,28 +17,30 @@ export type AiFormRead = {
   has_company_line?: boolean | null;
 };
 
-export type AiLayoutResult = { layout: FormLayout; unmatched: string[]; approvalLabels: string[]; tableFallback: boolean };
+export type AiLayoutResult = { layout: FormLayout; pending: string[]; approvalLabels: string[]; tableFallback: boolean };
 
 const label = (s: unknown) => (typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, 30) : "");
 
-function pick<K extends string>(list: AiFormRead["header_fields"], catalog: Record<K, unknown>, unmatched: string[]): LayoutField<K>[] {
-  const out: LayoutField<K>[] = [];
+function pick<K extends string>(list: AiFormRead["header_fields"], catalog: Record<K, unknown>, taken: Set<string>): (LayoutField<K> | CustomField)[] {
+  const out: (LayoutField<K> | CustomField)[] = [];
   for (const x of list ?? []) {
     const l = label(x?.label);
-    if (x && typeof x.binding === "string" && x.binding in catalog && !out.some((o) => o.key === x.binding)) out.push({ key: x.binding as K, label: l });
-    else if (l) unmatched.push(l);
+    if (x && typeof x.binding === "string" && x.binding in catalog && !taken.has(x.binding)) {
+      taken.add(x.binding);
+      out.push({ key: x.binding as K, label: l });
+    } else if (l) out.push({ key: newCustomKey(), label: l, mode: "blank", pending: true });
   }
   return out;
 }
 
 export function layoutFromAi(raw: AiFormRead): AiLayoutResult {
-  const unmatched: string[] = [];
-  const header = pick<FieldKey>(raw.header_fields, FIELD_CATALOG, unmatched);
-  let columns = pick<ColumnKey>(raw.table_columns, COLUMN_CATALOG, unmatched);
-  const footer = pick<FieldKey>(raw.footer_fields, FIELD_CATALOG, unmatched).filter((f) => !header.some((h) => h.key === f.key));
-  // 표 칸을 하나도 못 맞추면 영수증을 보여 줄 곳이 없으므로 기본 표(사용일·사용처·적요·금액)를 넣는다
-  const tableFallback = !columns.length;
-  if (tableFallback) columns = PRESETS.single.layout.columns;
+  const takenFields = new Set<string>();
+  const header = pick(raw.header_fields, FIELD_CATALOG, takenFields);
+  const footer = pick(raw.footer_fields, FIELD_CATALOG, takenFields);
+  let columns = pick(raw.table_columns, COLUMN_CATALOG, new Set());
+  // 영수증 표 칸을 하나도 못 맞추면 영수증을 보여 줄 곳이 없으므로 기본 표(사용일·사용처·적요·금액)를 넣는다
+  const tableFallback = !columns.some((c) => !c.key.startsWith("custom."));
+  if (tableFallback) columns = [...PRESETS.single.layout.columns, ...columns];
   const layout = normalizeLayout({
     v: 1,
     base: "custom",
@@ -50,8 +54,9 @@ export function layoutFromAi(raw: AiFormRead): AiLayoutResult {
     signerLabel: label(raw.signer_label).replace(/[:：_\s(]*(\(?인\)?)?$/, "") || null,
     showCompany: raw.has_company_line === true,
   });
+  const pending = [...layout.header, ...layout.columns, ...layout.footer].filter((e): e is CustomField => "pending" in e && e.pending === true).map((e) => e.label);
   const approvalLabels = (raw.approval_labels ?? []).map(label).filter(Boolean).slice(0, 8);
-  return { layout, unmatched: [...new Set(unmatched)], approvalLabels, tableFallback };
+  return { layout, pending, approvalLabels, tableFallback };
 }
 
 // Gemini에 줄 항목 설명(이 목록 밖으로는 짝짓지 못한다)

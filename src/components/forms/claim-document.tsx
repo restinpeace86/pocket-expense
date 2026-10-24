@@ -17,7 +17,7 @@ function Fields({ fields }: { fields: DocField[] }) {
           {row.map((f, k) => (
             <div key={k} className={`flex border-b border-r border-zinc-400 ${row.length === 1 && f.wide ? "col-span-2" : ""}`}>
               <div className="flex w-24 shrink-0 items-center justify-center bg-zinc-100 px-1.5 py-1.5 text-center text-[11px] text-zinc-600">{f.label}</div>
-              <div className="min-w-0 flex-1 border-l border-zinc-400 px-2 py-1.5 text-xs whitespace-pre-wrap text-zinc-900">{f.value || "-"}</div>
+              <div className="min-w-0 flex-1 border-l border-zinc-400 px-2 py-1.5 text-xs whitespace-pre-wrap text-zinc-900">{f.value || (f.blank ? "" : "-")}</div>
             </div>
           ))}
           {row.length === 1 && !row[0].wide && <div className="border-b border-r border-zinc-400" aria-hidden />}

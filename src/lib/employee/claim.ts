@@ -1,5 +1,6 @@
 import "server-only";
 import type { FuelType } from "@/lib/expense/route";
+import { inputFieldsOf, normalizeLayout } from "@/lib/forms/layout";
 import { aiCategoryOf } from "@/lib/expense/category-check";
 import { deadlineDate, isOverdue, type DeadlinePolicy } from "@/lib/expense/deadline";
 import { todayKst } from "@/lib/dates";
@@ -7,7 +8,7 @@ import { maskCardNumber } from "@/lib/cards/match";
 import type { Membership } from "@/lib/auth/paths";
 import { signReceiptUrls } from "@/lib/storage/signed-urls";
 import { createClient } from "@/lib/supabase/server";
-import type { EditorClaim, EditorData, EditorItem } from "./editor-types";
+import type { CompanyField, EditorClaim, EditorData, EditorItem } from "./editor-types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: string) => UUID.test(v);
@@ -47,10 +48,10 @@ export async function signOriginalUrl(path: string | null): Promise<string | nul
 export async function getMyClaimForEdit(membership: Membership, claimId: string): Promise<EditorData | null> {
   if (!isUuid(claimId)) return null;
   const supabase = await createClient();
-  const [claimRes, itemsRes, cardsRes, companyRes, meRes, dupRes, vehiclesRes] = await Promise.all([
+  const [claimRes, itemsRes, cardsRes, companyRes, meRes, dupRes, vehiclesRes, formRes, lastRes] = await Promise.all([
     supabase
       .from("expense_claims")
-      .select("id, status, title, description, exception_memo, trip_transport, default_payment_method, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, rejection_reason, category, purchase_type, meeting_purpose, client_name, attendees, purchase_purpose, purchase_items, headcount, vehicle_id, recurring_payment_id")
+      .select("id, status, title, description, exception_memo, trip_transport, default_payment_method, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, rejection_reason, category, purchase_type, meeting_purpose, client_name, attendees, purchase_purpose, purchase_items, headcount, vehicle_id, recurring_payment_id, header_custom_payload")
       .eq("id", claimId)
       .eq("company_id", membership.company_id)
       .eq("member_id", membership.member_id)
@@ -61,6 +62,9 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
     supabase.from("members").select("meal_limit_override, receives_car_allowance, vehicle_number, fuel_type").eq("id", membership.member_id).single(),
     supabase.rpc("claim_duplicate_receipts", { p_claim_id: claimId }),
     supabase.from("company_vehicles").select("id, nickname, plate_number, is_active").eq("company_id", membership.company_id).order("created_at"),
+    // 회사 추가 항목(D-120): 지금 쓰는 양식에서 '직원이 작성'인 칸 + 내 지난 결의서 값(미리 채움)
+    supabase.from("form_templates").select("schema").eq("company_id", membership.company_id).eq("is_active", true).maybeSingle(),
+    supabase.from("expense_claims").select("header_custom_payload").eq("company_id", membership.company_id).eq("member_id", membership.member_id).neq("id", claimId).neq("header_custom_payload", "{}").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const dups = (dupRes.data ?? {}) as Record<string, EditorItem["duplicate"]>;
   const claim = claimRes.data;
@@ -81,8 +85,13 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
     overdueDeadline: isOverdue(r.expense_date, deadline, todayKst()) ? deadlineDate(r.expense_date, deadline) : null,
   }));
   const c = companyRes.data;
+  const companyFields: CompanyField[] = inputFieldsOf(formRes.data ? normalizeLayout(formRes.data.schema) : null).map((f) => ({ key: f.key, label: f.label, required: !!f.required, options: f.options ?? null }));
+  const asStrings = (v: unknown): Record<string, string> =>
+    v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v as Record<string, unknown>).filter(([, x]) => typeof x === "string") as [string, string][]) : {};
   return {
-    claim: claim as EditorClaim,
+    companyFields,
+    lastCustom: asStrings(lastRes.data?.header_custom_payload),
+    claim: { ...(claim as unknown as EditorClaim), header_custom_payload: asStrings(claim.header_custom_payload) },
     items,
     cards: cardsRes.data ?? [],
     vehicles: (vehiclesRes.data ?? []).filter((v) => v.is_active || v.id === claim.vehicle_id),

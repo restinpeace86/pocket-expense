@@ -14,9 +14,15 @@ import {
   FIELD_CATALOG,
   PRESET_IDS,
   PRESETS,
-  type ColumnKey,
-  type FieldKey,
+  inputFieldsOf,
+  isCustom,
+  MAX_INPUT_FIELDS,
+  newCustomKey,
+  type ColumnEntry,
+  type CustomField,
+  type CustomMode,
   type FormLayout,
+  type HeaderEntry,
   type LayoutField,
   type PresetId,
 } from "@/lib/forms/layout";
@@ -41,6 +47,67 @@ const clone = (l: FormLayout): FormLayout => JSON.parse(JSON.stringify(l)) as Fo
 const chip = (on: boolean) =>
   `flex min-h-11 w-full flex-col items-start rounded-xl border px-3 py-2 text-left text-sm ${on ? "border-brand-600 bg-brand-50 ring-2 ring-brand-500/30" : "border-zinc-300 bg-white hover:bg-zinc-50"}`;
 
+type Entry<K extends string> = LayoutField<K> | CustomField;
+const MODE_LABEL: Record<CustomMode, string> = { input: "직원이 작성", fixed: "고정값", blank: "빈칸으로 남기기" };
+const MODE_HINT: Record<CustomMode, string> = {
+  input: "직원 결의서 맨 아래 [회사 추가 항목]에 이 칸이 생겨요(결의서마다 한 번).",
+  fixed: "아래 값이 모든 결의서에 똑같이 찍혀요. 직원 입력 없음.",
+  blank: "양식 모양만 남기고 비워 둬요. 직원 입력 없음.",
+};
+
+// 회사 추가 칸 한 줄: 칸마다 어떻게 채울지 관리자가 정한다(D-120)
+function CustomControls({ it, columnOnly, inputFull, onChange }: { it: CustomField; columnOnly: boolean; inputFull: boolean; onChange: (next: CustomField) => void }) {
+  const modes: CustomMode[] = columnOnly ? ["blank"] : ["input", "fixed", "blank"];
+  const decided = !it.pending;
+  return (
+    <div className="mt-1.5 flex flex-col gap-1.5">
+      <p className={`text-[11px] ${decided ? "text-zinc-500" : "font-semibold text-amber-800"}`}>
+        {decided ? "우리 데이터에 없는 칸 · " + MODE_HINT[it.mode] : columnOnly ? "우리 데이터에 없는 열이에요. 빈 열로 남길지, 오른쪽 ✕로 뺄지 정해 주세요." : "우리 데이터에 없는 칸이에요. 어떻게 할지 정해 주세요(필요 없으면 오른쪽 ✕로 빼기)."}
+      </p>
+      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={`${it.label} 채우는 방법`}>
+        {modes.map((m) => {
+          const on = decided && it.mode === m;
+          const disabled = m === "input" && inputFull && it.mode !== "input";
+          return (
+            <button
+              key={m}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              disabled={disabled}
+              title={disabled ? `직원이 쓰는 칸은 ${MAX_INPUT_FIELDS}개까지예요` : undefined}
+              onClick={() => onChange({ key: it.key, label: it.label, mode: m, ...(m === "input" ? { required: it.required ?? false, options: it.options } : {}), ...(m === "fixed" ? { value: it.value ?? "" } : {}) })}
+              className={`min-h-9 rounded-lg border px-2.5 text-xs font-medium disabled:opacity-40 ${on ? "border-brand-600 bg-brand-600 text-white" : "border-zinc-300 bg-white text-zinc-700"}`}
+            >
+              {columnOnly ? "빈 열로 남기기" : MODE_LABEL[m]}
+            </button>
+          );
+        })}
+      </div>
+      {decided && it.mode === "input" && (
+        <div className="flex flex-col gap-1.5 rounded-lg bg-zinc-50 p-2">
+          <label className="flex min-h-9 items-center gap-2 text-xs text-zinc-800">
+            <input type="checkbox" className="size-4 accent-brand-600" checked={!!it.required} onChange={(e) => onChange({ ...it, required: e.target.checked })} /> 꼭 써야 상신 가능(필수)
+          </label>
+          <input
+            className={`${inputClass} min-h-9 text-xs`}
+            aria-label={`${it.label} 선택지`}
+            placeholder="고를 값(쉼표로 구분, 예: A프로젝트, B프로젝트). 비우면 글자로 입력"
+            defaultValue={(it.options ?? []).join(", ")}
+            onBlur={(e) => {
+              const options = [...new Set(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))].slice(0, 10);
+              onChange({ ...it, options: options.length ? options : undefined });
+            }}
+          />
+        </div>
+      )}
+      {decided && it.mode === "fixed" && (
+        <input className={`${inputClass} min-h-9 text-sm`} aria-label={`${it.label} 고정값`} maxLength={100} placeholder="모든 결의서에 찍을 값(예: 5년)" value={it.value ?? ""} onChange={(e) => onChange({ ...it, value: e.target.value })} />
+      )}
+    </div>
+  );
+}
+
 function FieldList<K extends string>({
   title,
   hint,
@@ -48,15 +115,20 @@ function FieldList<K extends string>({
   catalog,
   onChange,
   min = 0,
+  columnOnly = false,
+  inputFull = false,
 }: {
   title: string;
   hint: string;
-  items: LayoutField<K>[];
+  items: Entry<K>[];
   catalog: Record<K, { label: string; hint: string }>;
-  onChange: (next: LayoutField<K>[]) => void;
-  min?: number;
+  onChange: (next: Entry<K>[]) => void;
+  min?: number; // 우리 데이터 칸 최소 개수(영수증 표 열)
+  columnOnly?: boolean; // 표 열: 회사 추가 칸은 빈 열만
+  inputFull?: boolean; // 직원이 쓰는 칸이 이미 3개
 }) {
   const unused = (Object.keys(catalog) as K[]).filter((k) => !items.some((i) => i.key === k));
+  const dataCount = items.filter((i) => !isCustom(i)).length;
   const move = (i: number, d: -1 | 1) => {
     const next = [...items];
     [next[i], next[i + d]] = [next[i + d], next[i]];
@@ -68,52 +140,64 @@ function FieldList<K extends string>({
       <p className="-mt-1 text-xs text-zinc-500">{hint}</p>
       {items.length === 0 && <p className="rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500">칸이 없어요.</p>}
       <ol className="flex flex-col gap-1.5">
-        {items.map((it, i) => (
-          <li key={it.key} className="flex items-center gap-1.5">
-            <div className="min-w-0 flex-1">
-              <input
-                className={`${inputClass} min-h-10 text-sm`}
-                value={it.label}
-                maxLength={30}
-                aria-label={`${catalog[it.key].label} 칸 이름`}
-                onChange={(e) => onChange(items.map((x, k) => (k === i ? { ...x, label: e.target.value } : x)))}
-              />
-              <p className="mt-0.5 truncate pl-1 text-[11px] text-zinc-500">채우는 값: {catalog[it.key].hint || catalog[it.key].label}</p>
-            </div>
-            <button type="button" className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 disabled:opacity-30" aria-label="위로" disabled={i === 0} onClick={() => move(i, -1)}>
-              <ArrowUp className="size-4" />
-            </button>
-            <button type="button" className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 disabled:opacity-30" aria-label="아래로" disabled={i === items.length - 1} onClick={() => move(i, 1)}>
-              <ArrowDown className="size-4" />
-            </button>
-            <button type="button" className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 disabled:opacity-30" aria-label={`${it.label} 빼기`} disabled={items.length <= min} onClick={() => onChange(items.filter((_, k) => k !== i))}>
-              <X className="size-4" />
-            </button>
-          </li>
-        ))}
+        {items.map((it, i) => {
+          const custom = isCustom(it);
+          return (
+            <li key={it.key} className={custom ? `rounded-xl border p-2 ${it.pending ? "border-amber-400 bg-amber-50" : "border-zinc-200 bg-white"}` : ""} data-pending={custom && it.pending ? "1" : undefined}>
+              <div className="flex items-center gap-1.5">
+                <div className="min-w-0 flex-1">
+                  <input
+                    className={`${inputClass} min-h-10 text-sm`}
+                    value={it.label}
+                    maxLength={30}
+                    aria-label={`${custom ? it.label : catalog[it.key as K].label} 칸 이름`}
+                    onChange={(e) => onChange(items.map((x, k) => (k === i ? { ...x, label: e.target.value } : x)))}
+                  />
+                  {!custom && <p className="mt-0.5 truncate pl-1 text-[11px] text-zinc-500">채우는 값: {catalog[it.key as K].hint || catalog[it.key as K].label}</p>}
+                </div>
+                <button type="button" className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white disabled:opacity-30" aria-label="위로" disabled={i === 0} onClick={() => move(i, -1)}>
+                  <ArrowUp className="size-4" />
+                </button>
+                <button type="button" className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white disabled:opacity-30" aria-label="아래로" disabled={i === items.length - 1} onClick={() => move(i, 1)}>
+                  <ArrowDown className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 disabled:opacity-30"
+                  aria-label={`${it.label} 빼기`}
+                  disabled={!custom && dataCount <= min}
+                  onClick={() => onChange(items.filter((_, k) => k !== i))}
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              {custom && <CustomControls it={it} columnOnly={columnOnly} inputFull={inputFull} onChange={(next) => onChange(items.map((x, k) => (k === i ? next : x)))} />}
+            </li>
+          );
+        })}
       </ol>
-      {unused.length > 0 && (
-        <label className="flex min-w-0 items-center gap-2">
-          <Plus className="size-4 shrink-0 text-brand-700" />
-          <span className="sr-only">{title}에 칸 추가</span>
-          <select
-            className={`${inputClass} min-h-10 min-w-0 text-sm`}
-            value=""
-            onChange={(e) => {
-              const k = e.target.value as K;
-              if (k) onChange([...items, { key: k, label: catalog[k].label }]);
-            }}
-          >
-            <option value="">칸 추가 (우리 데이터에 있는 것만)</option>
-            {unused.map((k) => (
-              <option key={k} value={k}>
-                {catalog[k].label}
-                {catalog[k].hint ? ` — ${catalog[k].hint}` : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
+      <label className="flex min-w-0 items-center gap-2">
+        <Plus className="size-4 shrink-0 text-brand-700" />
+        <span className="sr-only">{title}에 칸 추가</span>
+        <select
+          className={`${inputClass} min-h-10 min-w-0 text-sm`}
+          value=""
+          onChange={(e) => {
+            const k = e.target.value;
+            if (k === "__custom") onChange([...items, { key: newCustomKey(), label: "새 칸", mode: "blank", pending: true }]);
+            else if (k) onChange([...items, { key: k as K, label: catalog[k as K].label }]);
+          }}
+        >
+          <option value="">칸 추가</option>
+          {unused.map((k) => (
+            <option key={k} value={k}>
+              {catalog[k].label}
+              {catalog[k].hint ? ` — ${catalog[k].hint}` : ""}
+            </option>
+          ))}
+          <option value="__custom">＋ 우리 데이터에 없는 칸({columnOnly ? "빈 열" : "직원 작성·고정값·빈칸"})</option>
+        </select>
+      </label>
     </fieldset>
   );
 }
@@ -131,6 +215,9 @@ export function FormTemplateView(p: FormTemplateViewProps) {
   const [saving, startSave] = useTransition();
   const cameraRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // 아직 안 정한 회사 추가 칸(AI가 찾았거나 새로 넣은 칸) — 다 정해야 저장(D-120)
+  const pending = [...layout.header, ...layout.columns, ...layout.footer].filter((e) => isCustom(e) && e.pending).map((e) => e.label);
+  const inputCount = inputFieldsOf(layout).length;
   const model = useMemo(() => buildDocModel(layout, p.previewDoc, { companyName: p.companyName }), [layout, p.previewDoc, p.companyName]);
 
   const edit = (patch: Partial<FormLayout>) => {
@@ -267,15 +354,28 @@ export function FormTemplateView(p: FormTemplateViewProps) {
             )}
             <div className="flex flex-col gap-1">
               <p className="font-medium text-zinc-900">
-                AI가 칸 {ai.result.layout.header.length + ai.result.layout.columns.length + ai.result.layout.footer.length}개를 우리 데이터와 맞췄어요. 아래에서 고치고 미리보기로 확인하세요.
+                AI가 칸 {ai.result.layout.header.length + ai.result.layout.columns.length + ai.result.layout.footer.length - ai.result.pending.length}개를 우리 데이터와 맞췄어요. 아래에서 고치고 미리보기로 확인하세요.
               </p>
-              {ai.result.unmatched.length > 0 && <p>우리 데이터로 채울 수 없어 뺀 칸: {ai.result.unmatched.join(", ")}</p>}
+              {ai.result.pending.length > 0 && <p className="text-amber-800">우리 데이터로 못 채우는 칸 {ai.result.pending.length}개({ai.result.pending.join(", ")})는 양식에 그대로 두었어요. 칸마다 어떻게 할지 정해 주세요.</p>}
               {ai.result.approvalLabels.length > 0 && <p>결재란({ai.result.approvalLabels.join("·")})은 결재라인대로 자동으로 채워요.</p>}
               {ai.result.tableFallback && <p className="text-amber-800">내역 표를 찾지 못해 기본 표(사용일·사용처·적요·금액)를 넣었어요.</p>}
             </div>
           </div>
         )}
       </section>
+
+      {pending.length > 0 && (
+        <div className="flex flex-col gap-1 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert" data-testid="pending-fields">
+          <p className="font-semibold">정해야 할 칸 {pending.length}개: {pending.join(", ")}</p>
+          <p>우리 데이터로 채울 수 없는 칸이에요. [② 꾸미기]의 노란 칸마다 골라 주세요.</p>
+          <ul className="list-disc pl-5 text-xs">
+            <li><b>직원이 작성</b> — 꼭 필요한 회사 정보(예: 프로젝트명). 직원 결의서 맨 아래에 생겨요. 최대 {MAX_INPUT_FIELDS}개.</li>
+            <li><b>고정값</b> — 늘 같은 값(예: 보존 기간 5년). 직원 입력 없음.</li>
+            <li><b>빈칸으로 남기기</b> — 모양만 남겨요(도장·수기용). 직원 입력 없음.</li>
+            <li><b>빼기(✕)</b> — 필요 없는 칸이면 양식에서 지워요.</li>
+          </ul>
+        </div>
+      )}
 
       <div className="flex rounded-xl bg-zinc-100 p-1 lg:hidden" role="tablist" aria-label="꾸미기와 미리보기">
         {(
@@ -297,13 +397,13 @@ export function FormTemplateView(p: FormTemplateViewProps) {
             문서 제목
             <input className={inputClass} value={layout.title} maxLength={30} onChange={(e) => edit({ title: e.target.value })} />
           </label>
-          <FieldList title="표 위 칸" hint="결의서에 한 번씩 나오는 칸(작성자·부서·날짜·금액 등)" items={layout.header} catalog={FIELD_CATALOG} onChange={(header: LayoutField<FieldKey>[]) => edit({ header })} />
-          <FieldList title="영수증 표 열" hint="영수증 한 장이 한 줄. 최소 1개" items={layout.columns} catalog={COLUMN_CATALOG} min={1} onChange={(columns: LayoutField<ColumnKey>[]) => edit({ columns })} />
+          <FieldList title="표 위 칸" hint="결의서에 한 번씩 나오는 칸(작성자·부서·날짜·금액 등)" items={layout.header} catalog={FIELD_CATALOG} inputFull={inputCount >= MAX_INPUT_FIELDS} onChange={(header: HeaderEntry[]) => edit({ header })} />
+          <FieldList title="영수증 표 열" hint="영수증 한 장이 한 줄. 최소 1개" items={layout.columns} catalog={COLUMN_CATALOG} min={1} columnOnly onChange={(columns: ColumnEntry[]) => edit({ columns })} />
           <label className="flex flex-col gap-1 text-sm font-semibold text-zinc-900">
             합계 줄 이름
             <input className={inputClass} value={layout.totalLabel} maxLength={10} onChange={(e) => edit({ totalLabel: e.target.value })} />
           </label>
-          <FieldList title="표 아래 칸" hint="특이사항·비고·입금 정보 등" items={layout.footer} catalog={FIELD_CATALOG} onChange={(footer: LayoutField<FieldKey>[]) => edit({ footer })} />
+          <FieldList title="표 아래 칸" hint="특이사항·비고·입금 정보 등" items={layout.footer} catalog={FIELD_CATALOG} inputFull={inputCount >= MAX_INPUT_FIELDS} onChange={(footer: HeaderEntry[]) => edit({ footer })} />
           <fieldset className="flex min-w-0 flex-col gap-2">
             <legend className="text-sm font-semibold text-zinc-900">맨 아래</legend>
             <label className="flex flex-col gap-1 text-sm text-zinc-700">
@@ -346,11 +446,11 @@ export function FormTemplateView(p: FormTemplateViewProps) {
       )}
       <div className="kb-hide fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur md:left-64">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
-          <p className="hidden flex-1 text-sm text-zinc-600 sm:block">{dirty || !p.active ? (reviewed ? "확인했어요. 저장할 수 있어요." : "미리보기 아래 '확인했어요'를 체크하면 저장할 수 있어요.") : "저장된 양식이에요."}</p>
+          <p className="hidden flex-1 text-sm text-zinc-600 sm:block">{pending.length ? `정해야 할 칸 ${pending.length}개를 먼저 정해 주세요.` : dirty || !p.active ? (reviewed ? "확인했어요. 저장할 수 있어요." : "미리보기 아래 '확인했어요'를 체크하면 저장할 수 있어요.") : "저장된 양식이에요."}</p>
           <button type="button" className={`${buttonSecondary} sm:w-auto lg:hidden`} onClick={() => setTab(tab === "edit" ? "preview" : "edit")}>
             {tab === "edit" ? "미리보기" : "꾸미기"}
           </button>
-          <button type="button" className={`${buttonPrimary} sm:w-auto`} disabled={saving || reading || !reviewed || (!dirty && !!p.active)} onClick={save}>
+          <button type="button" className={`${buttonPrimary} sm:w-auto`} disabled={saving || reading || !reviewed || pending.length > 0 || (!dirty && !!p.active)} onClick={save}>
             {saving ? "저장 중…" : "이 양식으로 저장"}
           </button>
         </div>
