@@ -133,7 +133,7 @@
 - [x] T7-3 자차 유류비 계산 + 수동 입력 Fallback + `distance_source` + 단위 테스트 (2026-10-21, IMP-6, migration 040)
 - [x] T7-4 왕복 토글(기본 왕복) 및 왕복 거리 × 2 계산 + 승인 화면 "왕복 · n km × 2" 표시 (D-069, O-04 해소) (2026-10-21, IMP-6)
 - [x] T7-6 자차 경로 요약 증빙 이미지 파일(상신 때 서버 생성·연결, D-088, migration 041) (2026-10-21, `implementation/2026-10-21_route-card-file.md`)
-- [ ] T7-5 자차 계기판 사진 2장(선택 기능: 회사 설정 켰을 때만 필수, D-070 ②) — 설정 기본 꺼짐, 우선순위 낮음(사용자 2026-10-21)
+- [ ] T7-5 (설정 화면은 숨김, D-121 — 구현하면 설정 다시 보이기) 자차 계기판 사진 2장(선택 기능: 회사 설정 켰을 때만 필수, D-070 ②) — 설정 기본 꺼짐, 우선순위 낮음(사용자 2026-10-21)
 
 ## T8. 알림톡 — 기준: `spec/features/kakao-alimtalk.md`
 - [x] T8-1 `NotificationSender` 어댑터 + `log` 드라이버 + `notification_logs` 기록 (2026-10-20, `implementation/2026-10-20_T8-alimtalk-ready.md`)
