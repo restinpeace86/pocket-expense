@@ -84,6 +84,8 @@ export type CompanySettings = {
   fuel_enabled: boolean;
   fuel_rate_per_km: number;
   fuel_rate_mode: "fixed" | "opinet"; // 자차 유류비 계산 방식(D-117)
+  per_diem_enabled: boolean; // 출장 일비(하루 정액, 식비 포함, D-124)
+  per_diem_amount: number;
   latest_oil: { log_date: string; gasoline: number | null; diesel: number | null; lpg: number | null } | null; // 최근 전국 평균 유가
   odometer_photo_required: boolean;
   claim_deadline_type: "none" | "end_of_month" | "days_after" | "next_month_day";
@@ -95,7 +97,7 @@ export async function getCompanySettings(companyId: string): Promise<CompanySett
   const { data } = await supabase
     .from("companies")
     .select(
-      "name, business_number, invite_code, meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, fuel_rate_mode, odometer_photo_required, claim_deadline_type, claim_deadline_days",
+      "name, business_number, invite_code, meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, fuel_rate_mode, odometer_photo_required, claim_deadline_type, claim_deadline_days, per_diem_enabled, per_diem_amount",
     )
     .eq("id", companyId)
     .maybeSingle();

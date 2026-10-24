@@ -35,6 +35,8 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
   const [mode, setMode] = useState(s.meal_limit_mode);
   const [fuelRate, setFuelRate] = useState(String(s.fuel_rate_per_km));
   const [fuelMode, setFuelMode] = useState<"fixed" | "opinet">(s.fuel_rate_mode);
+  const [perDiemOn, setPerDiemOn] = useState(s.per_diem_enabled);
+  const [perDiem, setPerDiem] = useState(String(s.per_diem_amount || 30000));
   const [deadline, setDeadline] = useState<DeadlineType>(s.claim_deadline_type);
   const [deadlineDays, setDeadlineDays] = useState(String(s.claim_deadline_days ?? DEADLINE_DAYS.next_month_day.initial));
 
@@ -61,6 +63,8 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
         fuelEnabled,
         fuelRatePerKm: toInt(fuelRate),
         fuelRateMode: fuelMode,
+        perDiemEnabled: perDiemOn,
+        perDiemAmount: toInt(perDiem),
         odometerPhotoRequired: odometer,
         claimDeadlineType: deadline,
         claimDeadlineDays: deadline === "days_after" || deadline === "next_month_day" ? toInt(deadlineDays) : null,
@@ -264,6 +268,51 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
                 label: "사용 안 함",
                 description: "직원 화면에 '자차 유류비' 항목이 보이지 않아요.",
               },
+            ]}
+          />
+        </div>
+      </section>
+
+      <section className={card}>
+        <SectionHeading
+          title="출장 일비"
+          summary="출장 하루마다 영수증 없이 주는 정해진 금액이에요(식비 포함)."
+          helpId="settings.per-diem"
+          help={
+            <>
+              <p>
+                <b>어떻게 들어가나요?</b> 출장 결의서의 출장 기간(시작일~끝나는 날)만큼 &lsquo;출장 일비 하루 금액 × 일수&rsquo; 한 줄이 자동으로 들어가요. 직원은
+                고치거나 지울 수 없고, 영수증도 필요 없어요. 계정과목은 출장비(여비교통비)로 나가요.
+              </p>
+              <p>
+                <b>무엇을 대신하나요?</b> 출장 중 식비와 잡비예요. 그래서 일비를 쓰면 출장 식비 영수증은 따로 받지 않아요(올리면 상신 전에 빼라고 안내해요).
+                출장지까지 가는 교통비(KTX·자차 유류비·통행료)와 숙박비는 지금처럼 영수증으로 받아요.
+              </p>
+              <p>회사 여비 규정에 일비가 있을 때만 켜세요. 세무 처리는 세무사무소와 확인해 주세요.</p>
+            </>
+          }
+        />
+        <div className="mt-4">
+          <ChoiceCards
+            name="perDiemEnabled"
+            label="출장 일비"
+            value={perDiemOn ? "on" : "off"}
+            onChange={(v) => setPerDiemOn(v === "on")}
+            choices={[
+              {
+                value: "on",
+                label: "출장 일비 지급",
+                description: "출장 하루마다 정해진 금액을 줘요(식비 포함).",
+                example: `예: 1박 2일 출장 → ${(Math.max(0, toInt(perDiem)) * 2).toLocaleString("ko-KR")}원(하루 ${Math.max(0, toInt(perDiem)).toLocaleString("ko-KR")}원 × 2일)`,
+                extra: (
+                  <div className="sm:max-w-xs">
+                    <Field label="하루 일비" required>
+                      <AmountInput name="perDiem" value={perDiem} onChange={setPerDiem} required />
+                    </Field>
+                  </div>
+                ),
+              },
+              { value: "off", label: "사용 안 함", description: "출장 식비는 영수증으로 받아요(식대 한도 적용)." },
             ]}
           />
         </div>

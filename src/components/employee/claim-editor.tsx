@@ -96,6 +96,7 @@ function ItemRow({
   open,
   onToggle,
   mismatch,
+  perDiemMeal = false,
   children,
 }: {
   item: EditorItem;
@@ -106,10 +107,29 @@ function ItemRow({
   open: boolean;
   onToggle: () => void;
   mismatch?: boolean;
+  perDiemMeal?: boolean; // 출장 일비에 식비가 포함된 회사의 출장 식비 영수증(D-124) — 빼야 함
   children?: ReactNode;
 }) {
   const [confirm, setConfirm] = useState(false);
   const check = itemNeedsCheck(item);
+  // 출장 일비(D-124): 회사 규정으로 자동 계산된 줄 — 고치거나 지울 수 없다
+  if (item.trip_type === "per_diem") {
+    return (
+      <li id={`item-${item.id}`} className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3">
+        <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-xl" aria-hidden>
+          🧳
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-medium">출장 일비</span>
+          <span className="block text-xs text-zinc-600">{item.purpose}</span>
+          <span className="mt-1 flex flex-wrap items-center gap-1.5">
+            <span className="mr-auto font-semibold tabular-nums">{item.amount !== null ? formatWon(item.amount) : "-"}</span>
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">자동 계산 · 영수증 필요 없음</span>
+          </span>
+        </span>
+      </li>
+    );
+  }
   const parsing = item.parse_status === "parsing";
   const inline = !isOwnCar(item);
   const panelId = `item-panel-${item.id}`;
@@ -142,6 +162,7 @@ function ItemRow({
             </span>
             {item.duplicate && <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900">중복 의심</span>}
             {mismatch && <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900">카테고리 확인</span>}
+            {perDiemMeal && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-800">일비에 포함돼요 — 빼 주세요</span>}
             {item.overdueDeadline && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">기한 초과</span>}
             {parsing ? (
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-600">분석 중</span>
@@ -875,6 +896,11 @@ export function ClaimEditor({
         )}
         {category === "trip" && (
         <div className="flex flex-col gap-3 rounded-xl bg-zinc-50 p-3" aria-label="출장 정보">
+          {data.perDiem.enabled && (
+            <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+              🧳 출장 일비 하루 {formatWon(data.perDiem.amount)}(식비 포함)가 출장 기간만큼 자동으로 들어가요. 출장 중 식사 영수증은 올리지 않아도 돼요. 교통·유류비·숙박은 영수증으로 올려 주세요.
+            </p>
+          )}
           {(
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
@@ -1108,6 +1134,7 @@ export function ClaimEditor({
                 open={openIds.has(item.id)}
                 onToggle={() => toggleItem(item.id)}
                 mismatch={!isOwnCar(item) && !item.category_mismatch_ack && categoryMismatch(category, item.aiCategory)}
+                perDiemMeal={data.perDiem.enabled && item.category === "trip" && item.trip_type === "meal"}
               >
                 <ItemInlineForm
                   key={`${item.id}:${item.parse_status}:${item.headcount}:${item.category}:${item.trip_type}:${item.receipt_path ?? ""}`} // AI로 다시 읽은 뒤·결의서 값(인원·카테고리·출장 유형)이 영수증에 반영된 뒤 새 값으로 다시 그린다
@@ -1120,6 +1147,7 @@ export function ClaimEditor({
                   deadline={data.deadline}
                   claimCategory={category}
                   tripTransport={form.tripTransport}
+                  perDiem={data.perDiem.enabled}
                   mismatch={!item.category_mismatch_ack && categoryMismatch(category, item.aiCategory)}
                   busy={busy}
                   onAckCategory={() => ackItem(item.id)}

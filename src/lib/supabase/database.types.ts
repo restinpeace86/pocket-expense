@@ -442,6 +442,8 @@ export type Database = {
           meal_limit_per_person: number
           name: string
           odometer_photo_required: boolean
+          per_diem_amount: number
+          per_diem_enabled: boolean
           policy_confirmed_at: string | null
           receipt_credits_granted: number
           receipt_credits_used: number
@@ -467,6 +469,8 @@ export type Database = {
           meal_limit_per_person?: number
           name: string
           odometer_photo_required?: boolean
+          per_diem_amount?: number
+          per_diem_enabled?: boolean
           policy_confirmed_at?: string | null
           receipt_credits_granted?: number
           receipt_credits_used?: number
@@ -492,6 +496,8 @@ export type Database = {
           meal_limit_per_person?: number
           name?: string
           odometer_photo_required?: boolean
+          per_diem_amount?: number
+          per_diem_enabled?: boolean
           policy_confirmed_at?: string | null
           receipt_credits_granted?: number
           receipt_credits_used?: number
@@ -2077,6 +2083,10 @@ export type Database = {
         Returns: Json
       }
       set_company_fuel_mode: { Args: { p_mode: string }; Returns: undefined }
+      set_company_per_diem: {
+        Args: { p_amount: number; p_enabled: boolean }
+        Returns: undefined
+      }
       set_member_role: {
         Args: {
           p_member_id: string
@@ -2220,6 +2230,7 @@ export type Database = {
         | "other"
         | "car_fuel"
         | "car_toll"
+        | "per_diem"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2415,6 +2426,7 @@ export const Constants = {
         "other",
         "car_fuel",
         "car_toll",
+        "per_diem",
       ],
     },
   },

@@ -123,6 +123,7 @@ const SAMPLE_EDITOR: EditorData = {
   fuel: { mode: "fixed", fuelType: "gasoline", enabled: true, ratePerKm: 200, blocked: null, vehicleNumber: "12가3456" },
   vehicles: [{ id: "v1", nickname: "영업 1호차", plate_number: "12가3456", is_active: true }],
   deadline: { type: "next_month_day", days: 5 },
+  perDiem: { enabled: false, amount: 0 },
   companyFields: [],
   lastCustom: {},
 };
@@ -902,6 +903,8 @@ async function Preview({
               fuel_enabled: true,
               fuel_rate_per_km: 200,
               fuel_rate_mode: "opinet",
+              per_diem_enabled: true,
+              per_diem_amount: 30000,
               latest_oil: { log_date: "2026-10-22", gasoline: 1680.12, diesel: 1540.5, lpg: 1010 },
               odometer_photo_required: false,
               claim_deadline_type: "next_month_day",

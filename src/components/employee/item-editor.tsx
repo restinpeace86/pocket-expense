@@ -215,6 +215,7 @@ export function ItemInlineForm({
   deadline = { type: "none", days: null },
   claimCategory,
   tripTransport = null,
+  perDiem = false,
   mismatch = false,
   busy = false,
   onAckCategory,
@@ -225,6 +226,7 @@ export function ItemInlineForm({
   claim: EditorClaim;
   claimCategory: ExpenseCategory | null; // 결의서 화면에서 지금 고른 대표 카테고리(D-098). 저장 전이라도 화면은 이것을 따른다
   tripTransport?: TripTransport | null; // 출장 이동 수단(회사차량이면 세부 유형이 달라짐)
+  perDiem?: boolean; // 회사가 출장 일비(식비 포함)를 쓰면 출장 식비는 고르지 않는다(D-124)
   mismatch?: boolean; // AI가 본 종류가 결의서 카테고리와 다르고 아직 확인 안 함(D-104)
   busy?: boolean;
   onAckCategory?: () => void;
@@ -582,7 +584,7 @@ export function ItemInlineForm({
         <Field label="출장비 세부 유형" required>
           <Chips
             label="출장비 세부 유형"
-            options={(tripTransport === "company_car" ? COMPANY_CAR_TRIP_TYPES : TRIP_TYPES).map((t) => ({ value: t, label: TRIP_TYPE_LABEL[t] }))}
+            options={(tripTransport === "company_car" ? COMPANY_CAR_TRIP_TYPES : TRIP_TYPES).filter((t) => !(perDiem && t === "meal")).map((t) => ({ value: t, label: TRIP_TYPE_LABEL[t] }))}
             value={input.category === "trip" ? input.tripType : null}
             onChange={(v) => change((f) => ({ ...f, category: "trip", tripType: v, purchaseType: null }))}
           />

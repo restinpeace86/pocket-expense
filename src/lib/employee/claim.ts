@@ -45,7 +45,7 @@ export async function signOriginalUrl(path: string | null): Promise<string | nul
 }
 
 // 편집 화면 데이터: 본인 회사·본인 결의서만 (다른 사람 결의서 id를 넣어도 null → 404)
-export async function getMyClaimForEdit(membership: Membership, claimId: string): Promise<EditorData | null> {
+export async function getMyClaimForEdit(membership: Membership, claimId: string, synced = false): Promise<EditorData | null> {
   if (!isUuid(claimId)) return null;
   const supabase = await createClient();
   const [claimRes, itemsRes, cardsRes, companyRes, meRes, dupRes, vehiclesRes, formRes, lastRes] = await Promise.all([
@@ -58,7 +58,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
       .maybeSingle(),
     supabase.from("expense_items").select(ITEM_COLUMNS).eq("claim_id", claimId).eq("company_id", membership.company_id).order("sort_order"),
     supabase.from("corporate_cards").select("id, nickname, bin6, last4").eq("company_id", membership.company_id).eq("is_active", true).order("created_at"),
-    supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, fuel_rate_mode, claim_deadline_type, claim_deadline_days").eq("id", membership.company_id).single(),
+    supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, fuel_rate_mode, claim_deadline_type, claim_deadline_days, per_diem_enabled, per_diem_amount").eq("id", membership.company_id).single(),
     supabase.from("members").select("meal_limit_override, receives_car_allowance, vehicle_number, fuel_type").eq("id", membership.member_id).single(),
     supabase.rpc("claim_duplicate_receipts", { p_claim_id: claimId }),
     supabase.from("company_vehicles").select("id, nickname, plate_number, is_active").eq("company_id", membership.company_id).order("created_at"),
@@ -69,6 +69,16 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
   const dups = (dupRes.data ?? {}) as Record<string, EditorItem["duplicate"]>;
   const claim = claimRes.data;
   if (!claim) return null;
+  // 출장 일비(D-124): 일비를 켠 뒤 처음 여는 출장 결의서 등 — 일비 줄이 없거나 일수와 안 맞으면 한 번 맞추고 다시 읽는다
+  const pd = companyRes.data;
+  if (!synced && pd?.per_diem_enabled && (pd.per_diem_amount ?? 0) > 0 && claim.category === "trip" && (claim.status === "draft" || claim.status === "rejected") && claim.trip_start_date && claim.trip_end_date && claim.trip_end_date >= claim.trip_start_date) {
+    const days = Math.min(60, Math.round((Date.parse(claim.trip_end_date) - Date.parse(claim.trip_start_date)) / 86_400_000) + 1);
+    const line = (itemsRes.data ?? []).find((i) => i.trip_type === "per_diem");
+    if (!line || line.amount !== pd.per_diem_amount * days) {
+      await supabase.rpc("refresh_claim_totals", { p_claim_id: claimId });
+      return getMyClaimForEdit(membership, claimId, true);
+    }
+  }
   const rows = itemsRes.data ?? [];
   const urls = await signReceiptUrls(supabase, rows.map((r) => r.receipt_thumb_path));
   const deadline: DeadlinePolicy = { type: companyRes.data?.claim_deadline_type ?? "none", days: companyRes.data?.claim_deadline_days ?? null };
@@ -89,6 +99,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string)
   const asStrings = (v: unknown): Record<string, string> =>
     v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v as Record<string, unknown>).filter(([, x]) => typeof x === "string") as [string, string][]) : {};
   return {
+    perDiem: { enabled: !!c?.per_diem_enabled && (c?.per_diem_amount ?? 0) > 0, amount: c?.per_diem_amount ?? 0 },
     companyFields,
     lastCustom: asStrings(lastRes.data?.header_custom_payload),
     claim: { ...(claim as unknown as EditorClaim), header_custom_payload: asStrings(claim.header_custom_payload) },

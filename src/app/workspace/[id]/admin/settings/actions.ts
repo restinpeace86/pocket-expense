@@ -15,6 +15,8 @@ export type CompanySettingsInput = {
   fuelEnabled: boolean;
   fuelRatePerKm: number;
   fuelRateMode: "fixed" | "opinet"; // 자차 유류비 계산 방식(D-117)
+  perDiemEnabled: boolean; // 출장 일비(D-124)
+  perDiemAmount: number;
   odometerPhotoRequired: boolean;
   claimDeadlineType: "none" | "end_of_month" | "days_after" | "next_month_day";
   claimDeadlineDays: number | null;
@@ -41,6 +43,9 @@ export async function saveCompanySettingsAction(input: CompanySettingsInput): Pr
   // 계산 방식은 따로 저장(관리자만, set_company_fuel_mode)
   const { error: modeError } = await supabase.rpc("set_company_fuel_mode", { p_mode: input.fuelRateMode === "opinet" ? "opinet" : "fixed" });
   if (modeError) return { error: messageForDbError(modeError) };
+  // 출장 일비(관리자만, set_company_per_diem)
+  const { error: perDiemError } = await supabase.rpc("set_company_per_diem", { p_enabled: input.perDiemEnabled, p_amount: input.perDiemEnabled ? input.perDiemAmount : 0 });
+  if (perDiemError) return { error: messageForDbError(perDiemError) };
   refresh();
   return { error: null };
 }

@@ -122,6 +122,7 @@ export type EditorData = {
   fuel: FuelPolicy;
   vehicles: EditorVehicle[]; // 고를 수 있는 회사차량(사용 중 + 이 결의서가 이미 고른 차량)
   deadline: { type: "none" | "end_of_month" | "days_after" | "next_month_day"; days: number | null }; // 회사 청구 기한 (D-031)
+  perDiem: { enabled: boolean; amount: number }; // 출장 일비(하루, 식비 포함, D-124)
   companyFields: CompanyField[]; // 회사 추가 항목(관리자가 양식에서 '직원이 작성'으로 정한 칸, D-120). 없으면 화면에 안 보임
   lastCustom: Record<string, string>; // 내 지난 결의서의 값(미리 채움)
 };

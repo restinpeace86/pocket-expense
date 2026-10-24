@@ -21,6 +21,7 @@ export const HEADER_PROBLEM_LABEL: Record<string, string> = {
 
 export const ITEM_PROBLEM_LABEL: Record<string, string> = {
   parsing: "AI가 아직 읽는 중",
+  per_diem_meal: "출장 일비에 식비가 포함돼요 — 이 식사 영수증은 빼 주세요",
   category_mismatch: "다른 종류로 보이는 영수증(옮기거나 \"이 결의서가 맞아요\")",
   category: "지출 카테고리",
   corporate_card: "사용한 법인카드",

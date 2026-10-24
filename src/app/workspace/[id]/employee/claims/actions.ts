@@ -110,6 +110,8 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
     .select("id");
   if (error) return { ok: false, error: messageForDbError(error) };
   if (!data?.length) return fail("NOT_EDITABLE");
+  // 출장 기간이 바뀌면 출장 일비 줄을 다시 맞춘다(D-124)
+  if (isTrip) await supabase.rpc("refresh_claim_totals", { p_claim_id: claimId });
   refresh();
   return { ok: true };
 }

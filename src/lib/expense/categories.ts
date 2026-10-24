@@ -2,7 +2,7 @@
 // 4대 카테고리 + 추가 카테고리(D-102: 회식비·경조사비·세미나·도서·교육·회사차량·SaaS)
 export type ExpenseCategory = "meal" | "trip" | "meeting" | "purchase" | "team_dinner" | "condolence" | "seminar" | "books" | "training" | "company_car" | "saas";
 // car_fuel·car_toll: 회사차량으로 간 출장의 주유·통행료·주차(차량유지비, D-106)
-export type TripType = "meal" | "public_transport" | "taxi" | "toll_parking" | "lodging" | "own_car" | "other" | "car_fuel" | "car_toll";
+export type TripType = "meal" | "public_transport" | "taxi" | "toll_parking" | "lodging" | "own_car" | "other" | "car_fuel" | "car_toll" | "per_diem";
 export type PurchaseType = "pantry" | "office_supplies" | "small_equipment";
 
 export const CATEGORY_LABEL: Record<ExpenseCategory, string> = {
@@ -32,6 +32,7 @@ export const TRIP_TYPE_LABEL: Record<TripType, string> = {
   other: "기타",
   car_fuel: "회사차량 주유",
   car_toll: "회사차량 통행료·주차",
+  per_diem: "출장 일비", // 회사 여비 규정 하루 정액(식비 포함), 자동으로만 생김 (D-124)
 };
 export const PURCHASE_TYPE_LABEL: Record<PurchaseType, string> = {
   pantry: "탕비실·간식",
