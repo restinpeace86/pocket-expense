@@ -19,7 +19,7 @@ export async function getClaimDetail(companyId: string, claimId: string, opts: {
   let cq = supabase
     .from("expense_claims")
     .select(
-      "id, member_id, status, title, description, exception_memo, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, settlement_required, self_approved, current_round, rejection_reason, created_at, submitted_at, approved_at, rejected_at, paid_at, category, vehicle:company_vehicles(nickname, plate_number)",
+      "id, member_id, status, title, description, exception_memo, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, settlement_required, self_approved, current_round, rejection_reason, created_at, submitted_at, approved_at, rejected_at, paid_at, category, condolence_target, client_name, vehicle:company_vehicles(nickname, plate_number)",
     )
     .eq("id", claimId)
     .eq("company_id", companyId);

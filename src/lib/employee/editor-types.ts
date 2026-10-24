@@ -1,4 +1,5 @@
 import type { MealPolicy } from "@/lib/expense/amounts";
+import type { CondolenceTarget } from "@/lib/expense/categories";
 import type { FuelType } from "@/lib/expense/route";
 import type { EvidenceKind } from "@/lib/receipts/evidence-kind";
 import type { ExpenseCategory, PurchaseType, TripType } from "@/lib/expense/categories";
@@ -41,6 +42,7 @@ export type EditorClaim = {
   vehicle_id: string | null; // 회사차량 결의서의 차량 (D-105)
   recurring_payment_id: string | null; // 정기 결제로 자동으로 만든 결의서 (D-110)
   header_custom_payload: Record<string, string>; // 회사 추가 항목 값 (D-120)
+  condolence_target: CondolenceTarget | null; // 경조사비 내부·외부 (D-123)
 };
 
 export type EditorItem = {
@@ -170,4 +172,5 @@ export type ClaimHeaderInput = {
   headcount: number | null;
   vehicleId: string | null; // 회사차량 결의서의 차량 (D-105)
   custom: Record<string, string>; // 회사 추가 항목 (D-120)
+  condolenceTarget: CondolenceTarget | null; // 경조사비 내부·외부 (D-123)
 };

@@ -39,7 +39,9 @@ export const PURCHASE_TYPE_LABEL: Record<PurchaseType, string> = {
   small_equipment: "소액 비품",
 };
 
-export type Classification = { category: ExpenseCategory; tripType: TripType | null; purchaseType: PurchaseType | null };
+export type CondolenceTarget = "internal" | "external";
+export const CONDOLENCE_TARGET_LABEL: Record<CondolenceTarget, string> = { internal: "내부 · 임직원", external: "외부 · 거래처" }; // D-123
+export type Classification = { category: ExpenseCategory; tripType: TripType | null; purchaseType: PurchaseType | null; condolenceTarget?: CondolenceTarget | null };
 
 // 계정과목 매핑 표에 보여 줄 순서 (내부 분류 21종)
 export const MAPPING_ROWS: Classification[] = [
@@ -47,11 +49,14 @@ export const MAPPING_ROWS: Classification[] = [
   ...(Object.keys(TRIP_TYPE_LABEL) as TripType[]).map((t) => ({ category: "trip" as const, tripType: t, purchaseType: null })),
   { category: "meeting", tripType: null, purchaseType: null },
   ...(Object.keys(PURCHASE_TYPE_LABEL) as PurchaseType[]).map((p) => ({ category: "purchase" as const, tripType: null, purchaseType: p })),
-  ...EXTRA_CATEGORIES.map((c) => ({ category: c, tripType: null, purchaseType: null })),
+  ...EXTRA_CATEGORIES.flatMap((c): Classification[] =>
+    c === "condolence" ? (Object.keys(CONDOLENCE_TARGET_LABEL) as CondolenceTarget[]).map((t) => ({ category: c, tripType: null, purchaseType: null, condolenceTarget: t })) : [{ category: c, tripType: null, purchaseType: null }],
+  ),
 ];
 
 export function classificationLabel(c: Classification): string {
   if (c.category === "trip" && c.tripType) return `${CATEGORY_LABEL.trip} › ${TRIP_TYPE_LABEL[c.tripType]}`;
   if (c.category === "purchase" && c.purchaseType) return `${CATEGORY_LABEL.purchase} › ${PURCHASE_TYPE_LABEL[c.purchaseType]}`;
+  if (c.category === "condolence" && c.condolenceTarget) return `${CATEGORY_LABEL.condolence} › ${CONDOLENCE_TARGET_LABEL[c.condolenceTarget]}`;
   return CATEGORY_LABEL[c.category];
 }

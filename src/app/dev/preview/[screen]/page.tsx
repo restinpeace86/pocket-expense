@@ -109,7 +109,7 @@ const SAMPLE_EDITOR: EditorData = {
     id: "claim1", status: "draft", title: "", description: "", exception_memo: null, trip_transport: null, default_payment_method: "corporate_card", is_business_trip: false,
     trip_destination: null, trip_start_date: null, trip_end_date: null, trip_purpose: null, item_count: 4, total_amount: 172000,
     total_company_supported: 161000, total_personal_burden: 11000, rejection_reason: null,
-    category: "meal", purchase_type: null, meeting_purpose: null, client_name: null, attendees: null, purchase_purpose: null, purchase_items: null, headcount: null, vehicle_id: null, recurring_payment_id: null, header_custom_payload: {},
+    category: "meal", purchase_type: null, meeting_purpose: null, client_name: null, attendees: null, purchase_purpose: null, purchase_items: null, headcount: null, vehicle_id: null, recurring_payment_id: null, header_custom_payload: {}, condolence_target: null,
   },
   items: [
     { ...SAMPLE_ITEM, duplicate: { mine: [], others: 1 } },
@@ -397,11 +397,14 @@ async function Preview({
     case "employee-claim-edit-trip":
     case "employee-claim-edit-owncar":
     case "employee-claim-edit-company-fields":
+    case "employee-claim-edit-condolence":
       return (
         <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee/claims/claim1/edit">
           <ClaimEditor
             data={
-              screen === "employee-claim-edit-company-fields"
+              screen === "employee-claim-edit-condolence"
+                ? { ...SAMPLE_EDITOR, claim: { ...SAMPLE_EDITOR.claim, category: "condolence" as const, condolence_target: "external" as const, client_name: "(주)에이컴퍼니 김부장 부친상" } }
+                : screen === "employee-claim-edit-company-fields"
                 ? { ...SAMPLE_EDITOR, companyFields: [{ key: "custom.proj0001", label: "프로젝트", required: true, options: ["A프로젝트", "B프로젝트", "공통 운영비"] }, { key: "custom.code0001", label: "예산 코드 (아주 긴 칸 이름이 줄바꿈되는지 확인)", required: false, options: null }], lastCustom: { "custom.proj0001": "B프로젝트" } }
                 : screen === "employee-claim-edit-empty"
                 ? { ...SAMPLE_EDITOR, items: [], claim: { ...SAMPLE_EDITOR.claim, item_count: 0, total_amount: 0, total_company_supported: 0, total_personal_burden: 0 } }

@@ -52,7 +52,8 @@ PocketExpense는 영수증(항목) 단위로 **내부 분류**(카테고리 + �
 | 회사 물품 구매 `purchase` | 사무용품·소모품 `office_supplies` | 소모품비 |
 | 회사 물품 구매 `purchase` | 소액 비품 `small_equipment` | 소모품비 |
 | 회식비 `team_dinner` | — | 복리후생비 (D-102) |
-| 경조사비 `condolence` | — | 기업업무추진비 (D-102) |
+| 경조사비 `condolence` › 내부(임직원) `internal` | — | 복리후생비 (D-123) |
+| 경조사비 `condolence` › 외부(거래처) `external` | — | 기업업무추진비 (D-102·D-123) |
 | 세미나·컨퍼런스 참가 `seminar` | — | 교육훈련비 (D-107) |
 | 업무용 도서 구입 `books` | — | 도서인쇄비 (D-102) |
 | 교육·훈련 `training` | — | 교육훈련비 (D-107) |

@@ -96,6 +96,8 @@ export type ClaimDetail = {
     rejected_at: string | null;
     paid_at: string | null;
     category: ExpenseCategory | null; // 결의서 대표 카테고리 (D-098)
+    condolence_target?: string | null; // 경조사비 내부(internal)·외부(external) (D-123)
+    client_name?: string | null;
     vehicle: { nickname: string; plate_number: string } | null; // 회사차량 결의서의 차량 (D-105)
   };
   owner: { name: string; department: string | null; position: string | null };

@@ -5,6 +5,8 @@ export const HEADER_PROBLEM_LABEL: Record<string, string> = {
   title: "제목",
   category: "지출 카테고리(영수증 카테고리가 섞여 있어요)",
   meeting_purpose: "미팅 목적",
+  condolence_target: "경조사 대상(내부·임직원 / 외부·거래처)",
+  client_name: "거래처명",
   purchase_type: "구매 세부 유형",
   purchase_purpose: "구매 목적",
   vehicle: "차량",

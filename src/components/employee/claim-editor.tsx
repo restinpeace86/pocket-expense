@@ -12,7 +12,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { inputClass } from "@/components/ui/page-shell";
 import type { ClaimHeaderInput, EditorData, EditorItem, PaymentMethod, TripTransport } from "@/lib/employee/editor-types";
 import { FUEL_TYPE_LABEL, routeCardFrom, STANDARD_KM_PER_L } from "@/lib/expense/route";
-import { CATEGORY_LABEL, EXTRA_CATEGORIES, MAIN_CATEGORIES, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory } from "@/lib/expense/categories";
+import { CATEGORY_LABEL, EXTRA_CATEGORIES, MAIN_CATEGORIES, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, CONDOLENCE_TARGET_LABEL, type CondolenceTarget } from "@/lib/expense/categories";
 import { claimStatusBadge } from "@/lib/expense/status";
 import { suggestPurpose } from "@/lib/expense/purpose";
 import { isAutoTitle, suggestTitle } from "@/lib/expense/title";
@@ -374,6 +374,7 @@ export function ClaimEditor({
       purchaseItems: claim.purchase_items ?? "",
       headcount: claim.headcount,
       vehicleId: claim.vehicle_id,
+      condolenceTarget: claim.condolence_target,
       custom: Object.fromEntries(data.companyFields.map((f) => [f.key, claim.header_custom_payload?.[f.key] ?? ""])),
     }),
     [claim, items, data.companyFields],
@@ -806,6 +807,30 @@ export function ClaimEditor({
               <Chips label="차량" options={data.vehicles.map((v) => ({ value: v.id, label: `${v.nickname} · ${v.plate_number}` }))} value={form.vehicleId} onChange={(v) => set("vehicleId", v)} />
             ) : (
               <p className="text-xs text-zinc-500">등록된 회사차량이 없어요. 관리자가 [설정 › 회사차량]에 등록하면 여기서 고를 수 있어요.</p>
+            )}
+          </div>
+        )}
+        {category === "condolence" && (
+          <div className="flex flex-col gap-3 rounded-xl bg-zinc-50 p-3" aria-label="경조사 정보">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-zinc-800">
+                누구 경조사인가요?<span className="ml-0.5 text-red-600">*</span>
+              </span>
+              <Chips
+                label="경조사 대상"
+                options={(Object.keys(CONDOLENCE_TARGET_LABEL) as CondolenceTarget[]).map((t) => ({ value: t, label: CONDOLENCE_TARGET_LABEL[t] }))}
+                value={form.condolenceTarget}
+                onChange={(v) => set("condolenceTarget", v)}
+              />
+              <p className="text-xs text-zinc-500">우리 회사 직원 경조사면 내부, 거래처 경조사면 외부예요. 세무 처리(계정과목)가 달라요.</p>
+            </div>
+            {form.condolenceTarget === "external" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="claim-condolence-client" required>
+                  거래처명
+                </Label>
+                <input id="claim-condolence-client" className={inputClass} value={form.clientName} maxLength={100} placeholder="예: (주)에이컴퍼니 김부장 부친상" onChange={(e) => set("clientName", e.target.value)} />
+              </div>
             )}
           </div>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { CATEGORY_LABEL } from "@/lib/expense/categories";
+import { CATEGORY_LABEL, CONDOLENCE_TARGET_LABEL } from "@/lib/expense/categories";
 import { ReceiptGallery } from "./receipt-gallery";
 import { ExceptionNote } from "./exception-note";
 import { ClaimPdfButton } from "./claim-pdf-button";
@@ -118,6 +118,7 @@ export function AdminClaimDetail({
         {(claim.category || claim.vehicle) && (
           <p className="mt-2 text-sm text-zinc-700">
             {claim.category && `📂 ${CATEGORY_LABEL[claim.category]}`}
+            {claim.category === "condolence" && (claim.condolence_target === "internal" || claim.condolence_target === "external") && ` · ${CONDOLENCE_TARGET_LABEL[claim.condolence_target]}${claim.condolence_target === "external" && claim.client_name ? ` (${claim.client_name})` : ""}`}
             {claim.vehicle && ` · 🚙 ${claim.vehicle.nickname} (${claim.vehicle.plate_number})`}
           </p>
         )}

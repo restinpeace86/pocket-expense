@@ -19,6 +19,7 @@ export type Database = {
           account_title_id: string
           category: Database["public"]["Enums"]["expense_category"]
           company_id: string
+          condolence_target: string | null
           created_at: string
           id: string
           purchase_type: Database["public"]["Enums"]["purchase_type"] | null
@@ -29,6 +30,7 @@ export type Database = {
           account_title_id: string
           category: Database["public"]["Enums"]["expense_category"]
           company_id: string
+          condolence_target?: string | null
           created_at?: string
           id?: string
           purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
@@ -39,6 +41,7 @@ export type Database = {
           account_title_id?: string
           category?: Database["public"]["Enums"]["expense_category"]
           company_id?: string
+          condolence_target?: string | null
           created_at?: string
           id?: string
           purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
@@ -679,6 +682,7 @@ export type Database = {
           category: Database["public"]["Enums"]["expense_category"] | null
           client_name: string | null
           company_id: string
+          condolence_target: string | null
           created_at: string
           current_round: number
           default_payment_method: Database["public"]["Enums"]["payment_method"]
@@ -723,6 +727,7 @@ export type Database = {
           category?: Database["public"]["Enums"]["expense_category"] | null
           client_name?: string | null
           company_id: string
+          condolence_target?: string | null
           created_at?: string
           current_round?: number
           default_payment_method?: Database["public"]["Enums"]["payment_method"]
@@ -767,6 +772,7 @@ export type Database = {
           category?: Database["public"]["Enums"]["expense_category"] | null
           client_name?: string | null
           company_id?: string
+          condolence_target?: string | null
           created_at?: string
           current_round?: number
           default_payment_method?: Database["public"]["Enums"]["payment_method"]
@@ -878,6 +884,7 @@ export type Database = {
           closing_seq: number | null
           company_id: string
           company_supported_amount: number | null
+          condolence_target: string | null
           corporate_card_id: string | null
           created_at: string
           credit_charged: boolean
@@ -947,6 +954,7 @@ export type Database = {
           closing_seq?: number | null
           company_id: string
           company_supported_amount?: number | null
+          condolence_target?: string | null
           corporate_card_id?: string | null
           created_at?: string
           credit_charged?: boolean
@@ -1018,6 +1026,7 @@ export type Database = {
           closing_seq?: number | null
           company_id?: string
           company_supported_amount?: number | null
+          condolence_target?: string | null
           corporate_card_id?: string | null
           created_at?: string
           credit_charged?: boolean
@@ -2056,6 +2065,7 @@ export type Database = {
           p_category: Database["public"]["Enums"]["expense_category"]
           p_claim_id: string
           p_client_name?: string
+          p_condolence_target?: string
           p_headcount?: number
           p_meeting_purpose?: string
           p_purchase_items?: string

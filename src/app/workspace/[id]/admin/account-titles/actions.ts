@@ -66,12 +66,13 @@ export async function setMappingAction(c: Classification, accountTitleId: string
   let q = supabase.from("account_title_mappings").update({ account_title_id: accountTitleId }).eq("company_id", membership.company_id).eq("category", c.category);
   q = c.tripType ? q.eq("trip_type", c.tripType) : q.is("trip_type", null);
   q = c.purchaseType ? q.eq("purchase_type", c.purchaseType) : q.is("purchase_type", null);
+  q = c.condolenceTarget ? q.eq("condolence_target", c.condolenceTarget) : q.is("condolence_target", null);
   const { data, error } = await q.select("id");
   if (error) return { error: errorMessage(error) };
   if (!data?.length) {
     const { error: insertError } = await supabase
       .from("account_title_mappings")
-      .insert({ company_id: membership.company_id, category: c.category, trip_type: c.tripType, purchase_type: c.purchaseType, account_title_id: accountTitleId });
+      .insert({ company_id: membership.company_id, category: c.category, trip_type: c.tripType, purchase_type: c.purchaseType, condolence_target: c.condolenceTarget ?? null, account_title_id: accountTitleId });
     if (insertError) return { error: errorMessage(insertError) };
   }
   refresh();

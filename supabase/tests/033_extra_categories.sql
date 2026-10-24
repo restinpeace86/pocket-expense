@@ -16,13 +16,13 @@ select private.seed_account_defaults('c3300000-0000-0000-0000-00000000000a');
 select private.seed_account_defaults('c3300000-0000-0000-0000-00000000000a'); -- 두 번 해도 그대로
 
 do $$
-declare r record; v_expect jsonb := '{"team_dinner":"복리후생비","condolence":"기업업무추진비","seminar":"교육훈련비","books":"도서인쇄비","training":"교육훈련비","company_car":"차량유지비","saas":"지급수수료","meal":"복리후생비","meeting":"기업업무추진비"}';
+declare r record; v_expect jsonb := '{"team_dinner":"복리후생비","condolence:external":"기업업무추진비","condolence:internal":"복리후생비","seminar":"교육훈련비","books":"도서인쇄비","training":"교육훈련비","company_car":"차량유지비","saas":"지급수수료","meal":"복리후생비","meeting":"기업업무추진비"}';
 begin
-  for r in select m.category::text as c, t.name from public.account_title_mappings m join public.account_titles t on t.id = m.account_title_id
+  for r in select m.category::text || coalesce(':' || m.condolence_target, '') as c, t.name from public.account_title_mappings m join public.account_titles t on t.id = m.account_title_id
             where m.company_id = 'c3300000-0000-0000-0000-00000000000a' and m.trip_type is null and m.purchase_type is null loop
     if v_expect->>r.c is distinct from r.name then raise exception 'FAIL [mapping] % → %', r.c, r.name; end if;
   end loop;
-  if (select count(*) from public.account_title_mappings where company_id = 'c3300000-0000-0000-0000-00000000000a' and trip_type is null and purchase_type is null) <> 9 then raise exception 'FAIL [mapping count]'; end if;
+  if (select count(*) from public.account_title_mappings where company_id = 'c3300000-0000-0000-0000-00000000000a' and trip_type is null and purchase_type is null) <> 10 then raise exception 'FAIL [mapping count]'; end if; -- 경조사비는 내부·외부 2줄(D-123)
   if (select count(*) from public.account_titles where company_id = 'c3300000-0000-0000-0000-00000000000a' and name = '도서인쇄비') <> 1 then raise exception 'FAIL [dup title]'; end if;
 end;
 $$;

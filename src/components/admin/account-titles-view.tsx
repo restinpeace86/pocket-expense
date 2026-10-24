@@ -71,8 +71,8 @@ export function AccountTitlesView({ titles, mappings, preview = false }: { title
     });
   }
 
-  const mappingFor = (category: string, tripType: string | null, purchaseType: string | null) =>
-    mappings.find((m) => m.category === category && (m.trip_type ?? null) === tripType && (m.purchase_type ?? null) === purchaseType)
+  const mappingFor = (category: string, tripType: string | null, purchaseType: string | null, condolenceTarget: string | null) =>
+    mappings.find((m) => m.category === category && (m.trip_type ?? null) === tripType && (m.purchase_type ?? null) === purchaseType && (m.condolence_target ?? null) === condolenceTarget)
       ?.account_title_id ?? "";
 
   return (
@@ -84,10 +84,10 @@ export function AccountTitlesView({ titles, mappings, preview = false }: { title
         <SectionHeading title="분류별 계정과목" summary="영수증 분류마다 어떤 계정과목으로 넘길지 골라요." />
         <ul className="mt-4 flex flex-col divide-y divide-zinc-100">
           {MAPPING_ROWS.map((r) => {
-            const value = mappingFor(r.category, r.tripType, r.purchaseType);
+            const value = mappingFor(r.category, r.tripType, r.purchaseType, r.condolenceTarget ?? null);
             const label = classificationLabel(r);
             return (
-              <li key={`${r.category}-${r.tripType ?? ""}-${r.purchaseType ?? ""}`} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <li key={`${r.category}-${r.tripType ?? ""}-${r.purchaseType ?? ""}-${r.condolenceTarget ?? ""}`} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm font-medium text-zinc-800">{label}</span>
                 <select
                   className={`${inputClass} sm:w-56`}

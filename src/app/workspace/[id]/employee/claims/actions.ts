@@ -84,6 +84,7 @@ export async function saveClaimHeaderAction(claimId: string, input: ClaimHeaderI
       p_headcount: headcount ?? undefined,
       p_vehicle_id: (category === "company_car" || (category === "trip" && input.tripTransport === "company_car")) && input.vehicleId && isUuid(input.vehicleId) ? input.vehicleId : undefined,
       p_trip_transport: category === "trip" && input.tripTransport && TRANSPORTS.includes(input.tripTransport) ? input.tripTransport : undefined,
+      p_condolence_target: category === "condolence" && (input.condolenceTarget === "internal" || input.condolenceTarget === "external") ? input.condolenceTarget : undefined,
     });
     if (catError) return { ok: false, error: messageForDbError(catError) };
   }

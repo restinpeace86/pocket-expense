@@ -3,7 +3,7 @@ import { classificationLabel, MAPPING_ROWS } from "./categories";
 
 describe("내부 분류", () => {
   it("매핑 표는 21개 (식대 1 + 출장 9 + 미팅 1 + 물품 구매 3 + 추가 7, D-102·D-106)", () => {
-    expect(MAPPING_ROWS).toHaveLength(21);
+    expect(MAPPING_ROWS).toHaveLength(22); // 경조사비 내부·외부(D-123)
     expect(MAPPING_ROWS.filter((r) => r.category === "purchase").map((r) => r.purchaseType)).toEqual(["pantry", "office_supplies", "small_equipment"]);
   });
   it("이름", () => {
