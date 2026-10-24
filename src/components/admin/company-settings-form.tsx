@@ -30,7 +30,8 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
   const [mealEnabled, setMealEnabled] = useState(s.meal_limit_enabled);
   const [mealLimit, setMealLimit] = useState(String(s.meal_limit_per_person));
   const [fuelEnabled, setFuelEnabled] = useState(s.fuel_enabled);
-  const [odometer, setOdometer] = useState(s.odometer_photo_required);
+  // 계기판 사진 받기(D-070 ②)는 직원 쪽 기능이 생길 때까지 숨김(D-121) — 저장 때 기존 값을 그대로 보낸다
+  const odometer = s.odometer_photo_required;
   const [mode, setMode] = useState(s.meal_limit_mode);
   const [fuelRate, setFuelRate] = useState(String(s.fuel_rate_per_km));
   const [fuelMode, setFuelMode] = useState<"fixed" | "opinet">(s.fuel_rate_mode);
@@ -185,8 +186,7 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
               </p>
               <p>유가가 크게 바뀌면 단가를 조정하세요. 바꾼 단가는 이후 상신되는 경비부터 적용돼요.</p>
               <p>
-                <b>증빙은 어떻게 하나요?</b> 주유 영수증 대신 직원이 입력한 출발지·도착지·거리·출장 목적이 기록으로 남고, 세무 마감 자료에 함께 나가요. 더 확실한
-                증빙이 필요하면 계기판 사진 받기를 켜세요.
+                <b>증빙은 어떻게 하나요?</b> 주유 영수증 대신 직원이 입력한 출발지·도착지·거리·출장 목적이 기록으로 남고, 세무 마감 자료에 함께 나가요.
               </p>
               <p>자차 출장비를 지원하지 않는 회사라면 &lsquo;사용 안 함&rsquo;을 고르세요. 자가운전보조금을 받는 직원은 멤버 관리에서 따로 막을 수 있어요.</p>
             </>
@@ -256,18 +256,6 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
                         <p className="mt-1 text-xs text-zinc-500">출처: 한국석유공사 오피넷 전국 주유소 평균 가격. 출장 당일 값이 없으면 7일 안 가장 최근 값, 그것도 없으면 고정 단가로 계산해요.</p>
                       </div>
                     )}
-                    <label className="flex cursor-pointer items-start gap-3">
-                      <input
-                        type="checkbox"
-                        checked={odometer}
-                        onChange={(e) => setOdometer(e.target.checked)}
-                        className="mt-0.5 size-5 shrink-0 accent-brand-600"
-                      />
-                      <span className="min-w-0">
-                        <span className="block text-sm font-medium text-zinc-900">출발·도착 계기판 사진 받기 (선택)</span>
-                        <span className="block text-sm text-zinc-600">거리 증빙이 더 확실해지지만 직원이 사진 2장을 더 찍어야 해요.</span>
-                      </span>
-                    </label>
                   </div>
                 ),
               },
