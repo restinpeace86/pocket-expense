@@ -122,6 +122,7 @@ export function FormTemplateView(p: FormTemplateViewProps) {
   const [layout, setLayout] = useState<FormLayout>(() => clone(p.initialLayout));
   const [choice, setChoice] = useState<Choice>(p.active ? (p.initialLayout.base === "custom" ? "photo" : p.initialLayout.base) : "standard");
   const [dirty, setDirty] = useState(false);
+  const [reviewed, setReviewed] = useState(false); // 저장 전 미리보기 확인(필수) — 바꿀 때마다 다시 확인
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [source, setSource] = useState<{ path: string; localUrl: string | null } | null>(null);
   const [ai, setAi] = useState<{ result: AiLayoutResult; read: AiFormRead } | null>(null);
@@ -135,6 +136,7 @@ export function FormTemplateView(p: FormTemplateViewProps) {
   const edit = (patch: Partial<FormLayout>) => {
     setLayout((l) => ({ ...l, ...patch, base: choice === "photo" ? "custom" : l.base }));
     setDirty(true);
+    setReviewed(false);
     setMessage(null);
   };
   const pickPreset = (id: PresetId) => {
@@ -144,6 +146,7 @@ export function FormTemplateView(p: FormTemplateViewProps) {
     setAi(null);
     setSource(null);
     setDirty(id !== (p.active ? p.initialLayout.base : "standard"));
+    setReviewed(false);
     setMessage(null);
   };
 
@@ -166,6 +169,7 @@ export function FormTemplateView(p: FormTemplateViewProps) {
       setAi({ result: r.result, read: r.aiRead });
       setLayout(r.result.layout);
       setDirty(true);
+      setReviewed(false);
       setTab("preview");
     } finally {
       setReading(false);
@@ -178,6 +182,7 @@ export function FormTemplateView(p: FormTemplateViewProps) {
       const r = await saveFormLayoutAction({ layout, sourceFilePath: choice === "photo" ? (source?.path ?? null) : null, aiRead: choice === "photo" ? (ai?.read ?? null) : null });
       if (!r.ok) return setMessage({ kind: "error", text: r.error });
       setDirty(false);
+      setReviewed(false);
       setMessage({ kind: "ok", text: "저장했어요. 이제 결의서 PDF와 세무 마감 PDF가 이 양식으로 나가요." });
     });
   const reset = () =>
@@ -324,6 +329,12 @@ export function FormTemplateView(p: FormTemplateViewProps) {
           <SectionHeading title="③ 미리보기" summary={`${p.previewLabel}로 그려 봤어요. PDF도 이 모양으로 나가요.`} />
           <div className="lg:sticky lg:top-4">
             <ClaimDocument model={model} />
+            <label className={`mt-3 flex min-h-11 cursor-pointer items-start gap-2 rounded-xl border px-3 py-2.5 text-sm ${reviewed ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-amber-300 bg-amber-50 text-amber-900"}`}>
+              <input type="checkbox" className="mt-0.5 size-4 shrink-0 accent-brand-600" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)} />
+              <span>
+                <span className="font-semibold">미리보기를 확인했어요</span> — 칸 이름·순서·숫자가 맞는지 보고 체크해 주세요. 체크해야 저장할 수 있어요{choice === "photo" ? "(AI가 읽은 양식은 특히 꼭 확인)" : ""}.
+              </span>
+            </label>
           </div>
         </section>
       </div>
@@ -335,11 +346,11 @@ export function FormTemplateView(p: FormTemplateViewProps) {
       )}
       <div className="kb-hide fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur md:left-64">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
-          <p className="hidden flex-1 text-sm text-zinc-600 sm:block">{dirty ? "저장하지 않은 변경이 있어요." : "저장된 양식이에요."}</p>
+          <p className="hidden flex-1 text-sm text-zinc-600 sm:block">{dirty || !p.active ? (reviewed ? "확인했어요. 저장할 수 있어요." : "미리보기 아래 '확인했어요'를 체크하면 저장할 수 있어요.") : "저장된 양식이에요."}</p>
           <button type="button" className={`${buttonSecondary} sm:w-auto lg:hidden`} onClick={() => setTab(tab === "edit" ? "preview" : "edit")}>
             {tab === "edit" ? "미리보기" : "꾸미기"}
           </button>
-          <button type="button" className={`${buttonPrimary} sm:w-auto`} disabled={saving || reading || (!dirty && !!p.active)} onClick={save}>
+          <button type="button" className={`${buttonPrimary} sm:w-auto`} disabled={saving || reading || !reviewed || (!dirty && !!p.active)} onClick={save}>
             {saving ? "저장 중…" : "이 양식으로 저장"}
           </button>
         </div>
