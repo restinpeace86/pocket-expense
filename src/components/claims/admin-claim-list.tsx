@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RowPending } from "./claim-list-pane";
 import { APPROVAL_TABS, type AdminClaimRow, type ApprovalTab } from "@/lib/claims/admin-list";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { claimStatusBadge } from "@/lib/expense/status";
@@ -37,10 +38,11 @@ export function AdminClaimList({ rows, tab, base, selectedId, query = "" }: { ro
         const badge = claimStatusBadge(c.status, c.settlement_required);
         const active = c.id === selectedId;
         return (
-          <li key={c.id}>
+          <li key={c.id} id={`c-${c.id}`} className="scroll-mt-20">
             <Link
               href={`${base}/${c.id}?tab=${tab}${query ? `&${query}` : ""}`}
               aria-current={active ? "true" : undefined}
+              data-claim-row
               className={`block rounded-xl border p-3 hover:border-brand-300 ${active ? "border-brand-500 bg-brand-50" : "border-zinc-200 bg-white"}`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -48,7 +50,10 @@ export function AdminClaimList({ rows, tab, base, selectedId, query = "" }: { ro
                   {c.is_business_trip && <span className="mr-1 rounded bg-sky-100 px-1.5 py-0.5 text-[11px] text-sky-800">출장</span>}
                   {c.title || "제목 없는 결의서"}
                 </p>
-                <span className="shrink-0 font-semibold tabular-nums">{formatWon(c.total_amount)}</span>
+                <span className="flex shrink-0 items-center gap-1 font-semibold tabular-nums">
+                  <RowPending />
+                  {formatWon(c.total_amount)}
+                </span>
               </div>
               <p className="mt-1 text-xs text-zinc-500">
                 {c.member_name} · {c.item_count}건 · {formatDateTimeKst(c.submitted_at).slice(0, 10)}

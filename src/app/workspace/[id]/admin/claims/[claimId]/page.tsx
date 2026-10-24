@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { AdminClaimDetail } from "@/components/claims/admin-claim-detail";
 import { AdminClaimList, ApprovalTabs } from "@/components/claims/admin-claim-list";
 import { ClaimFiltersBar } from "@/components/claims/claim-filters";
+import { ClaimListPane } from "@/components/claims/claim-list-pane";
 import { getFilterOptions } from "@/lib/claims/filter-options";
 import { filterQuery, parseClaimFilters } from "@/lib/claims/filters";
 import { ApprovalTimeline } from "@/components/claims/approval-timeline";
@@ -46,17 +47,17 @@ async function Detail({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   const nextFor = (rows: typeof nextList) => (rows.length ? { href: `${base}/${rows[0].id}?tab=pending${query ? `&${query}` : ""}`, count: rows.length } : { href: "", count: 0 });
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
-      <div className="hidden min-w-0 flex-col gap-3 lg:flex">
+      <ClaimListPane className="hidden lg:flex">
         <ApprovalTabs tab={tab} pendingCount={pendingCount} base={base} query={query} />
         <ClaimFiltersBar key={query} filters={filters} tab={tab} base={base} {...options} />
         <AdminClaimList rows={list} tab={tab} base={base} selectedId={claimId} query={query} />
-      </div>
+      </ClaimListPane>
       <AdminClaimDetail
         key={`${detail.claim.id}:${detail.claim.current_round}`}
         detail={detail}
         canAct={can}
         blockedReason={reason}
-        backHref={`${base}?tab=${tab}${query ? `&${query}` : ""}`}
+        backHref={`${base}?tab=${tab}${query ? `&${query}` : ""}#c-${claimId}`}
         payoutsHref={`/workspace/${id}/admin/payouts`}
         timeline={<ApprovalTimeline detail={detail} />}
         accountTitles={titles ?? []}

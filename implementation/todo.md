@@ -39,9 +39,9 @@
   - 본문에 반영할 사항 추가(D-080): 크레딧 사용 영수증 기록 보관, 직원이 지운 영수증 사진 3개월 보관 후 삭제, AI 인식 내용(품목 포함)의 서비스 분석 이용
 
 ## T3. 관리자 기본 — 기준: `spec/screens/admin-dashboard.md` 0·⑤, `spec/screens/admin-team-members.md`, `spec/screens/admin-settings.md`, `spec/features/roles-and-permissions.md`
-- [ ] T3-1 관리자 레이아웃(사이드바, Split View, 모바일 반응형) + 워크스페이스 스위처(D-049)
+- [x] T3-1 관리자 레이아웃(사이드바, Split View, 모바일 반응형) + 워크스페이스 스위처(D-049) (2026-10-24)
   - [x] T3-1a 사이드바(PC)·햄버거 메뉴(모바일) 레이아웃 + 관리자/직원 모드 전환 헤더 (2026-10-17)
-  - [ ] T3-1b Split View (지출 승인 관리 화면과 함께, T7)
+  - [x] T3-1b Split View (지출 승인 관리 화면과 함께, T7) (2026-10-24, D-122: 목록 칸 따로 스크롤·위치 유지, 휴대폰은 2단계 + 돌아오면 보던 위치, `implementation/2026-10-24_T3-1b-split-view.md`)
 - [x] T3-0 직원 합류 흐름 우선 처리 (2026-10-17, 사용자 지시: 초대는 코드가 아니라 링크로 보낸다)
   - [x] 관리자 홈: 가입 승인 대기 안내 + 공용 초대 링크 카드(링크 복사·QR 이미지 저장·새 링크 만들기) + 무료 영수증 잔량
   - [x] 멤버 관리: 탭(전체·가입 승인 대기·비활성) + 가입 승인/거절 (`approve_member`·`reject_member`, 마이그레이션 012, `supabase/tests/004_member_admin.sql`)
