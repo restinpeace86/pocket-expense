@@ -54,6 +54,33 @@ describe("지출결의서 양식 틀 (D-118)", () => {
     expect(m.statement).toBe("상기와 같이 2026-10-14 ~ 2026-10-17 지출한 경비를 청구합니다.");
   });
 
+  it("품목 표형(A안): 영수증 품목마다 한 줄, 품목 없으면 한 줄(수량 1), 품목 합과 다르면 할인 줄 — 합계는 영수증과 같다", () => {
+    const m = buildDocModel(PRESETS.itemized.layout, SAMPLE_DOC, { companyName: "가나다" });
+    expect(m.table.rows.map((r) => r.cells)).toEqual([
+      ["1", "점심 정식", "3", "11,000", "33,000", "10/14 한식당 소담"],
+      ["2", "음료", "2", "1,400", "2,800", ""],
+      ["3", "거래처 신제품 협의", "1", "16,500", "16,500", "10/16 카페 온도"],
+      ["4", "A4 복사지", "2", "15,000", "30,000", "10/17 다이소"],
+      ["5", "볼펜 세트", "3", "7,500", "22,500", ""],
+      ["6", "할인", "", "", "-1,500", ""],
+    ]);
+    expect(m.table.total).toEqual(["합계", "", "", "", "103,300", ""]);
+  });
+
+  it("수량·단가 열만 있고 품목 열이 없으면 적요 열이 품목 이름", () => {
+    const layout = { ...PRESETS.itemized.layout, columns: PRESETS.itemized.layout.columns.map((c) => (c.key === "item.line_name" ? { key: "item.summary" as const, label: "적요" } : c)) };
+    const m = buildDocModel(layout, SAMPLE_DOC, { companyName: "x" });
+    expect(m.table.rows[1].cells.slice(0, 2)).toEqual(["2", "음료"]);
+  });
+
+  it("품목 금액을 모르면 영수증 한 줄로, 수량만 없으면 1", async () => {
+    const { linesOf } = await import("./layout");
+    const base = SAMPLE_DOC.items[0];
+    expect(linesOf({ ...base, line_items: [{ name: "김밥", quantity: null, unit_price: null, amount: null }] })).toEqual([{ name: "부서 정기 점심 식사", quantity: 1, unitPrice: 35800, amount: 35800 }]);
+    expect(linesOf({ ...base, amount: 9000, line_items: [{ name: "김밥", quantity: null, unit_price: 4500, amount: 9000 }] })).toEqual([{ name: "김밥", quantity: 2, unitPrice: 4500, amount: 9000 }]);
+    expect(linesOf({ ...base, amount: 9000, line_items: [{ name: "김밥", quantity: null, unit_price: null, amount: 9000 }] })).toEqual([{ name: "김밥", quantity: 1, unitPrice: 9000, amount: 9000 }]);
+  });
+
   it("내역·입금형: 입금 정보, 회사 이름. 계좌가 없으면 빈칸", () => {
     const m = buildDocModel(PRESETS.detailed.layout, SAMPLE_DOC, { companyName: "주식회사 가나다" });
     expect(m.footer).toEqual([{ label: "입금 정보", value: "가나은행 / 123-456-7890 / 홍길동", wide: true }]);

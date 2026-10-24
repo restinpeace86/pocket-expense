@@ -16,9 +16,10 @@ describe("AI가 읽은 종이 양식 → 양식 틀 (D-118)", () => {
       ],
       table_columns: [
         { label: "번호", binding: "item.no" },
-        { label: "적요", binding: "item.summary" },
-        { label: "수량", binding: "none" },
-        { label: "단가", binding: "none" },
+        { label: "적요", binding: "item.line_name" },
+        { label: "수량", binding: "item.quantity" },
+        { label: "단가", binding: "item.unit_price" },
+        { label: "결재코드", binding: "none" },
         { label: "금액", binding: "item.amount" },
         { label: "비고", binding: "item.note" },
       ],
@@ -31,9 +32,9 @@ describe("AI가 읽은 종이 양식 → 양식 틀 (D-118)", () => {
     expect(r.layout.title).toBe("지 출 결 의 서");
     expect(r.layout.base).toBe("custom");
     expect(r.layout.header.map((h) => h.label)).toEqual(["문서번호", "지출건명", "작성부서", "작성자"]);
-    expect(r.layout.columns.map((c) => c.key)).toEqual(["item.no", "item.summary", "item.amount", "item.note"]);
+    expect(r.layout.columns.map((c) => c.key)).toEqual(["item.no", "item.line_name", "item.quantity", "item.unit_price", "item.amount", "item.note"]);
     expect(r.layout.footer).toEqual([{ key: "claim.description", label: "특이사항" }]);
-    expect(r.unmatched).toEqual(["보존기간", "담당자", "수량", "단가"]);
+    expect(r.unmatched).toEqual(["보존기간", "담당자", "결재코드"]);
     expect(r.approvalLabels).toEqual(["담당", "이사", "대표"]);
     expect(r.layout.statement).toBe("위와 같은 금액을 청구하오니, 결재하여 주시기 바랍니다.");
     expect(r.layout.signerLabel).toBe("작성자");

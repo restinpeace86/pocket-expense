@@ -7,6 +7,8 @@
 - 칸은 **우리 데이터로 채울 수 있는 항목**에서만 고른다(`src/lib/forms/layout.ts`의 FIELD_CATALOG·COLUMN_CATALOG). §4 바인딩 표를 대신한다.
 - `form_templates.schema` 형식은 §3 대신 `FormLayout`: `{ v, base, title, header[], columns[], totalLabel, footer[], statement, showDate, signerLabel, showCompany }` (각 칸 `{ key, label }`).
 - 기본 포맷 5종: 기본 양식 / 품목 표형 / 단건 요약형 / 월 청구형 / 내역·입금형 (`PRESETS`).
+- 품목·수량·단가 열(D-119): 영수증 품목(`line_items`)마다 한 줄. 품목 없으면 영수증 한 장 = 한 줄(수량 1, 단가 = 금액). 품목 합 ≠ 영수증 합계면 '할인'/'기타' 한 줄로 차이를 넣어 합계는 영수증 합계. 품목 금액을 모르면 영수증 한 줄. 영수증 단위 칸은 첫 줄에만. 품목 열이 없으면 적요 열이 품목 이름.
+- 사람이 따로 채워야 하는 칸은 만들지 않는다.
 - AI 분석: 사진·PDF(10MB, `form-templates/{company_id}/{uuid}.jpg|pdf`) → Gemini가 칸 이름과 항목 키(없으면 none)를 돌려줌 → 짝 없는 칸은 '채울 수 없어 뺀 칸'으로 안내, 결재란은 결재라인 자동, 표 열을 못 찾으면 기본 표. 실패하면 "양식을 읽지 못했어요… 비슷한 기본 포맷을 골라 직접 꾸며 주세요".
 - 저장 `save_form_template(schema, source_path, ai_extracted)`(관리자, 새 버전·활성 1개), 되돌리기 `clear_form_template()`.
 - 렌더링: 문서 모델(`buildDocModel`) 하나를 화면 미리보기(`ClaimDocument`)와 PDF(`pdf-client.ts`)가 같이 그린다. 쓰는 곳: 관리자 결의서 상세 [지출결의서 PDF], 세무 마감 ZIP 지출결의서 PDF.

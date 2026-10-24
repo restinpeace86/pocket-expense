@@ -38,7 +38,11 @@ export const COLUMN_CATALOG = {
   "item.merchant_name": { label: "사용처", hint: "가맹점(자차는 출발→도착)", w: 1.8 },
   "item.category": { label: "카테고리", hint: "지출 카테고리", w: 1.2 },
   "item.account_title": { label: "계정과목", hint: "세무 계정과목", w: 1.1 },
-  "item.purpose": { label: "적요", hint: "지출 사유 한 줄(품목)", w: 1.9 },
+  "item.purpose": { label: "적요", hint: "지출 사유 한 줄", w: 1.9 },
+  "item.line_name": { label: "품목", hint: "영수증 품목(품목이 여러 개면 한 줄씩, 없으면 적요)", w: 1.7, line: true },
+  "item.quantity": { label: "수량", hint: "영수증 품목 수량(없으면 1)", w: 0.5, line: true, num: true },
+  "item.unit_price": { label: "단가", hint: "영수증 품목 단가(없으면 금액)", w: 0.85, line: true, num: true },
+  "item.receipt": { label: "사용 내역", hint: "사용일 · 사용처", w: 1.6 },
   "item.summary": { label: "적요", hint: "사유 + 인원·참석자·경로", w: 2 },
   "item.note": { label: "비고", hint: "인원·참석자·거래처", w: 1.4 },
   "item.payment_method": { label: "결제", hint: "법인카드 / 개인", w: 0.7 },
@@ -48,7 +52,7 @@ export const COLUMN_CATALOG = {
   "item.amount": { label: "금액", hint: "합계 금액", w: 1, money: true },
   "item.company_supported_amount": { label: "회사지원", hint: "", w: 1, money: true },
   "item.personal_burden_amount": { label: "개인부담", hint: "", w: 0.95, money: true },
-} as const satisfies Record<string, { label: string; hint: string; w: number; money?: boolean }>;
+} as const satisfies Record<string, { label: string; hint: string; w: number; money?: boolean; num?: boolean; line?: boolean }>;
 export type ColumnKey = keyof typeof COLUMN_CATALOG;
 
 export type LayoutField<K extends string> = { key: K; label: string };
@@ -111,7 +115,7 @@ export const PRESETS: Record<PresetId, { name: string; desc: string; layout: For
   },
   itemized: {
     name: "품목 표형",
-    desc: "문서번호·지출일자·발의일자·결재일자 칸 + 번호·적요·금액·비고 표 + 특이사항.",
+    desc: "문서번호·지출일자·발의일자·결재일자 칸 + 번호·적요·수량·단가·금액·비고 표(영수증 품목마다 한 줄) + 특이사항.",
     layout: {
       v: 1,
       base: "itemized",
@@ -126,14 +130,7 @@ export const PRESETS: Record<PresetId, { name: string; desc: string; layout: For
         f("member.name", "작성자"),
         f("claim.total_amount_words", "합계 (VAT 포함)"),
       ],
-      columns: [
-        f("item.no", "번호"),
-        f("item.expense_date", "사용일"),
-        f("item.merchant_name", "사용처"),
-        f("item.summary", "적요"),
-        f("item.amount", "금액"),
-        f("item.payment_method", "비고"),
-      ],
+      columns: [f("item.no", "번호"), f("item.line_name", "적요"), f("item.quantity", "수량"), f("item.unit_price", "단가"), f("item.amount", "금액"), f("item.receipt", "비고")],
       totalLabel: "합계",
       footer: [f("claim.description", "특이사항")],
       statement: null,
@@ -192,7 +189,7 @@ export const PRESETS: Record<PresetId, { name: string; desc: string; layout: For
   },
   detailed: {
     name: "내역·입금형",
-    desc: "지출 제목·작성/결재 일자·부서/담당·지출 금액 + 항목·금액·비고 내역 + 입금 정보 + 회사 이름.",
+    desc: "지출 제목·작성/결재 일자·부서/담당·지출 금액 + 항목·금액·비고 내역(품목마다 한 줄) + 입금 정보 + 회사 이름.",
     layout: {
       v: 1,
       base: "detailed",
@@ -204,7 +201,7 @@ export const PRESETS: Record<PresetId, { name: string; desc: string; layout: For
         f("member.dept_name", "부서 / 담당"),
         f("claim.total_amount_words", "지출 금액"),
       ],
-      columns: [f("item.expense_date", "사용일"), f("item.summary", "항 목"), f("item.amount", "금액(원)"), f("item.note", "비 고")],
+      columns: [f("item.line_name", "항 목"), f("item.amount", "금액(원)"), f("item.receipt", "비 고")],
       totalLabel: "합 계",
       footer: [f("member.bank", "입금 정보")],
       statement: "위 금액을 청구하오니 결재해 주시기 바랍니다.",
@@ -325,10 +322,48 @@ export function itemSummary(i: ClaimDocItem): string {
   return parts.filter(Boolean).join(" · ");
 }
 
-function cell(key: ColumnKey, i: ClaimDocItem, index: number, evidenceNo: string | undefined): string {
+// 품목 한 줄(D-118 A안): 영수증 품목마다 한 줄. 품목이 없으면 영수증 한 장이 한 줄(수량 1, 단가 = 금액).
+// 품목 합이 영수증 합계와 다르면(할인·봉사료 등) 차이를 "할인·기타" 한 줄로 넣어 합계를 영수증과 맞춘다.
+export type DocLine = { name: string; quantity: number | null; unitPrice: number | null; amount: number | null };
+export function linesOf(i: ClaimDocItem): DocLine[] {
+  const whole: DocLine[] = [{ name: isOwnCar(i) ? itemSummary(i) || `자차 ${clean(i.start_location)}→${clean(i.end_location)}` : clean(i.purpose) || clean(i.merchant_name), quantity: 1, unitPrice: i.amount, amount: i.amount }];
+  const raw = (Array.isArray(i.line_items) ? i.line_items : []).filter((l) => l && typeof l.name === "string" && l.name.trim());
+  if (!raw.length || isOwnCar(i)) return whole;
+  const lines: DocLine[] = [];
+  for (const l of raw) {
+    const q = typeof l.quantity === "number" && l.quantity > 0 ? l.quantity : null;
+    const u = typeof l.unit_price === "number" ? l.unit_price : null;
+    const amount = typeof l.amount === "number" ? l.amount : q != null && u != null ? Math.round(q * u) : u != null && q == null ? u : null;
+    if (amount == null) return whole; // 금액을 모르는 품목이 있으면 영수증 한 줄로(틀린 숫자를 만들지 않는다)
+    const quantity = q ?? (u != null && u !== 0 && Number.isInteger(amount / u) ? amount / u : 1);
+    lines.push({ name: clean(l.name), quantity, unitPrice: u ?? (Number.isInteger(amount / quantity) ? amount / quantity : null), amount });
+  }
+  const diff = (i.amount ?? 0) - lines.reduce((s, l) => s + (l.amount ?? 0), 0);
+  if (diff !== 0) lines.push({ name: diff < 0 ? "할인" : "기타(봉사료·배달비 등)", quantity: null, unitPrice: null, amount: diff });
+  return lines;
+}
+const num = (n: number | null) => (n == null ? "" : Number.isInteger(n) ? n.toLocaleString("ko-KR") : String(n));
+
+function cell(key: ColumnKey, i: ClaimDocItem, index: number, evidenceNo: string | undefined, line: DocLine | null, first: boolean, nameKey: ColumnKey): string {
+  // 품목 줄: 영수증 단위 칸은 그 영수증의 첫 줄에만
+  if (line) {
+    if (key === nameKey) return line.name;
+    if (key === "item.quantity") return num(line.quantity);
+    if (key === "item.unit_price") return num(line.unitPrice);
+    if (key === "item.amount") return won(line.amount);
+    if (key !== "item.no" && !first) return "";
+  }
   switch (key) {
     case "item.no":
       return String(index + 1);
+    case "item.line_name":
+      return linesOf(i)[0]?.name ?? "";
+    case "item.quantity":
+      return "1";
+    case "item.unit_price":
+      return won(i.amount);
+    case "item.receipt":
+      return [i.expense_date ? i.expense_date.slice(5).replace("-", "/") : "", isOwnCar(i) ? "자차" : clean(i.merchant_name)].filter(Boolean).join(" ");
     case "item.evidence_no":
       return evidenceNo ?? String(index + 1);
     case "item.expense_date":
@@ -435,9 +470,19 @@ export function buildDocModel(layout: FormLayout, doc: ClaimDoc, ctx: DocContext
       return v === null ? [] : [{ label: x.label, value: v, wide: "wide" in FIELD_CATALOG[x.key] }];
     });
 
-  const cols = layout.columns.map((c) => ({ label: c.label, w: COLUMN_CATALOG[c.key].w, right: "money" in COLUMN_CATALOG[c.key] }));
+  const cols = layout.columns.map((c) => ({ label: c.label, w: COLUMN_CATALOG[c.key].w, right: "money" in COLUMN_CATALOG[c.key] || "num" in COLUMN_CATALOG[c.key] }));
   const ev = ctx.evidenceNo ?? null;
-  const rows = doc.items.map((i, idx) => ({ cells: layout.columns.map((c) => cell(c.key, i, idx, ev?.get(i.id) ?? (ev ? "다른 달" : undefined))), dim: ev ? !ev.get(i.id) : false }));
+  // 품목 칸(품목·수량·단가)이 있으면 영수증 품목마다 한 줄(A안), 없으면 영수증 한 장이 한 줄
+  const lineMode = layout.columns.some((c) => "line" in COLUMN_CATALOG[c.key]);
+  // 품목 이름 열: item.line_name, 없으면 적요 열(수량·단가만 있는 양식에서 적요가 품목 이름 자리)
+  const nameKey: ColumnKey = layout.columns.find((c) => c.key === "item.line_name")?.key ?? layout.columns.find((c) => c.key === "item.summary" || c.key === "item.purpose")?.key ?? "item.line_name";
+  const rows: DocModel["table"]["rows"] = [];
+  doc.items.forEach((i) => {
+    const no = ev?.get(i.id) ?? (ev ? "다른 달" : undefined);
+    const dim = ev ? !ev.get(i.id) : false;
+    const parts: (DocLine | null)[] = lineMode ? linesOf(i) : [null];
+    parts.forEach((ln, j) => rows.push({ cells: layout.columns.map((c) => cell(c.key, i, rows.length, no, ln, j === 0, nameKey)), dim }));
+  });
   const moneyCols = layout.columns.map((c) => MONEY_FIELD[c.key]);
   const totalRow = moneyCols.some(Boolean) ? layout.columns.map((c, i) => (moneyCols[i] ? won(sum(moneyCols[i]!)) : i === 0 ? layout.totalLabel : "")) : null;
   if (totalRow && moneyCols[0]) totalRow[0] = `${layout.totalLabel} ${totalRow[0]}`;
@@ -481,9 +526,9 @@ export const SAMPLE_DOC: ClaimDoc = {
   total_personal_burden: 0,
   member: { name: "홍길동", department: "영업팀", position: "대리", bank: { bank_name: "가나은행", account_number: "123-456-7890", account_holder: "홍길동" } },
   items: [
-    { id: "s1", sort_order: 1, expense_date: "2026-10-14", merchant_name: "한식당 소담", category: "meal", trip_type: null, purchase_type: null, payment_method: "corporate_card", evidence_type: "card_slip", supply_amount: 32545, vat_amount: 3255, amount: 35800, purpose: "부서 정기 점심 식사", headcount: 3, attendees: "홍길동, 김철수, 이영희", client_name: null, start_location: null, end_location: null, is_round_trip: null, route_one_way_km: null, company_supported_amount: 35800, personal_burden_amount: 0, account_title_name: "복리후생비" },
+    { id: "s1", sort_order: 1, expense_date: "2026-10-14", merchant_name: "한식당 소담", category: "meal", trip_type: null, purchase_type: null, payment_method: "corporate_card", evidence_type: "card_slip", supply_amount: 32545, vat_amount: 3255, amount: 35800, purpose: "부서 정기 점심 식사", headcount: 3, attendees: "홍길동, 김철수, 이영희", client_name: null, start_location: null, end_location: null, is_round_trip: null, route_one_way_km: null, company_supported_amount: 35800, personal_burden_amount: 0, account_title_name: "복리후생비", line_items: [{ name: "점심 정식", quantity: 3, unit_price: 11000, amount: 33000 }, { name: "음료", quantity: 2, unit_price: 1400, amount: 2800 }] },
     { id: "s2", sort_order: 2, expense_date: "2026-10-16", merchant_name: "카페 온도", category: "meeting", trip_type: null, purchase_type: null, payment_method: "personal_card", evidence_type: "card_slip", supply_amount: 15000, vat_amount: 1500, amount: 16500, purpose: "거래처 신제품 협의", headcount: 2, attendees: "홍길동", client_name: "가나상사", start_location: null, end_location: null, is_round_trip: null, route_one_way_km: null, company_supported_amount: 16500, personal_burden_amount: 0, account_title_name: "접대비" },
-    { id: "s3", sort_order: 3, expense_date: "2026-10-17", merchant_name: "다이소", category: "purchase", trip_type: null, purchase_type: "office_supplies", payment_method: "corporate_card", evidence_type: "cash_receipt", supply_amount: 46364, vat_amount: 4636, amount: 51000, purpose: "사내 비품 및 소모품 구입", headcount: null, attendees: null, client_name: null, start_location: null, end_location: null, is_round_trip: null, route_one_way_km: null, company_supported_amount: 51000, personal_burden_amount: 0, account_title_name: "소모품비" },
+    { id: "s3", sort_order: 3, expense_date: "2026-10-17", merchant_name: "다이소", category: "purchase", trip_type: null, purchase_type: "office_supplies", payment_method: "corporate_card", evidence_type: "cash_receipt", supply_amount: 46364, vat_amount: 4636, amount: 51000, purpose: "사내 비품 및 소모품 구입", headcount: null, attendees: null, client_name: null, start_location: null, end_location: null, is_round_trip: null, route_one_way_km: null, company_supported_amount: 51000, personal_burden_amount: 0, account_title_name: "소모품비", line_items: [{ name: "A4 복사지", quantity: 2, unit_price: 15000, amount: 30000 }, { name: "볼펜 세트", quantity: 3, unit_price: 7500, amount: 22500 }] },
   ],
   steps: [
     { step_kind: "review", name: "김팀장", status: "approved", acted_at: "2026-10-20T05:00:00Z" },

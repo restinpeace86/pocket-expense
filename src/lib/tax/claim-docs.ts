@@ -28,6 +28,7 @@ export type ClaimDocItem = {
   company_supported_amount: number | null;
   personal_burden_amount: number | null;
   account_title_name: string | null;
+  line_items?: { name: string; quantity: number | null; unit_price: number | null; amount: number | null }[] | null; // 영수증 품목(D-079)
 };
 export type ClaimDocStep = { step_kind: "review" | "final"; name: string | null; status: string; acted_at: string | null };
 export type ClaimDoc = {
@@ -52,7 +53,7 @@ export type ClaimDoc = {
 };
 
 const ITEM_COLS =
-  "id, claim_id, sort_order, expense_date, merchant_name, category, trip_type, purchase_type, payment_method, evidence_type, supply_amount, vat_amount, amount, purpose, headcount, attendees, client_name, start_location, end_location, is_round_trip, route_one_way_km, company_supported_amount, personal_burden_amount, account_title_name";
+  "id, claim_id, sort_order, expense_date, merchant_name, category, trip_type, purchase_type, payment_method, evidence_type, supply_amount, vat_amount, amount, purpose, headcount, attendees, client_name, start_location, end_location, is_round_trip, route_one_way_km, company_supported_amount, personal_burden_amount, account_title_name, line_items";
 
 export async function getClaimDocs(companyId: string, rows: Pick<ExportRow, "claim_id">[]): Promise<ClaimDoc[]> {
   return getClaimDocsByIds(companyId, [...new Set(rows.map((r) => r.claim_id))]);
