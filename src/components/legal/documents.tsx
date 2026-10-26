@@ -1,74 +1,352 @@
 import type { ReactNode } from "react";
 
-// 이용약관 · 개인정보 문서 (초안). 정식 오픈 전 전문가 검토 후 본문을 보완한다 (D-059, O-07).
-// 버전을 바꾸면 private.app_settings의 terms_version / privacy_version도 함께 바꾼다.
-export const LEGAL_VERSION = "draft-2026-10-17";
+// 이용약관 · 개인정보 처리방침 · 선택 동의 (D-059, D-125 — 일반적인 국내 B2B SaaS 약관·개인정보보호위원회 처리방침 작성지침 구성을 따름)
+// 버전을 바꾸면 private.app_settings의 terms_version / privacy_version도 함께 바꾼다(동의 기록에 남는 버전).
+export const LEGAL_VERSION = "2026-10-27";
+export const LEGAL_EFFECTIVE_DATE = "2026년 10월 27일";
 
-function DraftNotice() {
-  return (
-    <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
-      초안입니다. 정식 서비스 오픈 전에 내용이 보완될 수 있습니다. (버전 {LEGAL_VERSION})
-    </p>
-  );
-}
+// 운영자 정보 — 비어 있으면 "(등록 예정)"으로 보인다. 사업자 정보가 정해지면 여기만 채우면 된다
+export const OPERATOR = {
+  serviceName: "PocketExpense",
+  name: "", // 상호(또는 운영자 이름)
+  ceo: "", // 대표자
+  businessNumber: "", // 사업자등록번호
+  address: "", // 주소
+  privacyOfficer: "", // 개인정보 보호책임자
+  email: "", // 문의 이메일
+};
+const v = (s: string) => s || "(등록 예정)";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-1.5">
       <h3 className="font-semibold text-zinc-900">{title}</h3>
-      <div className="flex flex-col gap-1 text-sm leading-relaxed text-zinc-700">{children}</div>
+      <div className="flex flex-col gap-1.5 text-sm leading-relaxed text-zinc-700">{children}</div>
+    </section>
+  );
+}
+const Ol = ({ children }: { children: ReactNode }) => <ol className="list-decimal space-y-1 pl-5">{children}</ol>;
+const Ul = ({ children }: { children: ReactNode }) => <ul className="list-disc space-y-1 pl-5">{children}</ul>;
+
+// 휴대폰은 한 줄씩 카드(항목: 값), 넓은 화면은 표
+function Table({ head, rows }: { head: string[]; rows: ReactNode[][] }) {
+  return (
+    <>
+      <ul className="flex flex-col gap-2 sm:hidden">
+        {rows.map((r, i) => (
+          <li key={i} className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs">
+            {r.map((c, k) => (
+              <p key={k} className={k === 0 ? "font-semibold text-zinc-900" : "text-zinc-700"}>
+                {k > 0 && <span className="mr-1 text-zinc-500">{head[k]}:</span>}
+                {c}
+              </p>
+            ))}
+          </li>
+        ))}
+      </ul>
+      <TableWide head={head} rows={rows} />
+    </>
+  );
+}
+function TableWide({ head, rows }: { head: string[]; rows: ReactNode[][] }) {
+  return (
+    <div className="hidden overflow-x-auto sm:block">
+      <table className="w-full border-collapse text-left text-xs">
+        <thead>
+          <tr className="bg-zinc-100">
+            {head.map((h) => (
+              <th key={h} className="border border-zinc-200 px-2 py-1.5 font-semibold text-zinc-800">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i}>
+              {r.map((c, k) => (
+                <td key={k} className="border border-zinc-200 px-2 py-1.5 align-top">
+                  {c}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Meta() {
+  return (
+    <p className="rounded-xl bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
+      시행일 {LEGAL_EFFECTIVE_DATE} · 버전 {LEGAL_VERSION}
+    </p>
+  );
+}
+
+function OperatorInfo() {
+  return (
+    <section className="rounded-xl border border-zinc-200 px-3 py-2 text-xs leading-relaxed text-zinc-600">
+      <p className="font-semibold text-zinc-800">운영자 정보</p>
+      <p>
+        상호 {v(OPERATOR.name)} · 대표자 {v(OPERATOR.ceo)} · 사업자등록번호 {v(OPERATOR.businessNumber)}
+      </p>
+      <p>
+        주소 {v(OPERATOR.address)} · 문의 {v(OPERATOR.email)}
+      </p>
     </section>
   );
 }
 
 export function TermsContent() {
+  const S = OPERATOR.serviceName;
   return (
     <div className="flex flex-col gap-5">
-      <DraftNotice />
+      <Meta />
       <Section title="제1조 (목적)">
-        <p>이 약관은 PocketExpense(이하 &ldquo;서비스&rdquo;)가 제공하는 경비 청구·결재·정산 서비스의 이용 조건과 절차, 이용자와 서비스의 권리·의무를 정합니다.</p>
+        <p>
+          이 약관은 {v(OPERATOR.name)}(이하 &ldquo;운영자&rdquo;)가 제공하는 {S} 서비스(경비 청구·결재·정산·세무 자료 정리 서비스, 이하 &ldquo;서비스&rdquo;)의 이용과 관련하여 운영자와
+          고객사·이용자의 권리, 의무, 책임과 그 밖에 필요한 사항을 정합니다.
+        </p>
       </Section>
-      <Section title="제2조 (이용 계약)">
-        <p>회사(고객사)의 관리자는 회사 정보를 등록해 서비스 이용을 신청하며, 직원은 회사가 제공한 초대 링크로 가입합니다.</p>
+      <Section title="제2조 (용어의 정의)">
+        <Ol>
+          <li>&ldquo;고객사&rdquo;란 이 약관에 동의하고 회사 정보를 등록하여 서비스를 이용하는 법인 또는 개인사업자를 말합니다.</li>
+          <li>&ldquo;관리자&rdquo;란 고객사를 대신하여 서비스를 설정하고 구성원·결의서를 관리하는 사람(최고 관리자 포함)을 말합니다.</li>
+          <li>&ldquo;구성원&rdquo;이란 고객사의 초대로 가입하여 관리자의 승인을 받은 임직원을 말합니다.</li>
+          <li>&ldquo;이용자&rdquo;란 관리자와 구성원을 함께 이르는 말입니다.</li>
+          <li>&ldquo;고객사 데이터&rdquo;란 이용자가 서비스에 입력하거나 올린 지출결의서, 영수증·증빙 파일, 구성원 정보 등 모든 자료를 말합니다.</li>
+          <li>&ldquo;크레딧&rdquo;이란 영수증 자동 인식 등 서비스의 일부 기능을 이용할 때 차감되는 이용 단위를 말합니다.</li>
+        </Ol>
       </Section>
-      <Section title="제3조 (요금)">
-        <p>현재는 한시적 무료 제공 기간이며, 유료 요금제와 결제 조건은 별도로 안내합니다.</p>
+      <Section title="제3조 (약관의 게시와 변경)">
+        <Ol>
+          <li>운영자는 이 약관을 서비스 화면(로그인 화면·가입 화면 등)에 게시합니다.</li>
+          <li>운영자는 관계 법령을 위반하지 않는 범위에서 약관을 변경할 수 있으며, 변경 내용과 시행일을 시행일 7일 전(이용자에게 불리한 변경은 30일 전)부터 서비스 공지로 알립니다.</li>
+          <li>이용자가 변경 약관 시행일까지 거부 의사를 밝히지 않고 서비스를 계속 이용하면 변경 약관에 동의한 것으로 봅니다. 변경에 동의하지 않는 고객사는 이용 계약을 해지할 수 있습니다.</li>
+        </Ol>
       </Section>
-      <Section title="제4조 (이용자의 의무)">
-        <p>이용자는 사실과 다른 경비 청구, 타인의 영수증 사용 등 부정한 목적으로 서비스를 이용해서는 안 됩니다.</p>
+      <Section title="제4조 (이용 계약의 성립)">
+        <Ol>
+          <li>고객사의 이용 계약은 관리자가 이 약관과 개인정보 처리방침에 동의하고 회사 정보를 등록하면 성립합니다.</li>
+          <li>구성원은 고객사가 제공한 초대 링크로 가입을 신청하고, 고객사 관리자가 승인하면 서비스를 이용할 수 있습니다.</li>
+          <li>운영자는 타인의 명의·정보를 도용한 경우, 허위 정보를 기재한 경우, 관계 법령이나 이 약관을 위반할 목적으로 신청한 경우 이용 신청을 승낙하지 않거나 사후에 이용 계약을 해지할 수 있습니다.</li>
+        </Ol>
       </Section>
-      <Section title="제5조 (기타)">
-        <p>그 밖의 사항은 정식 약관에서 정합니다.</p>
+      <Section title="제5조 (서비스의 내용)">
+        <Ul>
+          <li>지출결의서 작성·상신, 결재라인에 따른 검토·승인·반려, 정산 지급 관리</li>
+          <li>영수증·증빙 파일 보관과 AI를 이용한 영수증·양식 자동 인식</li>
+          <li>자차 출장 경로·거리 계산, 식대 한도·출장 일비 등 회사 정책에 따른 금액 계산</li>
+          <li>세무 마감 자료(엑셀·지출결의서 PDF·증빙 묶음) 생성</li>
+          <li>결재·마감 알림(웹 푸시 등)과 공지</li>
+          <li>그 밖에 운영자가 정하여 안내하는 기능</li>
+        </Ul>
       </Section>
+      <Section title="제6조 (서비스의 변경·중단)">
+        <Ol>
+          <li>운영자는 서비스의 품질 향상과 운영상 필요에 따라 기능을 추가·변경할 수 있습니다. 이용자에게 중요한 영향이 있는 변경은 미리 공지합니다.</li>
+          <li>운영자는 시스템 점검·교체, 설비 장애, 외부 서비스(클라우드·AI·지도 등)의 장애, 천재지변 등 부득이한 경우 서비스를 일시 중단할 수 있으며, 가능한 경우 미리 공지합니다.</li>
+        </Ol>
+      </Section>
+      <Section title="제7조 (요금과 크레딧)">
+        <Ol>
+          <li>서비스의 요금제·크레딧 지급 및 차감 기준은 서비스 화면에 안내한 바에 따릅니다.</li>
+          <li>현재 유료 결제 기능은 제공하지 않으며, 유료 요금제를 도입할 때에는 요금·결제·환불 조건을 시행 30일 전에 공지하고 고객사의 별도 동의를 받습니다.</li>
+          <li>무료로 지급한 크레딧은 현금으로 환급되지 않으며, 지급 시 안내한 유효기간이 지나면 소멸할 수 있습니다.</li>
+        </Ol>
+      </Section>
+      <Section title="제8조 (운영자의 의무)">
+        <Ol>
+          <li>운영자는 관계 법령과 이 약관을 지키며, 서비스를 안정적으로 제공하기 위해 노력합니다.</li>
+          <li>운영자는 개인정보 처리방침에 따라 이용자의 개인정보를 보호하고, 고객사 데이터를 다른 고객사와 분리하여 관리합니다.</li>
+          <li>운영자는 장애 대응, 부정 이용 확인, 크레딧 사용 확인 등 서비스 운영에 필요한 범위에서만 고객사 데이터를 열람합니다.</li>
+        </Ol>
+      </Section>
+      <Section title="제9조 (고객사와 관리자의 의무)">
+        <Ol>
+          <li>고객사는 구성원의 개인정보를 서비스에 입력·처리하게 할 때 관계 법령에 따라 필요한 고지와 동의를 직접 갖추어야 합니다.</li>
+          <li>관리자는 결재·정산·세무 자료의 최종 확인 책임이 있으며, 회사 정책(한도·일비·계정과목 등)을 사실에 맞게 설정해야 합니다.</li>
+          <li>고객사는 퇴사 등으로 더 이상 서비스를 이용하지 않는 구성원의 권한을 지체 없이 정리해야 합니다.</li>
+        </Ol>
+      </Section>
+      <Section title="제10조 (이용자의 의무)">
+        <p>이용자는 다음 행위를 해서는 안 됩니다.</p>
+        <Ul>
+          <li>사실과 다른 경비 청구, 타인의 영수증 사용, 같은 영수증의 중복 청구</li>
+          <li>타인의 계정 이용, 계정·초대 링크를 부정한 목적으로 넘기는 행위</li>
+          <li>서비스의 정상 운영을 방해하거나, 권한 없이 다른 고객사의 데이터에 접근하려는 행위</li>
+          <li>그 밖에 관계 법령이나 이 약관을 위반하는 행위</li>
+        </Ul>
+      </Section>
+      <Section title="제11조 (AI 기능)">
+        <Ol>
+          <li>영수증·양식 자동 인식, 지출 사유 초안 등 AI 기능의 결과는 입력을 돕는 참고 자료이며, 정확하지 않을 수 있습니다.</li>
+          <li>이용자는 AI가 채운 내용을 확인하고 필요하면 고쳐서 상신해야 하며, 결재와 최종 판단은 사람이 합니다.</li>
+        </Ol>
+      </Section>
+      <Section title="제12조 (고객사 데이터의 권리와 이용)">
+        <Ol>
+          <li>고객사 데이터에 대한 권리는 고객사에 있습니다. 고객사는 서비스 기능(세무 마감 자료 내려받기 등)으로 언제든지 자료를 받을 수 있습니다.</li>
+          <li>운영자는 서비스 제공·유지·개선을 위해 필요한 범위에서 고객사 데이터를 이용할 수 있으며, 서비스 개선·통계에는 개인을 알아볼 수 없도록 처리한 정보만 이용합니다.</li>
+        </Ol>
+      </Section>
+      <Section title="제13조 (세무·회계 처리)">
+        <p>
+          서비스는 경비 자료를 정리하고 계정과목을 제안하는 도구입니다. 계정과목 분류, 비과세 여부, 증빙 요건 등 세무·회계상의 판단과 신고 책임은 고객사에 있으며, 필요한 경우 세무 전문가와
+          확인해야 합니다.
+        </p>
+      </Section>
+      <Section title="제14조 (계약 해지와 데이터 처리)">
+        <Ol>
+          <li>고객사는 언제든지 운영자에게 이용 계약 해지를 요청할 수 있습니다. 구성원은 고객사 관리자를 통해 탈퇴(권한 해제)할 수 있습니다.</li>
+          <li>해지 후 고객사 데이터는 개인정보 처리방침에서 정한 기간이 지나면 파기합니다. 고객사는 해지 전에 필요한 자료를 내려받아 보관해야 합니다.</li>
+          <li>이용자가 제10조를 위반한 경우 운영자는 서비스 이용을 제한하거나 계약을 해지할 수 있으며, 이 경우 미리 그 사유를 알립니다(긴급한 경우 사후 통지).</li>
+        </Ol>
+      </Section>
+      <Section title="제15조 (손해배상과 면책)">
+        <Ol>
+          <li>운영자 또는 이용자가 고의 또는 과실로 상대방에게 손해를 입힌 경우 관계 법령에 따라 배상합니다.</li>
+          <li>운영자는 천재지변, 외부 서비스 장애 등 운영자의 귀책사유 없이 발생한 손해, 이용자가 입력한 정보의 오류나 이용자의 확인 소홀로 생긴 손해에 대해서는 책임을 지지 않습니다.</li>
+          <li>무료로 제공되는 서비스·기능에 대해서는 관계 법령이 허용하는 범위에서 운영자의 책임이 제한될 수 있습니다.</li>
+        </Ol>
+      </Section>
+      <Section title="제16조 (분쟁 해결과 관할)">
+        <p>이 약관과 서비스 이용에 관한 분쟁은 대한민국 법을 따르며, 분쟁으로 소송이 제기되는 경우 민사소송법에 따른 관할 법원을 관할 법원으로 합니다.</p>
+      </Section>
+      <Section title="부칙">
+        <p>이 약관은 {LEGAL_EFFECTIVE_DATE}부터 시행합니다.</p>
+      </Section>
+      <OperatorInfo />
     </div>
   );
 }
 
 export function PrivacyContent() {
+  const S = OPERATOR.serviceName;
   return (
     <div className="flex flex-col gap-5">
-      <DraftNotice />
-      <Section title="1. 수집·이용 목적">
-        <p>경비 청구·결재·정산 처리, 카카오 알림톡 결재 알림 발송, 회사 내 멤버 관리</p>
+      <Meta />
+      <p className="text-sm leading-relaxed text-zinc-700">
+        {v(OPERATOR.name)}(이하 &ldquo;운영자&rdquo;)는 「개인정보 보호법」 등 관련 법령을 지키며, {S} 서비스 이용자의 개인정보를 다음과 같이 처리합니다.
+      </p>
+      <Section title="1. 운영자와 고객사의 역할">
+        <Ul>
+          <li>관리자·구성원이 서비스에 입력하는 임직원 정보와 경비 자료는 고객사(회사)가 경비 처리를 위해 수집·이용하는 정보입니다. 이 정보에 대해서는 고객사가 개인정보처리자이고, 운영자는 고객사의 위탁을 받아 처리하는 수탁자입니다.</li>
+          <li>회원 가입·로그인 정보, 서비스 운영 기록 등 운영자가 서비스 제공을 위해 직접 처리하는 정보에 대해서는 운영자가 개인정보처리자입니다.</li>
+        </Ul>
       </Section>
-      <Section title="2. 수집 항목 (필수)">
-        <p>이름, 휴대폰 번호, 부서, 로그인 계정 정보(카카오·Google 이메일), 직급·사번(입력 시), 경비 청구 내역과 영수증 이미지</p>
+      <Section title="2. 처리하는 개인정보 항목">
+        <Table
+          head={["구분", "항목", "수집 방법"]}
+          rows={[
+            ["가입·로그인(필수)", "소셜 로그인 계정 식별값, 이메일(카카오·Google 중 선택한 서비스에서 받음), 이름, 휴대폰 번호, 소속 회사·부서", "가입 화면, 소셜 로그인 연동"],
+            ["구성원 정보(입력 시)", "직급, 사번, 역할(관리자·직원), 결재라인", "이용자·관리자 입력"],
+            ["경비 자료(필수)", "지출결의서 내용(제목·사유·카테고리·출장지·기간·회사 추가 항목), 영수증·증빙 이미지와 그 안의 정보(가맹점, 일시, 금액, 품목, 카드번호 일부·승인번호 등), 함께 식사·참석한 사람의 이름(입력 시), 거래처명", "이용자 입력·업로드, AI 자동 인식"],
+            ["자차 출장(입력 시)", "출발지·도착지 주소와 좌표, 주행 거리, 차량 유종", "이용자 입력, 지도 검색"],
+            ["선택", "정산 계좌(은행명·계좌번호·예금주), 차량번호", "선택 동의 후 이용자 입력"],
+            ["회사 정보(관리자)", "회사명, 사업자등록번호, 회사 정책 설정, 법인카드 별칭과 카드번호 앞 6자리·뒤 4자리(전체 번호는 저장하지 않음)", "관리자 입력"],
+            ["자동 생성·수집", "접속 기록(IP 주소, 접속 일시, 브라우저 정보), 로그인 세션 쿠키, 알림 수신 기기 등록 정보(웹 푸시 구독 주소), 알림 발송 기록, 크레딧 사용 기록", "서비스 이용 과정에서 자동 생성"],
+          ]}
+        />
       </Section>
-      <Section title="3. 보유·이용 기간">
-        <p>회사의 서비스 이용 종료 시까지. 세무 증빙 등 법령상 보관 의무가 있는 기록은 해당 법령이 정한 기간까지 보관합니다.</p>
+      <Section title="3. 처리 목적">
+        <Ul>
+          <li>회원 식별, 가입 승인, 회사별 권한 관리, 부정 이용 방지</li>
+          <li>지출결의서 작성·결재·반려·정산 지급과 그 기록 관리</li>
+          <li>영수증 자동 인식, 금액·한도·일비·유류비 계산, 계정과목 제안, 세무 마감 자료 생성</li>
+          <li>결재 요청·마감 알림 등 서비스 알림과 공지 전달</li>
+          <li>크레딧 사용 내역 확인(분쟁 시 소명), 장애 대응과 서비스 개선(개인을 알아볼 수 없게 처리한 통계)</li>
+        </Ul>
       </Section>
-      <Section title="4. 동의를 거부할 권리와 불이익">
-        <p>개인정보 수집·이용 동의를 거부할 수 있습니다. 다만 필수 항목에 동의하지 않으면 서비스에 가입하거나 경비를 청구할 수 없습니다.</p>
+      <Section title="4. 보유·이용 기간">
+        <Table
+          head={["항목", "보유 기간"]}
+          rows={[
+            ["회원·구성원 정보", "고객사의 서비스 이용 종료 또는 구성원 권한 해제 시까지. 이후 지체 없이 파기"],
+            ["지출결의서·영수증·증빙", "고객사가 서비스를 이용하는 동안 보관. 고객사가 이용 종료(해지)를 요청하면 30일 이내 파기(그 전에 고객사가 자료를 내려받을 수 있음)"],
+            ["직원이 지운 영수증 사진", "크레딧 사용 확인을 위해 운영 보관함에 옮겨 두었다가 삭제 후 3개월이 지나면 자동 파기"],
+            ["크레딧 사용 기록(인식 결과 텍스트)", "고객사가 서비스를 이용하는 동안"],
+            ["선택 정보(계좌·차량번호)", "본인이 지우거나 동의를 철회할 때, 또는 위 회원 정보와 같은 시점까지"],
+            ["접속 기록", "서비스 운영(장애·보안 확인)에 필요한 기간, 최대 3개월"],
+          ]}
+        />
+        <p>
+          다른 법령에서 보관을 정한 경우 그 기간 동안 보관합니다. 예를 들어 「국세기본법」·「법인세법」에 따른 장부·증빙 보관(5년)은 고객사의 의무이므로, 고객사는 세무 마감 자료를 내려받아
+          보관해야 합니다.
+        </p>
       </Section>
-      <Section title="5. 처리 위탁 및 국외 이전">
-        <ul className="list-disc space-y-1 pl-5">
-          <li>Supabase(데이터·파일 보관) — 일본</li>
-          <li>Vercel(서비스 서버) — 일본</li>
-          <li>Google Gemini(영수증 문자 인식) — 미국</li>
-          <li>카카오 알림톡 발송대행사 — 대한민국(업체 선정 후 안내)</li>
-        </ul>
-        <p>이전 항목·시기·방법·보유 기간 등 상세 내용은 개인정보 처리방침에서 안내합니다.</p>
+      <Section title="5. 제3자 제공">
+        <p>
+          운영자는 개인정보를 제3자에게 제공하지 않습니다. 같은 고객사 안에서 결재·정산을 위해 관리자·결재자에게 보이는 것은 고객사의 처리이며, 법령에 따른 요청이 있는 경우에는 예외로 합니다.
+        </p>
       </Section>
+      <Section title="6. 처리 위탁">
+        <Table
+          head={["수탁자", "위탁 업무"]}
+          rows={[
+            ["Supabase Inc.", "데이터베이스·파일 저장, 로그인 인증"],
+            ["Vercel Inc.", "서비스 서버 운영"],
+            ["Google LLC", "영수증·지출결의서 양식 이미지 자동 인식(Gemini API)"],
+            ["(주)카카오, (주)카카오모빌리티", "주소·장소 검색, 출장 거리 계산"],
+            ["Google·Apple·Mozilla 등 브라우저 제조사", "웹 푸시 알림 전달(이용자가 알림을 켠 기기만)"],
+          ]}
+        />
+        <p>카카오 알림톡 등 새 위탁이 생기면 이 처리방침에 추가하고 알립니다.</p>
+      </Section>
+      <Section title="7. 국외 이전">
+        <Table
+          head={["이전받는 자", "국가", "이전 항목", "시기·방법", "보유 기간"]}
+          rows={[
+            ["Supabase Inc.", "일본(도쿄 데이터센터)", "2번의 모든 항목", "서비스 이용 시 네트워크로 저장", "4번의 기간"],
+            ["Vercel Inc.", "일본(도쿄) 및 미국", "서비스 이용 중 주고받는 정보, 접속 기록", "서비스 이용 시 네트워크로 전송", "처리 후 즉시(접속 기록은 최대 3개월)"],
+            ["Google LLC", "미국", "영수증·양식 이미지와 인식 결과", "영수증·양식을 올릴 때 네트워크로 전송", "인식 처리 후 보관하지 않음(구글 정책에 따른 일시 보관 제외)"],
+            ["브라우저 푸시 서비스", "미국 등", "알림 내용, 기기 구독 주소", "알림 발송 시 네트워크로 전송", "전달 후 삭제"],
+          ]}
+        />
+        <p>국외 이전을 원하지 않으면 서비스에 가입하지 않거나 탈퇴할 수 있습니다. 다만 이 경우 서비스를 이용할 수 없습니다. 웹 푸시는 [내 정보]·[관리자 설정]에서 끌 수 있습니다.</p>
+      </Section>
+      <Section title="8. 파기 절차와 방법">
+        <p>보유 기간이 지나거나 처리 목적이 끝난 개인정보는 지체 없이 파기합니다. 전자 파일은 복구할 수 없는 방법으로 삭제하고, 백업에 남은 정보는 백업 보관 주기에 따라 순차적으로 삭제됩니다.</p>
+      </Section>
+      <Section title="9. 정보주체의 권리와 행사 방법">
+        <Ul>
+          <li>이용자는 언제든지 자신의 개인정보 열람·정정·삭제·처리 정지를 요청할 수 있습니다. 대부분은 [내 정보]에서 직접 할 수 있습니다.</li>
+          <li>고객사가 처리하는 경비 자료에 관한 요청은 소속 고객사(관리자)에게 하시면 되며, 운영자에게 요청하면 고객사에 전달해 처리를 돕습니다.</li>
+          <li>법정대리인이나 위임받은 사람을 통해서도 요청할 수 있습니다.</li>
+        </Ul>
+      </Section>
+      <Section title="10. 안전성 확보 조치">
+        <Ul>
+          <li>회사별 데이터 분리(행 단위 접근 통제), 역할에 따른 권한 관리, 운영자 화면 접근 제한</li>
+          <li>전송 구간 암호화(HTTPS), 비밀키의 분리 보관, 카드번호 전체 미저장</li>
+          <li>접속 기록 보관, 개인정보 취급자 최소화</li>
+        </Ul>
+      </Section>
+      <Section title="11. 자동 수집 장치(쿠키 등)">
+        <p>
+          로그인 상태 유지를 위해 쿠키를 사용하고, 화면 설정(색상·도움말 펼침 등)을 이용자의 브라우저에 저장합니다. 광고·추적 목적의 쿠키는 쓰지 않습니다. 브라우저 설정에서 쿠키를 막을 수 있지만
+          이 경우 로그인이 유지되지 않습니다.
+        </p>
+      </Section>
+      <Section title="12. 개인정보 보호책임자">
+        <p>
+          개인정보 보호책임자 {v(OPERATOR.privacyOfficer)} · 연락처 {v(OPERATOR.email)}
+        </p>
+      </Section>
+      <Section title="13. 권익 침해 구제 방법">
+        <Ul>
+          <li>개인정보침해신고센터 (국번 없이) 118 · privacy.kisa.or.kr</li>
+          <li>개인정보 분쟁조정위원회 1833-6972 · www.kopico.go.kr</li>
+          <li>대검찰청 (국번 없이) 1301 · www.spo.go.kr</li>
+          <li>경찰청 (국번 없이) 182 · ecrm.police.go.kr</li>
+        </Ul>
+      </Section>
+      <Section title="14. 처리방침의 변경">
+        <p>이 처리방침은 {LEGAL_EFFECTIVE_DATE}부터 적용됩니다. 내용이 바뀌면 시행 7일 전(중요한 변경은 30일 전)부터 서비스 공지로 알립니다.</p>
+      </Section>
+      <OperatorInfo />
     </div>
   );
 }
@@ -76,15 +354,15 @@ export function PrivacyContent() {
 export function OptionalPrivacyContent() {
   return (
     <div className="flex flex-col gap-5">
-      <DraftNotice />
+      <Meta />
       <Section title="1. 수집·이용 목적">
-        <p>개인카드로 쓴 경비의 정산금 지급(정산 계좌), 자차 출장비 증빙(차량번호)</p>
+        <p>개인카드로 쓴 경비의 정산금 지급(정산 계좌), 자차 출장 증빙(차량번호)</p>
       </Section>
       <Section title="2. 수집 항목 (선택)">
         <p>은행명, 계좌번호, 예금주, 차량번호</p>
       </Section>
       <Section title="3. 보유·이용 기간">
-        <p>회사의 서비스 이용 종료 또는 본인이 삭제할 때까지</p>
+        <p>본인이 지우거나 동의를 철회할 때, 또는 회사의 서비스 이용 종료·구성원 권한 해제 시까지</p>
       </Section>
       <Section title="4. 동의를 거부할 권리와 불이익">
         <p>동의하지 않아도 가입과 경비 청구는 할 수 있습니다. 정산 계좌가 없으면 정산금 지급을 위해 회사에 별도로 계좌를 알려야 할 수 있습니다.</p>

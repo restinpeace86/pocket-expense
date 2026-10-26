@@ -35,7 +35,8 @@
 - [x] T2-3 `/join/[inviteCode]` 진입 + 직원 정보 입력 + 개인정보 동의
 - [x] T2-4 승인 대기 화면
 - [x] T2-5 이용약관·개인정보 동의 구조(전체/필수/선택, 팝업, 동의 기록), `/terms`·`/privacy` 초안 페이지 (D-059)
-- [ ] T2-6 ⛔ 보류(O-07) 이용약관·개인정보 처리방침 본문 확정 — 전문가 검토 대기. 임의로 구현 가능으로 바꾸지 말 것
+- [x] T2-6 이용약관·개인정보 처리방침 본문 확정 (2026-10-27, D-125 — 사용자 지시로 O-07 보류 해제, `implementation/2026-10-27_legal-and-full-check.md`)
+  - [ ] 운영자 정보(상호·대표자·사업자번호·주소·보호책임자·이메일) 채우기 — 사용자가 주면 `src/components/legal/documents.tsx`의 `OPERATOR`만 수정
   - 본문에 반영할 사항 추가(D-080): 크레딧 사용 영수증 기록 보관, 직원이 지운 영수증 사진 3개월 보관 후 삭제, AI 인식 내용(품목 포함)의 서비스 분석 이용
 
 ## T3. 관리자 기본 — 기준: `spec/screens/admin-dashboard.md` 0·⑤, `spec/screens/admin-team-members.md`, `spec/screens/admin-settings.md`, `spec/features/roles-and-permissions.md`
