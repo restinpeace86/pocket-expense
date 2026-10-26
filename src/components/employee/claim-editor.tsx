@@ -201,7 +201,7 @@ function ItemRow({
           onClick={onToggle}
           aria-expanded={open}
           aria-controls={panelId}
-          className="mx-auto flex min-h-9 items-center gap-1 rounded-t-xl border border-b-0 border-zinc-200 bg-zinc-50 px-5 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
+          className="mx-auto flex min-h-11 items-center gap-1 rounded-t-xl border border-b-0 border-zinc-200 bg-zinc-50 px-5 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
         >
           {open ? "접기" : check ? "펼쳐서 확인하기" : "펼쳐서 고치기"}
           <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -672,7 +672,7 @@ export function ClaimEditor({
             영수증 <b className="tabular-nums">{items.length}</b>장
           </span>
           {needsCheck.length > 0 ? (
-            <button type="button" onClick={() => showItem(needsCheck[0].id)} className="font-semibold text-amber-700 underline underline-offset-2">
+            <button type="button" onClick={() => showItem(needsCheck[0].id)} className="-my-2.5 inline-flex min-h-11 items-center font-semibold text-amber-700 underline underline-offset-2">
               확인 필요 {needsCheck.length}장
             </button>
           ) : (
@@ -987,7 +987,7 @@ export function ClaimEditor({
                                       return n;
                                     });
                                   }}
-                                  className="mx-auto mt-3 flex min-h-9 items-center gap-1 rounded-xl border border-zinc-200 bg-white px-5 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
+                                  className="mx-auto mt-3 flex min-h-11 items-center gap-1 rounded-xl border border-zinc-200 bg-white px-5 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
                                 >
                                   {i ? "접기" : "닫기"}
                                   <ChevronDown className="size-4 rotate-180" />

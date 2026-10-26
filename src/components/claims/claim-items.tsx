@@ -230,7 +230,7 @@ function AccountCell({ i, titles, onChange, busy }: { i: DetailItem; titles: Acc
         title={i.closed_month ? `${i.closed_month} 세무 마감된 항목이라 바꿀 수 없어요` : undefined}
         value={i.account_title_id ?? ""}
         onChange={(e) => onChange(i.id, e.target.value || null)}
-        className="min-h-11 max-w-full rounded-lg border border-zinc-300 bg-white px-2 text-base disabled:bg-zinc-100 sm:min-h-9 sm:text-xs"
+        className="min-h-11 max-w-full rounded-lg border border-zinc-300 bg-white px-2 text-base disabled:bg-zinc-100 lg:min-h-9 lg:text-xs"
       >
         <option value="">{i.account_title_overridden ? "자동(분류 기준)으로 되돌리기" : "계정과목 미지정"}</option>
         {titles.map((t) => (

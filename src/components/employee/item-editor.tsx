@@ -401,7 +401,7 @@ export function ItemInlineForm({
                 {attaching ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
                 사진·PDF 올리기
               </button>
-              <button type="button" onClick={() => set("evidenceKind", "none")} className="self-start text-zinc-500 underline underline-offset-2">
+              <button type="button" onClick={() => set("evidenceKind", "none")} className="inline-flex min-h-11 items-center self-start text-zinc-500 underline underline-offset-2">
                 자료가 정말 없어요
               </button>
             </>

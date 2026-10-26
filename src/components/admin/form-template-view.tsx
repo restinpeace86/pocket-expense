@@ -77,7 +77,7 @@ function CustomControls({ it, columnOnly, inputFull, onChange }: { it: CustomFie
               disabled={disabled}
               title={disabled ? `직원이 쓰는 칸은 ${MAX_INPUT_FIELDS}개까지예요` : undefined}
               onClick={() => onChange({ key: it.key, label: it.label, mode: m, ...(m === "input" ? { required: it.required ?? false, options: it.options } : {}), ...(m === "fixed" ? { value: it.value ?? "" } : {}) })}
-              className={`min-h-9 rounded-lg border px-2.5 text-xs font-medium disabled:opacity-40 ${on ? "border-brand-600 bg-brand-600 text-white" : "border-zinc-300 bg-white text-zinc-700"}`}
+              className={`min-h-11 rounded-lg border px-2.5 text-xs font-medium disabled:opacity-40 ${on ? "border-brand-600 bg-brand-600 text-white" : "border-zinc-300 bg-white text-zinc-700"}`}
             >
               {columnOnly ? "빈 열로 남기기" : MODE_LABEL[m]}
             </button>
@@ -86,11 +86,11 @@ function CustomControls({ it, columnOnly, inputFull, onChange }: { it: CustomFie
       </div>
       {decided && it.mode === "input" && (
         <div className="flex flex-col gap-1.5 rounded-lg bg-zinc-50 p-2">
-          <label className="flex min-h-9 items-center gap-2 text-xs text-zinc-800">
+          <label className="flex min-h-11 items-center gap-2 text-xs text-zinc-800">
             <input type="checkbox" className="size-4 accent-brand-600" checked={!!it.required} onChange={(e) => onChange({ ...it, required: e.target.checked })} /> 꼭 써야 상신 가능(필수)
           </label>
           <input
-            className={`${inputClass} min-h-9 text-xs`}
+            className={`${inputClass} lg:min-h-9 lg:text-xs`}
             aria-label={`${it.label} 선택지`}
             placeholder="고를 값(쉼표로 구분, 예: A프로젝트, B프로젝트). 비우면 글자로 입력"
             defaultValue={(it.options ?? []).join(", ")}
@@ -102,7 +102,7 @@ function CustomControls({ it, columnOnly, inputFull, onChange }: { it: CustomFie
         </div>
       )}
       {decided && it.mode === "fixed" && (
-        <input className={`${inputClass} min-h-9 text-sm`} aria-label={`${it.label} 고정값`} maxLength={100} placeholder="모든 결의서에 찍을 값(예: 5년)" value={it.value ?? ""} onChange={(e) => onChange({ ...it, value: e.target.value })} />
+        <input className={`${inputClass} lg:min-h-9 lg:text-sm`} aria-label={`${it.label} 고정값`} maxLength={100} placeholder="모든 결의서에 찍을 값(예: 5년)" value={it.value ?? ""} onChange={(e) => onChange({ ...it, value: e.target.value })} />
       )}
     </div>
   );
@@ -147,7 +147,7 @@ function FieldList<K extends string>({
               <div className="flex items-center gap-1.5">
                 <div className="min-w-0 flex-1">
                   <input
-                    className={`${inputClass} min-h-10 text-sm`}
+                    className={`${inputClass} lg:min-h-11 lg:text-sm`}
                     value={it.label}
                     maxLength={30}
                     aria-label={`${custom ? it.label : catalog[it.key as K].label} 칸 이름`}
@@ -155,15 +155,15 @@ function FieldList<K extends string>({
                   />
                   {!custom && <p className="mt-0.5 truncate pl-1 text-[11px] text-zinc-500">채우는 값: {catalog[it.key as K].hint || catalog[it.key as K].label}</p>}
                 </div>
-                <button type="button" className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white disabled:opacity-30" aria-label="위로" disabled={i === 0} onClick={() => move(i, -1)}>
+                <button type="button" className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white disabled:opacity-30" aria-label="위로" disabled={i === 0} onClick={() => move(i, -1)}>
                   <ArrowUp className="size-4" />
                 </button>
-                <button type="button" className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white disabled:opacity-30" aria-label="아래로" disabled={i === items.length - 1} onClick={() => move(i, 1)}>
+                <button type="button" className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white disabled:opacity-30" aria-label="아래로" disabled={i === items.length - 1} onClick={() => move(i, 1)}>
                   <ArrowDown className="size-4" />
                 </button>
                 <button
                   type="button"
-                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 disabled:opacity-30"
+                  className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 disabled:opacity-30"
                   aria-label={`${it.label} 빼기`}
                   disabled={!custom && dataCount <= min}
                   onClick={() => onChange(items.filter((_, k) => k !== i))}
@@ -180,7 +180,7 @@ function FieldList<K extends string>({
         <Plus className="size-4 shrink-0 text-brand-700" />
         <span className="sr-only">{title}에 칸 추가</span>
         <select
-          className={`${inputClass} min-h-10 min-w-0 text-sm`}
+          className={`${inputClass} min-w-0 lg:min-h-11 lg:text-sm`}
           value=""
           onChange={(e) => {
             const k = e.target.value;
@@ -295,7 +295,7 @@ export function FormTemplateView(p: FormTemplateViewProps) {
           {p.active && <span className="ml-1 text-xs font-normal text-zinc-500">v{p.active.version}</span>}
         </span>
         {p.active && (
-          <button type="button" onClick={reset} disabled={saving} className="ml-auto inline-flex min-h-10 items-center gap-1 rounded-lg border border-zinc-300 px-3 text-sm text-zinc-700 hover:bg-zinc-50">
+          <button type="button" onClick={reset} disabled={saving} className="ml-auto inline-flex min-h-11 items-center gap-1 rounded-lg border border-zinc-300 px-3 text-sm text-zinc-700 hover:bg-zinc-50">
             <RotateCcw className="size-4" /> 기본 양식으로 되돌리기
           </button>
         )}
@@ -330,10 +330,10 @@ export function FormTemplateView(p: FormTemplateViewProps) {
             </span>
             <span className="text-xs text-zinc-600">종이 양식을 찍거나 PDF를 올리면 AI가 칸을 읽어 우리 데이터와 맞춰요. 그다음 직접 꾸며요.</span>
             <span className="flex w-full flex-wrap gap-2">
-              <button type="button" disabled={reading} onClick={() => cameraRef.current?.click()} className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-lg bg-brand-600 px-3 text-sm font-semibold text-white disabled:opacity-50">
+              <button type="button" disabled={reading} onClick={() => cameraRef.current?.click()} className="inline-flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg bg-brand-600 px-3 text-sm font-semibold text-white disabled:opacity-50">
                 <Camera className="size-4" /> 카메라로 찍기
               </button>
-              <button type="button" disabled={reading} onClick={() => fileRef.current?.click()} className="inline-flex min-h-10 flex-1 items-center justify-center gap-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-800 disabled:opacity-50">
+              <button type="button" disabled={reading} onClick={() => fileRef.current?.click()} className="inline-flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-800 disabled:opacity-50">
                 <FileUp className="size-4" /> 파일 고르기
               </button>
             </span>
@@ -384,7 +384,7 @@ export function FormTemplateView(p: FormTemplateViewProps) {
             ["preview", "③ 미리보기"],
           ] as const
         ).map(([v, l]) => (
-          <button key={v} type="button" role="tab" aria-selected={tab === v} onClick={() => setTab(v)} className={`min-h-10 flex-1 rounded-lg text-sm font-semibold ${tab === v ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-600"}`}>
+          <button key={v} type="button" role="tab" aria-selected={tab === v} onClick={() => setTab(v)} className={`min-h-11 flex-1 rounded-lg text-sm font-semibold ${tab === v ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-600"}`}>
             {l}
           </button>
         ))}
@@ -410,16 +410,16 @@ export function FormTemplateView(p: FormTemplateViewProps) {
               맺음말 (비우면 없음 · {"{기간}"}은 영수증 사용 기간으로 바뀜)
               <textarea className={`${inputClass} min-h-16 py-2`} maxLength={200} value={layout.statement ?? ""} onChange={(e) => edit({ statement: e.target.value || null })} />
             </label>
-            <label className="flex min-h-10 items-center gap-2 text-sm text-zinc-800">
+            <label className="flex min-h-11 items-center gap-2 text-sm text-zinc-800">
               <input type="checkbox" className="size-4 accent-brand-600" checked={layout.showDate} onChange={(e) => edit({ showDate: e.target.checked })} /> 날짜 줄(상신일)
             </label>
-            <label className="flex min-h-10 items-center gap-2 text-sm text-zinc-800">
+            <label className="flex min-h-11 items-center gap-2 text-sm text-zinc-800">
               <input type="checkbox" className="size-4 accent-brand-600" checked={!!layout.signerLabel} onChange={(e) => edit({ signerLabel: e.target.checked ? "작성자" : null })} /> 서명 줄 (○○: 이름 (인))
             </label>
             {layout.signerLabel !== null && (
-              <input className={`${inputClass} min-h-10 text-sm`} aria-label="서명 줄 이름" maxLength={10} value={layout.signerLabel} onChange={(e) => edit({ signerLabel: e.target.value })} />
+              <input className={`${inputClass} lg:min-h-11 lg:text-sm`} aria-label="서명 줄 이름" maxLength={10} value={layout.signerLabel} onChange={(e) => edit({ signerLabel: e.target.value })} />
             )}
-            <label className="flex min-h-10 items-center gap-2 text-sm text-zinc-800">
+            <label className="flex min-h-11 items-center gap-2 text-sm text-zinc-800">
               <input type="checkbox" className="size-4 accent-brand-600" checked={layout.showCompany} onChange={(e) => edit({ showCompany: e.target.checked })} /> 회사 이름 줄
             </label>
           </fieldset>

@@ -24,7 +24,7 @@ export function HelpDetails({ id, label = "왜 필요한가요?", children }: { 
 
   return (
     <details ref={ref} className="group mt-1">
-      <summary className="inline-flex min-h-9 cursor-pointer list-none items-center gap-1 rounded-lg text-sm font-medium text-brand-700 hover:text-brand-800 [&::-webkit-details-marker]:hidden">
+      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1 rounded-lg text-sm font-medium text-brand-700 hover:text-brand-800 [&::-webkit-details-marker]:hidden">
         <Info className="size-4 shrink-0" />
         {label}
         <ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" />

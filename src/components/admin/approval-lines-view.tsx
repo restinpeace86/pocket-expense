@@ -179,7 +179,7 @@ export function ApprovalLinesView({ lines, departments, members }: { lines: Appr
             aria-label="부서별 결재라인 추가"
             value=""
             onChange={(e) => e.target.value && setAdding(e.target.value)}
-            className={`${inputClass} text-sm`}
+            className={`${inputClass} lg:text-sm`}
           >
             <option value="">+ 부서별 결재라인 추가</option>
             {free.map((d) => (

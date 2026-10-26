@@ -45,7 +45,7 @@ export function NotificationList({ rows, devMode, failedOnly, base }: { rows: No
             ["failed", "실패"],
           ] as const
         ).map(([k, l]) => (
-          <Link key={l} href={k ? `${base}?status=${k}` : base} aria-current={(k === "failed") === failedOnly ? "page" : undefined} className={`inline-flex min-h-10 flex-1 items-center justify-center rounded-lg text-sm ${(k === "failed") === failedOnly ? "bg-white font-semibold shadow-sm" : "text-zinc-600"}`}>
+          <Link key={l} href={k ? `${base}?status=${k}` : base} aria-current={(k === "failed") === failedOnly ? "page" : undefined} className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-lg text-sm ${(k === "failed") === failedOnly ? "bg-white font-semibold shadow-sm" : "text-zinc-600"}`}>
             {l}
           </Link>
         ))}

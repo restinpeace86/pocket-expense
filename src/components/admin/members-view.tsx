@@ -88,7 +88,7 @@ export function MembersView({ members, tab, basePath, preview = false, reminders
             href={`${basePath}?tab=${t.key}`}
             role="tab"
             aria-selected={tab === t.key}
-            className={`inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-lg px-3 text-sm ${tab === t.key ? "bg-white font-semibold shadow-sm" : "text-zinc-600"}`}
+            className={`inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-lg px-3 text-sm ${tab === t.key ? "bg-white font-semibold shadow-sm" : "text-zinc-600"}`}
           >
             {t.label}
           </Link>

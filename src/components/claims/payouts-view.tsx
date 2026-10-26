@@ -89,7 +89,11 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
             return (
               <li key={g.member_id} className="rounded-xl border border-zinc-200 bg-white">
                 <div className="flex flex-wrap items-start gap-3 border-b border-zinc-100 p-4">
-                  {tab === "waiting" && <input type="checkbox" className="mt-1 size-5" aria-label={`${g.name} 전체 선택`} checked={allOn} onChange={(e) => toggle(ids, e.target.checked)} />}
+                  {tab === "waiting" && (
+                    <label className="-m-3 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center">
+                      <input type="checkbox" className="size-5" aria-label={`${g.name} 전체 선택`} checked={allOn} onChange={(e) => toggle(ids, e.target.checked)} />
+                    </label>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">
                       {g.name}
@@ -118,9 +122,13 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
                 </div>
                 <ul className="divide-y divide-zinc-100">
                   {g.claims.map((c) => (
-                    <li key={c.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                      {tab === "waiting" && <input type="checkbox" className="size-5" aria-label={`${c.title} 선택`} checked={selected.includes(c.id)} onChange={(e) => toggle([c.id], e.target.checked)} />}
-                      <Link href={`${claimsBase}/${c.id}?tab=done`} className="min-w-0 flex-1 truncate hover:underline">
+                    <li key={c.id} className="flex items-center gap-3 px-4 text-sm">
+                      {tab === "waiting" && (
+                        <label className="-mx-3 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center">
+                          <input type="checkbox" className="size-5" aria-label={`${c.title} 선택`} checked={selected.includes(c.id)} onChange={(e) => toggle([c.id], e.target.checked)} />
+                        </label>
+                      )}
+                      <Link href={`${claimsBase}/${c.id}?tab=done`} className="block min-w-0 flex-1 truncate py-3 hover:underline">
                         {c.title || "제목 없는 결의서"}
                         <span className="ml-1 text-xs text-zinc-500">{tab === "waiting" ? `승인 ${formatDateTimeKst(c.approved_at).slice(0, 10)}` : `지급 ${formatDateTimeKst(c.paid_at)}`}</span>
                       </Link>

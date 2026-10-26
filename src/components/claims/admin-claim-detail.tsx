@@ -177,7 +177,7 @@ export function AdminClaimDetail({
           <dd className="text-right tabular-nums">{formatWon(detail.payback)}</dd>
         </dl>
         {claim.status === "approved" && (
-          <Link href={payoutsHref} className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-zinc-100 px-3 font-medium hover:bg-zinc-200">
+          <Link href={payoutsHref} className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-zinc-100 px-3 font-medium hover:bg-zinc-200">
             정산 지급 관리로 이동 →
           </Link>
         )}
