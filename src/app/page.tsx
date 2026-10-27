@@ -2,6 +2,7 @@ import { Building2, FileSpreadsheet, MessageCircle, ScanLine } from "lucide-reac
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AiSimulator } from "@/components/landing/ai-simulator";
+import { Faq } from "@/components/landing/faq";
 import { HeroMockup } from "@/components/landing/hero-mockup";
 import { Pricing } from "@/components/landing/pricing";
 import { Testimonials } from "@/components/landing/testimonials";
@@ -12,6 +13,13 @@ import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 // CTA는 로그인 후 회사 생성 위저드로 간다. 이미 소속이 있으면 /login이 본인 워크스페이스로 보낸다.
 // 검색 결과에 대표 주소로 잡히게(7차 개선사항 6) — 제목·설명·공유 이미지는 루트 layout 기본값
 export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+// 상단 메뉴 바로 가기(D-143) — PC(lg 이상)에서만 보인다(휴대폰·태블릿은 자리가 없어 로그인·시작 버튼만)
+const SECTION_LINKS = [
+  { href: "#preview", label: "미리보기" },
+  { href: "#pricing", label: "요금제" },
+  { href: "#faq", label: "자주 묻는 질문" },
+];
 
 const START_HREF = `/login?next=${encodeURIComponent("/onboarding/create-company")}`;
 
@@ -43,6 +51,11 @@ export default function LandingPage() {
             <span className="hidden whitespace-nowrap rounded-full border border-white/20 px-2 py-0.5 text-xs text-zinc-300 md:inline">for Startups &amp; SMBs</span>
           </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            {SECTION_LINKS.map(({ href, label }) => (
+              <a key={href} href={href} className="hidden min-h-11 items-center whitespace-nowrap rounded-xl px-3 text-sm text-zinc-300 hover:text-white lg:inline-flex">
+                {label}
+              </a>
+            ))}
             <Link href="/login" className="inline-flex min-h-11 items-center whitespace-nowrap rounded-xl px-2 text-sm text-zinc-200 hover:text-white sm:px-3">
               로그인
             </Link>
@@ -106,6 +119,8 @@ export default function LandingPage() {
       <Pricing />
 
       <Testimonials />
+
+      <Faq />
 
       <section className="mx-auto max-w-3xl px-4 pb-28 pt-8 text-center">
         <h2 className="text-balance text-3xl font-bold tracking-tight">엑셀과 영수증 지옥에서 벗어날 준비가 되셨나요?</h2>

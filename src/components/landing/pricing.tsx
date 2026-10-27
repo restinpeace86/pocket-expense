@@ -27,7 +27,7 @@ export async function Pricing() {
   if (plans.length === 0) return null;
 
   return (
-    <section id="pricing" className="mx-auto w-full max-w-6xl px-4 py-20">
+    <section id="pricing" className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 py-20">
       <div className="text-center">
         <span className="inline-block text-balance rounded-full bg-emerald-400/15 px-3 py-1 text-sm font-medium text-emerald-300">
           지금 가입하면 영수증 100장 무료

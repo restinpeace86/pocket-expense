@@ -155,7 +155,7 @@ export function AiSimulator({ startHref }: { startHref: string }) {
   const reading = step === 0 && uploaded && reads < READS.length;
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-16" aria-labelledby="ai-sim-title">
+    <section id="preview" className="mx-auto max-w-5xl scroll-mt-20 px-4 py-16" aria-labelledby="ai-sim-title">
       <div className="text-center">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-300/30 bg-violet-400/10 px-3 py-1 text-sm font-medium text-violet-200">
           <ScanLine className="size-4" />

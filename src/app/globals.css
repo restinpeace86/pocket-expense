@@ -253,3 +253,10 @@ html[data-keyboard="open"] .kb-pad {
     font-size: max(16px, 1em);
   }
 }
+
+/* 랜딩 상단 메뉴 바로 가기(D-143)는 부드럽게 이동 — 랜딩에서만, 움직임 줄이기 설정이면 바로 이동 */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(#preview) {
+    scroll-behavior: smooth;
+  }
+}

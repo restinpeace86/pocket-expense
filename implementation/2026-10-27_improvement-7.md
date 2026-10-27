@@ -111,3 +111,7 @@
 - `hero-mockup.tsx`: 노란 말풍선 = 카카오톡 알림톡(버튼 [결재하러 가기], 실제 템플릿 버튼명), 그 아래 결재 화면 [전체 승인 ✓] — 승인은 화면에서(D-013). 기능 카드 "카카오톡 원클릭 결재"는 알림톡 연결 후 오픈 전제로 유지
 - `page.tsx`: 하단 CTA 아래 [💬 궁금한 점은 카카오톡으로 문의하기](관리자 1:1 문의와 같은 `ADMIN_FEEDBACK_URL`, 없으면 숨김), 푸터 `BusinessInfo`(OPERATOR 채워진 칸만, 상호 없으면 숨김)
 - `documents.tsx` OPERATOR: phone·mailOrderNumber·hosting(Vercel Inc.) 추가
+
+## 13. 랜딩 자주 묻는 질문 + 상단 바로 가기 (2026-10-28, D-143)
+- `src/components/landing/faq.tsx`(새로): 질문 5개, `<details>` 펼치기(자바스크립트 없음), 이용약관 링크. 후기 아래·하단 CTA 위
+- `page.tsx`: lg 이상 상단 메뉴에 [미리보기](#preview) [요금제](#pricing) [자주 묻는 질문](#faq). 각 섹션 `scroll-mt-20`(고정 메뉴에 안 가림), 랜딩에서만 부드러운 이동(움직임 줄이기 제외)
