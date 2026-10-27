@@ -42,8 +42,6 @@ export function TaxClosingView({
   const ex = data.excluded;
   const excludedItems = ex.draft + ex.submitted + ex.rejected;
   const carry = rows.filter((r) => r.kind === "carryover").length;
-  // 세무사무소는 계정코드가 필요하다(D-136) — 이 달 자료에 코드가 빈 계정과목
-  const noCode = [...new Set(rows.filter((r) => r.account_title_name && !r.account_title_code).map((r) => r.account_title_name as string))];
 
   const [confirm, setConfirm] = useState(false);
   const [reopen, setReopen] = useState(false);
@@ -184,16 +182,6 @@ export function TaxClosingView({
               {k} {formatWon(v)}
             </span>
           ))}
-        </p>
-      )}
-
-      {noCode.length > 0 && (
-        <p className="flex flex-wrap items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
-          <AlertTriangle className="size-4 shrink-0" />
-          세무사무소는 계정코드가 필요해요. 코드가 빈 계정과목: {noCode.join(", ")}
-          <Link href={claimsBase.replace(/\/claims$/, "/account-titles")} className="font-semibold underline underline-offset-2">
-            계정코드 넣기
-          </Link>
         </p>
       )}
 

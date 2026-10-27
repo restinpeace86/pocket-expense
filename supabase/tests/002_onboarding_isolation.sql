@@ -30,6 +30,7 @@ begin
     ('approval_steps(직통)', (select count(*) from public.approval_line_steps), 0),
     ('account_titles(복리후생·여비교통·기업업무추진·소모품·도서인쇄·차량유지·지급수수료·교육훈련·비품, D-102·D-107·D-136)', (select count(*) from public.account_titles), 9),
     ('mappings(식대1+출장10+미팅1+물품3+추가7+경조사 내부1, D-102·D-106·D-123·D-124 출장 일비)', (select count(*) from public.account_title_mappings), 23),
+    ('더존 기본 계정코드(D-138)', (select count(*) from public.account_titles where (name, code) in (('복리후생비','811'),('여비교통비','812'),('기업업무추진비','813'),('차량유지비','822'),('교육훈련비','825'),('도서인쇄비','826'),('소모품비','830'),('지급수수료','831'),('비품','212'))), 9),
     ('물품 탕비실→복리후생비', (select count(*) from public.account_title_mappings m join public.account_titles t on t.id = m.account_title_id where m.category = 'purchase' and m.purchase_type = 'pantry' and t.name = '복리후생비'), 1),
     ('물품 사무용품→소모품비', (select count(*) from public.account_title_mappings m join public.account_titles t on t.id = m.account_title_id where m.category = 'purchase' and m.purchase_type = 'office_supplies' and t.name = '소모품비'), 1),
     ('물품 비품→비품(D-136)', (select count(*) from public.account_title_mappings m join public.account_titles t on t.id = m.account_title_id where m.category = 'purchase' and m.purchase_type = 'small_equipment' and t.name = '비품'), 1),
