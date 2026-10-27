@@ -39,3 +39,9 @@
 - 공유 이미지: `/opengraph-image`(1200×630, 히어로 카피)
 - 소유 확인: `GOOGLE_SITE_VERIFICATION`, `NAVER_SITE_VERIFICATION` 환경변수(서치 콘솔·서치어드바이저 "HTML 태그" 방식의 content 값). 비우면 태그 없음
 - `/sitemap.xml`: `/`, `/terms`, `/privacy`. `/robots.txt`: 전체 허용 + `/workspace/`·`/onboarding`·`/app-admin`·`/api/`·`/auth/`·`/dev/`·`/join/`·`/share/`·`/push/` 막음
+
+## AI 영수증 분석 미리보기 (D-131, 7차 개선사항 10)
+- 위치: 기능 카드 3개 아래. 배지 "단순 OCR이 아닌 AI LLM", 제목 "오타 투성이 구겨진 영수증도, AI LLM이 척척 정리하는 10초 컷 매직"
+- 3단계 버튼(휴대폰은 3칸 한 줄·짧은 이름만): ① 영수증 업로드(예시 철물점 영수증, 업로드 막대) ② AI LLM 분석(스캔 줄 + 로그 4줄: 분석 중 → 상호명 → 품목·공급가액·부가세 → 거래 맥락·계정과목) ③ 엑셀 행 완료 카드(휴대폰: 칸 이름·값 2열, 넓은 화면: 4칸 × 2줄)
+- 화면에 35% 보이면 한 번 자동 진행(약 6초), 버튼으로 단계 이동, [처음부터 다시 보기]. `prefers-reduced-motion`이면 결과를 바로 보여 줌
+- 시연용(서버 호출·크레딧 없음). CTA → 회사 등록(`/login?next=/onboarding/create-company`)

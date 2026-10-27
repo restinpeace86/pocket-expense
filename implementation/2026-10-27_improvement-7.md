@@ -46,3 +46,9 @@
 - `src/app/sitemap.ts`·`robots.ts`(새), `.env.example`에 GOOGLE_SITE_VERIFICATION·NAVER_SITE_VERIFICATION
 - 확인(운영 빌드): 시험 값으로 빌드하면 `google-site-verification`·`naver-site-verification` 태그가 나오고 값을 비우면 0개, og:title·description·image(1200×630)·locale·twitter 태그, canonical, robots.txt·sitemap.xml 내용, 공유 이미지를 열어 한글 카피 확인
 - **사용자 할 일**: 구글 서치 콘솔·네이버 서치어드바이저에서 "HTML 태그" 방식으로 받은 content 값을 Vercel 환경변수 `GOOGLE_SITE_VERIFICATION`·`NAVER_SITE_VERIFICATION`에 넣고 다시 배포 → 각 콘솔에서 [확인] → 사이트맵 `https://pocket-expense-ruby.vercel.app/sitemap.xml` 제출
+
+## 10. 랜딩 AI 영수증 분석 미리보기 (D-131)
+> 7·8·9는 DB 마이그레이션 적용 승인이 필요해 먼저 10·11을 진행(아래 "남은 것" 참고)
+- `src/components/landing/ai-simulator.tsx`(새, 클라이언트): 예시 영수증(CSS로 그린 구겨진 철물점 영수증, 합계 47,300 = 공급가액 43,000 + 부가세 4,300), 3단계 버튼, 로그·스캔 줄·엑셀 행 카드, 자동 진행(IntersectionObserver), 움직임 줄이기 대응
+- `globals.css`: `pe-scan`(스캔 줄)·`pe-fill`(업로드 막대) 애니메이션, `page.tsx`: 기능 카드 아래 배치
+- 확인(`.responsive/live/shot-simulator.mjs`, 로컬): 360·390·768·1280에서 자동 진행 끝까지 → 완료 카드 보임, 단계 버튼 동작, 가로 넘침 0, 움직임 줄이기면 결과 바로 보임. 스크린샷으로 PC 제목 "AI / LLM" 끊김과 엑셀 칸 잘림을 발견해 고침(붙여 쓰기, 4칸 × 2줄)

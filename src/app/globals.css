@@ -218,6 +218,15 @@ body {
   opacity: 0;
   animation: landing-bubble-in 0.6s ease-out forwards;
 }
+/* AI 영수증 분석 미리보기(ai-simulator.tsx): 스캔 줄, 업로드 막대 */
+@keyframes pe-scan {
+  0% { top: -2.5rem; }
+  100% { top: 100%; }
+}
+@keyframes pe-fill {
+  from { width: 0; }
+  to { width: 100%; }
+}
 @media (prefers-reduced-motion: reduce) {
   .landing-row,
   .landing-bubble {

@@ -1,6 +1,7 @@
 import { Building2, FileSpreadsheet, MessageCircle, ScanLine } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AiSimulator } from "@/components/landing/ai-simulator";
 import { HeroMockup } from "@/components/landing/hero-mockup";
 import { Pricing } from "@/components/landing/pricing";
 
@@ -88,6 +89,8 @@ export default function LandingPage() {
           ))}
         </ul>
       </section>
+
+      <AiSimulator startHref={START_HREF} />
 
       <section className="mx-auto max-w-3xl px-4 py-16 text-center">
         <p className="text-balance text-2xl font-semibold leading-snug">&ldquo;팀장 결재, 복잡한 조직도… 5인 회사에 과하지 않나요?&rdquo;</p>
