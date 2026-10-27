@@ -93,6 +93,7 @@
 | review | text | null, 1~100자 | 한 줄 후기(선택) |
 | display_consent | boolean | default false | 홈페이지 소개 동의 |
 | is_displayed | boolean | default true | 운영자가 끄면 랜딩에서 숨김 |
+| is_featured | boolean | default false | 운영자가 고른 대표 후기 — 랜딩에 먼저(D-135, migration 069) |
 | credits_granted | integer | default 100 | 지급한 장수 |
 - RLS: 자기 회사 관리자만 읽기. 쓰기는 `submit_feedback_survey`(관리자, 1회, +100)로만, 숨김은 운영자(service role). anon 권한 없음.
 

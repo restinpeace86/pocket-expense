@@ -13,3 +13,14 @@ export async function setReviewDisplayedAction(id: string, displayed: boolean): 
   refresh();
   return { error: null };
 }
+
+// 대표 후기로 올리기·내리기 (D-135): 랜딩에 먼저 보인다
+export async function setReviewFeaturedAction(id: string, featured: boolean): Promise<{ error: string | null }> {
+  const ok = await getAppAdmin();
+  if (!ok) return { error: "운영자만 바꿀 수 있어요." };
+  const { error } = await ok.admin.from("feedback_surveys").update({ is_featured: featured }).eq("id", id);
+  if (error) return { error: "바꾸지 못했어요. 다시 시도해 주세요." };
+  updateTag("testimonials");
+  refresh();
+  return { error: null };
+}

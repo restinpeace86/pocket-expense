@@ -1,10 +1,10 @@
 import { Star } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
-import { authorLabel } from "@/lib/feedback-survey";
+import { authorLabel, isDisplayableReview } from "@/lib/feedback-survey";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // 랜딩 "실제 사용자 후기" (7차 개선사항 7, D-130)
-// 홈페이지 소개에 동의했고 운영자가 숨기지 않은 한 줄 후기만, 작성자는 규모·업종·직무로만(회사명·이름 없음).
+// 홈페이지 소개에 동의했고 운영자가 숨기지 않은 공백 빼고 10자 이상 후기만(D-135), 운영자가 고른 대표 후기 먼저. 작성자는 규모·업종·직무로만(회사명·이름 없음).
 // 공개 데이터지만 표에 anon 권한을 주지 않고 서버가 service role로 익명 칸만 읽는다(읽기 전용). 후기가 없으면 섹션을 숨긴다 — 지어낸 후기는 넣지 않는다.
 export type TestimonialRow = { id: string; rating: number; review: string; industry: string; company_size: string; job_role: string };
 
@@ -21,9 +21,10 @@ async function loadTestimonials(): Promise<TestimonialRow[]> {
       .eq("display_consent", true)
       .eq("is_displayed", true)
       .not("review", "is", null)
+      .order("is_featured", { ascending: false })
       .order("created_at", { ascending: false })
-      .limit(6);
-    return (data ?? []).filter((r): r is TestimonialRow => !!r.review);
+      .limit(60);
+    return (data ?? []).filter((r): r is TestimonialRow => isDisplayableReview(r.review)).slice(0, 6);
   } catch {
     return [];
   }

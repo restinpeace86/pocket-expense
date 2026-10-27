@@ -1157,6 +1157,7 @@ export type Database = {
           id: string
           industry: string
           is_displayed: boolean
+          is_featured: boolean
           job_role: string
           member_id: string | null
           rating: number
@@ -1172,6 +1173,7 @@ export type Database = {
           id?: string
           industry: string
           is_displayed?: boolean
+          is_featured?: boolean
           job_role: string
           member_id?: string | null
           rating: number
@@ -1187,6 +1189,7 @@ export type Database = {
           id?: string
           industry?: string
           is_displayed?: boolean
+          is_featured?: boolean
           job_role?: string
           member_id?: string | null
           rating?: number

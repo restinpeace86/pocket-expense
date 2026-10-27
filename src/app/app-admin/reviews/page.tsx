@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { AppAdminShell, Panel } from "@/components/app-admin/app-admin-shell";
 import { ReviewToggle } from "@/components/app-admin/review-toggle";
-import { authorLabel, featureLabel } from "@/lib/feedback-survey";
+import { authorLabel, featureLabel, isDisplayableReview, REVIEW_DISPLAY_MIN } from "@/lib/feedback-survey";
 import { requireAppAdmin } from "@/lib/app-admin/guard";
 
 export const metadata = { title: "후기·설문 · PocketExpense 운영자" };
@@ -21,16 +21,16 @@ async function Content() {
   const { admin } = await requireAppAdmin();
   const { data } = await admin
     .from("feedback_surveys")
-    .select("id, rating, useful_feature, industry, company_size, job_role, review, display_consent, is_displayed, created_at, companies(name)")
+    .select("id, rating, useful_feature, industry, company_size, job_role, review, display_consent, is_displayed, is_featured, created_at, companies(name)")
     .order("created_at", { ascending: false })
     .limit(200);
   const rows = data ?? [];
-  const shown = rows.filter((r) => r.display_consent && r.is_displayed && r.review).length;
+  const shown = rows.filter((r) => r.display_consent && r.is_displayed && isDisplayableReview(r.review)).length;
   return (
     <>
       <h1 className="text-2xl font-bold">후기·설문</h1>
       <p className="-mt-4 text-sm text-zinc-600">
-        설문 {rows.length}건 · 랜딩에 보이는 후기 {shown}건(소개 동의 + 숨기지 않음 + 한 줄 후기 있음, 최신 6건). 부적절한 후기는 [랜딩에서 숨기기]로 내려요.
+        설문 {rows.length}건 · 랜딩 후보 {shown}건(소개 동의 + 숨기지 않음 + 공백 빼고 {REVIEW_DISPLAY_MIN}자 이상). 랜딩에는 [대표 후기]를 먼저, 나머지는 최신순으로 6건까지 보여요. 부적절한 후기는 [랜딩에서 숨기기]로 내려요.
       </p>
       <Panel title="설문 결과">
         {rows.length === 0 ? (
@@ -50,9 +50,11 @@ async function Content() {
                     {authorLabel(r)} · 유용한 기능: {featureLabel(r.useful_feature)} · {new Date(r.created_at).toLocaleDateString("ko-KR")}
                     {!r.display_consent && " · 소개 동의 안 함"}
                     {r.display_consent && !r.is_displayed && " · 숨김"}
+                    {r.display_consent && r.review && !isDisplayableReview(r.review) && ` · ${REVIEW_DISPLAY_MIN}자 미만이라 랜딩에 안 보임`}
+                    {r.is_featured && " · ★ 대표 후기"}
                   </p>
                 </div>
-                {r.display_consent && r.review && <ReviewToggle id={r.id} displayed={r.is_displayed} />}
+                {r.display_consent && r.review && <ReviewToggle id={r.id} displayed={r.is_displayed} featured={r.is_featured} eligible={isDisplayableReview(r.review)} />}
               </li>
             ))}
           </ul>

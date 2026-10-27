@@ -4,7 +4,7 @@ import { Gift, Loader2, Star, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { submitFeedbackSurveyAction } from "@/app/workspace/[id]/admin/billing/actions";
 import { measureAction } from "@/lib/perf/client";
-import { COMPANY_SIZES, INDUSTRIES, JOB_ROLES, REVIEW_MAX, SURVEY_BONUS, USEFUL_FEATURES } from "@/lib/feedback-survey";
+import { COMPANY_SIZES, INDUSTRIES, JOB_ROLES, REVIEW_DISPLAY_MIN, REVIEW_MAX, REVIEW_STARTERS, SURVEY_BONUS, USEFUL_FEATURES, reviewLength } from "@/lib/feedback-survey";
 
 // 후기·설문 → +100 크레딧 (7차 개선사항 7, D-130). 관리자 이상, 회사당 1회.
 // done: 이미 참여한 회사면 버튼 대신 "참여 완료". preview: 반응형 점검용(제출하지 않음)
@@ -134,18 +134,32 @@ function SurveyDialog({ onClose, onDone, preview }: { onClose: () => void; onDon
             </div>
           </fieldset>
 
-          <label className="flex flex-col gap-1.5 text-sm font-semibold">
-            <span>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="survey-review" className="text-sm font-semibold">
               한 줄 후기 <span className="font-normal text-zinc-500">(선택)</span>
-            </span>
-            <input
+              <span className="mt-0.5 block font-normal text-zinc-600">PocketExpense로 어떤 일이 편해졌나요?</span>
+            </label>
+            <textarea
+              id="survey-review"
               value={review}
               onChange={(e) => setReview(e.target.value.slice(0, REVIEW_MAX))}
               maxLength={REVIEW_MAX}
-              placeholder="예: 현장 영수증 정리가 정말 편해졌어요"
-              className="min-h-11 rounded-xl border border-zinc-300 px-3 text-base font-normal lg:text-sm"
+              rows={2}
+              placeholder="예: 현장 영수증을 찍기만 하면 돼서 월말 정리가 하루에서 한 시간으로 줄었어요"
+              className="rounded-xl border border-zinc-300 px-3 py-2.5 text-base font-normal lg:text-sm"
             />
-          </label>
+            {/* 예시 문장: 눌러서 칸에 넣고 내 말로 고쳐 쓴다 */}
+            <div className="flex flex-wrap gap-1.5" aria-label="예시 문장">
+              {REVIEW_STARTERS.map((t) => (
+                <button key={t} type="button" onClick={() => setReview(t)} className="inline-flex min-h-11 items-center rounded-full border border-zinc-200 bg-zinc-50 px-3 text-xs text-zinc-700 hover:bg-zinc-100">
+                  {t}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-zinc-500">
+              예시를 눌러 넣은 뒤 우리 회사 이야기로 고쳐 써 주세요. 공백 빼고 {REVIEW_DISPLAY_MIN}자 이상이면 홈페이지 소개 후보가 돼요 ({reviewLength(review)}/{REVIEW_MAX})
+            </p>
+          </div>
           <label className="-my-2 flex min-h-11 items-center gap-2 text-sm text-zinc-700">
             <input type="checkbox" checked={displayConsent} onChange={(e) => setConsent(e.target.checked)} className="size-5 shrink-0" />
             <span>후기를 홈페이지에 소개해도 좋아요 (회사명·이름 없이 업종·직무로만 표시)</span>

@@ -1,6 +1,18 @@
 // 후기·설문(+100 크레딧, D-130) 선택지와 표시 이름. DB 체크 제약(migration 066)과 같은 값만 쓴다.
 export const SURVEY_BONUS = 100;
 export const REVIEW_MAX = 100;
+// 랜딩에 보일 최소 길이: 공백을 뺀 10자 이상(D-135). 짧은 후기도 설문 기록으로는 남는다
+export const REVIEW_DISPLAY_MIN = 10;
+export const reviewLength = (s: string | null | undefined) => (s ?? "").replace(/\s/g, "").length;
+export const isDisplayableReview = (s: string | null | undefined) => reviewLength(s) >= REVIEW_DISPLAY_MIN;
+
+// 후기 칸 예시 문장(눌러서 칸에 넣은 뒤 직접 고쳐 쓴다, D-135) — 사용자가 고르고 고친 문장만 후기가 된다
+export const REVIEW_STARTERS = [
+  "월말 영수증 정리 시간이 확 줄었어요",
+  "카톡으로 바로 결재하니 승인이 빨라졌어요",
+  "영수증 사진만 찍으면 알아서 입력돼서 편해요",
+  "세무사무소에 넘길 자료를 한 번에 받을 수 있어요",
+];
 
 export const USEFUL_FEATURES = [
   ["receipt_ai", "영수증 AI 자동 입력"],
