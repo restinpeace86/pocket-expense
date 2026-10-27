@@ -1,5 +1,5 @@
 -- =============================================================================
--- 044_feedback_survey.sql — 설문 +100 크레딧(회사당 1회)·권한·회사 격리 (D-130, migration 066)
+-- 044_feedback_survey.sql — 설문 +100 크레딧(회사당 1회, 후기 10자·소개 동의 필수)·권한·회사 격리 (D-130, D-137, migration 066·071)
 -- =============================================================================
 begin;
 
@@ -32,15 +32,18 @@ insert into public.members (id, auth_user_id, company_id, name, phone, role, sta
 -- 직원: 설문 제출 불가
 select set_config('request.jwt.claims', '{"sub":"a4400000-0000-0000-0000-000000000002","role":"authenticated"}', true);
 set local role authenticated;
-select public._t_raises($q$select public.submit_feedback_survey(5, 'receipt_ai', 'construction', '5-10', 'site_manager', '좋아요', true)$q$, '42501', 'E submit');
+select public._t_raises($q$select public.submit_feedback_survey(5, 'receipt_ai', 'construction', '5-10', 'site_manager', '현장 영수증 정리가 편해졌어요', true)$q$, '42501', 'E submit');
 reset role;
 
 -- 대표: 잘못된 값은 거절, 정상 제출 → 남은 크레딧 3 + 100 = 103
 select set_config('request.jwt.claims', '{"sub":"a4400000-0000-0000-0000-000000000001","role":"authenticated"}', true);
 set local role authenticated;
-select public._t_raises($q$select public.submit_feedback_survey(6, 'receipt_ai', 'construction', '5-10', 'site_manager', null, false)$q$, 'INVALID_SURVEY', 'A rating');
-select public._t_raises($q$select public.submit_feedback_survey(5, 'receipt_ai', 'space', '5-10', 'site_manager', null, false)$q$, 'INVALID_SURVEY', 'A industry');
-select public._t_raises($q$select public.submit_feedback_survey(5, 'receipt_ai', 'construction', '5-10', 'site_manager', repeat('가', 101), false)$q$, 'INVALID_SURVEY', 'A review long');
+select public._t_raises($q$select public.submit_feedback_survey(6, 'receipt_ai', 'construction', '5-10', 'site_manager', '현장 영수증 정리가 편해졌어요', true)$q$, 'INVALID_SURVEY', 'A rating');
+select public._t_raises($q$select public.submit_feedback_survey(5, 'receipt_ai', 'space', '5-10', 'site_manager', '현장 영수증 정리가 편해졌어요', true)$q$, 'INVALID_SURVEY', 'A industry');
+select public._t_raises($q$select public.submit_feedback_survey(5, 'receipt_ai', 'construction', '5-10', 'site_manager', repeat('가', 101), true)$q$, 'INVALID_SURVEY', 'A review long');
+select public._t_raises($q$select public.submit_feedback_survey(5, 'receipt_ai', 'construction', '5-10', 'site_manager', '좋 아 요 좋 아 요', true)$q$, 'SURVEY_REVIEW_TOO_SHORT', 'A review short');
+select public._t_raises($q$select public.submit_feedback_survey(5, 'receipt_ai', 'construction', '5-10', 'site_manager', null, true)$q$, 'SURVEY_REVIEW_TOO_SHORT', 'A review null');
+select public._t_raises($q$select public.submit_feedback_survey(5, 'receipt_ai', 'construction', '5-10', 'site_manager', '현장 영수증 정리가 편해졌어요', false)$q$, 'SURVEY_CONSENT_REQUIRED', 'A no consent');
 do $$
 declare v integer;
 begin
@@ -51,13 +54,13 @@ begin
 end;
 $$;
 -- 두 번째 제출(같은 사람)
-select public._t_raises($q$select public.submit_feedback_survey(4, 'tax_export', 'construction', '5-10', 'ceo', null, false)$q$, 'SURVEY_ALREADY_DONE', 'A twice');
+select public._t_raises($q$select public.submit_feedback_survey(4, 'tax_export', 'construction', '5-10', 'ceo', '두 번째 후기도 써 봅니다 열 자', true)$q$, 'SURVEY_ALREADY_DONE', 'A twice');
 reset role;
 
 -- 같은 회사 다른 관리자도 다시 받을 수 없음
 select set_config('request.jwt.claims', '{"sub":"a4400000-0000-0000-0000-000000000003","role":"authenticated"}', true);
 set local role authenticated;
-select public._t_raises($q$select public.submit_feedback_survey(4, 'tax_export', 'construction', '5-10', 'finance', null, false)$q$, 'SURVEY_ALREADY_DONE', 'A2 twice');
+select public._t_raises($q$select public.submit_feedback_survey(4, 'tax_export', 'construction', '5-10', 'finance', '다른 관리자 후기도 열 자 넘게', true)$q$, 'SURVEY_ALREADY_DONE', 'A2 twice');
 reset role;
 
 -- 직원은 설문 내용을 볼 수 없음
@@ -72,7 +75,7 @@ set local role authenticated;
 do $$
 begin
   if (select count(*) from public.feedback_surveys) <> 0 then raise exception 'FAIL [B sees A survey]'; end if;
-  if public.submit_feedback_survey(3, 'other', 'it', '1-4', 'ceo', null, false) <> 200 then raise exception 'FAIL [B credits]'; end if;
+  if public.submit_feedback_survey(3, 'other', 'it', '1-4', 'ceo', '다른 회사도 잘 쓰고 있어요', true) <> 200 then raise exception 'FAIL [B credits]'; end if;
   if (select count(*) from public.feedback_surveys) <> 1 then raise exception 'FAIL [B own]'; end if;
 end;
 $$;
@@ -82,7 +85,7 @@ reset role;
 -- anon: 표 접근 불가, 함수 실행 불가
 set local role anon;
 select public._t_raises($q$select count(*) from public.feedback_surveys$q$, '42501', 'anon select');
-select public._t_raises($q$select public.submit_feedback_survey(5, 'other', 'it', '1-4', 'ceo', null, false)$q$, '42501', 'anon submit');
+select public._t_raises($q$select public.submit_feedback_survey(5, 'other', 'it', '1-4', 'ceo', '익명은 낼 수 없어요 열 자', true)$q$, '42501', 'anon submit');
 reset role;
 
 do $$

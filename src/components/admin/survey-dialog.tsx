@@ -4,7 +4,7 @@ import { Gift, Loader2, Star, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { submitFeedbackSurveyAction } from "@/app/workspace/[id]/admin/billing/actions";
 import { measureAction } from "@/lib/perf/client";
-import { COMPANY_SIZES, INDUSTRIES, JOB_ROLES, REVIEW_DISPLAY_MIN, REVIEW_MAX, REVIEW_STARTERS, SURVEY_BONUS, USEFUL_FEATURES, reviewLength } from "@/lib/feedback-survey";
+import { COMPANY_SIZES, INDUSTRIES, JOB_ROLES, REVIEW_DISPLAY_MIN, REVIEW_MAX, REVIEW_STARTERS, SURVEY_BONUS, USEFUL_FEATURES, isDisplayableReview, reviewLength } from "@/lib/feedback-survey";
 
 // 후기·설문 → +100 크레딧 (7차 개선사항 7, D-130). 관리자 이상, 회사당 1회.
 // done: 이미 참여한 회사면 버튼 대신 "참여 완료". preview: 반응형 점검용(제출하지 않음)
@@ -27,7 +27,7 @@ export function SurveyButton({ done, emphasize = false, preview = false }: { don
         className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-semibold ${emphasize ? "bg-brand-600 text-white hover:bg-brand-700" : "border border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100"}`}
       >
         <Gift className="size-4" />
-        추가 크레딧 받기 (설문 1분 · +{SURVEY_BONUS}장)
+        추가 크레딧 받기 (후기 1분 · +{SURVEY_BONUS}장)
       </button>
       {open && <SurveyDialog onClose={() => setOpen(false)} onDone={(left) => setFinished(left)} preview={preview} />}
     </>
@@ -47,7 +47,8 @@ function SurveyDialog({ onClose, onDone, preview }: { onClose: () => void; onDon
   const [displayConsent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  const ready = rating > 0 && usefulFeature && industry && companySize && jobRole;
+  const reviewOk = isDisplayableReview(review);
+  const ready = rating > 0 && usefulFeature && industry && companySize && jobRole && reviewOk && displayConsent;
 
   const submit = () =>
     start(async () => {
@@ -66,9 +67,9 @@ function SurveyDialog({ onClose, onDone, preview }: { onClose: () => void; onDon
         <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 pb-3 pt-5">
           <div>
             <h2 id="survey-title" className="text-lg font-semibold">
-              1분 설문하고 영수증 {SURVEY_BONUS}장 받기
+              후기 남기고 영수증 {SURVEY_BONUS}장 받기
             </h2>
-            <p className="mt-0.5 text-sm text-zinc-600">제출하면 바로 충전돼요. 회사당 한 번만 받을 수 있어요.</p>
+            <p className="mt-0.5 text-sm text-zinc-600">남겨 주신 후기는 회사명·이름 없이 홈페이지에 소개돼요. 제출하면 바로 충전되고, 회사당 한 번만 받을 수 있어요.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="닫기" className="-mr-2 -mt-2 inline-flex size-11 shrink-0 items-center justify-center rounded-xl hover:bg-zinc-100">
             <X className="size-5" />
@@ -136,7 +137,7 @@ function SurveyDialog({ onClose, onDone, preview }: { onClose: () => void; onDon
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor="survey-review" className="text-sm font-semibold">
-              한 줄 후기 <span className="font-normal text-zinc-500">(선택)</span>
+              한 줄 후기 <span className="text-red-600">*</span>
               <span className="mt-0.5 block font-normal text-zinc-600">PocketExpense로 어떤 일이 편해졌나요?</span>
             </label>
             <textarea
@@ -156,13 +157,16 @@ function SurveyDialog({ onClose, onDone, preview }: { onClose: () => void; onDon
                 </button>
               ))}
             </div>
-            <p className="text-xs text-zinc-500">
-              예시를 눌러 넣은 뒤 우리 회사 이야기로 고쳐 써 주세요. 공백 빼고 {REVIEW_DISPLAY_MIN}자 이상이면 홈페이지 소개 후보가 돼요 ({reviewLength(review)}/{REVIEW_MAX})
+            <p className={`text-xs ${review && !reviewOk ? "text-amber-700" : "text-zinc-500"}`}>
+              예시를 눌러 넣은 뒤 우리 회사 이야기로 고쳐 써 주세요. 공백 빼고 {REVIEW_DISPLAY_MIN}자 이상 써야 해요 ({reviewLength(review)}자)
             </p>
           </div>
           <label className="-my-2 flex min-h-11 items-center gap-2 text-sm text-zinc-700">
             <input type="checkbox" checked={displayConsent} onChange={(e) => setConsent(e.target.checked)} className="size-5 shrink-0" />
-            <span>후기를 홈페이지에 소개해도 좋아요 (회사명·이름 없이 업종·직무로만 표시)</span>
+            <span>
+              후기를 홈페이지에 소개하는 데 동의해요 <span className="text-red-600">*</span>
+              <span className="block text-xs text-zinc-500">회사명·이름 없이 업종·직무로만 표시하고, &ldquo;후기를 남긴 회사에 영수증 {SURVEY_BONUS}장 제공&rdquo;이라고 함께 밝혀요.</span>
+            </span>
           </label>
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         </div>
@@ -177,7 +181,7 @@ function SurveyDialog({ onClose, onDone, preview }: { onClose: () => void; onDon
             {pending && <Loader2 className="size-4 animate-spin" />}
             제출하고 {SURVEY_BONUS}장 받기
           </button>
-          {!ready && <p className="mt-2 text-center text-xs text-zinc-500">별점·기능·업종·직무·규모를 골라 주세요</p>}
+          {!ready && <p className="mt-2 text-center text-xs text-zinc-500">별점·기능·업종·직무·규모를 고르고, 후기 {REVIEW_DISPLAY_MIN}자 이상·소개 동의를 채워 주세요</p>}
         </div>
       </div>
     </div>

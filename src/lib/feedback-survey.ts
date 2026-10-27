@@ -56,7 +56,8 @@ type Pairs = readonly (readonly [string, string])[];
 const labelOf = (pairs: Pairs, key: string) => pairs.find(([k]) => k === key)?.[1] ?? "";
 const keysOf = (pairs: Pairs) => pairs.map(([k]) => k);
 
-export const isValidSurvey = (v: { rating: number; usefulFeature: string; industry: string; companySize: string; jobRole: string; review: string }) =>
+// 100장 조건(D-137): 후기 공백 빼고 10자 이상 + 홈페이지 소개 동의 — DB 함수도 같은 규칙으로 막는다
+export const isValidSurvey = (v: { rating: number; usefulFeature: string; industry: string; companySize: string; jobRole: string; review: string; displayConsent?: boolean }) =>
   Number.isInteger(v.rating) &&
   v.rating >= 1 &&
   v.rating <= 5 &&
@@ -64,7 +65,9 @@ export const isValidSurvey = (v: { rating: number; usefulFeature: string; indust
   keysOf(INDUSTRIES).includes(v.industry) &&
   keysOf(COMPANY_SIZES).includes(v.companySize) &&
   keysOf(JOB_ROLES).includes(v.jobRole) &&
-  v.review.trim().length <= REVIEW_MAX;
+  v.review.trim().length <= REVIEW_MAX &&
+  isDisplayableReview(v.review) &&
+  v.displayConsent === true;
 
 // 랜딩에 보일 작성자: 회사명·이름 없이 규모·업종·직무로만 — 예) "10인 이하 건설업 현장 소장"
 export function authorLabel(r: { industry: string; company_size: string; job_role: string }): string {

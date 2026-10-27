@@ -13,11 +13,13 @@ describe("후기·설문", () => {
     expect(isDisplayableReview(null)).toBe(false);
   });
   it("선택지 밖 값·별점·긴 후기는 거절", () => {
-    const ok = { rating: 5, usefulFeature: "receipt_ai", industry: "it", companySize: "1-4", jobRole: "ceo", review: "" };
+    const ok = { rating: 5, usefulFeature: "receipt_ai", industry: "it", companySize: "1-4", jobRole: "ceo", review: "월말 정리가 정말 편해졌어요", displayConsent: true };
     expect(isValidSurvey(ok)).toBe(true);
     expect(isValidSurvey({ ...ok, rating: 0 })).toBe(false);
     expect(isValidSurvey({ ...ok, rating: 4.5 })).toBe(false);
     expect(isValidSurvey({ ...ok, industry: "space" })).toBe(false);
     expect(isValidSurvey({ ...ok, review: "가".repeat(101) })).toBe(false);
+    expect(isValidSurvey({ ...ok, review: "좋아요" })).toBe(false); // 10자 미만
+    expect(isValidSurvey({ ...ok, displayConsent: false })).toBe(false); // 소개 동의 필수
   });
 });
