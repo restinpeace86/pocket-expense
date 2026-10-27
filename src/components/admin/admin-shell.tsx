@@ -14,6 +14,7 @@ import {
   FileText,
   LayoutDashboard,
   Menu,
+  MessageCircle,
   ReceiptText,
   Route,
   Settings,
@@ -30,6 +31,7 @@ import { ThemeOptionsInline } from "@/components/workspace/theme-switcher";
 import type { ThemeKey } from "@/lib/theme";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import type { Membership } from "@/lib/auth/paths";
+import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 
 // 관리자 워크스페이스 레이아웃 (spec/screens/admin-dashboard.md 0): PC는 좌측 사이드바, 모바일은 햄버거 메뉴
 // 설정은 하단 배치 + 하위 메뉴 (admin-settings.md §4)
@@ -83,7 +85,8 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
 }
 
 // settingsOpen: 휴대폰 메뉴(서랍)에서는 설정 하위 메뉴를 펼친 채로 연다(개선사항 1-1) — 화면 이름이 바로 보이게
-function NavList({ base, onNavigate, previewPath, settingsOpen = false }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean }) {
+// feedback: 관리자 1:1 문의 주소 — 휴대폰 서랍 메뉴에서만 넘긴다(PC는 오른쪽 아래 떠 있는 버튼, 7차 개선사항 3)
+function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null }) {
   const realPath = usePathname();
   const pathname = previewPath ? `${base}${previewPath}` : realPath;
   const settingsActive = SETTINGS_NAV.some((i) => pathname.startsWith(`${base}${i.href}`));
@@ -102,6 +105,19 @@ function NavList({ base, onNavigate, previewPath, settingsOpen = false }: { base
           {SETTINGS_NAV.map((item) => (
             <NavLink key={item.label} item={item} base={base} pathname={pathname} onNavigate={onNavigate} />
           ))}
+          {feedback && (
+            <a
+              href={feedback}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onNavigate}
+              className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-sidebar-fg hover:bg-sidebar-hover"
+            >
+              <MessageCircle className="size-5 shrink-0" />
+              <span className="flex-1">관리자 1:1 문의</span>
+              <span className="whitespace-nowrap text-[11px] text-sidebar-muted">카카오톡</span>
+            </a>
+          )}
         </div>
       </details>
     </nav>
@@ -154,7 +170,7 @@ export function AdminShell({
                 <X className="size-5" />
               </button>
             </div>
-            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen />
+            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} />
             <div className="mt-auto sm:hidden">
               <ThemeOptionsInline />
             </div>
@@ -173,6 +189,19 @@ export function AdminShell({
         </div>
         <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 py-6 md:px-8">{children}</main>
       </div>
+
+      {/* 관리자 1:1 문의 — PC(md 이상)만 오른쪽 아래에 띄운다. 화면 아래 고정 버튼 줄(.kb-hide.fixed: 승인·지급·내려받기)이 있으면 그 위로 비켜 선다 */}
+      {ADMIN_FEEDBACK_URL && (
+        <a
+          href={ADMIN_FEEDBACK_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 z-50 hidden min-h-12 items-center gap-2 rounded-full bg-[#FEE500] px-5 text-sm font-semibold text-[#191919] shadow-lg ring-1 ring-black/5 transition hover:brightness-95 md:inline-flex [body:has(.kb-hide.fixed)_&]:bottom-28"
+        >
+          <MessageCircle className="size-5 shrink-0" />
+          관리자 피드백
+        </a>
+      )}
     </div>
   );
 }
