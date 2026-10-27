@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { AlreadyMemberNotice } from "@/components/auth/already-member-notice";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Card, PageShell } from "@/components/ui/page-shell";
 import { destinationAfterLogin } from "@/lib/auth/paths";
@@ -23,11 +24,18 @@ async function PersonalInviteContent({ params }: { params: PageProps<"/join/i/[t
   const { token } = await params;
   const next = `/onboarding/join?token=${encodeURIComponent(token)}`;
 
+  const supabase = await createClient();
   if (await getCurrentUserId()) {
-    redirect(destinationAfterLogin(await getMembership(), next));
+    const membership = await getMembership();
+    // 이미 소속이 있는데 다른 회사의 아직 쓰지 않은 초대를 열면 말없이 내 회사로 보내지 않고 안내(같은 회사 초대는 그대로 이동)
+    if (membership) {
+      const { data } = await supabase.rpc("get_invitation_public", { p_token: token });
+      const pending = data as { company_name: string } | null;
+      if (pending && pending.company_name !== membership.company_name) return <AlreadyMemberNotice membership={membership} invitedCompany={pending.company_name} />;
+    }
+    redirect(destinationAfterLogin(membership, next));
   }
 
-  const supabase = await createClient();
   const { data } = await supabase.rpc("get_invitation_public", { p_token: token });
   const invitation = data as { company_name: string; name: string } | null;
   if (!invitation) {

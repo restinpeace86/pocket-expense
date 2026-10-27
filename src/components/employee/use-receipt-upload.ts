@@ -116,7 +116,8 @@ export function useReceiptUpload(claimId: string, currentCount: number) {
               const e = result.error;
               set(keys[i], { phase: "failed", error: e instanceof StepError ? e.message : NETWORK_ERROR });
             }
-            router.refresh();
+            // 인터넷이 끊긴 채 화면을 새로 받으면 Next가 페이지 전체를 다시 불러 빈 화면이 된다(7-15) → 연결됐을 때만
+            if (navigator.onLine !== false) router.refresh();
           },
         },
       );

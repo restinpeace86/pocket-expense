@@ -10,6 +10,7 @@ import { inputClass } from "@/components/ui/page-shell";
 import type { EditorClaim, EditorItem, FuelPolicy, RoutePlaceInput } from "@/lib/employee/editor-types";
 import { cardAmount, FUEL_TYPE_LABEL, routeCardFrom, routeFormula, STANDARD_KM_PER_L } from "@/lib/expense/route";
 import { formatWon } from "@/lib/format";
+import { guardAction } from "@/lib/action-guard";
 import { measureAction } from "@/lib/perf/client";
 import type { ItemFormHandle } from "./item-editor";
 
@@ -68,7 +69,7 @@ export function OwnCarInline({
     const m = meta.current;
     const snap = JSON.stringify(m);
     if (!itemId || !m || snap === savedMeta.current) return true;
-    const res = await measureAction("employee.save_item", () => saveOwnCarItemAction(itemId, m));
+    const res = await guardAction(() => measureAction("employee.save_item", () => saveOwnCarItemAction(itemId, m)));
     if (!res.ok) {
       onError(res.error);
       return false;
@@ -104,8 +105,10 @@ export function OwnCarInline({
         createdId.current = id;
       }
       const target = id;
-      const res = await measureAction("employee.own_car_route", () =>
-        saveOwnCarRouteAction(target, { start: next.start, end: next.end, roundTrip: next.roundTrip, manualOneWayKm: next.manual }),
+      const res = await guardAction(() =>
+        measureAction("employee.own_car_route", () =>
+          saveOwnCarRouteAction(target, { start: next.start, end: next.end, roundTrip: next.roundTrip, manualOneWayKm: next.manual }),
+        ),
       );
       if (!res.ok) return onError(res.error);
       if (res.autoFailed) {
@@ -124,8 +127,10 @@ export function OwnCarInline({
     if (!itemId) return;
     onError(null);
     startRoundSave(async () => {
-      const res = await measureAction("employee.own_car_round_trip", () =>
-        saveOwnCarRouteAction(itemId, { start, end, roundTrip: next, manualOneWayKm: manualOpen && manualValid ? manualNum : null }),
+      const res = await guardAction(() =>
+        measureAction("employee.own_car_round_trip", () =>
+          saveOwnCarRouteAction(itemId, { start, end, roundTrip: next, manualOneWayKm: manualOpen && manualValid ? manualNum : null }),
+        ),
       );
       if (!res.ok) {
         setRoundTrip(!next); // 저장 실패 → 화면 되돌림

@@ -225,7 +225,7 @@ function TitleItem({
         className={`${iconButton} hover:text-red-600`}
         disabled={busy || t.used}
         onClick={onDelete}
-        aria-label={t.used ? `${t.name}은 분류에 연결되어 삭제할 수 없어요` : `${t.name} 삭제`}
+        aria-label={t.used ? `${t.name}: 분류에 연결되어 삭제할 수 없어요` : `${t.name} 삭제`}
         title={t.used ? "분류에 연결되어 있어 삭제할 수 없어요" : undefined}
       >
         <Trash2 className="size-4" />

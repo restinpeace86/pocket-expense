@@ -13,6 +13,7 @@ import { formatDateTimeKst } from "@/lib/claims/format";
 import type { ClaimDetail } from "@/lib/claims/types";
 import { claimStatusBadge } from "@/lib/expense/status";
 import { formatWon } from "@/lib/format";
+import { guardAction } from "@/lib/action-guard";
 import { measureAction } from "@/lib/perf/client";
 import { ClaimItems, type AccountTitleOption } from "./claim-items";
 
@@ -58,7 +59,7 @@ export function AdminClaimDetail({
     const t = titleId ? accountTitles?.find((x) => x.id === titleId) : null;
     if (t) setAccounts((a) => ({ ...a, [itemId]: { id: t.id, name: t.name, code: t.code, overridden: true } }));
     setAccountBusy(itemId);
-    const res = await measureAction("admin.override_account_title", () => overrideAccountTitleAction(itemId, titleId));
+    const res = await guardAction(() => measureAction("admin.override_account_title", () => overrideAccountTitleAction(itemId, titleId)));
     setAccountBusy(null);
     if (!res.ok) {
       setAccounts((a) => {
@@ -78,7 +79,7 @@ export function AdminClaimDetail({
   const approve = () =>
     start(async () => {
       setMessage(null);
-      const res = await measureAction("admin.approve_claim", () => approveClaimAction(claim.id));
+      const res = await guardAction(() => measureAction("admin.approve_claim", () => approveClaimAction(claim.id)));
       if (!res.ok) return setMessage({ kind: "error", text: res.error });
       setMessage({
         kind: "ok",
@@ -90,7 +91,7 @@ export function AdminClaimDetail({
   const reject = () =>
     start(async () => {
       setMessage(null);
-      const res = await measureAction("admin.reject_claim", () => rejectClaimAction(claim.id, reason, flagged));
+      const res = await guardAction(() => measureAction("admin.reject_claim", () => rejectClaimAction(claim.id, reason, flagged)));
       if (!res.ok) return setMessage({ kind: "error", text: res.error });
       setMode("view");
       setMessage({ kind: "ok", text: "반려했어요. 청구자에게 사유가 전달됩니다. 직원이 고쳐서 다시 올리면 승인 대기로 돌아와요." });

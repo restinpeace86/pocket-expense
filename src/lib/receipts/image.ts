@@ -39,8 +39,19 @@ async function render(bitmap: ImageBitmap, max: number, type: string, quality: n
 }
 
 // PDF는 줄이지 않고 원본 그대로(썸네일 없음 — 화면에서 PDF 아이콘으로 대신)
+export async function looksLikePdf(file: Blob): Promise<boolean> {
+  const head = new Uint8Array(await file.slice(0, 1024).arrayBuffer());
+  const sig = [0x25, 0x50, 0x44, 0x46, 0x2d]; // %PDF-
+  for (let i = 0; i + sig.length <= head.length; i++) if (sig.every((b, j) => head[i + j] === b)) return true;
+  return false;
+}
+
 export async function processReceiptFile(file: File): Promise<ProcessedReceipt> {
-  if (isPdf(file)) return { kind: "pdf", original: file, thumb: null };
+  if (isPdf(file)) {
+    // 이름만 .pdf인 깨진 파일은 AI로 보내기 전에 막는다(크레딧이 빠지지 않게, 7-15). PDF는 앞 1KB 안에 "%PDF-"가 있다
+    if (!(await looksLikePdf(file))) throw new Error("INVALID_PDF");
+    return { kind: "pdf", original: file, thumb: null };
+  }
   const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" }); // 휴대폰 사진 회전 반영
   try {
     const original = await render(bitmap, RECEIPT_ORIGINAL_MAX, "image/jpeg", ORIGINAL_QUALITY);

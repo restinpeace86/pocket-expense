@@ -10,6 +10,7 @@ import { CATEGORY_LABEL, type ExpenseCategory } from "@/lib/expense/categories";
 import { CLAIM_FILTERS, claimStatusBadge, shiftMonth, type ClaimFilterKey } from "@/lib/expense/status";
 import type { EmployeeSummary, MyClaimRow } from "@/lib/employee/types";
 import { formatWon } from "@/lib/format";
+import { guardAction } from "@/lib/action-guard";
 import { measureAction } from "@/lib/perf/client";
 
 // 화면 E-01 직원 메인 (spec/screens/worker-dashboard.md)
@@ -178,7 +179,7 @@ export function EmployeeHomeView({
     startDelete(async () => {
       if (!toDelete) return;
       setDeleteError(null);
-      const r = await measureAction("employee.delete_draft", () => deleteDraftClaimAction(toDelete.id, { stayOnPage: true }));
+      const r = await guardAction(() => measureAction("employee.delete_draft", () => deleteDraftClaimAction(toDelete.id, { stayOnPage: true })));
       if (!r.ok) return setDeleteError(r.error);
       setItems((list) => list.filter((c) => c.id !== toDelete.id));
       setToDelete(null);
@@ -196,7 +197,7 @@ export function EmployeeHomeView({
   const create = () =>
     startCreate(async () => {
       setError(null);
-      const res = await measureAction("employee.create_claim", () => createDraftClaimAction());
+      const res = await guardAction(() => measureAction("employee.create_claim", () => createDraftClaimAction()));
       if (res && "error" in res) setError(res.error);
     });
 

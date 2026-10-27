@@ -19,6 +19,7 @@ import { isAutoTitle, suggestTitle } from "@/lib/expense/title";
 import { formatWon } from "@/lib/format";
 import { submitClaimAction } from "@/lib/claims/actions";
 import { HEADER_PROBLEM_LABEL, ITEM_PROBLEM_LABEL, type ClaimProblems } from "@/lib/claims/problems";
+import { guardAction } from "@/lib/action-guard";
 import { measureAction } from "@/lib/perf/client";
 import { MAX_PER_CLAIM, useReceiptUpload, type UploadRow } from "./use-receipt-upload";
 import { useElementHeight } from "@/lib/ui/use-element-height";
@@ -520,6 +521,7 @@ export function ClaimEditor({
   const latest = useRef(current);
   const savedKey = useRef(JSON.stringify(savedForm));
   const queue = useRef<Promise<boolean>>(Promise.resolve(true));
+  const failedText = useRef<string | null>(null);
   useEffect(() => {
     latest.current = current;
   });
@@ -530,15 +532,22 @@ export function ClaimEditor({
       const key = JSON.stringify(next);
       if (!editable || key === savedKey.current) return true;
       setSaveState("saving");
-      const res = await measureAction("employee.save_claim", () => saveClaimHeaderAction(claim.id, next));
+      const res = await guardAction(() => measureAction("employee.save_claim", () => saveClaimHeaderAction(claim.id, next)));
       if (!res.ok) {
         setSaveState("error");
+        failedText.current = res.error;
         setMessage({ kind: "error", text: res.error });
         return false;
       }
       savedKey.current = key;
       setSavedForm(next);
       setSaveState("saved");
+      // 다시 저장에 성공하면 저장 실패 안내(연결 끊김 등)를 지운다. 다른 안내(상신 막힘 등)는 그대로
+      if (failedText.current) {
+        const text = failedText.current;
+        failedText.current = null;
+        setMessage((m) => (m?.kind === "error" && m.text === text ? null : m));
+      }
       return true;
     };
     const p = queue.current.then(run, run);
@@ -585,7 +594,7 @@ export function ClaimEditor({
   const ensureOwnCar = async (): Promise<string | null> => {
     // 헤더를 먼저 저장해 출장 시작일이 사용일 기본값이 되게
     if (!(await persist())) return null;
-    const res = await measureAction("employee.create_own_car", () => createOwnCarItemAction(claim.id));
+    const res = await guardAction(() => measureAction("employee.create_own_car", () => createOwnCarItemAction(claim.id)));
     if (!res.ok) {
       setMessage({ kind: "error", text: res.error });
       return null;
@@ -598,7 +607,7 @@ export function ClaimEditor({
     startBusy(async () => {
       setSheet(false);
       if (!(await persist())) return;
-      const res = await measureAction("employee.add_manual_item", () => createManualItemAction(claim.id));
+      const res = await guardAction(() => measureAction("employee.add_manual_item", () => createManualItemAction(claim.id)));
       if (!res.ok) return setMessage({ kind: "error", text: res.error });
       // 직접 입력 항목은 그 자리에서 펼쳐 채운다
       router.refresh();
@@ -607,7 +616,7 @@ export function ClaimEditor({
 
   const removeItem = (itemId: string) =>
     startBusy(async () => {
-      const res = await deleteItemAction(itemId);
+      const res = await guardAction(() => deleteItemAction(itemId));
       if (!res.ok) setMessage({ kind: "error", text: res.error });
       router.refresh();
     });
@@ -630,13 +639,13 @@ export function ClaimEditor({
   const [moved, setMoved] = useState<{ claimId: string; label: string } | null>(null);
   const ackItem = (itemId: string) =>
     startBusy(async () => {
-      const res = await measureAction("employee.ack_item_category", () => ackItemCategoryAction(itemId));
+      const res = await guardAction(() => measureAction("employee.ack_item_category", () => ackItemCategoryAction(itemId)));
       if (!res.ok) setMessage({ kind: "error", text: res.error });
     });
   const moveItem = (item: EditorItem) =>
     startBusy(async () => {
       if (!(await persist())) return;
-      const res = await measureAction("employee.move_item", () => moveItemToNewClaimAction(item.id));
+      const res = await guardAction(() => measureAction("employee.move_item", () => moveItemToNewClaimAction(item.id)));
       if (!res.ok) return setMessage({ kind: "error", text: res.error });
       setMoved({ claimId: res.claimId, label: `${item.merchant_name || "영수증"} → 새 [${item.aiCategory ? CATEGORY_LABEL[item.aiCategory] : "결의서"}] 결의서` });
     });
@@ -1252,7 +1261,7 @@ export function ClaimEditor({
                   disabled={busy}
                   onClick={() =>
                     startBusy(async () => {
-                      const res = await deleteDraftClaimAction(claim.id);
+                      const res = await guardAction(() => deleteDraftClaimAction(claim.id));
                       if (res && !res.ok) setMessage({ kind: "error", text: res.error });
                     })
                   }
@@ -1320,7 +1329,7 @@ export function ClaimEditor({
                 onClick={() =>
                   startSubmit(async () => {
                     if (!(await flushItems())) return setConfirmSubmit(false);
-                    const res = await measureAction("employee.submit_claim", () => submitClaimAction(claim.id));
+                    const res = await guardAction(() => measureAction("employee.submit_claim", () => submitClaimAction(claim.id)));
                     setConfirmSubmit(false);
                     if (res.ok) {
                       router.push(base);

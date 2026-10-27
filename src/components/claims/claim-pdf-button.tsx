@@ -3,6 +3,7 @@
 import { FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { claimDocumentAction } from "@/app/workspace/[id]/admin/form-template/actions";
+import { guardAction } from "@/lib/action-guard";
 
 // 결의서 한 건을 회사 양식으로 PDF 내려받기(관리자, D-118). 영수증 원본은 [영수증 모아보기]·세무 마감 ZIP에서
 export function ClaimPdfButton({ claimId }: { claimId: string }) {
@@ -12,7 +13,7 @@ export function ClaimPdfButton({ claimId }: { claimId: string }) {
     setBusy(true);
     setError(null);
     try {
-      const r = await claimDocumentAction(claimId);
+      const r = await guardAction(() => claimDocumentAction(claimId));
       if (!r.ok) return setError(r.error);
       const [{ buildClaimsPdf }, { saveBlob }] = await Promise.all([import("@/lib/tax/pdf-client"), import("@/lib/tax/zip-client")]);
       const pdf = await buildClaimsPdf({ docs: [r.doc], companyName: r.companyName, layout: r.layout });

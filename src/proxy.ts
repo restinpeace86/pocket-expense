@@ -7,7 +7,7 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function proxy(request: NextRequest) {
   // 반응형 점검용 미리보기(/dev/*)는 ENABLE_UI_PREVIEW=1일 때만. 배포 환경에서는 렌더링 전에 404로 막는다.
   if (request.nextUrl.pathname.startsWith("/dev/") && process.env.ENABLE_UI_PREVIEW !== "1") {
-    return new NextResponse("Not Found", { status: 404 });
+    return notFoundPage(request);
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -45,9 +45,11 @@ export async function proxy(request: NextRequest) {
       redirect.headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
       return redirect;
     }
-    if (!(await isAppAdmin(url, sub))) return new NextResponse("Not Found", { status: 404, headers: { "Cache-Control": "private, no-store" } });
+    if (!(await isAppAdmin(url, sub))) return notFoundPage(request);
   }
-  if (!data?.claims && pathname.startsWith("/workspace/")) {
+  // 화면 안의 버튼(서버 작업, next-action 헤더)은 로그인 화면으로 돌리지 않는다: 돌리면 화면이 알 수 없는 응답을 받아 통째로 깨진다(7-15).
+  // 작업 쪽이 로그인·소속을 다시 확인해 "새로고침해 주세요" 안내를 돌려준다.
+  if (!data?.claims && pathname.startsWith("/workspace/") && !request.headers.has("next-action")) {
     const to = new URL("/login", request.url);
     to.searchParams.set("next", pathname + search);
     const redirect = NextResponse.redirect(to);
@@ -55,6 +57,14 @@ export async function proxy(request: NextRequest) {
     redirect.headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
     return redirect;
   }
+  return response;
+}
+
+// 막은 주소는 영문 "Not Found" 글자 대신 앱의 한국어 '찾는 화면이 없어요' 화면(app/not-found)을 404로 보여 준다(7-15).
+// 없는 경로로 바꿔 그리게 하는 것이라 막은 화면의 내용은 그려지지 않는다
+function notFoundPage(request: NextRequest) {
+  const response = NextResponse.rewrite(new URL("/_blocked-not-found", request.url), { status: 404 });
+  response.headers.set("Cache-Control", "private, no-store");
   return response;
 }
 

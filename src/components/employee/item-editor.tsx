@@ -18,6 +18,7 @@ import { isMealLike, itemAmounts, type MealPolicy } from "@/lib/expense/amounts"
 import { CATEGORY_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, type PurchaseType, type TripType } from "@/lib/expense/categories";
 import { formatWon } from "@/lib/format";
 import { evidenceReason } from "@/lib/receipts/evidence-reason";
+import { guardAction } from "@/lib/action-guard";
 import { measureAction } from "@/lib/perf/client";
 
 // 영수증 항목 편집 — 결의서 화면 안 인라인(아코디언) (worker-tax-processing.md §2·§3-3, smart-meal.md §4, corporate-cards.md §3, todo_improvement(2차) 3)
@@ -260,7 +261,7 @@ export function ItemInlineForm({
     const snapshot = JSON.stringify(latest.current);
     if (snapshot === saved.current) return true;
     setStatus("saving");
-    const res = await measureAction("employee.save_item", () => saveItemAction(item.id, latest.current));
+    const res = await guardAction(() => measureAction("employee.save_item", () => saveItemAction(item.id, latest.current)));
     if (!res.ok) {
       setStatus("error");
       onError(res.error);
@@ -295,7 +296,7 @@ export function ItemInlineForm({
   const reread = () =>
     startReread(async () => {
       if (!(await save())) return;
-      const res = await measureAction("employee.reread_receipt", () => rereadReceiptAction(item.id));
+      const res = await guardAction(() => measureAction("employee.reread_receipt", () => rereadReceiptAction(item.id)));
       if (!res.ok) onError(res.error);
       else if (!res.parsed) onError("자동 인식에 실패했어요. 직접 입력해 주세요.");
     });
@@ -307,7 +308,7 @@ export function ItemInlineForm({
       const processed = await processReceiptFile(file).catch(() => null);
       if (!processed) return onError("올릴 수 없는 파일이에요. 사진 또는 PDF를 골라 주세요.");
       if (processed.original.size > RECEIPT_MAX_BYTES) return onError(TOO_LARGE_MESSAGE);
-      const r = await attachItemEvidenceAction(item.id, { isPdf: processed.kind === "pdf", thumbExt: processed.kind === "image" ? processed.thumbExt : "webp" });
+      const r = await guardAction(() => attachItemEvidenceAction(item.id, { isPdf: processed.kind === "pdf", thumbExt: processed.kind === "image" ? processed.thumbExt : "webp" }));
       if (!r.ok) return onError(r.error);
       const bucket = createClient().storage.from("receipts");
       const up = await bucket.upload(r.receiptPath, processed.original, { contentType: processed.kind === "pdf" ? "application/pdf" : "image/jpeg", upsert: true });
@@ -319,16 +320,16 @@ export function ItemInlineForm({
         await bucket.upload(r.thumbPath, processed.thumb, { contentType: processed.thumbExt === "webp" ? "image/webp" : "image/jpeg", upsert: true }).catch(() => undefined);
       }
       onError(null);
-      await evidenceUploadedAction();
+      await evidenceUploadedAction().catch(() => undefined);
     });
   const detach = () =>
     startAttach(async () => {
-      const r = await detachItemEvidenceAction(item.id);
+      const r = await guardAction(() => detachItemEvidenceAction(item.id));
       if (!r.ok) onError(r.error);
     });
 
   const openOriginal = async () => {
-    const r = await receiptOriginalUrlAction(item.id);
+    const r = await guardAction(() => receiptOriginalUrlAction(item.id));
     if (r.ok && r.url) {
       if (item.isPdf) window.open(r.url, "_blank", "noopener");
       else setZoomUrl(r.url);

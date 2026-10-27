@@ -17,7 +17,7 @@ const MESSAGES: Record<string, string> = {
   INVALID_INVITE_CODE: "초대 코드를 확인해 주세요. 관리자에게 초대 링크를 요청하세요.",
   INVALID_INVITATION: "초대 링크가 만료되었거나 이미 사용되었습니다. 관리자에게 다시 요청하세요.",
   NOT_ALLOWED: "이 작업을 할 권한이 없습니다. 관리자에게 문의하세요.",
-  NOT_A_MEMBER: "회사 멤버로 승인된 계정만 이용할 수 있어요.",
+  NOT_A_MEMBER: "로그인이 풀렸거나 이용이 중지된 계정이에요. 화면을 새로고침해 주세요.",
   NOT_FOUND: "대상을 찾을 수 없어요. 화면을 새로고침해 주세요.",
   NOT_PENDING: "이미 처리된 가입 신청입니다. 화면을 새로고침해 주세요.",
   INVALID_MEAL_LIMIT: "1식 한도를 0원~1,000,000원 사이로 입력해 주세요.",

@@ -4,6 +4,7 @@ import { Camera, Loader2, Trash2 } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 import { attachOdometerPhotoAction, detachOdometerPhotoAction, evidenceUploadedAction } from "@/app/workspace/[id]/employee/claims/actions";
 import type { EditorItem } from "@/lib/employee/editor-types";
+import { guardAction } from "@/lib/action-guard";
 import { measureAction } from "@/lib/perf/client";
 import { isPdf, processReceiptFile, RECEIPT_MAX_BYTES, TOO_LARGE_MESSAGE } from "@/lib/receipts/image";
 import { createClient } from "@/lib/supabase/client";
@@ -61,7 +62,7 @@ function Slot({
       const processed = await processReceiptFile(file).catch(() => null);
       if (!processed || processed.kind !== "image") return onError("올릴 수 없는 사진이에요. 다시 찍어 주세요.");
       if (processed.original.size > RECEIPT_MAX_BYTES) return onError(TOO_LARGE_MESSAGE);
-      const r = await measureAction("employee.odometer_attach", () => attachOdometerPhotoAction(itemId, which));
+      const r = await guardAction(() => measureAction("employee.odometer_attach", () => attachOdometerPhotoAction(itemId, which)));
       if (!r.ok) return onError(r.error);
       const up = await createClient().storage.from("receipts").upload(r.path, processed.original, { contentType: "image/jpeg", upsert: true });
       if (up.error) {
@@ -69,12 +70,12 @@ function Slot({
         return onError("사진을 올리지 못했어요. 잠시 뒤 다시 시도해 주세요.");
       }
       setPreview(URL.createObjectURL(processed.original));
-      await evidenceUploadedAction();
+      await evidenceUploadedAction().catch(() => undefined);
     });
   const remove = () =>
     start(async () => {
       onError(null);
-      const r = await measureAction("employee.odometer_detach", () => detachOdometerPhotoAction(itemId, which));
+      const r = await guardAction(() => measureAction("employee.odometer_detach", () => detachOdometerPhotoAction(itemId, which)));
       if (!r.ok) return onError(r.error);
       setPreview(null);
     });

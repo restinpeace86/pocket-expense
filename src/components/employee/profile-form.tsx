@@ -10,6 +10,7 @@ import { ThemeOptionsCard } from "@/components/workspace/theme-switcher";
 import { inputClass } from "@/components/ui/page-shell";
 import type { MyProfile } from "@/lib/employee/profile";
 import { formatPhone } from "@/lib/format";
+import { guardAction } from "@/lib/action-guard";
 import { measureAction } from "@/lib/perf/client";
 
 // 직원 [내 정보] (employee-mobile.md ⑤)
@@ -58,7 +59,7 @@ export function ProfileForm({ profile }: { profile: MyProfile }) {
         e.preventDefault();
         start(async () => {
           setMessage(null);
-          const res = await measureAction("employee.save_profile", () => updateMyProfileAction({ ...f, optionalAgreed: agreed }));
+          const res = await guardAction(() => measureAction("employee.save_profile", () => updateMyProfileAction({ ...f, optionalAgreed: agreed })));
           if (res.error) setMessage({ kind: "error", text: res.error });
           else {
             setMessage({ kind: "ok", text: "저장했어요." });

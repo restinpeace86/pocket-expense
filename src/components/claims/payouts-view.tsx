@@ -8,6 +8,7 @@ import { markClaimsPaidAction } from "@/lib/claims/actions";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import type { PayoutGroup } from "@/lib/claims/payouts";
 import { formatWon } from "@/lib/format";
+import { guardAction } from "@/lib/action-guard";
 import { measureAction } from "@/lib/perf/client";
 
 // 화면 A-02 정산 지급 관리 (admin-payouts.md). 실제 이체는 회사 은행에서 하고, 여기서는 체크리스트·처리 기록만 남긴다
@@ -185,7 +186,7 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
                 disabled={pending}
                 onClick={() =>
                   start(async () => {
-                    const res = await measureAction("admin.mark_paid", () => markClaimsPaidAction(sel.map((c) => c.id)));
+                    const res = await guardAction(() => measureAction("admin.mark_paid", () => markClaimsPaidAction(sel.map((c) => c.id))));
                     setConfirm(false);
                     if (!res.ok) return setMessage({ kind: "error", text: res.error });
                     setSelected([]);
