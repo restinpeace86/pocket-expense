@@ -48,16 +48,19 @@ export default function LandingPage() {
 
       <header className="mx-auto grid max-w-5xl items-center gap-12 px-4 pb-24 pt-12 sm:pt-16 lg:grid-cols-2 lg:gap-16 lg:pt-24">
         <div>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-            영수증 정산의
-            <br />
-            스트레스를 0으로.
-          </h1>
-          <p className="mt-3 text-balance text-lg text-blue-200">소기업과 스타트업을 위한 가장 가벼운 AI 경비 정산</p>
-          <p className="mt-4 text-zinc-300">
-            엑셀도, 무거운 그룹웨어도 필요 없습니다. 영수증 촬영 한 장과 카카오톡 결재로 끝내세요.
+          <p className="inline-flex rounded-full border border-blue-300/30 bg-blue-400/10 px-3 py-1 text-sm font-medium text-blue-200">
+            소기업·스타트업을 위한 AI 경비 정산
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          {/* 메인 카피는 두 줄로 고정(휴대폰에서도 어절 중간에서 끊기지 않게 break-keep) */}
+          <h1 className="mt-5 break-keep text-[2.5rem] font-extrabold leading-[1.15] tracking-tight sm:text-6xl lg:text-[3.5rem]">
+            복잡한 경비처리,
+            <br />
+            <span className="text-blue-400">사진 한 장</span>으로 끝.
+          </h1>
+          <p className="mt-5 max-w-md text-balance break-keep text-lg leading-relaxed text-zinc-300 sm:text-xl">
+            영수증 등록부터 월말 세무회계용 엑셀 정리까지 한 번에.
+          </p>
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link href={START_HREF} className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-xl bg-blue-500 px-6 font-semibold hover:bg-blue-400">
               🏢 우리 회사 무료로 시작하기
             </Link>
