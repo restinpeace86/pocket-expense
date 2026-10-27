@@ -122,7 +122,7 @@ function ReceiptPanel({ items, index, cards, onIndex, onClose, showAccount }: { 
     ["증빙 자료", i.evidence_kind === "none" ? `증빙 없음 — ${i.no_evidence_reason ?? ""}` : EVIDENCE_KIND_LABEL[effectiveEvidenceKind(i) ?? "receipt"]],
     ["결제수단", paymentBadge(i, cards)],
     ["카테고리", classLabel(i)],
-    ...(showAccount ? ([["계정과목", i.account_title_name ? `${i.account_title_name}${i.account_title_code ? ` (${i.account_title_code})` : ""}${i.account_title_overridden ? " · 계정 조정됨" : ""}` : "미지정"]] as [string, React.ReactNode][]) : []),
+    ...(showAccount ? ([["계정과목", i.account_title_name ? `${i.account_title_name}${i.account_title_overridden ? " · 계정 조정됨" : ""}` : "미지정"]] as [string, React.ReactNode][]) : []),
     ["인원 · 목적", [i.headcount ? `${i.headcount}명` : null, i.purpose, i.client_name, i.attendees].filter(Boolean).join(" · ") || null],
     ["승인번호", i.approval_number],
     ["가맹점 주소", i.merchant_address],
@@ -236,7 +236,6 @@ function AccountCell({ i, titles, onChange, busy }: { i: DetailItem; titles: Acc
         {titles.map((t) => (
           <option key={t.id} value={t.id}>
             {t.name}
-            {t.code ? ` (${t.code})` : ""}
           </option>
         ))}
       </select>

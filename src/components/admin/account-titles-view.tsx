@@ -107,7 +107,6 @@ export function AccountTitlesView({ titles, mappings, preview = false }: { title
                   {titles.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name}
-                      {t.code ? ` (${t.code})` : ""}
                     </option>
                   ))}
                 </select>
