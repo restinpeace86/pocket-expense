@@ -20,6 +20,9 @@ export const CATEGORY_LABEL: Record<ExpenseCategory, string> = {
 };
 // 결의서 맨 위 4대 카테고리 / 그 밖의 경비 (D-098, D-102)
 export const MAIN_CATEGORIES: ExpenseCategory[] = ["meal", "meeting", "purchase", "trip"];
+// 경조사비 건당 기준(세무사무소 답변 2026-10-27, D-136): 20만 원까지는 청첩장·부고 등으로 처리. 넘으면 경고만(상신은 막지 않음)
+export const CONDOLENCE_LIMIT = 200_000;
+
 export const EXTRA_CATEGORIES: ExpenseCategory[] = ["team_dinner", "condolence", "seminar", "books", "training", "company_car", "saas"];
 export const ALL_CATEGORIES: ExpenseCategory[] = [...MAIN_CATEGORIES, ...EXTRA_CATEGORIES];
 export const TRIP_TYPE_LABEL: Record<TripType, string> = {
@@ -37,7 +40,7 @@ export const TRIP_TYPE_LABEL: Record<TripType, string> = {
 export const PURCHASE_TYPE_LABEL: Record<PurchaseType, string> = {
   pantry: "탕비실·간식",
   office_supplies: "사무용품·소모품",
-  small_equipment: "소액 비품",
+  small_equipment: "비품(오래 쓰는 물건)",
 };
 
 export type CondolenceTarget = "internal" | "external";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { reconcile, type LedgerItem } from "./reconcile";
-import { detectColumns, parseAmount, parseDate, toRows } from "./statement";
+import { detectColumns, parseAmount, parseDate, toRows, type StatementRow } from "./statement";
 
 describe("카드사 내역 읽기 (D-111)", () => {
   const table = [
@@ -16,7 +16,7 @@ describe("카드사 내역 읽기 (D-111)", () => {
   it("머리글·열을 찾는다(할부·결제예정금액은 금액 열로 안 씀)", () => {
     const d = detectColumns(table)!;
     expect(d.headerRow).toBe(2);
-    expect(d.map).toEqual({ date: 0, card: 1, merchant: 2, amount: 3, status: 6 });
+    expect(d.map).toEqual({ date: 0, card: 1, merchant: 2, amount: 3, status: 6, bizNo: null });
   });
   it("행: 합계 줄은 건너뛰고, 음수·취소는 취소로", () => {
     const d = detectColumns(table)!;
@@ -80,3 +80,24 @@ describe("CSV 읽기", () => {
     ]);
   });
 });
+
+describe("같은 날 같은 금액은 사업자번호로 구분 (D-136)", () => {
+  const item = (p: Partial<LedgerItem>): LedgerItem => ({ id: "i", claimId: "c", claimTitle: "t", claimStatus: "submitted", memberName: "김", date: "2026-10-14", amount: 12000, merchant: "", paymentMethod: "corporate_card", last4: "7890", ...p });
+  const row = (p: Partial<StatementRow>): StatementRow => ({ line: 2, date: "2026-10-14", merchant: "", amount: 12000, last4: "7890", cancelled: false, ...p });
+  it("사업자번호가 맞는 영수증과 짝", () => {
+    const r = reconcile([row({ line: 2, bizNo: "2222222222" }), row({ line: 3, bizNo: "1111111111" })], [item({ id: "a", bizNo: "1111111111" }), item({ id: "b", bizNo: "2222222222" })]);
+    expect(r.matched.map((m) => `${m.row.line}:${m.item.id}`).sort()).toEqual(["2:b", "3:a"]);
+  });
+  it("사업자번호가 다르면 짝짓지 않음", () => {
+    const r = reconcile([row({ bizNo: "3333333333" })], [item({ id: "a", bizNo: "1111111111" })]);
+    expect(r.matched).toHaveLength(0);
+    expect(r.missing).toHaveLength(1);
+  });
+  it("카드 내역 머리글에서 사업자번호 열을 찾음", () => {
+    const d = detectColumns([["이용일자", "가맹점명", "가맹점사업자번호", "이용금액"], ["2026-10-14", "스타벅스", "123-45-67890", "12,000"]]);
+    expect(d?.map.bizNo).toBe(2);
+    expect(d?.map.merchant).toBe(1);
+    expect(toRows([["이용일자", "가맹점명", "가맹점사업자번호", "이용금액"], ["2026-10-14", "스타벅스", "123-45-67890", "12,000"]], 0, d!.map, 2026).rows[0].bizNo).toBe("1234567890");
+  });
+});
+

@@ -12,7 +12,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { inputClass } from "@/components/ui/page-shell";
 import type { ClaimHeaderInput, EditorData, EditorItem, PaymentMethod, TripTransport } from "@/lib/employee/editor-types";
 import { FUEL_TYPE_LABEL, routeCardFrom, STANDARD_KM_PER_L } from "@/lib/expense/route";
-import { CATEGORY_LABEL, EXTRA_CATEGORIES, MAIN_CATEGORIES, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, CONDOLENCE_TARGET_LABEL, type CondolenceTarget } from "@/lib/expense/categories";
+import { CATEGORY_LABEL, CONDOLENCE_LIMIT, EXTRA_CATEGORIES, MAIN_CATEGORIES, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, CONDOLENCE_TARGET_LABEL, type CondolenceTarget } from "@/lib/expense/categories";
 import { claimStatusBadge } from "@/lib/expense/status";
 import { suggestPurpose } from "@/lib/expense/purpose";
 import { isAutoTitle, suggestTitle } from "@/lib/expense/title";
@@ -845,6 +845,14 @@ export function ClaimEditor({
               />
               <p className="text-xs text-zinc-500">우리 회사 직원 경조사면 내부, 거래처 경조사면 외부예요. 세무 처리(계정과목)가 달라요.</p>
             </div>
+            {/* 건당 20만 원 기준(D-136) — 경고만, 상신은 막지 않음 */}
+            {items.some((i) => (i.amount ?? 0) > CONDOLENCE_LIMIT) ? (
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800" role="status">
+                경조사비는 건당 20만 원까지 청첩장·부고 등으로 처리해요. 20만 원을 넘는 건이 있어요 — 금액을 나눠 적지 말고, 회사 규정·세무사무소와 확인해 주세요.
+              </p>
+            ) : (
+              <p className="text-xs text-zinc-500">경조사비는 건당 20만 원까지예요. 청첩장·부고·돌잔치·개업 안내 등을 증빙으로 붙여 주세요.</p>
+            )}
             {form.condolenceTarget === "external" && (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="claim-condolence-client" required>

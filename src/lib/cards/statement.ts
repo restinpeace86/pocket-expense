@@ -1,8 +1,9 @@
 // 카드사 사용 내역(엑셀·CSV) 읽기 (D-111) — 카드사마다 모양이 달라 머리글 이름으로 열을 찾고, 못 찾으면 관리자가 고른다.
 // 브라우저에서 표(셀 2차원 배열)로 바꾼 뒤 여기서 행으로 만든다. 파일은 저장하지 않는다.
 export type Cell = string | number | Date | null | undefined;
-export type StatementRow = { line: number; date: string; merchant: string; amount: number; last4: string | null; cancelled: boolean };
-export type ColumnMap = { date: number; merchant: number; amount: number; card: number | null; status: number | null };
+// bizNo: 가맹점 사업자번호(숫자 10자리) — 같은 날 같은 금액이 여러 건이면 이것으로 구분한다(세무사무소 답변, D-136)
+export type StatementRow = { line: number; date: string; merchant: string; amount: number; last4: string | null; cancelled: boolean; bizNo?: string | null };
+export type ColumnMap = { date: number; merchant: number; amount: number; card: number | null; status: number | null; bizNo?: number | null };
 
 const KEYS = {
   date: ["이용일자", "이용일", "승인일자", "승인일", "거래일자", "거래일", "사용일자", "사용일", "매출일자", "매출일", "일자", "날짜", "일시"],
@@ -11,6 +12,7 @@ const KEYS = {
   amount: ["이용금액", "승인금액", "매출금액", "사용금액", "결제금액", "거래금액", "금액", "청구금액", "결제예정금액"],
   card: ["카드번호", "이용카드", "카드"],
   status: ["취소여부", "취소", "승인구분", "상태", "구분"],
+  bizNo: ["가맹점사업자번호", "가맹점사업자등록번호", "사업자등록번호", "사업자번호"],
 };
 const NOT_AMOUNT = ["할부", "수수료", "포인트", "잔액", "원금", "개월", "이자"];
 
@@ -33,10 +35,11 @@ export function detectColumns(table: Cell[][]): { headerRow: number; headers: st
     const date = findCol(headers, KEYS.date);
     const amount = findCol(headers, KEYS.amount, NOT_AMOUNT, date !== null ? [date] : []);
     if (date === null || amount === null) continue;
-    const merchant = findCol(headers, KEYS.merchant, [], [date, amount]) ?? -1;
+    const bizNo = findCol(headers, KEYS.bizNo, [], [date, amount]);
+    const merchant = findCol(headers, KEYS.merchant, ["사업자"], [date, amount, ...(bizNo !== null ? [bizNo] : [])]) ?? -1;
     const card = findCol(headers, KEYS.card, ["카드사", "카드종류"], [date, amount, merchant]);
-    const status = findCol(headers, KEYS.status, [], [date, amount, merchant, ...(card !== null ? [card] : [])]);
-    return { headerRow: r, headers, map: { date, merchant, amount, card, status } };
+    const status = findCol(headers, KEYS.status, [], [date, amount, merchant, ...(card !== null ? [card] : []), ...(bizNo !== null ? [bizNo] : [])]);
+    return { headerRow: r, headers, map: { date, merchant, amount, card, status, bizNo } };
   }
   return null;
 }
@@ -74,6 +77,11 @@ export function parseAmount(c: Cell): number | null {
   return Number.isFinite(n) ? (neg ? -n : n) : null;
 }
 
+export function bizNoOf(c: Cell): string | null {
+  const d = text(c).replace(/\D/g, "");
+  return d.length === 10 ? d : null;
+}
+
 export function last4Of(c: Cell): string | null {
   const groups = text(c).match(/\d{4}/g);
   return groups?.length ? groups[groups.length - 1] : null;
@@ -98,6 +106,7 @@ export function toRows(table: Cell[][], headerRow: number, map: ColumnMap, fallb
       merchant: map.merchant >= 0 ? text(line[map.merchant]) : "",
       amount: Math.abs(amount),
       last4: map.card !== null ? last4Of(line[map.card]) : null,
+      bizNo: map.bizNo != null ? bizNoOf(line[map.bizNo]) : null,
       cancelled: amount < 0 || /취소|환불/.test(status),
     });
   }

@@ -42,6 +42,8 @@ export function TaxClosingView({
   const ex = data.excluded;
   const excludedItems = ex.draft + ex.submitted + ex.rejected;
   const carry = rows.filter((r) => r.kind === "carryover").length;
+  // 세무사무소는 계정코드가 필요하다(D-136) — 이 달 자료에 코드가 빈 계정과목
+  const noCode = [...new Set(rows.filter((r) => r.account_title_name && !r.account_title_code).map((r) => r.account_title_name as string))];
 
   const [confirm, setConfirm] = useState(false);
   const [reopen, setReopen] = useState(false);
@@ -185,6 +187,16 @@ export function TaxClosingView({
         </p>
       )}
 
+      {noCode.length > 0 && (
+        <p className="flex flex-wrap items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+          <AlertTriangle className="size-4 shrink-0" />
+          세무사무소는 계정코드가 필요해요. 코드가 빈 계정과목: {noCode.join(", ")}
+          <Link href={claimsBase.replace(/\/claims$/, "/account-titles")} className="font-semibold underline underline-offset-2">
+            계정코드 넣기
+          </Link>
+        </p>
+      )}
+
       {excludedItems > 0 && (
         <p className="flex flex-wrap items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
           <AlertTriangle className="size-4 shrink-0" />
@@ -194,6 +206,10 @@ export function TaxClosingView({
           </Link>
         </p>
       )}
+
+      <p className="text-xs text-zinc-500">
+        엑셀의 업로드 시트는 법인카드와 개인(사비)이 따로예요. 영수증은 사진(전자)으로 함께 넘어가요. 종이 원본을 따로 모아 두는지는 회사·세무사무소마다 달라요 — 정한 방식대로 보관해 주세요.
+      </p>
 
       <section className="@container rounded-xl border border-zinc-200 bg-white">
         <h2 className="border-b border-zinc-100 px-4 py-3 font-semibold">

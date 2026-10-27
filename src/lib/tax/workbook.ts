@@ -3,7 +3,7 @@ import { EVIDENCE_KIND_LABEL, type EvidenceKind } from "@/lib/receipts/evidence-
 import ExcelJS from "exceljs";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, evidenceFile, evidenceNo, isOwnCar, settlement, statusLabel, supplyVat, upload적요, type ExportRow } from "./export-rows";
 
-// 세무 마감 엑셀 (tax-export.md §3.2~3.4): 시트1 지출내역(전체 데이터) / 시트2 요약 / 시트3 세무 업로드(초안, O-02)
+// 세무 마감 엑셀 (tax-export.md §3.2~3.4): 시트1 지출내역(전체 데이터) / 시트2 요약 / 시트3·4 세무 업로드 — 법인카드·개인(사비) 따로(세무사무소 답변 2026-10-27, D-136)
 type Col = { header: string; width?: number; kind?: "won" | "date" | "datetime" | "num"; value: (r: ExportRow, ctx: Ctx) => unknown };
 type Ctx = { month: string; total: number; files: Map<string, string | null> };
 
@@ -80,6 +80,8 @@ const SHEET3: Col[] = [
   { header: "카드 끝 4자리", width: 10, value: (r) => (r.payment_method === "corporate_card" ? (r.card_last4 ?? "") : "") },
   { header: "계정과목", width: 14, value: (r) => r.account_title_name ?? "" },
   { header: "계정코드", width: 10, value: (r) => r.account_title_code ?? "" },
+  // 거래처 코드는 세무사무소 회계 프로그램(더존 등)의 거래처 코드 — 사업자등록번호와 함께 적는다(D-136). 우리 데이터에 없어 빈칸으로 둔다
+  { header: "거래처코드", width: 10, value: () => "" },
   { header: "거래처명", width: 20, value: (r) => (isOwnCar(r) ? `자차 ${r.start_location ?? ""}→${r.end_location ?? ""}` : (r.merchant_name ?? "")) },
   { header: "사업자등록번호", width: 14, value: (r) => (isOwnCar(r) ? "" : bizNo(r.merchant_business_number)) },
   { header: "공급가액", width: 12, kind: "won", value: (r) => supplyVat(r).supply },
@@ -190,6 +192,10 @@ export async function buildTaxWorkbook(opts: { month: string; companyName: strin
   addTable(wb.addWorksheet("지출내역"), SHEET1, rows, ctx, ["공급가액", "부가세", "합계금액", "회사지원금", "개인부담금", "정산금액"]);
   const [y, m] = month.split("-");
   addSummary(wb.addWorksheet("요약"), rows, `${opts.companyName} ${y}년 ${Number(m)}월 지출 요약${opts.preview ? " (미리보기 — 마감 전)" : ""}`);
-  addTable(wb.addWorksheet("세무 업로드(초안)"), SHEET3, rows, ctx, []);
+  // 법인카드와 개인(사비)는 카드번호도 다르고 입력도 따로 해서 시트를 나눈다(D-136). 사비 시트에는 카드 끝 4자리 칸이 없다. 자차 유류비는 사비 쪽
+  const corporate = rows.filter((r) => r.payment_method === "corporate_card");
+  const personal = rows.filter((r) => r.payment_method !== "corporate_card");
+  addTable(wb.addWorksheet("세무 업로드(법인카드)"), SHEET3, corporate, ctx, []);
+  addTable(wb.addWorksheet("세무 업로드(개인 사비)"), SHEET3.filter((c) => c.header !== "카드 끝 4자리"), personal, ctx, []);
   return (await wb.xlsx.writeBuffer()) as ArrayBuffer;
 }

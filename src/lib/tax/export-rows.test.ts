@@ -35,6 +35,9 @@ describe("증빙 파일명 (D-052)", () => {
 
 describe("확인 필요·정산·상태", () => {
   it("확인 필요 표시", () => {
+    expect(checks(row({ category: "condolence", amount: 300000, merchant_business_number: null }), true)).toContain("경조사비 20만원 초과");
+    expect(checks(row({ category: "condolence", amount: 200000, merchant_business_number: null }), true)).not.toContain("경조사비 20만원 초과");
+    expect(checks(row({ category: "condolence", amount: 100000, merchant_business_number: null }), true)).not.toContain("사업자번호 없음");
     expect(checks(row(), true)).toEqual([]);
     expect(checks(row({ merchant_business_number: null, supply_amount: null }), false)).toEqual(["사업자번호 없음", "부가세 미구분", "영수증 파일 없음"]);
     expect(checks(row({ trip_type: "own_car", distance_source: "manual" }), true)).toEqual(["적격증빙 없음(자차·경로 요약 첨부)", "직접 입력 거리"]);

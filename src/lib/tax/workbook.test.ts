@@ -27,7 +27,7 @@ describe("세무 마감 엑셀", () => {
       row({ seq: 1, item_id: "a", expense_date: "2026-10-01", amount: 12000 }),
       row({ seq: 2, item_id: "b", expense_date: "2026-10-03", amount: 30000, department: "개발팀" }),
       row({ seq: 3, item_id: "c", expense_date: "2026-10-09", amount: 8000, department: null, member_name: "김대표" }),
-      row({ seq: 4, item_id: "d", expense_date: "2026-10-20", amount: 5000 }),
+      row({ seq: 4, item_id: "d", expense_date: "2026-10-20", amount: 5000, payment_method: "personal_card" }),
     ];
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(await buildTaxWorkbook({ month: "2026-10", companyName: "포켓", rows, preview: false }));
@@ -39,6 +39,18 @@ describe("세무 마감 엑셀", () => {
     expect(last.getCell(1).value).toBe("합계");
     expect(last.getCell(amountCol).value).toBe(55000);
     expect(sheet1.rowCount).toBe(1 + rows.length + 1);
+
+    // 세무 업로드: 법인카드 / 개인(사비) 시트가 따로, 사비 시트엔 카드 끝 4자리 칸 없음, 거래처코드 칸 있음
+    const corp = wb.getWorksheet("세무 업로드(법인카드)")!;
+    const own = wb.getWorksheet("세무 업로드(개인 사비)")!;
+    expect(corp.rowCount).toBe(1 + 3);
+    expect(own.rowCount).toBe(1 + 1);
+    const corpHead = (corp.getRow(1).values as unknown[]).map(String);
+    const ownHead = (own.getRow(1).values as unknown[]).map(String);
+    expect(corpHead).toContain("카드 끝 4자리");
+    expect(ownHead).not.toContain("카드 끝 4자리");
+    expect(corpHead.indexOf("거래처코드")).toBe(corpHead.indexOf("거래처명") - 1);
+    expect(wb.getWorksheet("세무 업로드(초안)")).toBeUndefined();
 
     const summary = wb.getWorksheet("요약")!;
     const lines: [unknown, unknown, unknown][] = [];

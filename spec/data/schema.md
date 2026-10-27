@@ -14,7 +14,7 @@
 | `member_status` | `pending`(승인 대기), `approved`(활성), `inactive`(비활성/퇴사) |
 | `claim_status` | `draft`, `submitted`, `approved`, `rejected`, `paid` (결의서 상태) |
 | `expense_category` | `meal`(일반 식대), `trip`(출장비), `meeting`(외부 미팅비), `purchase`(회사 물품 구매, D-076) (항목 카테고리. 출장 중 비용은 모두 `trip`, D-035) |
-| `purchase_type` | `pantry`(탕비실·간식), `office_supplies`(사무용품·소모품), `small_equipment`(소액 비품) — `purchase`일 때만 (D-076) |
+| `purchase_type` | `pantry`(탕비실·간식), `office_supplies`(사무용품·소모품), `small_equipment`(비품 — 오래 쓰는 물건, D-136) — `purchase`일 때만 (D-076) |
 | `payment_method` | `corporate_card`(법인카드, 기본값), `personal_card`(개인(사비): 개인카드·현금 등 직원 돈) (D-048) |
 | `trip_type` | `meal`(출장 식비), `public_transport`(대중교통), `taxi`(택시), `toll_parking`(통행료·주차), `lodging`(숙박), `own_car`(자차 유류비), `other`(기타) |
 | `distance_source` | `api`(카카오 길찾기 산출), `manual`(직접 입력) |

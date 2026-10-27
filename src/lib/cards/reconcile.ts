@@ -1,5 +1,6 @@
 // 법인카드 사용 내역 ↔ 올라온 영수증 짝 맞추기 (D-111)
 // 같은 금액 + 날짜 ±1일(승인일·매입일 차이) + 카드 끝 4자리(둘 다 있으면 같아야 함). 한 영수증은 한 결제에만.
+// 같은 날 같은 금액이 여러 건이면 가맹점 사업자번호로 구분한다(둘 다 있으면 같아야 함 — 세무사무소 답변, D-136).
 import type { StatementRow } from "./statement";
 
 export type LedgerItem = {
@@ -13,6 +14,7 @@ export type LedgerItem = {
   merchant: string;
   paymentMethod: "corporate_card" | "personal_card";
   last4: string | null;
+  bizNo?: string | null; // 영수증에서 읽은 가맹점 사업자번호(숫자 10자리)
 };
 
 export type ReconcileResult = {
@@ -39,10 +41,12 @@ export function reconcile(rows: StatementRow[], items: LedgerItem[]): ReconcileR
     for (const it of items) {
       if (used.has(it.id) || it.amount !== row.amount || dayDiff(it.date, row.date) > 1) continue;
       if (row.last4 && it.last4 && row.last4 !== it.last4) continue;
+      if (row.bizNo && it.bizNo && row.bizNo !== it.bizNo) continue;
       const m1 = plain(row.merchant);
       const m2 = plain(it.merchant);
       const score =
         (row.last4 && it.last4 === row.last4 ? 4 : 0) +
+        (row.bizNo && it.bizNo === row.bizNo ? 3 : 0) +
         (it.date === row.date ? 2 : 0) +
         (m1 && m2 && (m1.includes(m2) || m2.includes(m1)) ? 1 : 0) +
         (it.paymentMethod === "corporate_card" ? 1 : 0);

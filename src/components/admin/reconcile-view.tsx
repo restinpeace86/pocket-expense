@@ -51,6 +51,7 @@ const FIELDS: [keyof ColumnMap, string, boolean][] = [
   ["amount", "이용금액", true],
   ["card", "카드번호", false],
   ["status", "취소·승인 구분", false],
+  ["bizNo", "가맹점 사업자번호", false],
 ];
 
 export function ReconcileView({ base, holders }: { base: string; holders: Record<string, string> }) {
@@ -83,7 +84,7 @@ export function ReconcileView({ base, holders }: { base: string; holders: Record
       setMap(d.map);
     } else {
       setHeaderRow(0);
-      setMap({ date: -1, merchant: -1, amount: -1, card: null, status: null });
+      setMap({ date: -1, merchant: -1, amount: -1, card: null, status: null, bizNo: null });
       setError("머리글(이용일자·금액)을 찾지 못했어요. 아래에서 머리글 줄과 열을 직접 골라 주세요.");
     }
   }
@@ -150,7 +151,7 @@ export function ReconcileView({ base, holders }: { base: string; holders: Record
                   value={map[k] ?? -1}
                   onChange={(e) => {
                     const v = Number(e.target.value);
-                    setMap({ ...map, [k]: v < 0 && (k === "card" || k === "status") ? null : v });
+                    setMap({ ...map, [k]: v < 0 && (k === "card" || k === "status" || k === "bizNo") ? null : v });
                     setResult(null);
                   }}
                 >

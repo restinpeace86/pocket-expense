@@ -16,7 +16,7 @@ export async function reconcileCardStatementAction(rows: StatementRow[]): Promis
   const clean = (Array.isArray(rows) ? rows : [])
     .slice(0, 3000)
     .filter((r) => r && DATE.test(r.date) && Number.isInteger(r.amount) && r.amount > 0 && r.amount < 1_000_000_000)
-    .map((r) => ({ line: Number(r.line) || 0, date: r.date, merchant: String(r.merchant ?? "").slice(0, 100), amount: r.amount, last4: r.last4 && /^\d{4}$/.test(r.last4) ? r.last4 : null, cancelled: !!r.cancelled }));
+    .map((r) => ({ line: Number(r.line) || 0, date: r.date, merchant: String(r.merchant ?? "").slice(0, 100), amount: r.amount, last4: r.last4 && /^\d{4}$/.test(r.last4) ? r.last4 : null, bizNo: r.bizNo && /^\d{10}$/.test(r.bizNo) ? r.bizNo : null, cancelled: !!r.cancelled }));
   if (!clean.length) return { ok: false, error: "대조할 결제 내역이 없어요. 날짜·금액 열을 확인해 주세요." };
   const dates = clean.map((r) => r.date).sort();
   const shift = (d: string, n: number) => new Date(Date.parse(d) + n * 86400_000).toISOString().slice(0, 10);
@@ -24,7 +24,7 @@ export async function reconcileCardStatementAction(rows: StatementRow[]): Promis
   const [{ data: items, error }, { data: cards }] = await Promise.all([
     supabase
       .from("expense_items")
-      .select("id, claim_id, expense_date, amount, merchant_name, payment_method, corporate_card_id, card_last4, claim:expense_claims!inner(title, status, member_id)")
+      .select("id, claim_id, expense_date, amount, merchant_name, merchant_business_number, payment_method, corporate_card_id, card_last4, claim:expense_claims!inner(title, status, member_id)")
       .eq("company_id", m.company_id)
       .gte("expense_date", shift(dates[0], -1))
       .lte("expense_date", shift(dates[dates.length - 1], 1))
@@ -51,6 +51,7 @@ export async function reconcileCardStatementAction(rows: StatementRow[]): Promis
       merchant: i.merchant_name ?? "",
       paymentMethod: i.payment_method,
       last4: (i.corporate_card_id ? cardLast4.get(i.corporate_card_id) : null) ?? i.card_last4 ?? null,
+      bizNo: (i.merchant_business_number ?? "").replace(/\D/g, "") || null,
     };
   });
   return { ok: true, result: reconcile(clean, ledger) };

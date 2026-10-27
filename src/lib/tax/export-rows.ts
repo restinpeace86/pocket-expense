@@ -1,6 +1,6 @@
 // 세무 마감 엑셀·ZIP 행 규칙 (tax-export.md §3, tax-closing.md §4.B, tax-upload-format.md, D-052, D-088)
 // DB 함수 tax_month_export가 돌려준 행(순번 순)을 엑셀 시트·ZIP 파일명으로 바꾼다. 순수 함수 — 서버·브라우저 공용.
-import { CATEGORY_LABEL, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, type PurchaseType, type TripType } from "@/lib/expense/categories";
+import { CATEGORY_LABEL, CONDOLENCE_LIMIT, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, type PurchaseType, type TripType } from "@/lib/expense/categories";
 import { fuelOf, routeFormula } from "@/lib/expense/route";
 
 export type ExportRow = {
@@ -121,7 +121,8 @@ export function checks(r: ExportRow, hasFile: boolean): string[] {
     if (!hasFile) out.push("경로 요약 파일 없음");
     return out;
   }
-  if (!r.merchant_business_number) out.push("사업자번호 없음");
+  if (r.category === "condolence" && (r.amount ?? 0) > CONDOLENCE_LIMIT) out.push("경조사비 20만원 초과");
+  if (!r.merchant_business_number && r.category !== "condolence") out.push("사업자번호 없음");
   if (r.supply_amount == null || r.vat_amount == null) out.push("부가세 미구분");
   if (!hasFile) out.push("영수증 파일 없음");
   return out;
