@@ -1,6 +1,6 @@
 import { Lock } from "lucide-react";
 import { SectionHeading } from "@/components/ui/help";
-import type { BillingPlan, CreditStatus } from "@/lib/admin/billing";
+import type { BillingAddon, BillingPlan, CreditStatus } from "@/lib/admin/billing";
 import { formatWon } from "@/lib/format";
 import { EventBonusBanner } from "./event-bonus-banner";
 
@@ -59,20 +59,41 @@ function PlanCard({ plan }: { plan: BillingPlan }) {
       <p className="mt-1 text-sm text-zinc-700">
         영수증 월 {plan.monthly_receipts.toLocaleString("ko-KR")}장 <span className="text-zinc-500">· 장당 약 {formatWon(Math.round(plan.monthly_price / plan.monthly_receipts))}</span>
       </p>
-      {plan.annual_price && (
-        <p className="mt-3 border-t border-zinc-100 pt-3 text-sm text-zinc-700">
-          연간 선결제 <b>{formatWon(plan.annual_price)}</b>
-          <span className="block text-xs text-zinc-500">
-            월 환산 {formatWon(Math.round(plan.annual_price / 12))} · 10% 할인 (연 {formatWon(plan.monthly_price * 12 - plan.annual_price)} 절약)
-          </span>
-        </p>
-      )}
       <span className="mt-auto pt-4" title={DISABLED_TIP}>
         <button type="button" disabled className="min-h-11 w-full cursor-not-allowed rounded-xl bg-zinc-200 px-4 text-sm font-semibold text-zinc-500">
           이 플랜으로 결제하기
         </button>
       </span>
     </li>
+  );
+}
+
+// 추가 크레딧(애드온, D-133): 기본 장수를 다 썼을 때만 나타난다. 결제 연동 전이라 버튼은 비활성
+function AddonCard({ addons }: { addons: BillingAddon[] }) {
+  if (!addons.length) return null;
+  return (
+    <section className="rounded-xl border border-brand-200 bg-brand-50 p-5" aria-labelledby="addon-title">
+      <h2 id="addon-title" className="font-semibold text-zinc-900">
+        추가 크레딧 충전
+      </h2>
+      <p className="mt-1 text-sm text-zinc-700">남은 영수증을 모두 썼어요. 다음 달까지 기다리지 않고 필요한 만큼 더 쓸 수 있어요.</p>
+      <ul className="mt-3 flex flex-col gap-2">
+        {addons.map((a) => (
+          <li key={a.code} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3">
+            <p>
+              <b>영수증 {a.receipts.toLocaleString("ko-KR")}장</b>
+              <span className="ml-2 whitespace-nowrap tabular-nums">{formatWon(a.price)}</span>
+              <span className="ml-1 text-xs text-zinc-400">(VAT 별도)</span>
+            </p>
+            <span title={DISABLED_TIP}>
+              <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-xl bg-zinc-200 px-4 text-sm font-semibold text-zinc-500">
+                충전하기 (결제 준비 중)
+              </button>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -112,7 +133,8 @@ function PaymentForm() {
   );
 }
 
-export function BillingView({ status, plans, preview = false }: { status: CreditStatus; plans: BillingPlan[]; preview?: boolean }) {
+export function BillingView({ status, plans, addons = [], preview = false }: { status: CreditStatus; plans: BillingPlan[]; addons?: BillingAddon[]; preview?: boolean }) {
+  const exhausted = status.granted - status.used <= 0;
   return (
     <>
       {status.showEventBanner && <EventBonusBanner amount={status.eventAmount} count={status.eventCount} total={status.eventTotal} preview={preview} />}
@@ -124,11 +146,13 @@ export function BillingView({ status, plans, preview = false }: { status: Credit
         help={
           <>
             <p>영수증 사진·파일 1장을 올릴 때마다 1장이 빠집니다. 같은 항목의 사진 교체·영수증 없는 항목은 빠지지 않고, 지워도 돌려받지 않습니다.</p>
-            <p>가격은 공급가액이며 결제 시 부가세 10%가 더해지고 세금계산서가 발행됩니다. 예: 스탠다드 60,000원 + 부가세 6,000원 = 66,000원.</p>
+            <p>가격은 공급가액이며 결제 시 부가세 10%가 더해지고 세금계산서가 발행됩니다. 예: 스탠다드 49,000원 + 부가세 4,900원 = 53,900원.</p>
+            <p>매월 제공되는 기본 장수 중 남은 장수는 다음 달로 넘어가지 않아요. 다 쓰면 그때만 추가 크레딧(50장 8,000원)을 살 수 있어요.</p>
           </>
         }
       />
       <UsageCard s={status} />
+      {exhausted && <AddonCard addons={addons} />}
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">정식 플랜</h2>
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -136,6 +160,7 @@ export function BillingView({ status, plans, preview = false }: { status: Credit
             <PlanCard key={p.code} plan={p} />
           ))}
         </ul>
+        <p className="text-sm text-zinc-500">※ 매월 제공되는 기본 크레딧 중 사용하지 않은 잔여 장수는 다음 달로 이월되지 않습니다.</p>
       </section>
       <PaymentForm />
     </>

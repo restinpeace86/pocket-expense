@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BillingView } from "@/components/admin/billing-view";
-import { getBillingPlans, getCreditStatus } from "@/lib/admin/billing";
+import { getBillingAddons, getBillingPlans, getCreditStatus } from "@/lib/admin/billing";
 import { requireWorkspace } from "@/lib/auth/guards";
 
 export const metadata = { title: "요금제 · PocketExpense" };
@@ -18,7 +18,7 @@ export default function BillingPage({ params }: PageProps<"/workspace/[id]/admin
 async function Billing({ params }: { params: PageProps<"/workspace/[id]/admin/billing">["params"] }) {
   const { id } = await params;
   const membership = await requireWorkspace(id, { admin: true });
-  const [status, plans] = await Promise.all([getCreditStatus(membership.company_id), getBillingPlans()]);
+  const [status, plans, addons] = await Promise.all([getCreditStatus(membership.company_id), getBillingPlans(), getBillingAddons()]);
   if (!status) notFound();
-  return <BillingView status={status} plans={plans} />;
+  return <BillingView status={status} plans={plans} addons={addons} />;
 }

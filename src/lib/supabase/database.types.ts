@@ -263,6 +263,42 @@ export type Database = {
           },
         ]
       }
+      billing_addons: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_purchasable: boolean
+          name: string
+          price: number
+          receipts: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_purchasable?: boolean
+          name: string
+          price: number
+          receipts: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_purchasable?: boolean
+          name?: string
+          price?: number
+          receipts?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       billing_plans: {
         Row: {
           annual_price: number | null
@@ -1104,6 +1140,69 @@ export type Database = {
             columns: ["corporate_card_id", "company_id"]
             isOneToOne: false
             referencedRelation: "corporate_cards"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      feedback_surveys: {
+        Row: {
+          company_id: string
+          company_size: string
+          created_at: string
+          credits_granted: number
+          display_consent: boolean
+          id: string
+          industry: string
+          is_displayed: boolean
+          job_role: string
+          member_id: string | null
+          rating: number
+          review: string | null
+          useful_feature: string
+        }
+        Insert: {
+          company_id: string
+          company_size: string
+          created_at?: string
+          credits_granted?: number
+          display_consent?: boolean
+          id?: string
+          industry: string
+          is_displayed?: boolean
+          job_role: string
+          member_id?: string | null
+          rating: number
+          review?: string | null
+          useful_feature: string
+        }
+        Update: {
+          company_id?: string
+          company_size?: string
+          created_at?: string
+          credits_granted?: number
+          display_consent?: boolean
+          id?: string
+          industry?: string
+          is_displayed?: boolean
+          job_role?: string
+          member_id?: string | null
+          rating?: number
+          review?: string | null
+          useful_feature?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_surveys_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_surveys_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
             referencedColumns: ["id", "company_id"]
           },
         ]
@@ -2108,6 +2207,18 @@ export type Database = {
       submit_claim: {
         Args: { p_claim_id: string }
         Returns: Database["public"]["Enums"]["claim_status"]
+      }
+      submit_feedback_survey: {
+        Args: {
+          p_company_size: string
+          p_display_consent: boolean
+          p_industry: string
+          p_job_role: string
+          p_rating: number
+          p_review: string
+          p_useful_feature: string
+        }
+        Returns: number
       }
       tax_month_export: { Args: { p_month: string }; Returns: Json }
       tax_month_items: {

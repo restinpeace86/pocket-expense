@@ -167,9 +167,9 @@ const AA_RECORD = {
 } as unknown as ReceiptRecordData["record"];
 
 const SAMPLE_PLANS = [
-  { code: "starter", name: "스타터", monthly_price: 30000, annual_price: 324000, monthly_receipts: 150, recommended_size: "5인 미만", is_featured: false },
-  { code: "standard", name: "스탠다드", monthly_price: 60000, annual_price: 648000, monthly_receipts: 400, recommended_size: "5~15인", is_featured: true },
-  { code: "pro", name: "프로", monthly_price: 110000, annual_price: 1188000, monthly_receipts: 800, recommended_size: "영업·현장직이 많은 팀", is_featured: false },
+  { code: "starter", name: "스타터", monthly_price: 29000, monthly_receipts: 150, recommended_size: "5인 미만", is_featured: false },
+  { code: "standard", name: "스탠다드", monthly_price: 49000, monthly_receipts: 400, recommended_size: "5~15인", is_featured: true },
+  { code: "pro", name: "프로", monthly_price: 89000, monthly_receipts: 800, recommended_size: "영업·현장직이 많은 팀", is_featured: false },
 ];
 const SAMPLE_NOTICES: Notice[] = [
   { id: "n1", scope: "company", title: "11월부터 식대 1인 12,000원 (아주 긴 공지 제목이 들어가도 한 줄로 줄여 보이는지 확인)", body: "11월 1일 사용분부터 1인 한도가 12,000원으로 바뀝니다.\n야근 식대도 같아요.", created_at: "2026-10-22T01:00:00Z" },
@@ -503,6 +503,7 @@ async function Preview({
           <BillingView
             preview
             plans={SAMPLE_PLANS}
+            addons={[{ code: "receipts_50", name: "추가 크레딧 50장", receipts: 50, price: 8000 }]}
             status={
               screen === "admin-billing-banner"
                 ? { ...SAMPLE_CREDIT, used: 188, showEventBanner: true }

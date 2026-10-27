@@ -7,7 +7,6 @@ export type BillingPlan = {
   code: string;
   name: string;
   monthly_price: number;
-  annual_price: number | null;
   monthly_receipts: number;
   recommended_size: string | null;
   is_featured: boolean;
@@ -47,11 +46,20 @@ export async function getCreditStatus(companyId: string): Promise<CreditStatus |
   };
 }
 
+// 추가 크레딧 상품(D-133): 남은 장수가 0일 때만 화면에 보인다
+export type BillingAddon = { code: string; name: string; receipts: number; price: number };
+
+export async function getBillingAddons(): Promise<BillingAddon[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("billing_addons").select("code, name, receipts, price").order("sort_order");
+  return data ?? [];
+}
+
 export async function getBillingPlans(): Promise<BillingPlan[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("billing_plans")
-    .select("code, name, monthly_price, annual_price, monthly_receipts, recommended_size, is_featured")
+    .select("code, name, monthly_price, monthly_receipts, recommended_size, is_featured")
     .order("sort_order");
   return data ?? [];
 }

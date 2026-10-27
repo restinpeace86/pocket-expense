@@ -5,21 +5,20 @@ type Plan = {
   code: string;
   name: string;
   monthly_price: number;
-  annual_price: number | null;
   monthly_receipts: number;
   recommended_size: string | null;
   is_unlimited: boolean;
   is_featured: boolean;
 };
 
-// 요금제는 billing_plans에서 읽는다(하드코딩 금지). 공용 데이터라 정적으로 캐시한다. (D-046, D-054, D-081)
+// 요금제는 billing_plans에서 읽는다(하드코딩 금지). 공용 데이터라 정적으로 캐시한다. (D-046, D-054, D-133)
 export async function Pricing() {
   "use cache";
   let plans: Plan[] = [];
   try {
     const { data } = await createPublicClient()
       .from("billing_plans")
-      .select("code, name, monthly_price, annual_price, monthly_receipts, recommended_size, is_unlimited, is_featured")
+      .select("code, name, monthly_price, monthly_receipts, recommended_size, is_unlimited, is_featured")
       .order("sort_order");
     plans = data ?? [];
   } catch {
@@ -63,17 +62,11 @@ export async function Pricing() {
                 <span className="block text-sm text-zinc-500">장당 약 {formatWon(Math.round(plan.monthly_price / plan.monthly_receipts))}</span>
               </p>
             )}
-            {plan.annual_price && (
-              <p className="mt-4 border-t border-white/10 pt-3 text-sm text-zinc-300">
-                연간 결제 시 <b className="text-white">월 {formatWon(Math.round(plan.annual_price / 12))}</b>
-                <span className="block text-xs text-zinc-500">
-                  연 {formatWon(plan.annual_price)} · 10% 할인 (연 {formatWon(plan.monthly_price * 12 - plan.annual_price)} 절약)
-                </span>
-              </p>
-            )}
           </li>
         ))}
       </ul>
+      {/* 연간 선결제는 월간 결제로 먼저 선보인 뒤 다시 정한다(D-133) */}
+      <p className="mx-auto mt-6 max-w-3xl text-balance break-keep text-center text-sm text-zinc-400">※ 매월 제공되는 기본 크레딧 중 사용하지 않은 잔여 장수는 다음 달로 이월되지 않습니다.</p>
     </section>
   );
 }

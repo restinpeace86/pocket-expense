@@ -58,8 +58,8 @@
 |---|---|---|---|
 | code | text | not null, unique | `starter` / `standard` / `pro` (D-081) |
 | name | text | not null | 스타터 / 스탠다드 / 프로 (D-081) |
-| monthly_price | integer | not null | 30000 / 60000 / 110000 (공급가액, 부가세 별도) |
-| annual_price | integer | null | 연간 선결제 총액(월 요금 × 12 × 0.9): 324000 / 648000 / 1188000 (D-081) |
+| monthly_price | integer | not null | 29000 / 49000 / 89000 (공급가액, 부가세 별도, D-133) |
+| annual_price | integer | null | 연간 선결제 총액. **지금은 비움**(월간 결제로 먼저 — D-133). 다시 도입하면 채움 |
 | monthly_receipts | integer | not null | 150 / 400 / 800 |
 | recommended_size | text | null | 5인 미만 / 5~15인 / 영업·현장직이 많은 팀 |
 | sort_order | integer | default 0 | |
@@ -67,6 +67,17 @@
 | is_unlimited | boolean | not null, default false | 무제한 요금제(장수는 공정 사용 기준) (D-077) |
 | is_featured | boolean | not null, default false | 화면에 "추천" 표시 (D-077) |
 - `id`·`created_at` 외 회사와 무관한 공용 데이터. 시드 마이그레이션으로 넣는다.
+
+### 2.1a2 `billing_addons` — 추가 크레딧 상품 (D-133, 공용 데이터)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| code | text | unique | `receipts_50` |
+| name | text | not null | 추가 크레딧 50장 |
+| receipts | integer | > 0 | 50 |
+| price | integer | > 0 | 8000 (공급가액, 부가세 별도) |
+| sort_order | integer | default 0 | |
+| is_purchasable | boolean | default false | 결제 연동 전까지 false |
+- 로그인 사용자 읽기만(anon 불가), 쓰기는 마이그레이션으로만.
 
 ### 2.1b `credit_ledger` — 크레딧 이력 (D-046)
 | 컬럼 | 타입 | 제약 | 설명 |
