@@ -1,6 +1,7 @@
 import { Lock } from "lucide-react";
 import { SectionHeading } from "@/components/ui/help";
 import type { BillingAddon, BillingPlan, CreditStatus } from "@/lib/admin/billing";
+import { checkoutPrice } from "@/lib/billing/checkout";
 import { formatWon } from "@/lib/format";
 import { EventBonusBanner } from "./event-bonus-banner";
 import { SurveyButton } from "./survey-dialog";
@@ -47,7 +48,9 @@ function UsageCard({ s, preview }: { s: CreditStatus; preview: boolean }) {
   );
 }
 
-function PlanCard({ plan }: { plan: BillingPlan }) {
+// 첫 결제(D-134)면 정가에 줄을 긋고 50% 할인가·부가세 포함 결제 금액을 보여 준다(월간만)
+function PlanCard({ plan, firstPurchase }: { plan: BillingPlan; firstPurchase: boolean }) {
+  const c = checkoutPrice(plan.monthly_price, firstPurchase);
   return (
     <li className={`relative flex flex-col rounded-xl border bg-white p-5 ${plan.is_featured ? "border-brand-500 ring-1 ring-brand-500" : "border-zinc-200"}`}>
       {plan.is_featured && <span className="absolute -top-3 left-5 rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-semibold text-white">추천</span>}
@@ -56,11 +59,28 @@ function PlanCard({ plan }: { plan: BillingPlan }) {
         <span className="text-xs">{plan.recommended_size}</span>
       </label>
       <h3 className="mt-1 text-lg font-semibold">{plan.name}</h3>
-      <p className="mt-3 text-2xl font-bold tabular-nums">
-        <span className="whitespace-nowrap">{formatWon(plan.monthly_price)}</span>
-        <span className="text-sm font-normal text-zinc-500"> / 월</span>
-        <span className="ml-1 text-xs font-normal text-zinc-400">(VAT 별도)</span>
-      </p>
+      {c.firstPurchase ? (
+        <>
+          <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-600">첫 결제 50% 할인</span>
+            <s className="text-sm text-zinc-400 tabular-nums">{formatWon(c.list)}</s>
+          </p>
+          <p className="mt-1 text-2xl font-bold tabular-nums">
+            <span className="whitespace-nowrap">{formatWon(c.supply)}</span>
+            <span className="text-sm font-normal text-zinc-500"> / 첫 달</span>
+            <span className="ml-1 text-xs font-normal text-zinc-400">(VAT 별도)</span>
+          </p>
+          <p className="text-xs text-zinc-500">
+            <span className="whitespace-nowrap">첫 달 결제 {formatWon(c.total)}(VAT 포함)</span> · <span className="whitespace-nowrap">다음 달부터 월 {formatWon(c.list)}</span>
+          </p>
+        </>
+      ) : (
+        <p className="mt-3 text-2xl font-bold tabular-nums">
+          <span className="whitespace-nowrap">{formatWon(plan.monthly_price)}</span>
+          <span className="text-sm font-normal text-zinc-500"> / 월</span>
+          <span className="ml-1 text-xs font-normal text-zinc-400">(VAT 별도)</span>
+        </p>
+      )}
       <p className="mt-1 text-sm text-zinc-700">
         영수증 월 {plan.monthly_receipts.toLocaleString("ko-KR")}장 <span className="text-zinc-500">· 장당 약 {formatWon(Math.round(plan.monthly_price / plan.monthly_receipts))}</span>
       </p>
@@ -162,7 +182,7 @@ export function BillingView({ status, plans, addons = [], preview = false }: { s
         <h2 className="font-semibold">정식 플랜</h2>
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {plans.map((p) => (
-            <PlanCard key={p.code} plan={p} />
+            <PlanCard key={p.code} plan={p} firstPurchase={status.firstPurchase} />
           ))}
         </ul>
         <p className="text-sm text-zinc-500">※ 매월 제공되는 기본 크레딧 중 사용하지 않은 잔여 장수는 다음 달로 이월되지 않습니다.</p>

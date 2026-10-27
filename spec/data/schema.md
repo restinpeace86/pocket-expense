@@ -50,6 +50,7 @@
 | billing_status | billing_status | not null, default 'free_trial' | 과금 상태 (D-046) |
 | receipt_credits_granted | integer | not null, default 100 | 지급된 무료 크레딧(회사 생성 시 100) |
 | receipt_credits_used | integer | not null, default 0 | 사용한 크레딧. `used ≤ granted` 체크 제약 |
+| first_purchase_at | timestamptz | null | 첫 유료 결제 시각(D-134). null이면 첫 결제 50% 할인 대상. 사용자 수정 불가, 결제 승인 서버 처리만 채움 |
 | last_event_bonus_at | timestamptz | null | 마지막 이벤트 추가 지급 시각 (D-054) |
 | event_bonus_acknowledged_at | timestamptz | null | 관리자가 이벤트 지급 배너를 확인한 시각 |
 

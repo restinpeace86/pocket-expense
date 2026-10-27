@@ -10,6 +10,9 @@ begin
     raise exception 'FAIL [PLANS] unexpected plans: %', (select string_agg(code, ',' order by sort_order) from public.billing_plans);
   end if;
   if exists (select 1 from public.billing_plans where is_purchasable) then raise exception 'FAIL [PLANS] purchasable before payment integration'; end if;
+  -- 첫 결제 시각(D-134): 앱 사용자는 바꿀 수 없음(할인 재사용 방지)
+  if has_column_privilege('authenticated', 'public.companies', 'first_purchase_at', 'UPDATE') then raise exception 'FAIL [FIRST] user can update first_purchase_at'; end if;
+  if not has_column_privilege('authenticated', 'public.companies', 'first_purchase_at', 'SELECT') then raise exception 'FAIL [FIRST] cannot read first_purchase_at'; end if;
   -- 추가 크레딧: 50장 8,000원, 결제 연동 전이라 살 수 없음
   if (select string_agg(code || ':' || receipts || ':' || price || ':' || is_purchasable, ',') from public.billing_addons) <> 'receipts_50:50:8000:false' then
     raise exception 'FAIL [ADDONS] unexpected addons';

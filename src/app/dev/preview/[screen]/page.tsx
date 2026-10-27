@@ -176,7 +176,7 @@ const SAMPLE_NOTICES: Notice[] = [
   { id: "n1", scope: "company", title: "11월부터 식대 1인 12,000원 (아주 긴 공지 제목이 들어가도 한 줄로 줄여 보이는지 확인)", body: "11월 1일 사용분부터 1인 한도가 12,000원으로 바뀝니다.\n야근 식대도 같아요.", created_at: "2026-10-22T01:00:00Z" },
   { id: "n2", scope: "platform", title: "10/30(목) 02:00~03:00 정기 점검", body: "점검 시간에는 영수증 업로드가 잠시 안 돼요.", created_at: "2026-10-21T01:00:00Z" },
 ];
-const SAMPLE_CREDIT = { granted: 200, used: 163, freeTrial: 100, eventCount: 1, eventTotal: 100, eventEnabled: true, eventAmount: 100, showEventBanner: false, surveyDone: false };
+const SAMPLE_CREDIT = { granted: 200, used: 163, freeTrial: 100, eventCount: 1, eventTotal: 100, eventEnabled: true, eventAmount: 100, showEventBanner: false, surveyDone: false, firstPurchase: true };
 
 const DI: DetailItem = {
   id: "d1", sort_order: 1, category: "trip", trip_type: "public_transport", purchase_type: null, payment_method: "corporate_card", corporate_card_id: "card1", card_last4: "7890",

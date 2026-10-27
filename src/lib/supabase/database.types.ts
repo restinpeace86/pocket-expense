@@ -467,6 +467,7 @@ export type Database = {
           claim_deadline_type: Database["public"]["Enums"]["claim_deadline_type"]
           created_at: string
           event_bonus_acknowledged_at: string | null
+          first_purchase_at: string | null
           fuel_enabled: boolean
           fuel_rate_mode: string
           fuel_rate_per_km: number
@@ -494,6 +495,7 @@ export type Database = {
           claim_deadline_type?: Database["public"]["Enums"]["claim_deadline_type"]
           created_at?: string
           event_bonus_acknowledged_at?: string | null
+          first_purchase_at?: string | null
           fuel_enabled?: boolean
           fuel_rate_mode?: string
           fuel_rate_per_km?: number
@@ -521,6 +523,7 @@ export type Database = {
           claim_deadline_type?: Database["public"]["Enums"]["claim_deadline_type"]
           created_at?: string
           event_bonus_acknowledged_at?: string | null
+          first_purchase_at?: string | null
           fuel_enabled?: boolean
           fuel_rate_mode?: string
           fuel_rate_per_km?: number
