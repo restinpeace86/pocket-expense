@@ -37,3 +37,12 @@
 ### 확인
 - 연타 점검 `.responsive/live/e2e-double-submit.mjs`(로컬, 운영 빌드): 새 결의서·상신 확인·일괄 승인·지급 완료를 40ms 간격 3번씩 → 결의서 1개, 상신 1회(결재 단계 1), 결재 요청 알림 2건(관리자 2명), 승인 1회·알림 1건, 지급 1회·알림 1건 — 7개 모두 OK
 - `e2e-tax`(운영 빌드): 승인 건 3장만, 엑셀 파일명 = ZIP 파일명, 마감 잠금·해제, 직원 엑셀 요청 404, 390폭 넘침 0
+
+## 6. 테크니컬 SEO (D-129)
+- `src/lib/seo.ts`(+테스트): 사이트 이름·제목·설명·키워드, 운영 주소, 소유 확인 태그(값 있는 것만), robots 막을 경로, 사이트맵 화면
+- `src/app/layout.tsx`: metadataBase·title·description·keywords·openGraph·twitter·verification
+- `src/app/page.tsx`: canonical `/`
+- `src/app/opengraph-image.tsx`(새): 1200×630 공유 이미지. 처음 그렸을 때 글자가 겹쳐 나와(이미지 생성기는 자식이 여럿인 상자마다 flex 필요) 세로 상자로 감싸 고침
+- `src/app/sitemap.ts`·`robots.ts`(새), `.env.example`에 GOOGLE_SITE_VERIFICATION·NAVER_SITE_VERIFICATION
+- 확인(운영 빌드): 시험 값으로 빌드하면 `google-site-verification`·`naver-site-verification` 태그가 나오고 값을 비우면 0개, og:title·description·image(1200×630)·locale·twitter 태그, canonical, robots.txt·sitemap.xml 내용, 공유 이미지를 열어 한글 카피 확인
+- **사용자 할 일**: 구글 서치 콘솔·네이버 서치어드바이저에서 "HTML 태그" 방식으로 받은 content 값을 Vercel 환경변수 `GOOGLE_SITE_VERIFICATION`·`NAVER_SITE_VERIFICATION`에 넣고 다시 배포 → 각 콘솔에서 [확인] → 사이트맵 `https://pocket-expense-ruby.vercel.app/sitemap.xml` 제출

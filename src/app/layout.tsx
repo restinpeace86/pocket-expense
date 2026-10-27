@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { WebVitals } from "@/components/perf/web-vitals";
 import { KeyboardAware } from "@/components/ui/keyboard-aware";
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TITLE, siteOrigin, verificationTags } from "@/lib/seo";
 import { THEME_KEYS, THEME_STORAGE_KEY } from "@/lib/theme";
 
 const geistSans = Geist({
@@ -15,9 +16,25 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// 검색·공유 메타데이터(7차 개선사항 6, D-129). 화면별 제목은 각 page의 metadata.title("… · PocketExpense")이 덮어쓴다.
+// 공유 이미지는 app/opengraph-image.tsx, 사이트맵·robots는 app/sitemap.ts·robots.ts
 export const metadata: Metadata = {
-  title: "PocketExpense",
-  description: "소기업·스타트업을 위한 가장 가벼운 AI 경비 정산",
+  metadataBase: new URL(siteOrigin()),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
+  applicationName: SITE_NAME,
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: "/",
+  },
+  twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION },
+  // 구글 서치 콘솔·네이버 서치어드바이저 소유 확인(환경변수 GOOGLE_SITE_VERIFICATION·NAVER_SITE_VERIFICATION, 비우면 태그 없음)
+  verification: verificationTags(),
   // 홈 화면에 추가했을 때 아이콘·이름(아이폰 웹 알림은 홈 화면 앱에서만, D-116)
   icons: { apple: "/icons/180" },
   appleWebApp: { capable: true, title: "PocketExpense", statusBarStyle: "default" },

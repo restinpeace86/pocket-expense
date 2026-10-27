@@ -1,10 +1,14 @@
 import { Building2, FileSpreadsheet, MessageCircle, ScanLine } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { HeroMockup } from "@/components/landing/hero-mockup";
 import { Pricing } from "@/components/landing/pricing";
 
 // 랜딩 페이지 (spec/screens/landing-page.md). 정적 화면 — 세션을 읽지 않는다.
 // CTA는 로그인 후 회사 생성 위저드로 간다. 이미 소속이 있으면 /login이 본인 워크스페이스로 보낸다.
+// 검색 결과에 대표 주소로 잡히게(7차 개선사항 6) — 제목·설명·공유 이미지는 루트 layout 기본값
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
 const START_HREF = `/login?next=${encodeURIComponent("/onboarding/create-company")}`;
 
 const FEATURES = [

@@ -33,3 +33,9 @@
 ## 6. 하단 CTA
 - "엑셀과 영수증 지옥에서 벗어날 준비가 되셨나요?" + [🏢 우리 회사 무료로 시작하기].
 - 요금제 섹션(스타터·스탠다드(추천)·프로 3장, 장당 가격, 가격 옆 "(VAT 별도)", 카드 아래 "연간 결제 시 월 n원 · 10% 할인", D-078·D-081, 연속 결제 보너스는 O-09 확정 전 미표시)을 보여 주고 상단에 "지금 가입하면 영수증 100장 무료"만 표시한다. 이벤트 추가 지급은 랜딩에 알리지 않고(앱 안 안내만, D-054), 요금 카드에 "결제 준비 중" 문구를 두지 않는다(D-078).
+
+## SEO·공유 (D-129, 7차 개선사항 6)
+- 루트 metadata: 제목·설명·키워드·OG(ko_KR, website)·트위터 카드, 기준 주소 = 운영 주소(`NEXT_PUBLIC_SITE_URL` → Vercel 운영 도메인). 랜딩 canonical `/`
+- 공유 이미지: `/opengraph-image`(1200×630, 히어로 카피)
+- 소유 확인: `GOOGLE_SITE_VERIFICATION`, `NAVER_SITE_VERIFICATION` 환경변수(서치 콘솔·서치어드바이저 "HTML 태그" 방식의 content 값). 비우면 태그 없음
+- `/sitemap.xml`: `/`, `/terms`, `/privacy`. `/robots.txt`: 전체 허용 + `/workspace/`·`/onboarding`·`/app-admin`·`/api/`·`/auth/`·`/dev/`·`/join/`·`/share/`·`/push/` 막음
