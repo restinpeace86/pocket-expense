@@ -5,6 +5,8 @@ import { AiSimulator } from "@/components/landing/ai-simulator";
 import { HeroMockup } from "@/components/landing/hero-mockup";
 import { Pricing } from "@/components/landing/pricing";
 import { Testimonials } from "@/components/landing/testimonials";
+import { OPERATOR } from "@/components/legal/documents";
+import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 
 // 랜딩 페이지 (spec/screens/landing-page.md). 정적 화면 — 세션을 읽지 않는다.
 // CTA는 로그인 후 회사 생성 위저드로 간다. 이미 소속이 있으면 /login이 본인 워크스페이스로 보낸다.
@@ -110,6 +112,19 @@ export default function LandingPage() {
         <Link href={START_HREF} className="mt-8 inline-flex min-h-14 items-center justify-center whitespace-nowrap rounded-xl bg-blue-500 px-8 text-lg font-semibold hover:bg-blue-400">
           🏢 우리 회사 무료로 시작하기
         </Link>
+        {/* 가입 전 문의 창구(D-142) — 카카오톡 채널 주소가 등록되기 전에는 숨긴다 */}
+        {ADMIN_FEEDBACK_URL && (
+          <div className="mt-4">
+            <a
+              href={ADMIN_FEEDBACK_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-xl border border-white/20 px-6 text-zinc-200 hover:bg-white/5"
+            >
+              💬 궁금한 점은 카카오톡으로 문의하기
+            </a>
+          </div>
+        )}
       </section>
 
       <footer className="flex flex-col items-center gap-2 border-t border-white/10 py-8 text-xs text-zinc-500">
@@ -117,8 +132,33 @@ export default function LandingPage() {
           <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-zinc-300">이용약관</Link>
           <Link href="/privacy" className="inline-flex min-h-11 items-center font-semibold hover:text-zinc-300">개인정보 처리방침</Link>
         </nav>
+        <BusinessInfo />
         <p>© PocketExpense</p>
       </footer>
     </div>
+  );
+}
+
+// 사업자 정보(전자상거래법 표시 의무, D-142) — 운영자 정보(OPERATOR)가 채워진 칸만 보인다. 사업자등록 전에는 아무것도 보이지 않는다
+function BusinessInfo() {
+  if (!OPERATOR.name) return null;
+  const items = [
+    ["상호", OPERATOR.name],
+    ["대표", OPERATOR.ceo],
+    ["사업자등록번호", OPERATOR.businessNumber],
+    ["통신판매업 신고", OPERATOR.mailOrderNumber],
+    ["주소", OPERATOR.address],
+    ["전화", OPERATOR.phone],
+    ["이메일", OPERATOR.email],
+    ["호스팅", OPERATOR.hosting],
+  ].filter(([, value]) => value);
+  return (
+    <p className="max-w-3xl px-4 text-center leading-relaxed">
+      {items.map(([label, value]) => (
+        <span key={label} className="mx-1.5 inline-block">
+          {label} {value}
+        </span>
+      ))}
+    </p>
   );
 }

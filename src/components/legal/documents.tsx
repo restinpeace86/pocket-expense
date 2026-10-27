@@ -14,6 +14,9 @@ export const OPERATOR = {
   address: "", // 주소
   privacyOfficer: "", // 개인정보 보호책임자
   email: "", // 문의 이메일
+  phone: "", // 대표 전화번호(랜딩 푸터)
+  mailOrderNumber: "", // 통신판매업 신고번호(랜딩 푸터)
+  hosting: "Vercel Inc.", // 호스팅 서비스 제공자(랜딩 푸터)
 };
 const v = (s: string) => s || "(등록 예정)";
 

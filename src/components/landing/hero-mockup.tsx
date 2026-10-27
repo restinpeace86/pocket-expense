@@ -1,5 +1,6 @@
 // 히어로 목업 애니메이션 (spec/screens/landing-page.md §3). 소개 동영상이 준비되면 교체할 수 있다.
-// 영수증 여러 장 촬영 → 결의서 표 자동 입력 → 대표 카카오톡 결재 요청 → [전체 승인]
+// 영수증 여러 장 촬영 → 결의서 표 자동 입력 → 대표에게 카카오톡 알림톡 결재 요청 → [결재하러 가기]로 연 결재 화면에서 [전체 승인]
+// 알림톡은 승인하라는 알림이고, 승인은 열린 결재 화면에서 한다(D-013). 알림톡은 오픈 전에 연결한다는 전제(D-142)
 const ROWS = [
   { place: "코레일(KTX)", amount: "50,000원", tag: "대중교통" },
   { place: "한국도로공사", amount: "5,000원", tag: "통행료" },
@@ -8,7 +9,7 @@ const ROWS = [
 
 export function HeroMockup() {
   return (
-    <div className="relative mx-auto w-full max-w-sm lg:mb-20" aria-hidden>
+    <div className="relative mx-auto w-full max-w-sm lg:mb-48" aria-hidden>
       <div className="rounded-[2rem] border border-white/15 bg-zinc-950/80 p-4 shadow-2xl shadow-blue-900/40 backdrop-blur">
         <div className="rounded-2xl bg-white p-4 text-zinc-900">
           <p className="text-xs text-zinc-500">지출결의서</p>
@@ -34,13 +35,17 @@ export function HeroMockup() {
         </div>
       </div>
       {/* 모바일·태블릿: 카드 아래에 배치 / 넓은 화면(lg): 카드 오른쪽 아래에 겹쳐 배치 — 화면 밖으로 나가지 않게 */}
-      <div
-        className="landing-bubble ml-auto mt-4 w-full max-w-60 rounded-2xl bg-[#FEE500] p-3 text-sm text-black/85 shadow-xl lg:absolute lg:-bottom-24 lg:-right-8 lg:mt-0 lg:w-60"
-        style={{ animationDelay: "3.6s" }}
-      >
-        <p className="font-semibold">[PocketExpense] 결재 요청</p>
-        <p className="mt-1">김개발님 · 부산 출장 3건 · 72,000원</p>
-        <p className="mt-2 rounded-lg bg-black/80 py-1.5 text-center text-white">전체 승인</p>
+      <div className="ml-auto mt-4 flex w-full max-w-64 flex-col gap-2 lg:absolute lg:-bottom-44 lg:-right-8 lg:mt-0 lg:w-64">
+        <div className="landing-bubble rounded-2xl bg-[#FEE500] p-3 text-sm text-black/85 shadow-xl" style={{ animationDelay: "3.6s" }}>
+          <p className="text-[11px] text-black/60">카카오톡 알림톡</p>
+          <p className="font-semibold">[PocketExpense] 결재 요청</p>
+          <p className="mt-1">김개발님 · 부산 출장 3건 · 72,000원</p>
+          <p className="mt-2 rounded-lg bg-white py-1.5 text-center text-black/85">결재하러 가기</p>
+        </div>
+        <div className="landing-bubble flex items-center justify-between gap-2 rounded-2xl bg-white p-2 pl-3 text-sm text-zinc-900 shadow-xl" style={{ animationDelay: "4.6s" }}>
+          <span className="min-w-0 text-xs text-zinc-500">결재 화면</span>
+          <span className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 font-semibold text-white">전체 승인 ✓</span>
+        </div>
       </div>
     </div>
   );

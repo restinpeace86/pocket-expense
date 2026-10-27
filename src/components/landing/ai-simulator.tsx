@@ -41,8 +41,9 @@ const EXCEL_FIELDS: [string, string][] = [
   ["합계", "47,300"],
   ["계정과목", "소모품비"],
 ];
-// 단계별 걸리는 시간(ms) — 자동 진행 때 다음 단계로 넘어가는 시점
-const DURATION: Record<Step, number> = { 0: 1200 + READS.length * 700 + 600, 1: CLAIM_FIELDS.length * 350 + 1500, 2: 2600 };
+// 단계별 걸리는 시간(ms) — 자동 진행 때 다음 단계로 넘어가는 시점. 결과를 읽을 수 있게 단계 끝에 HOLD만큼 머문다
+const HOLD = 1500;
+const DURATION: Record<Step, number> = { 0: 1200 + READS.length * 700 + HOLD, 1: CLAIM_FIELDS.length * 350 + 800 + HOLD, 2: 2600 };
 
 export function AiSimulator({ startHref }: { startHref: string }) {
   const [step, setStep] = useState<Step>(0);
