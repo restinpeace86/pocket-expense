@@ -1,22 +1,30 @@
 "use client";
 
-import { Bell, Check, FileSpreadsheet, FileText, RotateCcw, ScanLine, Sparkles, Upload } from "lucide-react";
+import { Bell, Check, FileSpreadsheet, FileText, RotateCcw, ScanLine, Send, Sparkles, Upload } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-// 랜딩 "AI 영수증 처리 미리보기" (7차 개선사항 10, D-131 → D-140)
-// ① 영수증 찍기 → ② AI가 지출결의서 칸을 채움 → ③ 결재 요청 알림 → 휴대폰에서 승인 → 세무사무소 제출용 엑셀 한 줄.
-// 알림은 승인하라는 알림일 뿐이고 승인은 알림을 눌러 연 화면에서 한다(D-013). 실제 분석이 아니라 화면 안의 시연(서버 호출·크레딧 없음).
-// 화면에 보이면 한 번 자동 진행, 단계 버튼으로 직접 보기. 움직임 줄이기 설정이면 결과를 바로 보여 준다.
+// 랜딩 "AI 영수증 처리 미리보기" (7차 개선사항 10, D-131 → D-140 → D-141)
+// 단계마다 "행동 → 결과" 두 장면: ① 사진 올리기 → AI LLM이 읽은 것 ② 결의서 칸 자동 채움 → [결재 올리기], 결재 요청 알림 보냄
+// ③ (결재자) 알림 → 눌러서 연 화면에서 승인 → 세무사무실 제출용 엑셀에 한 줄 추가.
+// "알림"이라고만 쓴다(앱 알림·카카오톡 어느 쪽이든 맞게, D-141). 승인은 알림이 아니라 열린 화면에서 한다(D-013).
+// 실제 분석이 아니라 화면 안의 시연(서버 호출·크레딧 없음). 화면에 보이면 한 번 자동 진행, 단계 버튼으로 그 단계만 다시 보기. 움직임 줄이기면 결과를 바로.
 type Step = 0 | 1 | 2;
-const STEPS: { title: string; sub: string; icon: typeof Upload }[] = [
-  { title: "영수증 찍기", sub: "현장에서 대충 찍은 사진", icon: Upload },
-  { title: "AI가 결의서 작성", sub: "품목·부가세·계정과목까지", icon: FileText },
-  { title: "승인 → 엑셀 완성", sub: "알림 받고 휴대폰에서 승인", icon: FileSpreadsheet },
+const STEPS: { title: string; sub: string; who: string; icon: typeof Upload }[] = [
+  { title: "찍고 AI 분석", sub: "구겨진 영수증도 읽어요", who: "직원", icon: ScanLine },
+  { title: "결의서 작성·상신", sub: "칸은 AI가 채워요", who: "직원", icon: FileText },
+  { title: "승인·엑셀 추가", sub: "알림 받고 휴대폰에서", who: "결재자", icon: FileSpreadsheet },
 ];
-// 2단계: AI가 채우는 지출결의서 칸 [칸 이름, 값, AI가 판단한 것 표시]
+// 1단계: AI LLM이 읽어 낸 것
+const READS: [string, string][] = [
+  ["가맹점", "한빛철물건재 — 구겨진 글자 보정"],
+  ["품목·금액", "앵카볼트 외 2건 · 합계 47,300원"],
+  ["부가세", "공급가액 43,000원 + 부가세 4,300원 분리"],
+  ["거래 맥락", "현장 자재 구매로 판단 → 소모품비"],
+];
+// 2단계: 지출결의서 칸 [칸, 값, 표시]
 const CLAIM_FIELDS: [string, string, string?][] = [
-  ["가맹점", "한빛철물건재", "구겨진 글자 보정"],
+  ["가맹점", "한빛철물건재"],
   ["사용일", "2026-10-24 14:12"],
   ["품목", "앵카볼트 외 2건"],
   ["금액", "47,300원"],
@@ -33,13 +41,16 @@ const EXCEL_FIELDS: [string, string][] = [
   ["합계", "47,300"],
   ["계정과목", "소모품비"],
 ];
-const FIELD_MS = 600;
+// 단계별 걸리는 시간(ms) — 자동 진행 때 다음 단계로 넘어가는 시점
+const DURATION: Record<Step, number> = { 0: 1200 + READS.length * 700 + 600, 1: CLAIM_FIELDS.length * 350 + 1500, 2: 2600 };
 
 export function AiSimulator({ startHref }: { startHref: string }) {
   const [step, setStep] = useState<Step>(0);
-  const [filled, setFilled] = useState(0); // 2단계에서 채워진 칸 수
-  const [phase, setPhase] = useState(0); // 3단계: 0 알림 · 1 승인 화면 · 2 승인 완료 + 엑셀
-  const [auto, setAuto] = useState(false);
+  const [uploaded, setUploaded] = useState(false); // 1단계: 사진 다 올림
+  const [reads, setReads] = useState(0); // 1단계: AI가 읽은 줄 수
+  const [filled, setFilled] = useState(0); // 2단계: 채워진 칸 수
+  const [sent, setSent] = useState(false); // 2단계: 결재 올림 → 알림 보냄
+  const [phase, setPhase] = useState(0); // 3단계: 0 알림 · 1 결재 화면 · 2 승인 완료 + 엑셀
   const box = useRef<HTMLDivElement>(null);
   const timers = useRef<number[]>([]);
   const reduced = useRef(false);
@@ -49,56 +60,72 @@ export function AiSimulator({ startHref }: { startHref: string }) {
     timers.current = [];
   };
   const later = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms));
-  const showAll = () => {
-    setFilled(CLAIM_FIELDS.length);
-    setPhase(2);
+
+  // 한 단계의 끝 모습(움직임 줄이기, 앞 단계를 건너뛰었을 때)
+  const finish = (s: Step) => {
+    if (s >= 0) {
+      setUploaded(true);
+      setReads(READS.length);
+    }
+    if (s >= 1) {
+      setFilled(CLAIM_FIELDS.length);
+      setSent(true);
+    }
+    if (s >= 2) setPhase(2);
   };
 
-  // 3단계 안: 알림 → (1.2초) 승인 화면 → (1.2초) 승인 완료·엑셀
-  const playApproval = (offset: number) => {
-    later(offset, () => setPhase(0));
-    later(offset + 1200, () => setPhase(1));
-    later(offset + 2400, () => {
-      setPhase(2);
-      setAuto(false);
+  // 한 단계를 offset(ms) 뒤부터 처음부터 보여 준다
+  const playStep = (s: Step, offset: number) => {
+    later(offset, () => {
+      setStep(s);
+      if (s === 0) {
+        setUploaded(false);
+        setReads(0);
+      }
+      if (s === 1) {
+        finish(0);
+        setFilled(0);
+        setSent(false);
+      }
+      if (s === 2) {
+        finish(1);
+        setPhase(0);
+      }
     });
+    if (s === 0) {
+      later(offset + 1200, () => setUploaded(true));
+      READS.forEach((_, i) => later(offset + 1200 + (i + 1) * 700, () => setReads(i + 1)));
+    }
+    if (s === 1) {
+      CLAIM_FIELDS.forEach((_, i) => later(offset + (i + 1) * 350, () => setFilled(i + 1)));
+      later(offset + CLAIM_FIELDS.length * 350 + 800, () => setSent(true));
+    }
+    if (s === 2) {
+      later(offset + 1200, () => setPhase(1));
+      later(offset + 2400, () => setPhase(2));
+    }
   };
 
-  // 처음부터: 사진 올리기(1.2초) → 결의서 칸 6개(칸마다 0.6초) → 승인·엑셀
   const play = () => {
     clear();
     if (reduced.current) {
       setStep(2);
-      showAll();
+      finish(2);
       return;
     }
-    setAuto(true);
-    setStep(0);
-    setFilled(0);
-    setPhase(0);
-    later(1200, () => setStep(1));
-    CLAIM_FIELDS.forEach((_, i) => later(1500 + i * FIELD_MS, () => setFilled(i + 1)));
-    const toStep3 = 1500 + CLAIM_FIELDS.length * FIELD_MS + 700;
-    later(toStep3, () => setStep(2));
-    playApproval(toStep3);
+    playStep(0, 0);
+    playStep(1, DURATION[0]);
+    playStep(2, DURATION[0] + DURATION[1]);
   };
 
   const go = (s: Step) => {
     clear();
-    setStep(s);
-    if (s === 0) {
-      setAuto(false);
-      setFilled(0);
-      setPhase(0);
-    } else if (s === 1) {
-      setAuto(false);
-      setFilled(CLAIM_FIELDS.length);
-    } else {
-      setFilled(CLAIM_FIELDS.length);
-      if (reduced.current) return setPhase(2);
-      setAuto(true);
-      playApproval(0);
+    if (reduced.current) {
+      setStep(s);
+      finish(s);
+      return;
     }
+    playStep(s, 0);
   };
 
   useEffect(() => {
@@ -123,6 +150,9 @@ export function AiSimulator({ startHref }: { startHref: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const stepDone = (i: number) => step > i || (i === 2 && phase === 2);
+  const reading = step === 0 && uploaded && reads < READS.length;
+
   return (
     <section className="mx-auto max-w-5xl px-4 py-16" aria-labelledby="ai-sim-title">
       <div className="text-center">
@@ -134,14 +164,14 @@ export function AiSimulator({ startHref }: { startHref: string }) {
           {/* "AI LLM"은 줄이 바뀌어도 떨어지지 않게 붙여 쓴다 */}
           오타 투성이 구겨진 영수증도, AI{" "}LLM이 척척 정리하는 10초 컷 매직
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-balance break-keep text-zinc-400">사진 한 장이면 AI가 지출결의서를 채우고, 결재자는 알림을 받아 휴대폰에서 승인하면 끝. 월말 엑셀은 저절로 쌓여요.</p>
+        <p className="mx-auto mt-3 max-w-xl text-balance break-keep text-zinc-400">직원은 찍고 올리기만, 결재자는 알림 받고 승인만. 세무사무소에 넘길 엑셀은 저절로 쌓여요.</p>
       </div>
 
       {/* 단계 버튼 — 휴대폰은 3칸 한 줄(설명은 sm부터) */}
       <ol className="mx-auto mt-8 grid max-w-3xl grid-cols-3 gap-2 sm:gap-3">
-        {STEPS.map(({ title, sub, icon: Icon }, i) => {
+        {STEPS.map(({ title, sub, who, icon: Icon }, i) => {
           const on = step === i;
-          const done = step > i || (i === 2 && phase === 2);
+          const done = stepDone(i);
           return (
             <li key={title}>
               <button
@@ -158,7 +188,9 @@ export function AiSimulator({ startHref }: { startHref: string }) {
                     <span className="hidden sm:inline">Step {i + 1}. </span>
                     {title}
                   </span>
-                  <span className="hidden text-xs text-zinc-400 sm:block">{sub}</span>
+                  <span className="hidden text-xs text-zinc-400 sm:block">
+                    {who} · {sub}
+                  </span>
                 </span>
               </button>
             </li>
@@ -186,7 +218,7 @@ export function AiSimulator({ startHref }: { startHref: string }) {
             <p className="flex justify-between text-[10px] text-zinc-500"><span>부가세 포함</span><span>신용 ****-1234</span></p>
             {/* 구김 자국 */}
             <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_38%,rgba(0,0,0,0.06)_40%,transparent_43%),linear-gradient(35deg,transparent_60%,rgba(0,0,0,0.05)_62%,transparent_65%)]" />
-            {step === 1 && filled < CLAIM_FIELDS.length && <span className="pointer-events-none absolute inset-x-0 h-10 animate-[pe-scan_1.6s_ease-in-out_infinite] bg-gradient-to-b from-transparent via-blue-400/35 to-transparent" />}
+            {reading && <span className="pointer-events-none absolute inset-x-0 h-10 animate-[pe-scan_1.6s_ease-in-out_infinite] bg-gradient-to-b from-transparent via-blue-400/35 to-transparent" />}
           </div>
           <p className="mt-2 text-center text-xs text-zinc-500">예시 영수증</p>
         </div>
@@ -194,50 +226,90 @@ export function AiSimulator({ startHref }: { startHref: string }) {
         {/* 오른쪽: 단계별 화면 */}
         <div className="min-w-0" aria-live="polite">
           {step === 0 && (
-            <div className="flex h-full flex-col justify-center gap-3 rounded-2xl border border-dashed border-white/15 p-5">
-              <p className="flex items-center gap-2 font-semibold">
-                <Upload className="size-5 text-blue-300" />
-                사진 한 장 올리는 중…
-              </p>
-              <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                <div className={`h-full rounded-full bg-blue-500 ${auto ? "animate-[pe-fill_1.2s_ease-out_forwards]" : "w-full"}`} />
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2 rounded-2xl border border-dashed border-white/15 p-4">
+                <p className="flex items-center gap-2 text-sm font-semibold">
+                  {uploaded ? <Check className="size-4 text-emerald-400" /> : <Upload className="size-4 text-blue-300" />}
+                  {uploaded ? "사진 올리기 완료" : "사진 한 장 올리는 중…"}
+                </p>
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div className={`h-full rounded-full bg-blue-500 ${uploaded ? "w-full" : "animate-[pe-fill_1.2s_ease-out_forwards]"}`} />
+                </div>
               </div>
-              <p className="break-keep text-sm text-zinc-400">구겨지고 기울어진 사진도 그대로 올리면 돼요. 화질은 자동으로 맞춰요.</p>
+              {uploaded && (
+                <div className="rounded-2xl bg-violet-500/10 p-4">
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-violet-100">
+                    <Sparkles className="size-4" />
+                    {reads < READS.length ? "AI LLM이 영수증을 읽는 중…" : "AI LLM이 읽어 낸 것"}
+                  </p>
+                  <ul className="mt-2 flex flex-col gap-1.5 text-sm">
+                    {READS.slice(0, reads).map(([k, v]) => (
+                      <li key={k} className="landing-row flex gap-2 rounded-lg bg-white/5 px-3 py-2" style={{ animationDelay: "0s" }}>
+                        <Check className="mt-0.5 size-4 shrink-0 text-emerald-400" />
+                        <span className="min-w-0 break-keep">
+                          <b className="text-zinc-100">{k}</b> <span className="text-zinc-300">{v}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
           {step === 1 && (
-            <div className="rounded-2xl bg-white p-4 text-zinc-900 shadow-xl">
-              <p className="flex items-center justify-between gap-2">
-                <span className="font-bold">지출결의서</span>
-                <span className="text-xs text-zinc-500">현장 자재 구매</span>
-              </p>
-              <p className={`mt-2 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs ${filled < CLAIM_FIELDS.length ? "bg-violet-50 text-violet-700" : "bg-emerald-50 text-emerald-700"}`}>
-                {filled < CLAIM_FIELDS.length ? <Sparkles className="size-3.5 shrink-0" /> : <Check className="size-3.5 shrink-0" />}
-                {filled < CLAIM_FIELDS.length ? "AI LLM이 구겨진 글자·품목·부가세까지 읽어 채우는 중…" : "다 채웠어요. 직원은 확인만 하고 올리면 돼요."}
-              </p>
-              <dl className="mt-3 flex flex-col divide-y divide-zinc-100 text-sm">
-                {CLAIM_FIELDS.map(([k, v, tag], i) => (
-                  <div key={k} className="flex items-center justify-between gap-3 py-2">
-                    <dt className="shrink-0 text-zinc-500">{k}</dt>
-                    <dd className="min-w-0 text-right">
-                      {i < filled ? (
-                        <span className="landing-row inline-flex flex-wrap items-center justify-end gap-1.5" style={{ animationDelay: "0s" }}>
-                          <b className="tabular-nums">{v}</b>
-                          {tag && <span className="whitespace-nowrap rounded-full bg-violet-100 px-1.5 py-0.5 text-[11px] font-medium text-violet-700">{tag}</span>}
-                        </span>
-                      ) : (
-                        <span className="inline-block h-4 w-24 animate-pulse rounded bg-zinc-100" />
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+            <div className="flex flex-col gap-3">
+              <div className="rounded-2xl bg-white p-4 text-zinc-900 shadow-xl">
+                <p className="flex items-center justify-between gap-2">
+                  <span className="font-bold">지출결의서</span>
+                  <span className="text-xs text-zinc-500">AI가 채웠어요 · 직원은 확인만</span>
+                </p>
+                <dl className="mt-2 flex flex-col divide-y divide-zinc-100 text-sm">
+                  {CLAIM_FIELDS.map(([k, v, tag], i) => (
+                    <div key={k} className="flex items-center justify-between gap-3 py-2">
+                      <dt className="shrink-0 text-zinc-500">{k}</dt>
+                      <dd className="min-w-0 text-right">
+                        {i < filled ? (
+                          <span className="landing-row inline-flex flex-wrap items-center justify-end gap-1.5" style={{ animationDelay: "0s" }}>
+                            <b className="tabular-nums">{v}</b>
+                            {tag && <span className="whitespace-nowrap rounded-full bg-violet-100 px-1.5 py-0.5 text-[11px] font-medium text-violet-700">{tag}</span>}
+                          </span>
+                        ) : (
+                          <span className="inline-block h-4 w-24 animate-pulse rounded bg-zinc-100" />
+                        )}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <span
+                  aria-hidden
+                  className={`mt-3 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition ${sent ? "bg-emerald-500 text-white" : filled === CLAIM_FIELDS.length ? "bg-brand-600 text-white ring-4 ring-brand-200" : "bg-zinc-200 text-zinc-500"}`}
+                >
+                  {sent ? (
+                    <>
+                      <Check className="size-4" />
+                      결재 올림
+                    </>
+                  ) : (
+                    <>
+                      <Send className="size-4" />
+                      결재 올리기
+                    </>
+                  )}
+                </span>
+              </div>
+              {sent && (
+                <p className="landing-row flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm" style={{ animationDelay: "0s" }}>
+                  <Bell className="size-4 shrink-0 text-blue-300" />
+                  <span className="break-keep">대표님께 결재 요청 알림을 보냈어요</span>
+                </p>
+              )}
             </div>
           )}
 
           {step === 2 && (
             <div className="flex flex-col gap-3">
+              <p className="text-xs font-medium text-zinc-400">결재자(대표·경리) 휴대폰</p>
               {/* 결재 요청 알림 — 알림일 뿐, 승인은 눌러서 연 화면에서 */}
               <div className="landing-row flex items-start gap-3 rounded-2xl border border-white/10 bg-white/10 p-3" style={{ animationDelay: "0s" }}>
                 <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-500">
@@ -250,17 +322,12 @@ export function AiSimulator({ startHref }: { startHref: string }) {
               </div>
               {phase >= 1 && (
                 <div className="landing-row rounded-2xl bg-white p-3 text-zinc-900 shadow-xl" style={{ animationDelay: "0s" }}>
-                  <p className="text-xs text-zinc-500">알림을 눌러 연 휴대폰 결재 화면</p>
+                  <p className="text-xs text-zinc-500">알림을 눌러 연 결재 화면</p>
                   <p className="mt-1 flex items-center justify-between gap-2 text-sm">
                     <span className="min-w-0 truncate font-semibold">현장 자재 구매 · 영수증 1장</span>
                     <b className="shrink-0 tabular-nums">47,300원</b>
                   </p>
-                  <button
-                    type="button"
-                    tabIndex={-1}
-                    aria-hidden
-                    className={`mt-2 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl text-sm font-semibold ${phase === 2 ? "bg-emerald-500 text-white" : "bg-brand-600 text-white"}`}
-                  >
+                  <span aria-hidden className={`mt-2 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-white ${phase === 2 ? "bg-emerald-500" : "bg-brand-600 ring-4 ring-brand-200"}`}>
                     {phase === 2 ? (
                       <>
                         <Check className="size-4" />
@@ -269,14 +336,14 @@ export function AiSimulator({ startHref }: { startHref: string }) {
                     ) : (
                       "승인"
                     )}
-                  </button>
+                  </span>
                 </div>
               )}
               {phase === 2 && (
                 <div className="landing-bubble rounded-2xl bg-white p-4 text-zinc-900 shadow-xl" style={{ animationDelay: "0s" }}>
                   <p className="flex items-center gap-2 font-bold">
                     <FileSpreadsheet className="size-5 text-emerald-600" />
-                    세무사무실 제출용 엑셀 행(Row) 변환 완료! 🎉
+                    세무사무실 제출용 엑셀에 한 줄 추가! 🎉
                   </p>
                   {/* 휴대폰: 칸 이름·값 2열 표 / 넓은 화면: 엑셀 칸 모양 4칸 × 2줄(스크롤 없이 모두 보이게) */}
                   <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm sm:hidden">
