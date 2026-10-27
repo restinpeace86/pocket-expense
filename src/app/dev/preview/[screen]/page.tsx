@@ -11,6 +11,7 @@ import { Suspense } from "react";
 import { AdminHomeView } from "@/components/admin/admin-home-view";
 import { AccountTitlesHeading, AccountTitlesView } from "@/components/admin/account-titles-view";
 import { AdminShell, type ShellTheme } from "@/components/admin/admin-shell";
+import { TestimonialsView } from "@/components/landing/testimonials";
 import { CorporateCardsHeading, CorporateCardsView } from "@/components/admin/corporate-cards-view";
 import { CompanySettingsForm } from "@/components/admin/company-settings-form";
 import { EmployeeHomeView } from "@/components/employee/employee-home-view";
@@ -175,7 +176,7 @@ const SAMPLE_NOTICES: Notice[] = [
   { id: "n1", scope: "company", title: "11월부터 식대 1인 12,000원 (아주 긴 공지 제목이 들어가도 한 줄로 줄여 보이는지 확인)", body: "11월 1일 사용분부터 1인 한도가 12,000원으로 바뀝니다.\n야근 식대도 같아요.", created_at: "2026-10-22T01:00:00Z" },
   { id: "n2", scope: "platform", title: "10/30(목) 02:00~03:00 정기 점검", body: "점검 시간에는 영수증 업로드가 잠시 안 돼요.", created_at: "2026-10-21T01:00:00Z" },
 ];
-const SAMPLE_CREDIT = { granted: 200, used: 163, freeTrial: 100, eventCount: 1, eventTotal: 100, eventEnabled: true, eventAmount: 100, showEventBanner: false };
+const SAMPLE_CREDIT = { granted: 200, used: 163, freeTrial: 100, eventCount: 1, eventTotal: 100, eventEnabled: true, eventAmount: 100, showEventBanner: false, surveyDone: false };
 
 const DI: DetailItem = {
   id: "d1", sort_order: 1, category: "trip", trip_type: "public_transport", purchase_type: null, payment_method: "corporate_card", corporate_card_id: "card1", card_last4: "7890",
@@ -494,6 +495,18 @@ async function Preview({
         <AppAdminShell>
           <ReceiptRecordView data={{ record: AA_RECORD, company: { id: "c1", name: "포켓컴퍼니 주식회사" }, item: null, claim: null, photoUrl: null, thumbUrl: null }} base="#" />
         </AppAdminShell>
+      );
+    case "landing-testimonials":
+      return (
+        <div className="flex-1 bg-zinc-950 text-white">
+          <TestimonialsView
+            rows={[
+              { id: "t1", rating: 5, review: "현장 영수증 정리가 정말 편해졌어요. 월말에 경리 담당자 야근이 없어졌습니다.", industry: "construction", company_size: "5-10", job_role: "site_manager" },
+              { id: "t2", rating: 4, review: "카톡으로 바로 승인하니 결재가 하루 빨라졌어요", industry: "interior", company_size: "1-4", job_role: "ceo" },
+              { id: "t3", rating: 5, review: "세무사무소에 엑셀 하나로 끝", industry: "it", company_size: "11-30", job_role: "finance" },
+            ]}
+          />
+        </div>
       );
     case "admin-billing":
     case "admin-billing-banner":

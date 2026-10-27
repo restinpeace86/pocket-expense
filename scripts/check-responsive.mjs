@@ -10,7 +10,7 @@ import fs from "node:fs";
 const DEFAULT_PATHS = [
   "/", "/login", "/terms", "/privacy", "/join/ZZZZZZZZ", "/join/i/invalid-token",
   "/dev/preview/onboarding", "/dev/preview/create-company", "/dev/preview/join", "/dev/preview/join-invite", "/dev/preview/consent-dialog",
-  "/dev/preview/workspace-admin", "/dev/preview/workspace-employee",
+  "/dev/preview/workspace-admin", "/dev/preview/workspace-employee", "/dev/preview/landing-testimonials",
   "/dev/preview/admin-home", "/dev/preview/admin-home-team", "/dev/preview/admin-members",
   "/dev/preview/admin-members-all", "/dev/preview/admin-member-detail", "/dev/preview/admin-member-readonly", "/dev/preview/admin-member-inactive", "/dev/preview/admin-departments", "/dev/preview/admin-settings", "/dev/preview/admin-settings?theme=wine",
   "/dev/preview/admin-account-titles", "/dev/preview/admin-corporate-cards", "/dev/preview/admin-corporate-cards-empty", "/dev/preview/admin-vehicles", "/dev/preview/admin-vehicles-empty", "/dev/preview/admin-recurring", "/dev/preview/admin-form-template", "/dev/preview/employee-claim-edit-company-fields", "/dev/preview/employee-claim-edit-condolence", "/dev/preview/admin-form-template-monthly", "/dev/preview/admin-recurring-empty", "/dev/preview/admin-reconcile", "/dev/preview/admin-announcements", "/dev/preview/app-admin-announcements",

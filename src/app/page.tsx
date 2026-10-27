@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AiSimulator } from "@/components/landing/ai-simulator";
 import { HeroMockup } from "@/components/landing/hero-mockup";
 import { Pricing } from "@/components/landing/pricing";
+import { Testimonials } from "@/components/landing/testimonials";
 
 // 랜딩 페이지 (spec/screens/landing-page.md). 정적 화면 — 세션을 읽지 않는다.
 // CTA는 로그인 후 회사 생성 위저드로 간다. 이미 소속이 있으면 /login이 본인 워크스페이스로 보낸다.
@@ -101,6 +102,8 @@ export default function LandingPage() {
       </section>
 
       <Pricing />
+
+      <Testimonials />
 
       <section className="mx-auto max-w-3xl px-4 pb-28 pt-8 text-center">
         <h2 className="text-balance text-3xl font-bold tracking-tight">엑셀과 영수증 지옥에서 벗어날 준비가 되셨나요?</h2>

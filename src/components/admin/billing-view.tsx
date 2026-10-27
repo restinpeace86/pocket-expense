@@ -3,11 +3,12 @@ import { SectionHeading } from "@/components/ui/help";
 import type { BillingAddon, BillingPlan, CreditStatus } from "@/lib/admin/billing";
 import { formatWon } from "@/lib/format";
 import { EventBonusBanner } from "./event-bonus-banner";
+import { SurveyButton } from "./survey-dialog";
 
 // 화면 A-05 요금제 (spec/screens/admin-billing.md). 결제는 무료 제공 기간이라 전부 비활성(D-046), 카드 정보는 받지 않는다.
 const DISABLED_TIP = "무료 제공 기간에는 결제할 수 없습니다";
 
-function UsageCard({ s }: { s: CreditStatus }) {
+function UsageCard({ s, preview }: { s: CreditStatus; preview: boolean }) {
   const left = Math.max(s.granted - s.used, 0);
   const pct = s.granted > 0 ? Math.min(100, Math.round((s.used / s.granted) * 100)) : 0;
   const empty = left === 0 && !s.eventEnabled;
@@ -25,7 +26,7 @@ function UsageCard({ s }: { s: CreditStatus }) {
         남은 장수 <b className="tabular-nums">{left.toLocaleString("ko-KR")}장</b>
         <span className="text-zinc-500">
           {" "}
-          · 기본 {s.freeTrial.toLocaleString("ko-KR")}장{s.eventCount > 0 && ` + 이벤트 추가 지급 ${s.eventCount}회(${s.eventTotal.toLocaleString("ko-KR")}장)`}
+          · 기본 {s.freeTrial.toLocaleString("ko-KR")}장{s.eventCount > 0 && ` + 이벤트 추가 지급 ${s.eventCount}회(${s.eventTotal.toLocaleString("ko-KR")}장)`}{s.surveyDone && " + 설문 100장"}
         </span>
       </p>
       {empty ? (
@@ -38,6 +39,10 @@ function UsageCard({ s }: { s: CreditStatus }) {
       <p className="mt-3 text-sm text-zinc-600">
         현재 한시적 무료 제공 기간입니다.{s.eventEnabled && ` 이벤트 기간에는 무료 영수증을 모두 사용하면 추가 ${s.eventAmount}장을 무료로 더 드립니다.`} 유료 플랜 결제는 준비 중입니다.
       </p>
+      {/* 후기·설문 +100장(D-130): 남은 장수가 적거나 없으면 눈에 띄게 */}
+      <div className="mt-4 border-t border-zinc-100 pt-4">
+        <SurveyButton done={s.surveyDone} emphasize={empty || low || left === 0} preview={preview} />
+      </div>
     </section>
   );
 }
@@ -151,7 +156,7 @@ export function BillingView({ status, plans, addons = [], preview = false }: { s
           </>
         }
       />
-      <UsageCard s={status} />
+      <UsageCard s={status} preview={preview} />
       {exhausted && <AddonCard addons={addons} />}
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">정식 플랜</h2>

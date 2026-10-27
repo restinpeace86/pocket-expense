@@ -23,6 +23,8 @@ const MESSAGES: Record<string, string> = {
   INVALID_MEAL_LIMIT: "1식 한도를 0원~1,000,000원 사이로 입력해 주세요.",
   INVALID_MEAL_LIMIT_MODE: "한도 초과 처리 방식을 선택해 주세요.",
   INVALID_PER_DIEM: "출장 일비는 하루 1원~1,000,000원 사이로 입력해 주세요.",
+  INVALID_SURVEY: "설문 항목을 모두 골라 주세요. 한 줄 후기는 100자까지 쓸 수 있어요.",
+  SURVEY_ALREADY_DONE: "이미 설문에 참여해 100장을 받았어요. 설문 크레딧은 회사당 한 번만 드려요.",
   INVALID_FORM_LAYOUT: "양식에 영수증 표 칸이 하나 이상 있어야 해요.",
   INVALID_FORM_SOURCE: "양식 파일 경로가 올바르지 않아요. 다시 올려 주세요.",
   INVALID_FUEL_RATE: "유류비 단가를 0원~10,000원 사이로 입력해 주세요.",

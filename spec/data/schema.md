@@ -79,12 +79,28 @@
 | is_purchasable | boolean | default false | 결제 연동 전까지 false |
 - 로그인 사용자 읽기만(anon 불가), 쓰기는 마이그레이션으로만.
 
+### 2.1a3 `feedback_surveys` — 후기·설문 (D-130, 회사당 1건)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| company_id | uuid | FK companies, not null, **unique** | 회사당 1회 |
+| member_id | uuid | (member_id, company_id) FK, null | 제출한 관리자 |
+| rating | smallint | 1~5 | 만족도 |
+| useful_feature | text | receipt_ai / kakao_approval / tax_export / form_template / meal_split / trip / payouts / other | |
+| industry | text | construction / interior / it / manufacturing / distribution / service / nonprofit / other | |
+| company_size | text | 1-4 / 5-10 / 11-30 / 31+ | |
+| job_role | text | ceo / site_manager / finance / office_admin / team_lead / other | |
+| review | text | null, 1~100자 | 한 줄 후기(선택) |
+| display_consent | boolean | default false | 홈페이지 소개 동의 |
+| is_displayed | boolean | default true | 운영자가 끄면 랜딩에서 숨김 |
+| credits_granted | integer | default 100 | 지급한 장수 |
+- RLS: 자기 회사 관리자만 읽기. 쓰기는 `submit_feedback_survey`(관리자, 1회, +100)로만, 숨김은 운영자(service role). anon 권한 없음.
+
 ### 2.1b `credit_ledger` — 크레딧 이력 (D-046)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | company_id | uuid | FK companies, not null | |
 | delta | integer | not null | +100(무료 지급·이벤트 추가 지급) / -1(영수증 업로드) |
-| reason | text | not null | `free_trial_grant` / `receipt_upload` / `event_bonus` (D-054) |
+| reason | text | not null | `free_trial_grant` / `receipt_upload` / `event_bonus` (D-054) / `survey_bonus` (D-130) |
 | item_id | uuid | FK expense_items, null | 차감 대상 항목 |
 | member_id | uuid | FK members, null | 업로드한 사람 |
 
