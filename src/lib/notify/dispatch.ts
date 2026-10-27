@@ -2,7 +2,7 @@ import "server-only";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSender, siteUrl } from "./sender";
-import { approvalCompleted, approvalRejected, approvalRequest, invite, normalizePhone, payoutCompleted, recurringReady, reminder, type BuiltMessage } from "./templates";
+import { approvalCompleted, approvalRejected, approvalRequest, invite, merchantSummary, normalizePhone, payoutCompleted, recurringReady, reminder, type BuiltMessage } from "./templates";
 
 // 결재 알림 보내기 (kakao-alimtalk.md §2, notification-rule.md §2).
 // - 결재 처리(DB 트랜잭션)가 끝난 뒤에 부른다. 실패해도 결재는 되돌리지 않는다.
@@ -24,7 +24,7 @@ async function deliver(admin: Admin, p: { companyId: string; claimId?: string; m
       invitation_id: p.invitationId ?? null,
       recipient_phone: to ?? (p.phone ?? ""),
       template_code: p.message.template,
-      payload: { text: p.message.text, button_label: p.message.buttonLabel, button_url: buttonUrl },
+      payload: { text: p.message.text, button_label: p.message.buttonLabel, button_url: buttonUrl, ...(p.message.vars ? { vars: p.message.vars } : {}) },
       status: "queued",
       provider: sender.provider,
     })
@@ -35,7 +35,7 @@ async function deliver(admin: Admin, p: { companyId: string; claimId?: string; m
     await admin.from("notification_logs").update({ status: "failed", error_message: "수신 번호가 없거나 휴대폰 번호 형식이 아닙니다" }).eq("id", log.id);
     return false;
   }
-  const message = { to, template: p.message.template, text: p.message.text, buttonLabel: p.message.buttonLabel, buttonUrl };
+  const message = { to, template: p.message.template, text: p.message.text, buttonLabel: p.message.buttonLabel, buttonUrl, vars: p.message.vars };
   let result = await sender.send(message);
   if (!result.ok && result.retryable) {
     await new Promise((r) => setTimeout(r, RETRY_DELAY_MS)); // 자동 재시도 1회 (§5)
@@ -58,7 +58,7 @@ async function loadClaim(admin: Admin, companyId: string, claimId: string) {
   if (!claim) return null;
   const [{ data: owner }, { data: items }] = await Promise.all([
     admin.from("members").select("id, name, phone, department_id").eq("id", claim.member_id).eq("company_id", companyId).maybeSingle(),
-    admin.from("expense_items").select("payment_method, amount, company_supported_amount").eq("claim_id", claimId),
+    admin.from("expense_items").select("payment_method, amount, company_supported_amount, merchant_name").eq("claim_id", claimId).order("sort_order"),
   ]);
   let department: string | null = null;
   if (owner?.department_id) department = (await admin.from("departments").select("name").eq("id", owner.department_id).maybeSingle()).data?.name ?? null;
@@ -67,6 +67,7 @@ async function loadClaim(admin: Admin, companyId: string, claimId: string) {
     claim,
     owner,
     department,
+    merchant: merchantSummary(rows.map((i) => i.merchant_name)),
     corporate: rows.filter((i) => i.payment_method === "corporate_card").length,
     personal: rows.filter((i) => i.payment_method === "personal_card").length,
     payout: rows.filter((i) => i.payment_method === "personal_card").reduce((s, i) => s + (i.company_supported_amount ?? i.amount ?? 0), 0),
@@ -99,6 +100,7 @@ async function sendApprovalRequest(admin: Admin, companyId: string, claimId: str
     count: c.claim.item_count,
     corporate: c.corporate,
     personal: c.personal,
+    merchant: c.merchant,
   });
   for (const r of recipients ?? []) await deliver(admin, { companyId, claimId, memberId: r.id, phone: r.phone, message });
 }
@@ -117,10 +119,10 @@ export async function notifyClaimEvent(companyId: string, claimId: string, event
       // 사전 검토 승인 뒤 다음 단계가 남았으면 다음 결재자에게, 최종 승인이면 청구자에게
       if (c.claim.status === "submitted") return await sendApprovalRequest(admin, companyId, claimId);
       if (c.claim.status !== "approved" && c.claim.status !== "paid") return;
-      return await deliver(admin, { companyId, claimId, memberId: c.owner.id, phone: c.owner.phone, message: approvalCompleted({ companyId, claimId, title: c.claim.title, total: c.claim.total_amount, payout: c.payout }) });
+      return await deliver(admin, { companyId, claimId, memberId: c.owner.id, phone: c.owner.phone, message: approvalCompleted({ companyId, claimId, name: c.owner.name, title: c.claim.title, total: c.claim.total_amount, payout: c.payout, merchant: c.merchant }) });
     }
     if (event === "rejected" && c.claim.status === "rejected") {
-      return await deliver(admin, { companyId, claimId, memberId: c.owner.id, phone: c.owner.phone, message: approvalRejected({ companyId, claimId, title: c.claim.title, reason: c.claim.rejection_reason ?? "" }) });
+      return await deliver(admin, { companyId, claimId, memberId: c.owner.id, phone: c.owner.phone, message: approvalRejected({ companyId, claimId, name: c.owner.name, title: c.claim.title, total: c.claim.total_amount, merchant: c.merchant, reason: c.claim.rejection_reason ?? "" }) });
     }
   } catch (e) {
     console.error("[alimtalk] 알림 처리 실패", e);
@@ -202,7 +204,7 @@ export async function resendLog(companyId: string, logId: string): Promise<"sent
     if (!inv || inv.status !== "invited") return "not_found"; // 이미 가입·취소된 초대는 다시 보내지 않는다
     phone = inv.phone ?? phone;
   }
-  const p = (log.payload ?? {}) as { text?: string; button_label?: string; button_url?: string };
+  const p = (log.payload ?? {}) as { text?: string; button_label?: string; button_url?: string; vars?: Record<string, string> };
   let buttonPath = "/";
   try {
     buttonPath = p.button_url ? new URL(p.button_url).pathname : "/";
@@ -215,7 +217,7 @@ export async function resendLog(companyId: string, logId: string): Promise<"sent
     memberId: log.recipient_member_id ?? undefined,
     invitationId: log.invitation_id ?? undefined,
     phone,
-    message: { template: log.template_code as BuiltMessage["template"], text: p.text ?? "", buttonLabel: p.button_label ?? "", buttonPath },
+    message: { template: log.template_code as BuiltMessage["template"], text: p.text ?? "", buttonLabel: p.button_label ?? "", buttonPath, vars: p.vars },
   });
   return ok ? "sent" : "failed";
 }

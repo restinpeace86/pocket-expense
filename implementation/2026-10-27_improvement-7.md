@@ -15,3 +15,12 @@
 - 직원 워크스페이스에는 넣지 않음(관리자 레이아웃은 `requireWorkspace(id, { admin: true })` 뒤에서만 그려짐)
 - 확인(`.responsive/live/shot-feedback.mjs`, 로컬): PC 1280 결의서 상세에서 버튼 아래 688px < 승인 줄 위 727px(겹침 없음), 360·390은 떠 있는 버튼 안 보임·서랍 항목 보임(44px, `target=_blank`), check:responsive 관리자 3화면 통과
 - **사용자 할 일**: Vercel 환경변수 `NEXT_PUBLIC_KAKAO_CHANNEL_CHAT_URL`에 카카오톡 채널 채팅 주소를 넣고 다시 배포(넣기 전에는 버튼이 보이지 않음)
+
+## 4. 알림톡 Mock 점검·보완 (D-128)
+- 점검 결과: 어댑터(`NotificationSender`)·로그 드라이버·발송 이력·1회 재시도·재발송은 이미 있음(T8-1·T8-2). 실제 대행사 드라이버는 ⛔ O-01 그대로
+- `src/lib/notify/mock-format.ts`(새): Mock 콘솔 출력(템플릿 이름·템플릿 ID·가린 번호·본문·버튼·변수)
+- `sender.ts`: 드라이버 표(DRIVERS) + `templateIdOf()`(ALIMTALK_TEMPLATE_<코드>) + 교체 방법 주석, 로그 드라이버가 Mock 출력 사용
+- `templates.ts`: `vars`(템플릿 변수)·`TEMPLATE_LABEL`·`merchantSummary`. 상신(사용처 추가)·승인(신청자·사용처, "결재가 정상 완료되었습니다")·반려(신청자·금액·사용처·사유 필수)
+- `dispatch.ts`: 항목 가맹점을 영수증 순서로 읽어 사용처 요약, 이력 payload에 vars 저장, 재발송에도 vars
+- `.env.example`: ALIMTALK_API_KEY·SECRET·SENDER_KEY·템플릿 ID 7개(빈 값), spec `notification-rule.md` 문구·§3 갱신
+- 확인: 단위 테스트(문구 3종·사용처 요약·Mock 출력, 번호 가림), 운영 빌드 `e2e-flow` 16단계 OK·알림 9건 sent, 서버 콘솔에 상신·반려·승인 Mock 상자 출력 확인(받는 번호 010-****-0004)
