@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { deleteItemAction, finishReceiptUploadAction, startReceiptUploadAction } from "@/app/workspace/[id]/employee/claims/actions";
 import { runPool } from "@/lib/concurrency";
 import { recordPerf } from "@/lib/perf/client";
-import { processReceiptFile } from "@/lib/receipts/image";
+import { processReceiptFile, RECEIPT_MAX_BYTES, TOO_LARGE_MESSAGE } from "@/lib/receipts/image";
 import { createClient } from "@/lib/supabase/client";
 
 // 영수증 여러 장 올리기 (performance.md §1·§6, D-073):
@@ -72,6 +72,7 @@ export function useReceiptUpload(claimId: string, currentCount: number) {
           const processed = await processReceiptFile(file).catch(() => {
             throw new StepError("올릴 수 없는 파일이에요. 사진 또는 PDF를 골라 주세요.");
           });
+          if (processed.original.size > RECEIPT_MAX_BYTES) throw new StepError(TOO_LARGE_MESSAGE);
           set(key, { phase: "uploading", since: Date.now() });
           const start = await twice(() =>
             startReceiptUploadAction(claimId, { isPdf: processed.kind === "pdf", thumbExt: processed.kind === "image" ? processed.thumbExt : "webp" }),

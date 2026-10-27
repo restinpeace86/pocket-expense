@@ -160,6 +160,8 @@ function addSummary(ws: ExcelJS.Worksheet, rows: ExportRow[], title: string) {
     const inside = rows.filter((r) => (r.account_title_name || "(없음)") === g.label);
     for (const s of group(inside, (r) => [classLabels(r).category, classLabels(r).subtype].filter(Boolean).join(" · "))) ws.addRow([`   ${s.label}`, s.count, s.amount]).getCell(3).numFmt = WON;
   }
+  // 부서별 = 현장·프로젝트별 묶음(우리 데이터에서 현장에 가장 가까운 단위, 세무 업로드 시트의 "부서 / 프로젝트" 칸과 같음). 부서 없음(대표·임원, D-058)은 따로 묶는다
+  section("부서별", group(rows, (r) => r.department ?? "부서 없음"));
   section("사용자별", group(rows, (r) => [r.member_name, r.department].filter(Boolean).join(" · ")));
   section("카테고리별", group(rows, (r) => classLabels(r).category));
   section("결제수단별", group(rows, (r) => (r.payment_method === "corporate_card" ? "법인카드" : "개인(사비)")));

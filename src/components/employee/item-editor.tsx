@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { attachItemEvidenceAction, detachItemEvidenceAction, evidenceUploadedAction, rereadReceiptAction, saveItemAction } from "@/app/workspace/[id]/employee/claims/actions";
 import { EVIDENCE_KIND_LABEL, FILE_EVIDENCE_KINDS, NO_EVIDENCE_MIN, type EvidenceKind } from "@/lib/receipts/evidence-kind";
-import { processReceiptFile } from "@/lib/receipts/image";
+import { processReceiptFile, RECEIPT_MAX_BYTES, TOO_LARGE_MESSAGE } from "@/lib/receipts/image";
 import { createClient } from "@/lib/supabase/client";
 import { receiptOriginalUrlAction } from "@/lib/claims/actions";
 import { AmountInput } from "@/components/ui/amount-input";
@@ -306,6 +306,7 @@ export function ItemInlineForm({
       if (!(await save())) return;
       const processed = await processReceiptFile(file).catch(() => null);
       if (!processed) return onError("올릴 수 없는 파일이에요. 사진 또는 PDF를 골라 주세요.");
+      if (processed.original.size > RECEIPT_MAX_BYTES) return onError(TOO_LARGE_MESSAGE);
       const r = await attachItemEvidenceAction(item.id, { isPdf: processed.kind === "pdf", thumbExt: processed.kind === "image" ? processed.thumbExt : "webp" });
       if (!r.ok) return onError(r.error);
       const bucket = createClient().storage.from("receipts");

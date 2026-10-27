@@ -2,6 +2,9 @@
 // 보관본: 긴 변 2000px JPEG / 썸네일: 긴 변 320px WebP. 다시 그리면서 사진 속 위치정보(EXIF)도 함께 지워진다.
 export const RECEIPT_ORIGINAL_MAX = 2000;
 export const RECEIPT_THUMB_MAX = 320;
+// 저장소 한도(receipts 버킷 10MB, migration 003). 사진은 줄이면 1~2MB라 넘지 않고, 줄이지 않는 PDF만 걸린다 — 올리기 전에 막아 크레딧·빈 항목이 생기지 않게
+export const RECEIPT_MAX_BYTES = 10 * 1024 * 1024;
+export const TOO_LARGE_MESSAGE = "파일이 10MB를 넘어요. 사진으로 찍어 올리거나 더 작은 PDF로 올려 주세요.";
 const ORIGINAL_QUALITY = 0.85;
 const THUMB_QUALITY = 0.8;
 
