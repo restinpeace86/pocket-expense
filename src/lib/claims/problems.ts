@@ -36,6 +36,7 @@ export const ITEM_PROBLEM_LABEL: Record<string, string> = {
   trip_type: "출장비 세부 유형",
   lodging_period: "숙박 기간",
   own_car_route: "출발지·도착지·거리",
+  odometer_photos: "출발·도착 계기판 사진 2장",
 };
 
 export function isEmptyProblems(p: ClaimProblems | null | undefined): boolean {

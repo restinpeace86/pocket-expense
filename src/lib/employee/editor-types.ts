@@ -100,11 +100,17 @@ export type EditorItem = {
   distance_source: "api" | "manual" | null;
   route_evidence: unknown;
   applied_fuel_rate_per_km: number | null;
+  // 자차 출발·도착 계기판 사진 (D-070 ②, D-144). 회사가 받기를 켰을 때만 입력란이 보이고, 둘 다 있어야 상신된다
+  odometer_start_path: string | null;
+  odometer_end_path: string | null;
+  odometerStartUrl: string | null;
+  odometerEndUrl: string | null;
+  odometerMissing: boolean; // 회사가 켰는데 사진이 2장이 아님
   overdueDeadline: string | null; // 청구 기한이 지났으면 그 기한 (오늘 기준, D-031)
 };
 
 // 자차 유류비를 쓸 수 있는지·단가·차량번호 (trip-expense.md §4, D-068·D-070)
-export type FuelPolicy = { mode: "fixed" | "opinet"; fuelType: FuelType; enabled: boolean; ratePerKm: number; blocked: null | "disabled" | "allowance"; vehicleNumber: string | null };
+export type FuelPolicy = { mode: "fixed" | "opinet"; fuelType: FuelType; enabled: boolean; ratePerKm: number; blocked: null | "disabled" | "allowance"; vehicleNumber: string | null; odometerRequired: boolean };
 
 export type TripTransport = "own_car" | "public_transport" | "company_car"; // company_car: 회사차량으로 간 출장 (D-106)
 export type RoutePlaceInput = { name: string; address: string | null; lat: number; lng: number };

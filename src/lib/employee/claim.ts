@@ -14,7 +14,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: string) => UUID.test(v);
 
 const ITEM_COLUMNS =
-  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items, start_location, start_lat, start_lng, end_location, end_lat, end_lng, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, category_mismatch_ack, evidence_kind, no_evidence_reason, applied_fuel_mode, applied_fuel_price, applied_fuel_type";
+  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items, start_location, start_lat, start_lng, end_location, end_lat, end_lng, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, category_mismatch_ack, evidence_kind, no_evidence_reason, applied_fuel_mode, applied_fuel_price, applied_fuel_type, odometer_start_path, odometer_end_path";
 
 const EVIDENCE_TYPES = ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt", "other"] as const;
 
@@ -58,7 +58,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string,
       .maybeSingle(),
     supabase.from("expense_items").select(ITEM_COLUMNS).eq("claim_id", claimId).eq("company_id", membership.company_id).order("sort_order"),
     supabase.from("corporate_cards").select("id, nickname, bin6, last4").eq("company_id", membership.company_id).eq("is_active", true).order("created_at"),
-    supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, fuel_rate_mode, claim_deadline_type, claim_deadline_days, per_diem_enabled, per_diem_amount").eq("id", membership.company_id).single(),
+    supabase.from("companies").select("meal_limit_enabled, meal_limit_per_person, meal_limit_mode, fuel_enabled, fuel_rate_per_km, fuel_rate_mode, odometer_photo_required, claim_deadline_type, claim_deadline_days, per_diem_enabled, per_diem_amount").eq("id", membership.company_id).single(),
     supabase.from("members").select("meal_limit_override, receives_car_allowance, vehicle_number, fuel_type").eq("id", membership.member_id).single(),
     supabase.rpc("claim_duplicate_receipts", { p_claim_id: claimId }),
     supabase.from("company_vehicles").select("id, nickname, plate_number, is_active").eq("company_id", membership.company_id).order("created_at"),
@@ -80,7 +80,8 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string,
     }
   }
   const rows = itemsRes.data ?? [];
-  const urls = await signReceiptUrls(supabase, rows.map((r) => r.receipt_thumb_path));
+  const urls = await signReceiptUrls(supabase, rows.flatMap((r) => [r.receipt_thumb_path, r.odometer_start_path, r.odometer_end_path]));
+  const odometerRequired = !!companyRes.data?.odometer_photo_required;
   const deadline: DeadlinePolicy = { type: companyRes.data?.claim_deadline_type ?? "none", days: companyRes.data?.claim_deadline_days ?? null };
   const items: EditorItem[] = rows.map(({ ai_parsed_payload, receipt_thumb_path, line_items, paid_time, ...r }) => ({
     ...r,
@@ -88,6 +89,9 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string,
     line_items: Array.isArray(line_items) ? (line_items as EditorItem["line_items"]) : [],
     duplicate: dups[r.id] ?? null,
     thumbUrl: receipt_thumb_path ? (urls.get(receipt_thumb_path) ?? null) : null,
+    odometerStartUrl: r.odometer_start_path ? (urls.get(r.odometer_start_path) ?? null) : null,
+    odometerEndUrl: r.odometer_end_path ? (urls.get(r.odometer_end_path) ?? null) : null,
+    odometerMissing: odometerRequired && r.category === "trip" && r.trip_type === "own_car" && (!r.odometer_start_path || !r.odometer_end_path),
     isPdf: !!r.receipt_path?.endsWith(".pdf"),
     aiFilled: ai_parsed_payload !== null,
     ...aiFlags(ai_parsed_payload, r.parse_status),
@@ -116,6 +120,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string,
       fuelType: (meRes.data?.fuel_type as FuelType | null) ?? "gasoline",
       blocked: !c?.fuel_enabled ? "disabled" : meRes.data?.receives_car_allowance ? "allowance" : null,
       vehicleNumber: meRes.data?.vehicle_number ?? null,
+      odometerRequired,
     },
   };
 }

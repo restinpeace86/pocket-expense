@@ -950,6 +950,8 @@ export type Database = {
           merchant_business_number: string | null
           merchant_name: string | null
           no_evidence_reason: string | null
+          odometer_end_path: string | null
+          odometer_start_path: string | null
           paid_time: string | null
           parse_status: Database["public"]["Enums"]["parse_status"]
           payment_method: Database["public"]["Enums"]["payment_method"]
@@ -1022,6 +1024,8 @@ export type Database = {
           merchant_business_number?: string | null
           merchant_name?: string | null
           no_evidence_reason?: string | null
+          odometer_end_path?: string | null
+          odometer_start_path?: string | null
           paid_time?: string | null
           parse_status?: Database["public"]["Enums"]["parse_status"]
           payment_method?: Database["public"]["Enums"]["payment_method"]
@@ -1094,6 +1098,8 @@ export type Database = {
           merchant_business_number?: string | null
           merchant_name?: string | null
           no_evidence_reason?: string | null
+          odometer_end_path?: string | null
+          odometer_start_path?: string | null
           paid_time?: string | null
           parse_status?: Database["public"]["Enums"]["parse_status"]
           payment_method?: Database["public"]["Enums"]["payment_method"]
@@ -2049,6 +2055,10 @@ export type Database = {
         Args: { p_is_pdf?: boolean; p_item_id: string; p_thumb_ext?: string }
         Returns: Json
       }
+      attach_odometer_photo: {
+        Args: { p_item_id: string; p_which: string }
+        Returns: string
+      }
       business_verify_mode: { Args: never; Returns: string }
       check_claim_for_submit: { Args: { p_claim_id: string }; Returns: Json }
       claim_duplicate_receipts: { Args: { p_claim_id: string }; Returns: Json }
@@ -2084,6 +2094,10 @@ export type Database = {
       }
       deactivate_member: { Args: { p_member_id: string }; Returns: undefined }
       detach_item_evidence: { Args: { p_item_id: string }; Returns: Json }
+      detach_odometer_photo: {
+        Args: { p_item_id: string; p_which: string }
+        Returns: string
+      }
       generate_recurring_claims: { Args: { p_today?: string }; Returns: Json }
       get_invitation_detail: { Args: { p_token: string }; Returns: Json }
       get_invitation_public: { Args: { p_token: string }; Returns: Json }

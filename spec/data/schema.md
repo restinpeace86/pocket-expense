@@ -301,6 +301,8 @@
 | distance_source | distance_source | null | |
 | route_one_way_km | numeric(8,1) | null, 0~5000 | 길찾기(api) 또는 직접 입력(manual) 편도 거리. distance_km = 편도 × (왕복이면 2) (D-085) |
 | route_card_path | text | null, `{company_id}/route-cards/%` | 상신 때 서버가 만든 경로 요약 증빙 이미지 경로(직원 쓰기 불가, D-088) |
+| odometer_start_path | text | null, `{company_id}/%` | 자차 출발 계기판 사진 경로(D-144). 직원은 `attach_odometer_photo`/`detach_odometer_photo`로만 |
+| odometer_end_path | text | null, `{company_id}/%` | 자차 도착 계기판 사진 경로(D-144) |
 | route_evidence | jsonb | null | 디지털 증빙 근거: 출발·도착 주소, 길찾기 제공자·편도 m·소요 초·계산 시각(또는 직접 입력 시각) (D-085) |
 | applied_fuel_rate_per_km | integer | null | 계산 시점 단가 스냅샷 (D-018) |
 | item_custom_payload | jsonb | not null, default '{}' | 양식 항목(표) 고유 필드 값 `{ field_key: value }` |

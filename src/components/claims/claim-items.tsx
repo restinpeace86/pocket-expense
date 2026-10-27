@@ -146,8 +146,9 @@ function ReceiptPanel({ items, index, cards, onIndex, onClose, showAccount }: { 
             </button>
           </div>
         </div>
-        <div className="grid min-h-0 flex-1 overflow-y-auto md:grid-cols-2">
-          <div className="flex min-h-64 items-center justify-center bg-zinc-100 p-3">
+        {/* 휴대폰(한 줄로 쌓임): 줄 높이 = 내용 높이(사진·계기판이 아래 정보와 겹치지 않게). PC(두 칸): 사진 칸이 높이를 채운다 */}
+        <div className="grid min-h-0 flex-1 auto-rows-max overflow-y-auto md:auto-rows-auto md:grid-cols-2">
+          <div className="flex min-h-64 flex-col items-center justify-center gap-3 bg-zinc-100 p-3">
             {i.routeCardUrl ? (
               <a href={i.routeCardUrl} target="_blank" rel="noreferrer" className="block w-full" aria-label="경로 요약 증빙 이미지 새 창으로 열기">
                 {/* eslint-disable-next-line @next/next/no-img-element -- 10분짜리 서명 링크 */}
@@ -174,6 +175,29 @@ function ReceiptPanel({ items, index, cards, onIndex, onClose, showAccount }: { 
                 {/* eslint-disable-next-line @next/next/no-img-element -- 10분짜리 서명 링크 */}
                 <img src={photo} alt="영수증 원본" className="max-h-[70vh] w-auto rounded-lg" />
               </a>
+            )}
+            {/* 자차 출발·도착 계기판 사진(D-144) — 경로 증빙 아래 */}
+            {i.odometer && (
+              <div className="grid w-full max-w-sm grid-cols-2 gap-2">
+                {(
+                  [
+                    ["출발 계기판", i.odometer.startUrl],
+                    ["도착 계기판", i.odometer.endUrl],
+                  ] as const
+                ).map(([label, url]) => (
+                  <figure key={label} className="flex min-w-0 flex-col gap-1">
+                    {url ? (
+                      <a href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg bg-white shadow" aria-label={`${label} 사진 새 창으로 열기`}>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- 10분짜리 서명 링크 */}
+                        <img src={url} alt={`${label} 사진`} className="aspect-[4/3] w-full object-cover" />
+                      </a>
+                    ) : (
+                      <p className="flex aspect-[4/3] items-center justify-center rounded-lg bg-white text-xs text-zinc-400">사진 없음</p>
+                    )}
+                    <figcaption className="text-center text-xs text-zinc-600">{label}</figcaption>
+                  </figure>
+                ))}
+              </div>
             )}
           </div>
           <div className="flex flex-col gap-4 p-4 text-sm">

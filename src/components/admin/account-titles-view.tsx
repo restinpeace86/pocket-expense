@@ -35,7 +35,8 @@ export function AccountTitlesHeading() {
           </p>
           <p>
             <b>무엇을 바꾸면 되나요?</b> 처음에는 일반적인 기본값이 들어 있어요. 계정코드는 더존(Smart A·위하고)의 기본 계정코드입니다(예: 복리후생비 811,
-            여비교통비 812, 소모품비 830). 법으로 정한 표준은 아니라서, 세무사무소가 다른 번호를 쓴다고 하면 그때만 맞춰 바꿔 주세요.
+            여비교통비 812, 소모품비 830). 법으로 정한 표준이 아니라서 회사·세무사무소가 쓰는 회계 프로그램의 코드와 다를 수 있어요. 처음 한 번 회계
+            프로그램(또는 세무사무소)에서 확인하고, 다르면 여기서 맞춰 바꿔 주세요.
           </p>
           <p>
             <b>회사 물품 구매는?</b> 탕비실 간식·커피는 복리후생비, 펜·A4 용지 같은 사무용품은 소모품비, 책상·의자·노트북·프린터·에어컨처럼 오래 쓰는 물건은
@@ -117,7 +118,7 @@ export function AccountTitlesView({ titles, mappings, preview = false }: { title
       </section>
 
       <section className={card}>
-        <SectionHeading title="계정과목 목록" summary="기본 계정코드는 더존(Smart A·위하고)의 기본 계정코드입니다. 세무사무소 번호와 다를 때만 바꿔 주세요. 분류에 연결된 계정과목은 삭제할 수 없어요." />
+        <SectionHeading title="계정과목 목록" summary="기본 계정코드는 더존(Smart A·위하고)의 기본 계정코드라 회사 회계 프로그램과 다를 수 있어요. 회계 프로그램에서 확인하고 다르면 바꿔 주세요. 분류에 연결된 계정과목은 삭제할 수 없어요." />
         <form
           className="mt-4 flex flex-col gap-2 sm:flex-row"
           onSubmit={(e) => {

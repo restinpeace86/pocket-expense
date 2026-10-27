@@ -9,7 +9,7 @@ import type { ClaimDetail, DetailApproval, DetailItem } from "./types";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const ITEM_COLUMNS =
-  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, card_last4, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, applied_meal_limit_per_person, applied_meal_limit_mode, account_title_id, account_title_name, account_title_code, account_title_overridden, closed_month, paid_time, approval_number, merchant_address, line_items, ai_parsed_payload, start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, route_card_path, evidence_kind, no_evidence_reason, applied_fuel_mode, applied_fuel_price, applied_fuel_type";
+  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, card_last4, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, applied_meal_limit_per_person, applied_meal_limit_mode, account_title_id, account_title_name, account_title_code, account_title_overridden, closed_month, paid_time, approval_number, merchant_address, line_items, ai_parsed_payload, start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, route_card_path, evidence_kind, no_evidence_reason, applied_fuel_mode, applied_fuel_price, applied_fuel_type, odometer_start_path, odometer_end_path";
 
 // 결의서 상세. 열람 권한은 RLS(본인 / 같은 회사 관리자 이상 / 지정된 사전 검토자)가 건다.
 // ownerOnly: 직원 화면에서는 본인 결의서만(관리자가 직원 모드로 봐도 남의 것은 안 보이게)
@@ -45,14 +45,18 @@ export async function getClaimDetail(companyId: string, claimId: string, opts: {
   }
 
   const rows = itemsRes.data ?? [];
-  const urls = await signReceiptUrls(supabase, [...rows.map((r) => r.receipt_thumb_path), ...rows.map((r) => r.route_card_path)]);
+  const urls = await signReceiptUrls(supabase, rows.flatMap((r) => [r.receipt_thumb_path, r.route_card_path, r.odometer_start_path, r.odometer_end_path]));
   const dups = (dupRes.data ?? {}) as Record<string, { mine: unknown[]; others: number }>;
   const { data: co } = await supabase.from("companies").select("claim_deadline_type, claim_deadline_days").eq("id", companyId).single();
   const policy: DeadlinePolicy = { type: co?.claim_deadline_type ?? "none", days: co?.claim_deadline_days ?? null };
   const refDate = claimRes.data?.submitted_at ? kstDate(claimRes.data.submitted_at) : todayKst();
-  const items: DetailItem[] = rows.map(({ receipt_thumb_path, ai_parsed_payload, line_items, paid_time, start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, route_card_path, ...r }) => ({
+  const items: DetailItem[] = rows.map(({ receipt_thumb_path, ai_parsed_payload, line_items, paid_time, start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, route_card_path, odometer_start_path, odometer_end_path, ...r }) => ({
     ...r,
     routeCardUrl: route_card_path ? (urls.get(route_card_path) ?? null) : null,
+    odometer:
+      odometer_start_path || odometer_end_path
+        ? { startUrl: odometer_start_path ? (urls.get(odometer_start_path) ?? null) : null, endUrl: odometer_end_path ? (urls.get(odometer_end_path) ?? null) : null }
+        : null,
     overdueDeadline: isOverdue(r.expense_date, policy, refDate) ? deadlineDate(r.expense_date, policy) : null,
     // 자차 유류비: 영수증 대신 경로 요약 카드(D-085)
     route:

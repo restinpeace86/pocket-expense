@@ -151,10 +151,10 @@ export async function deleteDraftClaimAction(claimId: string, opts: { stayOnPage
     .maybeSingle();
   if (!claim) return fail("NOT_FOUND");
   if (claim.status !== "draft") return fail("NOT_EDITABLE");
-  const { data: items } = await supabase.from("expense_items").select("id, receipt_path, receipt_thumb_path, credit_charged").eq("claim_id", claimId);
+  const { data: items } = await supabase.from("expense_items").select("id, receipt_path, receipt_thumb_path, credit_charged, odometer_start_path, odometer_end_path").eq("claim_id", claimId);
   // 크레딧을 쓴 영수증은 사진을 운영 보관함으로 먼저 옮긴다(D-080). 못 옮기면 지우지 않는다
   if (!(await archiveCreditedReceipts(m.company_id, (items ?? []).filter((i) => i.credit_charged).map((i) => i.id)))) return fail("UNAVAILABLE");
-  await removeReceiptFiles(supabase, (items ?? []).flatMap((i) => [i.receipt_path, i.receipt_thumb_path]));
+  await removeReceiptFiles(supabase, (items ?? []).flatMap((i) => [i.receipt_path, i.receipt_thumb_path, i.odometer_start_path, i.odometer_end_path]));
   const { data, error } = await supabase.from("expense_claims").delete().eq("id", claimId).eq("member_id", m.member_id).select("id");
   if (error) return { ok: false, error: messageForDbError(error) };
   if (!data?.length) return fail("NOT_EDITABLE");
@@ -173,14 +173,14 @@ export async function deleteItemAction(itemId: string): Promise<Result> {
   const supabase = await createClient();
   const { data: item } = await supabase
     .from("expense_items")
-    .select("id, claim_id, receipt_path, receipt_thumb_path, credit_charged, route_card_path")
+    .select("id, claim_id, receipt_path, receipt_thumb_path, credit_charged, route_card_path, odometer_start_path, odometer_end_path")
     .eq("id", itemId)
     .eq("company_id", m.company_id)
     .maybeSingle();
   if (!item) return fail("NOT_FOUND");
   if (!(await canEditOwnClaim(supabase, item.claim_id))) return fail("NOT_EDITABLE");
   if (item.credit_charged && !(await archiveCreditedReceipts(m.company_id, [item.id]))) return fail("UNAVAILABLE");
-  await removeReceiptFiles(supabase, [item.receipt_path, item.receipt_thumb_path]);
+  await removeReceiptFiles(supabase, [item.receipt_path, item.receipt_thumb_path, item.odometer_start_path, item.odometer_end_path]);
   // 자차 경로 증빙 이미지는 직원이 지울 수 없는 폴더에 있어 서버가 지운다(권한 확인은 위 canEditOwnClaim)
   if (item.route_card_path) await createAdminClient()?.storage.from("receipts").remove([item.route_card_path]);
   const { data, error } = await supabase.from("expense_items").delete().eq("id", itemId).select("id");
@@ -532,3 +532,36 @@ export async function detachItemEvidenceAction(itemId: string, opts: { quiet?: b
 export async function evidenceUploadedAction(): Promise<void> {
   refresh();
 }
+
+// 자차 계기판 사진(D-070 ②, D-144) 붙이기: 경로는 DB가 정하고(본인 작성 중 결의서의 자차 항목만) 화면이 그 경로에 올린다
+export async function attachOdometerPhotoAction(itemId: string, which: "start" | "end"): Promise<Result<{ path: string }>> {
+  const m = await approvedMember();
+  if (!m) return fail("NOT_A_MEMBER");
+  if (!isUuid(itemId) || (which !== "start" && which !== "end")) return fail("NOT_FOUND");
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("attach_odometer_photo", { p_item_id: itemId, p_which: which });
+  if (error || !data) return { ok: false, error: messageForDbError(error ?? { message: "NOT_FOUND" }) };
+  return { ok: true, path: data };
+}
+
+// 계기판 사진 떼기 — 파일을 먼저 지우고(저장소 열람이 항목 행의 경로 기준이라) 칸을 비운다
+export async function detachOdometerPhotoAction(itemId: string, which: "start" | "end", opts: { quiet?: boolean } = {}): Promise<Result> {
+  const m = await approvedMember();
+  if (!m) return fail("NOT_A_MEMBER");
+  if (!isUuid(itemId) || (which !== "start" && which !== "end")) return fail("NOT_FOUND");
+  const supabase = await createClient();
+  const { data: item } = await supabase.from("expense_items").select("odometer_start_path, odometer_end_path").eq("id", itemId).eq("company_id", m.company_id).maybeSingle();
+  if (!item) return fail("NOT_FOUND");
+  if (!(await canEditOwnClaimOfItem(supabase, itemId))) return fail("NOT_EDITABLE");
+  await removeReceiptFiles(supabase, [which === "start" ? item.odometer_start_path : item.odometer_end_path]);
+  const { error } = await supabase.rpc("detach_odometer_photo", { p_item_id: itemId, p_which: which });
+  if (error) return { ok: false, error: messageForDbError(error) };
+  if (!opts.quiet) refresh();
+  return { ok: true };
+}
+
+async function canEditOwnClaimOfItem(supabase: Awaited<ReturnType<typeof createClient>>, itemId: string) {
+  const { data } = await supabase.from("expense_items").select("claim_id").eq("id", itemId).maybeSingle();
+  return !!data && canEditOwnClaim(supabase, data.claim_id);
+}
+

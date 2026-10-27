@@ -59,6 +59,7 @@ export function itemNeedsCheck(item: EditorItem): boolean {
   if (item.amount === null || !item.expense_date || !item.category || !item.evidence_type) return true;
   if (item.category === "trip" && !item.trip_type) return true;
   if (item.category === "purchase" && !item.purchase_type) return true;
+  if (item.odometerMissing) return true; // 회사가 계기판 사진을 받는데 2장이 아님 (D-144)
   // 증빙 자료가 없으면(자차 제외) 확인 필요 — 증빙 없음은 사유 5자 이상일 때만 통과 (D-108)
   if (!item.receipt_path && !(item.category === "trip" && item.trip_type === "own_car") && !(item.evidence_kind === "none" && (item.no_evidence_reason ?? "").trim().length >= 5)) return true;
   return false;

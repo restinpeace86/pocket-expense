@@ -4,6 +4,7 @@ import { Loader2, TriangleAlert } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { saveOwnCarItemAction, saveOwnCarRouteAction } from "@/app/workspace/[id]/employee/claims/actions";
 import { RouteEvidenceCard } from "@/components/claims/route-evidence-card";
+import { OdometerPhotos } from "@/components/employee/odometer-photos";
 import { PlaceSearch } from "@/components/employee/place-search";
 import { inputClass } from "@/components/ui/page-shell";
 import type { EditorClaim, EditorItem, FuelPolicy, RoutePlaceInput } from "@/lib/employee/editor-types";
@@ -245,6 +246,8 @@ export function OwnCarInline({
           </div>
         </div>
       )}
+      {/* 회사가 계기판 사진 받기를 켰을 때만(D-070 ②, D-144) — 꺼져 있으면 보이지 않는다 */}
+      {item && fuel.odometerRequired && <OdometerPhotos item={item} editable={claim.status === "draft" || claim.status === "rejected"} onError={onError} />}
       <p className="text-xs text-zinc-500">
         차량번호 {fuel.vehicleNumber ? <b className="text-zinc-800">{fuel.vehicleNumber}</b> : "미등록 — [내 정보]에서 등록해 주세요"} · {fuel.mode === "opinet" ? `출장 당일 전국 평균 ${FUEL_TYPE_LABEL[fuel.fuelType]} 가격 ÷ ${STANDARD_KM_PER_L}km/L` : `km당 ${fuel.ratePerKm.toLocaleString("ko-KR")}원`} · 결제수단은 개인(사비). 주유 영수증은 필요 없어요. 통행료·주차비는 영수증으로 따로 올려 주세요.
       </p>
