@@ -1,16 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { MONTH } from "@/lib/tax/closing";
 import { buildTaxWorkbook } from "@/lib/tax/workbook";
-import { getMyTaxCompanies, getTaxAgentMonth } from "@/lib/tax-office/queries";
+import { getTaxOfficeClients, getTaxOfficeMonth } from "@/lib/tax-office/queries";
 
-// 세무사 세무용 엑셀 (D-148): 회사 관리자 세무 마감과 같은 장부. 회사가 마감한 달은 정식 장부, 아니면 '미리보기'
+// 세무사무소 세무용 엑셀 (D-149): 회사 관리자 세무 마감과 같은 장부. 회사가 마감한 달은 정식 장부, 아니면 '미리보기'
 export async function GET(request: NextRequest, ctx: RouteContext<"/tax-office/[companyId]/xlsx">) {
   const { companyId } = await ctx.params;
-  const company = (await getMyTaxCompanies()).find((c) => c.company_id === companyId);
+  const company = (await getTaxOfficeClients()).find((c) => c.company_id === companyId);
   if (!company) return new NextResponse("Not Found", { status: 404 });
   const month = request.nextUrl.searchParams.get("month") ?? "";
   if (!MONTH.test(month)) return new NextResponse("Bad Request", { status: 400 });
-  const data = await getTaxAgentMonth(companyId, month);
+  const data = await getTaxOfficeMonth(companyId, month);
   if (!data) return new NextResponse("Not Found", { status: 404 });
   const preview = data.status !== "closed";
   const buf = await buildTaxWorkbook({ month, companyName: company.company_name, rows: data.rows, preview });

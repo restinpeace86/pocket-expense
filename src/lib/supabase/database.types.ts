@@ -599,6 +599,77 @@ export type Database = {
           },
         ]
       }
+      company_tax_offices: {
+        Row: {
+          agent_email: string | null
+          agent_name: string | null
+          agent_phone: string | null
+          assigned_member_id: string | null
+          company_id: string
+          created_at: string
+          office_email: string
+          office_id: string | null
+          office_name: string
+          updated_at: string
+          updated_by_member_id: string | null
+        }
+        Insert: {
+          agent_email?: string | null
+          agent_name?: string | null
+          agent_phone?: string | null
+          assigned_member_id?: string | null
+          company_id: string
+          created_at?: string
+          office_email: string
+          office_id?: string | null
+          office_name: string
+          updated_at?: string
+          updated_by_member_id?: string | null
+        }
+        Update: {
+          agent_email?: string | null
+          agent_name?: string | null
+          agent_phone?: string | null
+          assigned_member_id?: string | null
+          company_id?: string
+          created_at?: string
+          office_email?: string
+          office_id?: string | null
+          office_name?: string
+          updated_at?: string
+          updated_by_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_tax_offices_assigned_member_id_office_id_fkey"
+            columns: ["assigned_member_id", "office_id"]
+            isOneToOne: false
+            referencedRelation: "tax_office_members"
+            referencedColumns: ["id", "office_id"]
+          },
+          {
+            foreignKeyName: "company_tax_offices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_tax_offices_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "tax_offices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_tax_offices_updated_by_member_id_company_id_fkey"
+            columns: ["updated_by_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       company_vehicles: {
         Row: {
           company_id: string
@@ -2039,53 +2110,91 @@ export type Database = {
           },
         ]
       }
-      tax_agent_links: {
+      tax_office_members: {
         Row: {
-          agent_email: string
-          agent_name: string
-          agent_phone: string | null
-          company_id: string
+          auth_user_id: string
           created_at: string
-          office_name: string
-          updated_at: string
-          updated_by_member_id: string | null
+          email: string | null
+          id: string
+          name: string
+          office_id: string
+          phone: string | null
+          privacy_agreed_at: string
+          privacy_version: string | null
+          role: string
+          status: string
+          terms_agreed_at: string
+          terms_version: string | null
         }
         Insert: {
-          agent_email: string
-          agent_name: string
-          agent_phone?: string | null
-          company_id: string
+          auth_user_id: string
           created_at?: string
-          office_name: string
-          updated_at?: string
-          updated_by_member_id?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          office_id: string
+          phone?: string | null
+          privacy_agreed_at: string
+          privacy_version?: string | null
+          role: string
+          status?: string
+          terms_agreed_at: string
+          terms_version?: string | null
         }
         Update: {
-          agent_email?: string
-          agent_name?: string
-          agent_phone?: string | null
-          company_id?: string
+          auth_user_id?: string
           created_at?: string
-          office_name?: string
-          updated_at?: string
-          updated_by_member_id?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          office_id?: string
+          phone?: string | null
+          privacy_agreed_at?: string
+          privacy_version?: string | null
+          role?: string
+          status?: string
+          terms_agreed_at?: string
+          terms_version?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "tax_agent_links_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: true
-            referencedRelation: "companies"
+            foreignKeyName: "tax_office_members_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "tax_offices"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "tax_agent_links_updated_by_member_id_company_id_fkey"
-            columns: ["updated_by_member_id", "company_id"]
-            isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id", "company_id"]
-          },
         ]
+      }
+      tax_offices: {
+        Row: {
+          business_number: string
+          business_status: string
+          contact_email: string
+          created_at: string
+          id: string
+          invite_code: string
+          name: string
+        }
+        Insert: {
+          business_number: string
+          business_status?: string
+          contact_email: string
+          created_at?: string
+          id?: string
+          invite_code: string
+          name: string
+        }
+        Update: {
+          business_number?: string
+          business_status?: string
+          contact_email?: string
+          created_at?: string
+          id?: string
+          invite_code?: string
+          name?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -2154,6 +2263,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["claim_status"]
       }
       approve_member: { Args: { p_member_id: string }; Returns: undefined }
+      assign_tax_office_agent: {
+        Args: { p_company_id: string; p_member_id: string }
+        Returns: undefined
+      }
       attach_item_evidence: {
         Args: { p_is_pdf?: boolean; p_item_id: string; p_thumb_ext?: string }
         Returns: Json
@@ -2165,8 +2278,8 @@ export type Database = {
       business_verify_mode: { Args: never; Returns: string }
       check_claim_for_submit: { Args: { p_claim_id: string }; Returns: Json }
       claim_duplicate_receipts: { Args: { p_claim_id: string }; Returns: Json }
+      clear_company_tax_office: { Args: never; Returns: undefined }
       clear_form_template: { Args: never; Returns: undefined }
-      clear_tax_agent: { Args: never; Returns: undefined }
       close_tax_month: { Args: { p_month: string }; Returns: Json }
       consume_receipt_credit: {
         Args: {
@@ -2213,6 +2326,7 @@ export type Database = {
           name: string
         }[]
       }
+      get_tax_office_by_code: { Args: { p_code: string }; Returns: string }
       join_company: {
         Args: {
           p_account_holder: string
@@ -2231,25 +2345,26 @@ export type Database = {
         }
         Returns: string
       }
+      join_tax_office: {
+        Args: {
+          p_code: string
+          p_my_name: string
+          p_my_phone: string
+          p_privacy_agreed: boolean
+          p_terms_agreed: boolean
+        }
+        Returns: string
+      }
       mark_claims_paid: { Args: { p_claim_ids: string[] }; Returns: number }
       member_deactivation_check: {
         Args: { p_member_id: string }
         Returns: Json
       }
       move_item_to_new_claim: { Args: { p_item_id: string }; Returns: Json }
+      my_company_tax_office: { Args: never; Returns: Json }
       my_employee_summary: { Args: never; Returns: Json }
       my_membership: { Args: never; Returns: Json }
-      my_tax_agent_companies: {
-        Args: never
-        Returns: {
-          agent_name: string
-          business_number: string
-          company_id: string
-          company_name: string
-          linked_at: string
-          office_name: string
-        }[]
-      }
+      my_tax_office: { Args: never; Returns: Json }
       override_item_account_title: {
         Args: { p_account_title_id: string; p_item_id: string }
         Returns: undefined
@@ -2263,6 +2378,18 @@ export type Database = {
       record_perf_events: { Args: { p_events: Json }; Returns: number }
       refresh_claim_totals: { Args: { p_claim_id: string }; Returns: Json }
       regenerate_invite_code: { Args: never; Returns: string }
+      regenerate_tax_office_code: { Args: never; Returns: string }
+      register_tax_office: {
+        Args: {
+          p_business_number: string
+          p_my_name: string
+          p_my_phone: string
+          p_name: string
+          p_privacy_agreed: boolean
+          p_terms_agreed: boolean
+        }
+        Returns: string
+      }
       reject_claim: {
         Args: {
           p_claim_id: string
@@ -2337,6 +2464,16 @@ export type Database = {
         Args: { p_amount: number; p_enabled: boolean }
         Returns: undefined
       }
+      set_company_tax_office: {
+        Args: {
+          p_agent_email: string
+          p_agent_name: string
+          p_agent_phone: string
+          p_office_email: string
+          p_office_name: string
+        }
+        Returns: undefined
+      }
       set_member_role: {
         Args: {
           p_member_id: string
@@ -2355,13 +2492,8 @@ export type Database = {
         }
         Returns: undefined
       }
-      set_tax_agent: {
-        Args: {
-          p_agent_email: string
-          p_agent_name: string
-          p_agent_phone: string
-          p_office_name: string
-        }
+      set_tax_office_member_status: {
+        Args: { p_member_id: string; p_status: string }
         Returns: undefined
       }
       submit_claim: {
@@ -2380,10 +2512,6 @@ export type Database = {
         }
         Returns: number
       }
-      tax_agent_month_export: {
-        Args: { p_company_id: string; p_month: string }
-        Returns: Json
-      }
       tax_month_export: { Args: { p_month: string }; Returns: Json }
       tax_month_items: {
         Args: { p_month: string }
@@ -2393,6 +2521,36 @@ export type Database = {
           kind: string
           seq: number
         }[]
+      }
+      tax_office_clients: {
+        Args: never
+        Returns: {
+          agent_email: string
+          agent_name: string
+          assigned_member_id: string
+          assigned_name: string
+          business_number: string
+          company_id: string
+          company_name: string
+          linked_at: string
+        }[]
+      }
+      tax_office_member_list: {
+        Args: never
+        Returns: {
+          assigned_count: number
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string
+          role: string
+          status: string
+        }[]
+      }
+      tax_office_month_export: {
+        Args: { p_company_id: string; p_month: string }
+        Returns: Json
       }
       transfer_super_admin: {
         Args: { p_member_id: string }

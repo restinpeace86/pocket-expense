@@ -80,17 +80,39 @@
 | is_purchasable | boolean | default false | 결제 연동 전까지 false |
 - 로그인 사용자 읽기만(anon 불가), 쓰기는 마이그레이션으로만.
 
-### 2.1a5 `tax_agent_links` — 담당 세무사 연결 (D-148, migration 075, 회사당 1건)
+### 2.1a5 세무사무소 (D-149, migration 076 — D-148의 `tax_agent_links`는 걷어냄)
+`tax_offices` — 세무사무소
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
-| company_id | uuid | PK, FK companies (cascade) | 연결한 회사 |
-| office_name | text | 1~100자 | 세무사무소명 |
-| agent_name | text | 1~50자 | 담당 세무사·직원 이름 |
-| agent_email | text | 소문자, 이메일 형식, 254자 이하 (index) | 세무사가 로그인할 계정 이메일. 로그인 계정의 **확인된** 이메일과 같으면 연결 |
-| agent_phone | text | null, 숫자 9~11자리(0으로 시작) | 연락처(선택) |
-| updated_by_member_id | uuid | (member_id, company_id) FK, null | 마지막으로 저장한 관리자 |
-| created_at / updated_at | timestamptz | | |
-- 세무사는 `members`에 없다(D-004와 별개, 여러 회사와 연결 가능). RLS 강제, 고객 읽기는 자기 회사 관리자만, 쓰기는 `set_tax_agent`·`clear_tax_agent`. 세무사 쪽은 `my_tax_agent_companies`·`tax_agent_month_export`(= `private.tax_month_export_for`, 관리자 `tax_month_export`와 같은 함수)와 `account_titles`·`account_title_mappings`의 세무사 정책(조회·추가·수정).
+| id | uuid | PK | |
+| name | text | 1~100자 | 사무소명 |
+| business_number | text | 숫자 10자리, unique | 사업자등록번호(회사 등록과 같은 국세청 확인) |
+| business_status | text | skipped/bypass/active/suspended/unverified | 확인 결과 |
+| contact_email | text | 소문자, unique | 사무소 이메일 = 등록한 계정의 확인된 이메일. 회사가 이 이메일로 사무소를 지정 |
+| invite_code | text | 8자, unique | 소속 세무사 초대 코드(`/tax-join/{코드}`) |
+
+`tax_office_members` — 사무소 구성원(회사 `members`와 별개)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | uuid | PK, unique (id, office_id) | |
+| office_id | uuid | FK tax_offices (cascade) | |
+| auth_user_id | uuid | FK auth.users, **unique** | 계정당 사무소 1개 |
+| name / phone / email | text | 이름 1~50자, 휴대폰(선택), 이메일 소문자 | |
+| role | text | admin / staff | 사무소 관리자 / 소속 세무사 |
+| status | text | active / inactive | 이용 중지면 아무것도 못 봄 |
+| terms_agreed_at·privacy_agreed_at·terms_version·privacy_version | | | 약관·개인정보 동의 |
+
+`company_tax_offices` — 회사 → 사무소 연결·배정(회사당 1행)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| company_id | uuid | PK, FK companies (cascade) | |
+| office_name | text | 1~100자 | 회사가 적은 사무소명 |
+| office_email | text | 소문자·이메일 형식 | 회사가 적은 사무소 이메일(연결 기준) |
+| agent_name / agent_email / agent_phone | text | 선택 | 회사가 아는 담당 세무사(참고, 이메일이 구성원과 같으면 자동 배정) |
+| office_id | uuid | FK tax_offices (set null), null | 사무소가 등록되면 채움(그 전엔 가입 대기) |
+| assigned_member_id | uuid | (assigned_member_id, office_id) FK tax_office_members (set null) | 사무소가 배정한 담당 세무사 |
+| updated_by_member_id | uuid | (member_id, company_id) FK, null | 마지막으로 저장한 회사 관리자 |
+- 세 테이블 모두 RLS 강제. 고객 읽기는 `company_tax_offices`만, 자기 회사 관리자만. 나머지는 모두 함수로(`spec/screens/tax-office.md` §4). 계정과목·분류 연결에는 사무소 정책(열람 가능한 회사만 조회·추가·수정).
 
 ### 2.1a4 `company_referrals` — 추천 회사·추천인 (D-147, migration 074, 회사당 1건)
 | 컬럼 | 타입 | 제약 | 설명 |

@@ -11,7 +11,7 @@ const num = `${td} whitespace-nowrap text-right tabular-nums`;
 const payLabel = (r: ExportRow) => (r.payment_method === "corporate_card" ? `법인카드${r.card_last4 ? ` ${r.card_last4}` : ""}` : "개인(사비)");
 const titleLabel = (r: ExportRow) => (r.account_title_name ? `${r.account_title_name}${r.account_title_code ? ` (${r.account_title_code})` : ""}` : "미지정");
 
-// 세무사: 한 회사·한 달의 세무 자료 (D-148). 요약 → 계정과목별 → 지출 내역(영수증 보기). 엑셀은 관리자 세무 마감과 같은 장부
+// 세무사무소: 한 고객사·한 달의 세무 자료 (D-149). 요약 → 계정과목별 → 지출 내역(영수증 보기). 엑셀은 관리자 세무 마감과 같은 장부
 export function TaxOfficeMonthView({
   companyId,
   companyName,

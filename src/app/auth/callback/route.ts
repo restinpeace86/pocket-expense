@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { destinationAfterLogin, type Membership } from "@/lib/auth/paths";
 import { createClient } from "@/lib/supabase/server";
+import { isTaxOfficeUser } from "@/lib/tax-office/queries";
 
 // OAuth 콜백: 코드 → 세션 교환 후 소속 상태에 따라 이동 (spec/common/routes.md §1)
 export async function GET(request: NextRequest) {
@@ -20,8 +21,8 @@ export async function GET(request: NextRequest) {
 
   const { data } = await supabase.rpc("my_membership");
   const membership = (data ?? null) as unknown as Membership | null;
-  // 소속이 없으면 담당 세무사로 연결된 회사가 있는지(D-148)
-  const taxAgent = !membership && ((await supabase.rpc("my_tax_agent_companies")).data ?? []).length > 0;
+  // 소속이 없으면 세무사무소 계정인지(D-149)
+  const taxAgent = !membership && (await isTaxOfficeUser());
   const response = NextResponse.redirect(new URL(destinationAfterLogin(membership, next, { taxAgent }), origin));
   response.headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate, max-age=0");
   return response;

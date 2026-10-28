@@ -53,7 +53,7 @@ const SETTINGS_NAV: NavItem[] = [
   { href: "/departments", label: "부서", icon: Building2, ready: true },
   { href: "/approval-lines", label: "사전 검토 결재라인", icon: Route, ready: true },
   { href: "/account-titles", label: "계정과목", icon: BookOpen, ready: true },
-  { href: "/tax-agent", label: "담당 세무사", icon: Landmark, ready: true },
+  { href: "/tax-office", label: "세무사무소", icon: Landmark, ready: true },
   { href: "/billing", label: "요금제", icon: Wallet, ready: true },
   { href: "/announcements", label: "사내 공지", icon: Megaphone, ready: true },
   { href: "/notifications", label: "알림 이력", icon: Bell, ready: true },

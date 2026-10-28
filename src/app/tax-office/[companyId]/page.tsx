@@ -3,11 +3,11 @@ import { Suspense } from "react";
 import { TaxOfficeMonthView } from "@/components/tax-office/tax-office-month-view";
 import { currentMonthKst } from "@/lib/dates";
 import { MONTH } from "@/lib/tax/closing";
-import { getMyTaxCompanies, getTaxAgentMonth, signTaxAgentReceipts } from "@/lib/tax-office/queries";
+import { getTaxOfficeClients, getTaxOfficeMonth, signTaxOfficeReceipts } from "@/lib/tax-office/queries";
 
 export const metadata = { title: "세무 자료 · PocketExpense 세무사무소" };
 
-// 세무사: 담당 회사 한 곳의 월별 세무 자료 (D-148). 회사 관리자 세무 마감과 같은 행(승인·지급된 지출만)
+// 세무사무소: 고객사 한 곳의 월별 세무 자료 (D-149). 회사 관리자 세무 마감과 같은 행(승인·지급된 지출만)
 export default function TaxOfficeCompanyPage({ params, searchParams }: PageProps<"/tax-office/[companyId]">) {
   return (
     <Suspense fallback={<div className="h-96 animate-pulse rounded-xl bg-zinc-100" />}>
@@ -27,15 +27,15 @@ function recentMonths(now: string): string[] {
 
 async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[companyId]">, "params" | "searchParams">) {
   const [{ companyId }, sp] = await Promise.all([params, searchParams]);
-  const company = (await getMyTaxCompanies()).find((c) => c.company_id === companyId);
+  const company = (await getTaxOfficeClients()).find((c) => c.company_id === companyId);
   if (!company) notFound();
   const now = currentMonthKst();
   const months = recentMonths(now);
   // 기본은 지난달(보통 지난달을 기장한다)
   const month = typeof sp.month === "string" && MONTH.test(sp.month) && sp.month <= now ? sp.month : months[1];
-  const data = await getTaxAgentMonth(companyId, month);
+  const data = await getTaxOfficeMonth(companyId, month);
   if (!data) notFound();
-  const urls = await signTaxAgentReceipts(companyId, data.rows);
+  const urls = await signTaxOfficeReceipts(companyId, data.rows);
   return (
     <TaxOfficeMonthView
       companyId={companyId}

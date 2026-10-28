@@ -4,9 +4,9 @@ import { refresh } from "next/cache";
 import { messageForDbError } from "@/lib/errors";
 import type { Classification } from "@/lib/expense/categories";
 import { createClient } from "@/lib/supabase/server";
-import { getMyTaxCompanies } from "@/lib/tax-office/queries";
+import { getTaxOfficeClients } from "@/lib/tax-office/queries";
 
-// 세무사: 담당 회사의 계정과목·분류 연결 고치기 (D-148). 추가·수정만(삭제 없음). 회사 범위는 RLS(세무사 연결)가 다시 막는다
+// 세무사무소: 고객사의 계정과목·분류 연결 고치기 (D-149). 추가·수정만(삭제 없음). 회사 범위는 RLS(사무소 배정)가 다시 막는다
 type Result = { error: string | null };
 
 function errorMessage(error: { code?: string; message?: string }): string {
@@ -17,9 +17,9 @@ function errorMessage(error: { code?: string; message?: string }): string {
 }
 
 async function linked(companyId: string): Promise<boolean> {
-  return (await getMyTaxCompanies()).some((c) => c.company_id === companyId);
+  return (await getTaxOfficeClients()).some((c) => c.company_id === companyId);
 }
-const NOT_LINKED = { error: "이 회사의 담당 세무사 연결이 끊겼어요. 화면을 새로고침해 주세요." };
+const NOT_LINKED = { error: "이 고객사를 더 볼 수 없어요(연결 해제·배정 변경). 화면을 새로고침해 주세요." };
 
 export async function taxAgentAddTitleAction(companyId: string, name: string, code: string): Promise<Result> {
   if (!(await linked(companyId))) return NOT_LINKED;

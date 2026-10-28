@@ -57,7 +57,7 @@ describe("destinationAfterLogin", () => {
     expect(destinationAfterLogin(member(), `/workspace/${A}/admin/settings`)).toBe(`/workspace/${A}/employee`);
     expect(destinationAfterLogin(member({ role: "admin" }), `/workspace/${A}/admin/settings`)).toBe(`/workspace/${A}/admin/settings`);
   });
-  it("세무사(D-148): 소속이 없으면 세무사 화면, 회사 멤버이면 원래대로, /tax-office next는 그대로", () => {
+  it("세무사무소(D-149): 소속이 없으면 세무사무소 화면, 회사 멤버이면 원래대로, /tax-office·/tax-join next는 그대로", () => {
     expect(destinationAfterLogin(null, null, { taxAgent: true })).toBe("/tax-office");
     expect(destinationAfterLogin(null, null, { taxAgent: false })).toBe("/onboarding");
     expect(destinationAfterLogin(null, "/onboarding/create-company", { taxAgent: true })).toBe("/onboarding/create-company");
@@ -65,5 +65,6 @@ describe("destinationAfterLogin", () => {
     expect(destinationAfterLogin(member(), "/tax-office")).toBe("/tax-office");
     expect(destinationAfterLogin(null, `/tax-office/${B}?month=2026-09`)).toBe(`/tax-office/${B}?month=2026-09`);
     expect(destinationAfterLogin(null, "/tax-officex")).toBe("/onboarding");
+    expect(destinationAfterLogin(member(), "/tax-join/ABCD2345")).toBe("/tax-join/ABCD2345");
   });
 });

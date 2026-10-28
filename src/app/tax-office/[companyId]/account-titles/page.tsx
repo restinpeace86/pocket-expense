@@ -3,12 +3,12 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AccountTitlesView } from "@/components/admin/account-titles-view";
 import { getAccountTitles } from "@/lib/admin/queries";
-import { getMyTaxCompanies } from "@/lib/tax-office/queries";
+import { getTaxOfficeClients } from "@/lib/tax-office/queries";
 import { taxAgentAddTitleAction, taxAgentSetMappingAction, taxAgentUpdateTitleAction } from "./actions";
 
 export const metadata = { title: "계정과목 · PocketExpense 세무사무소" };
 
-// 세무사: 담당 회사의 계정과목·계정코드·분류 연결 (D-148). 회사 관리자 화면과 같은 화면, 삭제만 없음
+// 세무사무소: 고객사의 계정과목·계정코드·분류 연결 (D-149). 회사 관리자 화면과 같은 화면, 삭제만 없음
 export default function TaxOfficeAccountTitlesPage({ params }: PageProps<"/tax-office/[companyId]/account-titles">) {
   return (
     <Suspense fallback={<div className="h-96 animate-pulse rounded-xl bg-zinc-100" />}>
@@ -19,7 +19,7 @@ export default function TaxOfficeAccountTitlesPage({ params }: PageProps<"/tax-o
 
 async function Content({ params }: Pick<PageProps<"/tax-office/[companyId]/account-titles">, "params">) {
   const { companyId } = await params;
-  const company = (await getMyTaxCompanies()).find((c) => c.company_id === companyId);
+  const company = (await getTaxOfficeClients()).find((c) => c.company_id === companyId);
   if (!company) notFound();
   const { titles, mappings } = await getAccountTitles(companyId);
   return (
