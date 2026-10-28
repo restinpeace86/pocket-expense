@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSavedReconcile } from "@/lib/cards/saved-server";
 import { getTaxOfficeClients, getTaxOfficeMonth, signTaxOfficeReceipts } from "@/lib/tax-office/queries";
 import type { TemplateTarget } from "@/lib/tax-office/template-fields";
+import { listHometax } from "@/lib/hometax/server";
 
 export const metadata = { title: "세무 자료 · PocketExpense 세무사무소" };
 
@@ -39,11 +40,12 @@ async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[co
   const data = await getTaxOfficeMonth(companyId, month);
   if (!data) notFound();
   const supabase = await createClient();
-  const [urls, { data: templates }, cardReconcile, { data: titles }] = await Promise.all([
+  const [urls, { data: templates }, cardReconcile, { data: titles }, hometax] = await Promise.all([
     signTaxOfficeReceipts(companyId, data.rows),
     supabase.rpc("tax_office_template_list"),
     getSavedReconcile(companyId, month),
     supabase.from("account_titles").select("id, name, code").eq("company_id", companyId).order("sort_order"),
+    listHometax(companyId, month),
   ]);
   return (
     <TaxOfficeMonthView
@@ -55,6 +57,7 @@ async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[co
       receiptUrls={Object.fromEntries(urls)}
       cardReconcile={cardReconcile}
       accountTitles={titles ?? []}
+      hometax={hometax}
       templates={(templates ?? []).map((t) => ({ id: t.id, name: t.name, target: t.target as TemplateTarget }))}
     />
   );

@@ -8,6 +8,7 @@ import { getClaimDocs, type ClaimDoc } from "@/lib/tax/claim-docs";
 import { MONTH } from "@/lib/tax/closing";
 import { evidenceFile, type ExportRow } from "@/lib/tax/export-rows";
 import { getTaxOfficeMonth } from "@/lib/tax-office/queries";
+import { hometaxZipFiles } from "@/lib/hometax/server";
 
 // 세무사무소 증빙 묶음(ZIP) (D-153): 회사 세무 마감 ZIP과 같은 구성(장부 + 영수증 + 지출결의서 PDF).
 // 볼 수 있는 고객사인지는 tax_office_month_export가 확인하고, 그 결과의 행·결의서만 운영 키로 읽는다(그 회사 폴더·그 회사 결의서만).
@@ -43,4 +44,11 @@ export async function officeClaimDocsAction(companyId: string, month: string): P
   const client = admin as unknown as NonNullable<Parameters<typeof getActiveForm>[1]>;
   const [docs, form] = await Promise.all([getClaimDocs(companyId, data.rows, { client, withBank: false }), getActiveForm(companyId, client)]);
   return { ok: true, docs, rows: data.rows, layout: form?.layout ?? null };
+}
+
+// 회사가 올린 홈택스 원본(홈택스자료/ 폴더, D-158). 볼 수 있는 고객사인지는 tax_office_month_export·RLS가 확인
+export async function officeHometaxFilesAction(companyId: string, month: string): Promise<Result<{ files: { name: string; url: string | null }[] }>> {
+  if (!MONTH.test(month)) return fail("INVALID_MONTH");
+  if (!(await getTaxOfficeMonth(companyId, month))) return fail("NOT_FOUND");
+  return { ok: true, files: await hometaxZipFiles(companyId, month) };
 }

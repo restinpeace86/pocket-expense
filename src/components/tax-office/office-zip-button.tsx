@@ -2,7 +2,7 @@
 
 import { FolderArchive } from "lucide-react";
 import { useState } from "react";
-import { officeClaimDocsAction, officeEvidenceFilesAction } from "@/app/tax-office/[companyId]/zip-actions";
+import { officeClaimDocsAction, officeEvidenceFilesAction, officeHometaxFilesAction } from "@/app/tax-office/[companyId]/zip-actions";
 import { thrownActionMessage } from "@/lib/action-guard";
 import { evidenceFile, evidenceNo, isOwnCar } from "@/lib/tax/export-rows";
 import { buildTaxZip, saveBlob } from "@/lib/tax/zip-client";
@@ -29,11 +29,14 @@ export function OfficeZipButton({ companyId, companyName, month, closed, disable
         setProgress(null);
         return setMessage({ kind: "error", text: list.error });
       }
+      // 회사가 올린 홈택스 원본도 함께(홈택스자료/, D-158)
+      const hometax = only ? null : await officeHometaxFilesAction(companyId, month).catch(() => null);
       setProgress({ step: "영수증 받는 중", done: 0, total: list.files.length, failed: 0 });
       let pdfNote = "";
-      const { parts, failed, extraAdded } = await buildTaxZip({
+      const { parts, failed, extraAdded, attachmentsFailed } = await buildTaxZip({
         workbook,
         files: list.files,
+        attachments: hometax?.ok && hometax.files.length ? { folder: "홈택스자료", files: hometax.files } : undefined,
         refreshUrls: async (names) => {
           const r = await officeEvidenceFilesAction(companyId, month, names);
           return r.ok ? r.files : [];
@@ -75,10 +78,12 @@ export function OfficeZipButton({ companyId, companyName, month, closed, disable
       parts.forEach((b, i) => saveBlob(b, `${zipBase}${only ? "_누락분" : ""}${parts.length > 1 ? `_${i + 1}` : ""}.zip`));
       setProgress(null);
       setMissing(failed);
+      const htCount = (hometax?.ok ? hometax.files.length : 0) - attachmentsFailed.length;
+      const htNote = attachmentsFailed.length ? ` 홈택스 자료 ${attachmentsFailed.length}개는 넣지 못했어요 — 아래 홈택스 자료에서 따로 받아 주세요.` : "";
       setMessage(
         failed.length
           ? { kind: "error", text: `ZIP을 저장했지만 영수증 ${failed.length}장을 받지 못했어요. [못 받은 영수증 다시 받기]를 눌러 주세요.` }
-          : { kind: pdfNote ? "error" : "ok", text: `저장했어요 (장부 + 영수증 ${list.files.length}장${extraAdded ? " + 지출결의서 PDF" : ""}${parts.length > 1 ? `, ${parts.length}개 파일로 나눔` : ""}).${pdfNote}` },
+          : { kind: pdfNote || htNote ? "error" : "ok", text: `저장했어요 (장부 + 영수증 ${list.files.length}장${extraAdded ? " + 지출결의서 PDF" : ""}${htCount ? ` + 홈택스 자료 ${htCount}개` : ""}${parts.length > 1 ? `, ${parts.length}개 파일로 나눔` : ""}).${pdfNote}${htNote}` },
       );
     } catch {
       setProgress(null);

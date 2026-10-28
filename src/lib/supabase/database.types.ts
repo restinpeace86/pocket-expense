@@ -1586,6 +1586,62 @@ export type Database = {
           },
         ]
       }
+      hometax_uploads: {
+        Row: {
+          company_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          header: Json
+          id: string
+          kind: string
+          memo: string | null
+          month: string
+          preview: Json
+          row_count: number
+          uploaded_by_name: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size: number
+          header?: Json
+          id?: string
+          kind: string
+          memo?: string | null
+          month: string
+          preview?: Json
+          row_count?: number
+          uploaded_by_name?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          header?: Json
+          id?: string
+          kind?: string
+          memo?: string | null
+          month?: string
+          preview?: Json
+          row_count?: number
+          uploaded_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hometax_uploads_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_bank_accounts: {
         Row: {
           account_holder: string
@@ -2530,6 +2586,20 @@ export type Database = {
         Args: { p_ack?: boolean; p_item_id: string }
         Returns: undefined
       }
+      add_hometax_upload: {
+        Args: {
+          p_file_name: string
+          p_file_path: string
+          p_file_size: number
+          p_header: Json
+          p_kind: string
+          p_memo: string
+          p_month: string
+          p_preview: Json
+          p_row_count: number
+        }
+        Returns: string
+      }
       admin_dashboard: { Args: { p_month: string }; Returns: Json }
       app_admin_company_overview: {
         Args: { p_month: string }
@@ -2618,6 +2688,7 @@ export type Database = {
         Returns: Json
       }
       deactivate_member: { Args: { p_member_id: string }; Returns: undefined }
+      delete_hometax_upload: { Args: { p_id: string }; Returns: string }
       delete_tax_office_template: { Args: { p_id: string }; Returns: string }
       detach_item_evidence: { Args: { p_item_id: string }; Returns: Json }
       detach_odometer_photo: {

@@ -11,6 +11,8 @@ import { TemplateDownloads } from "@/components/tax-office/template-downloads";
 import { TaxDownloadLog, type TaxDownloadRow } from "@/components/admin/tax-download-log";
 import { createClient } from "@/lib/supabase/server";
 import type { TemplateTarget } from "@/lib/tax-office/template-fields";
+import { HometaxFiles } from "@/components/tax-office/hometax-files";
+import { listHometax } from "@/lib/hometax/server";
 
 export const metadata = { title: "세무 마감 · PocketExpense" };
 
@@ -47,11 +49,12 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   // 기본은 지난달(보통 지난달을 마감한다)
   const month = typeof sp.month === "string" && MONTH.test(sp.month) && sp.month <= now ? sp.month : months[1];
   const supabase = await createClient();
-  const [res, { data: templates }, { data: downloads }, cardRec] = await Promise.all([
+  const [res, { data: templates }, { data: downloads }, cardRec, hometax] = await Promise.all([
     getTaxMonth(month),
     supabase.rpc("my_company_tax_templates"),
     supabase.from("tax_export_downloads").select("id, actor_kind, actor_name, office_name, month, kind, template_name, row_count, closed, created_at").order("created_at", { ascending: false }).limit(20),
     getSavedReconcile(membership.company_id, month),
+    listHometax(membership.company_id, month),
   ]);
   if (!res.ok) notFound();
   return (
@@ -74,6 +77,8 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
       companyName={membership.company_name}
       isSuper={membership.role === "super_admin"}
     />
+      {/* 홈택스에서 내려받은 자료 올리기 — 세무사무소도 보고 받음(D-158) */}
+      <HometaxFiles key={`ht-${month}`} uploads={hometax} month={month} downloadBase={`/workspace/${id}/admin/export/hometax?id=`} editable />
       {/* 세무 자료 내려받은 기록(D-153) */}
       <TaxDownloadLog rows={(downloads ?? []) as TaxDownloadRow[]} />
     </div>

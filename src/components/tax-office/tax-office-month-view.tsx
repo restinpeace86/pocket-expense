@@ -9,6 +9,8 @@ import { SavedReconcilePanel } from "@/components/admin/card-reconcile-saved";
 import type { SavedReconcile } from "@/lib/cards/saved";
 import { OfficeZipButton } from "./office-zip-button";
 import { TemplateDownloads, type TemplateLink } from "./template-downloads";
+import { HometaxFiles } from "./hometax-files";
+import type { HometaxUpload } from "@/lib/hometax/kinds";
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const th = "whitespace-nowrap border-b border-zinc-200 px-2 py-2 text-left text-xs font-medium text-zinc-500";
@@ -28,6 +30,7 @@ export function TaxOfficeMonthView({
   templates = [],
   cardReconcile = null,
   accountTitles = [],
+  hometax = [],
 }: {
   companyId: string;
   companyName: string;
@@ -38,6 +41,7 @@ export function TaxOfficeMonthView({
   templates?: TemplateLink[];
   cardReconcile?: SavedReconcile | null;
   accountTitles?: { id: string; name: string; code: string | null }[]; // 영수증별 계정과목 조정(D-156)
+  hometax?: HometaxUpload[]; // 회사가 올린 홈택스 자료(D-158)
 }) {
   const locked = data.status === "closed"; // 회사가 마감한 달은 바꿀 수 없음(D-045)
   const accountCell = (r: ExportRow) =>
@@ -123,6 +127,7 @@ export function TaxOfficeMonthView({
       <CardReconcileStatus saved={cardReconcile} month={data.month} />
       {cardReconcile && cardReconcile.issues.length > 0 && <SavedReconcilePanel saved={cardReconcile} editable={false} />}
       <TemplateDownloads templates={templates} hrefFor={(id) => `${base}/template?id=${id}&month=${data.month}`} disabled={rows.length === 0} />
+      <HometaxFiles uploads={hometax} month={data.month} downloadBase={`${base}/hometax?id=`} />
 
       {pendingReviews > 0 && (
         <p className="break-keep rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">

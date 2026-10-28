@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
 // 세무 자료 내려받기 기록 (D-153). 권한 확인은 DB 함수가 한다. 기록이 실패해도 내려받기는 막지 않는다
-export type TaxExportKind = "preview" | "package" | "office_xlsx" | "office_zip" | "template";
+export type TaxExportKind = "preview" | "package" | "office_xlsx" | "office_zip" | "template" | "hometax";
 
 export async function logTaxExport(companyId: string, month: string, kind: TaxExportKind, rowCount: number, closed: boolean, templateName?: string | null) {
   try {
