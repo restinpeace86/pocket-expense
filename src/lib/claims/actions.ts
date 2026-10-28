@@ -96,6 +96,16 @@ export async function overrideAccountTitleAction(
   };
 }
 
+// 관리자: 세무사 확인 요청(D-156) — 세무사무소가 계정과목을 관리하는 회사에서 영수증별 계정과목 대신. 빈 값이면 요청 취소
+export async function requestTaxReviewAction(itemId: string, memo: string): Promise<Result> {
+  if (!(await member())) return fail("NOT_A_MEMBER");
+  if (!UUID.test(itemId)) return fail("NOT_FOUND");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("request_item_tax_review", { p_item_id: itemId, p_memo: memo.slice(0, 200) });
+  if (error) return { ok: false, error: messageForDbError(error) };
+  return { ok: true };
+}
+
 // 영수증 원본 크게 보기 (볼 수 있는 결의서의 항목만 — 저장소 열람 정책이 다시 확인)
 // [영수증 모아보기]: 결의서의 모든 영수증 원본(자차는 경로 요약) 링크를 한 번에. 열람 권한은 RLS(본인·관리자·지정 검토자)가 막는다
 export async function receiptOriginalUrlsAction(claimId: string): Promise<Result<{ urls: Record<string, string | null> }>> {

@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { TaxMonth } from "@/lib/tax/closing";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, statusLabel, supplyVat, type ExportRow } from "@/lib/tax/export-rows";
 import { MonthPicker } from "./month-picker";
+import { OfficeItemAccount } from "./office-item-account";
 import { CardReconcileStatus } from "@/components/admin/card-reconcile-status";
 import { SavedReconcilePanel } from "@/components/admin/card-reconcile-saved";
 import type { SavedReconcile } from "@/lib/cards/saved";
@@ -26,6 +27,7 @@ export function TaxOfficeMonthView({
   receiptUrls,
   templates = [],
   cardReconcile = null,
+  accountTitles = [],
 }: {
   companyId: string;
   companyName: string;
@@ -35,7 +37,30 @@ export function TaxOfficeMonthView({
   receiptUrls: Record<string, string>;
   templates?: TemplateLink[];
   cardReconcile?: SavedReconcile | null;
+  accountTitles?: { id: string; name: string; code: string | null }[]; // 영수증별 계정과목 조정(D-156)
 }) {
+  const locked = data.status === "closed"; // 회사가 마감한 달은 바꿀 수 없음(D-045)
+  const accountCell = (r: ExportRow) =>
+    accountTitles.length ? (
+      <OfficeItemAccount
+        itemId={r.item_id}
+        current={{ id: accountTitles.find((t) => t.name === r.account_title_name)?.id ?? null, name: r.account_title_name, code: r.account_title_code }}
+        overridden={!!r.account_title_overridden}
+        titles={accountTitles}
+        locked={locked}
+        pendingRequest={!!r.tax_review_request && !r.tax_review_resolved_at}
+      />
+    ) : (
+      titleLabel(r)
+    );
+  const reviewNote = (r: ExportRow) =>
+    r.tax_review_request ? (
+      <span className={`mt-1 block break-keep rounded-md px-2 py-1 text-xs ${r.tax_review_resolved_at ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}>
+        {r.tax_review_resolved_at ? "확인 요청 처리됨: " : "회사 확인 요청: "}
+        {r.tax_review_request}
+      </span>
+    ) : null;
+  const pendingReviews = data.rows.filter((r) => r.tax_review_request && !r.tax_review_resolved_at).length;
   const rows = data.rows;
   const totals = rows.reduce(
     (s, r) => {
@@ -99,6 +124,11 @@ export function TaxOfficeMonthView({
       {cardReconcile && cardReconcile.issues.length > 0 && <SavedReconcilePanel saved={cardReconcile} editable={false} />}
       <TemplateDownloads templates={templates} hrefFor={(id) => `${base}/template?id=${id}&month=${data.month}`} disabled={rows.length === 0} />
 
+      {pendingReviews > 0 && (
+        <p className="break-keep rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          회사가 계정과목 확인을 요청한 영수증이 {pendingReviews}건 있어요. 아래 지출 내역에서 계정과목을 바꾸거나, 지금 계정과목이 맞으면 [이대로 확인]을 눌러 주세요.
+        </p>
+      )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label={`${m}월 승인 지출`} value={`${rows.length.toLocaleString("ko-KR")}건`} />
         <Stat label="공급가액" value={won(totals.supply)} />
@@ -139,7 +169,7 @@ export function TaxOfficeMonthView({
             <ul className="divide-y divide-zinc-100 md:hidden">
               {rows.map((r) => {
                 const url = r.receipt_path ? receiptUrls[r.receipt_path] : undefined;
-                const warn = checks(r, !!r.receipt_path || !!r.route_card_path);
+                const warn = checks(r, !!r.receipt_path || !!r.route_card_path).filter((w) => !w.startsWith("세무사 확인 요청"));
                 return (
                   <li key={r.item_id} className="flex flex-col gap-1 px-4 py-3 text-sm">
                     <div className="flex items-start justify-between gap-3">
@@ -147,8 +177,12 @@ export function TaxOfficeMonthView({
                       <span className="whitespace-nowrap font-semibold tabular-nums">{won(r.amount ?? 0)}</span>
                     </div>
                     <p className="text-xs text-zinc-500">
-                      {r.expense_date} · {titleLabel(r)} · {EVIDENCE_LABEL[r.evidence_type ?? ""] ?? "증빙 없음"} · {payLabel(r)}
+                      {r.expense_date} · {EVIDENCE_LABEL[r.evidence_type ?? ""] ?? "증빙 없음"} · {payLabel(r)}
                     </p>
+                    <div className="text-sm">
+                      {accountCell(r)}
+                      {reviewNote(r)}
+                    </div>
                     <p className="text-xs text-zinc-500">
                       {r.member_name} · {statusLabel(r)}
                       {r.merchant_business_number && ` · ${bizNo(r.merchant_business_number)}`}
@@ -186,7 +220,7 @@ export function TaxOfficeMonthView({
                   {rows.map((r) => {
                     const url = r.receipt_path ? receiptUrls[r.receipt_path] : undefined;
                     const { supply, vat } = supplyVat(r);
-                    const warn = checks(r, !!r.receipt_path || !!r.route_card_path);
+                    const warn = checks(r, !!r.receipt_path || !!r.route_card_path).filter((w) => !w.startsWith("세무사 확인 요청"));
                     return (
                       <tr key={r.item_id}>
                         <td className={`${td} tabular-nums text-zinc-500`}>
@@ -204,7 +238,10 @@ export function TaxOfficeMonthView({
                             </a>
                           )}
                         </td>
-                        <td className={td}>{titleLabel(r)}</td>
+                        <td className={td}>
+                          {accountCell(r)}
+                          {reviewNote(r)}
+                        </td>
                         <td className={`${td} whitespace-nowrap`}>{EVIDENCE_LABEL[r.evidence_type ?? ""] ?? "증빙 없음"}</td>
                         <td className={`${td} whitespace-nowrap`}>{payLabel(r)}</td>
                         <td className={num}>{supply.toLocaleString("ko-KR")}</td>

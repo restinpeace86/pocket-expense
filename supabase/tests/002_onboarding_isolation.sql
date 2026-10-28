@@ -4,6 +4,9 @@
 -- =============================================================================
 begin;
 
+-- 이 테스트는 가짜 번호로 회사·사무소를 만든다: 트랜잭션 안에서만 국세청 확인을 끈다(검증 자체는 003 테스트, D-155)
+update private.app_settings set value = 'off' where key = 'business_verify_mode';
+
 insert into auth.users (id, instance_id, aud, role, email) values
   ('a1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_a@test.local'),
   ('b1000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'u_b@test.local'),

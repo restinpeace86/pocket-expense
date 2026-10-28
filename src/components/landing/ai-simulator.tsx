@@ -55,6 +55,9 @@ export function AiSimulator({ startHref }: { startHref: string }) {
   const box = useRef<HTMLDivElement>(null);
   const timers = useRef<number[]>([]);
   const reduced = useRef(false);
+  // 자동 재생 상태: 보는 동안만 재생하고, 끝까지 본 뒤에는 다시 자동으로 틀지 않는다(직접 누르면 다시)
+  const playing = useRef(false);
+  const seen = useRef(false);
 
   const clear = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
@@ -112,15 +115,36 @@ export function AiSimulator({ startHref }: { startHref: string }) {
     if (reduced.current) {
       setStep(2);
       finish(2);
+      seen.current = true;
       return;
     }
+    playing.current = true;
     playStep(0, 0);
     playStep(1, DURATION[0]);
     playStep(2, DURATION[0] + DURATION[1]);
+    later(DURATION[0] + DURATION[1] + DURATION[2], () => {
+      playing.current = false;
+      seen.current = true;
+    });
+  };
+
+  // 끝나기 전에 화면을 벗어나면 멈추고 처음 모습으로(다시 보이면 처음부터 보여 준다)
+  const stopUnseen = () => {
+    clear();
+    playing.current = false;
+    setStep(0);
+    setUploaded(false);
+    setReads(0);
+    setFilled(0);
+    setSent(false);
+    setPhase(0);
   };
 
   const go = (s: Step) => {
     clear();
+    // 단계를 직접 고르면 그때부터는 자동 재생하지 않는다
+    playing.current = false;
+    seen.current = true;
     if (reduced.current) {
       setStep(s);
       finish(s);
@@ -133,14 +157,14 @@ export function AiSimulator({ startHref }: { startHref: string }) {
     reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const el = box.current;
     if (!el) return;
+    // 시연 카드가 화면 가운데(위아래 30%를 뺀 띠)에 들어오면 = 지금 보고 있을 때 시작. 긴 카드(휴대폰)도 같은 기준
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          io.disconnect();
-          play();
-        }
+        const visible = entries.some((e) => e.isIntersecting);
+        if (visible && !playing.current && !seen.current) play();
+        else if (!visible && playing.current) stopUnseen();
       },
-      { threshold: 0.35 },
+      { rootMargin: "-30% 0px -30% 0px", threshold: 0 },
     );
     io.observe(el);
     return () => {

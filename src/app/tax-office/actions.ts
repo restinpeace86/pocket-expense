@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { TEMPLATE_BUCKET } from "@/lib/tax-office/template-workbook";
 
 // 세무사무소 워크스페이스 작업 (D-149). 권한(사무소 관리자)·범위는 DB 함수가 다시 확인한다
-export type OfficeFormState = { error: string | null };
+export type OfficeFormState = { error: string | null; values?: Record<string, string> };
 type Result = { error: string | null };
 const text = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 
@@ -26,7 +26,7 @@ export async function registerTaxOfficeAction(_prev: OfficeFormState, formData: 
     p_terms_agreed: formData.get("terms") === "on",
     p_privacy_agreed: formData.get("privacy") === "on",
   });
-  if (error) return { error: messageForDbError(error) };
+  if (error) return { error: messageForDbError(error), values: { officeName: text(formData, "officeName"), businessNumber: text(formData, "businessNumber"), name: text(formData, "name"), phone: text(formData, "phone") } };
   // 같은 주소(/tax-office)로 돌아가므로 레이아웃(등록 화면 → 워크스페이스)을 새로 그리게 한다
   revalidatePath("/tax-office", "layout");
   redirect("/tax-office");

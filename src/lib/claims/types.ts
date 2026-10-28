@@ -41,6 +41,8 @@ export type DetailItem = {
   account_title_code: string | null;
   account_title_overridden: boolean;
   closed_month: string | null; // 세무 마감된 항목이면 계정과목 조정 불가(D-045)
+  tax_review_request?: string | null; // 세무사 확인 요청(D-156)
+  tax_review_resolved_at?: string | null;
   paid_time: string | null;
   approval_number: string | null;
   merchant_address: string | null;

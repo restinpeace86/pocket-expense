@@ -33,6 +33,9 @@ export type ExportRow = {
   applied_fuel_price?: number | string | null;
   applied_fuel_type?: string | null;
   no_evidence_reason?: string | null;
+  account_title_overridden?: boolean; // 세무사·관리자가 영수증별로 바꾼 계정과목(D-156)
+  tax_review_request?: string | null; // 회사가 남긴 세무사 확인 요청
+  tax_review_resolved_at?: string | null;
   supply_amount: number | null;
   vat_amount: number | null;
   amount: number | null;
@@ -126,6 +129,8 @@ export function checks(r: ExportRow, hasFile: boolean): string[] {
   if (!r.merchant_business_number && r.category !== "condolence") out.push("사업자번호 없음");
   if (r.supply_amount == null || r.vat_amount == null) out.push("부가세 미구분");
   // 증빙 없음은 금액 기준으로 가산세 확인 여부를 함께(D-153). 증빙 없음이면 '영수증 파일 없음'은 겹치므로 빼고 이걸로
+  // 회사의 세무사 확인 요청(D-156) — 처리 전이면 맨 앞에
+  if (r.tax_review_request && !r.tax_review_resolved_at) out.unshift(`세무사 확인 요청: ${r.tax_review_request}`);
   const noEv = noEvidenceCheck(r.evidence_kind, r.amount);
   if (noEv) out.push(noEv);
   else if (!hasFile) out.push("영수증 파일 없음");

@@ -32,12 +32,16 @@ async function Detail({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   const supabase = await createClient();
   const filters = parseClaimFilters(sp);
   const query = filterQuery(filters);
-  const [detail, { list, pendingCount }, { data: titles }, options] = await Promise.all([
+  const [detail, { list, pendingCount }, { data: titles }, options, { data: office }] = await Promise.all([
     getClaimDetail(membership.company_id, claimId),
     getAdminClaimList(membership.company_id, tab, filters),
     supabase.from("account_titles").select("id, name, code").eq("company_id", membership.company_id).order("sort_order"),
     getFilterOptions(membership.company_id),
+    supabase.rpc("my_company_tax_office"),
   ]);
+  // 등록된 세무사무소와 연결돼 있으면 영수증별 계정과목은 사무소가 정한다(D-156)
+  const o = office as { registered?: boolean; registered_name?: string | null } | null;
+  const taxOffice = o?.registered ? (o.registered_name ?? "세무사무소") : null;
   // 작성 중인 결의서는 관리자 화면에서 열지 않는다
   if (!detail || detail.claim.status === "draft") notFound();
   const { can, reason } = canActOnClaim(detail, membership);
@@ -62,6 +66,7 @@ async function Detail({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
         timeline={<ApprovalTimeline detail={detail} />}
         accountTitles={titles ?? []}
         next={nextFor(nextList)}
+        taxOffice={taxOffice}
       />
     </div>
   );

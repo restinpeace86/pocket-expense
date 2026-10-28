@@ -5,7 +5,7 @@ import { recordBusinessCheck } from "@/lib/business/record";
 import { messageForDbError } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 
-export type FormState = { error: string | null };
+export type FormState = { error: string | null; values?: Record<string, string> };
 
 const text = (formData: FormData, key: string) => String(formData.get(key) ?? "").trim();
 const optional = (formData: FormData, key: string) => text(formData, key) || null;
@@ -29,7 +29,11 @@ export async function createCompanyAction(_prev: FormState, formData: FormData):
     p_privacy_agreed: formData.get("privacy") === "on",
     p_terms_agreed: formData.get("terms") === "on",
   });
-  if (error || !companyId) return { error: messageForDbError(error) };
+  if (error || !companyId) {
+    // 사업자번호 확인 등으로 막혀도 적은 내용은 남긴다(D-155)
+    const keep = ["companyName", "businessNumber", "name", "phone", "position"];
+    return { error: messageForDbError(error), values: Object.fromEntries(keep.map((k) => [k, text(formData, k)])) };
+  }
   // 다음 단계: 추천인·추천 회사(선택, 건너뛰면 관리자 홈) (D-147)
   redirect("/onboarding/referral");
 }

@@ -39,7 +39,12 @@ async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[co
   const data = await getTaxOfficeMonth(companyId, month);
   if (!data) notFound();
   const supabase = await createClient();
-  const [urls, { data: templates }, cardReconcile] = await Promise.all([signTaxOfficeReceipts(companyId, data.rows), supabase.rpc("tax_office_template_list"), getSavedReconcile(companyId, month)]);
+  const [urls, { data: templates }, cardReconcile, { data: titles }] = await Promise.all([
+    signTaxOfficeReceipts(companyId, data.rows),
+    supabase.rpc("tax_office_template_list"),
+    getSavedReconcile(companyId, month),
+    supabase.from("account_titles").select("id, name, code").eq("company_id", companyId).order("sort_order"),
+  ]);
   return (
     <TaxOfficeMonthView
       companyId={companyId}
@@ -49,6 +54,7 @@ async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[co
       months={months.includes(month) ? months : [month, ...months]}
       receiptUrls={Object.fromEntries(urls)}
       cardReconcile={cardReconcile}
+      accountTitles={titles ?? []}
       templates={(templates ?? []).map((t) => ({ id: t.id, name: t.name, target: t.target as TemplateTarget }))}
     />
   );

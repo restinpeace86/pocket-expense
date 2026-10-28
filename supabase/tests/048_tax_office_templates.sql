@@ -4,6 +4,9 @@
 -- =============================================================================
 begin;
 
+-- 이 테스트는 가짜 번호로 회사·사무소를 만든다: 트랜잭션 안에서만 국세청 확인을 끈다(검증 자체는 003 테스트, D-155)
+update private.app_settings set value = 'off' where key = 'business_verify_mode';
+
 create function public._t_raises48(p_sql text, p_code text, p_label text)
 returns void language plpgsql as $$
 begin

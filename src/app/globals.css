@@ -218,6 +218,15 @@ body {
   opacity: 0;
   animation: landing-bubble-in 0.6s ease-out forwards;
 }
+/* 히어로 목업은 화면에 보일 때만 재생(hero-mockup.tsx가 data-playing을 바꾼다). 멈춘 동안은 지연 시간도 흐르지 않는다 */
+.landing-anim .landing-row,
+.landing-anim .landing-bubble {
+  animation-play-state: paused;
+}
+.landing-anim[data-playing="true"] .landing-row,
+.landing-anim[data-playing="true"] .landing-bubble {
+  animation-play-state: running;
+}
 /* AI 영수증 분석 미리보기(ai-simulator.tsx): 스캔 줄, 업로드 막대 */
 @keyframes pe-scan {
   0% { top: -2.5rem; }

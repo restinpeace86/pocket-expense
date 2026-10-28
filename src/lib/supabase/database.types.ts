@@ -1279,6 +1279,10 @@ export type Database = {
           start_lng: number | null
           start_location: string | null
           supply_amount: number | null
+          tax_review_request: string | null
+          tax_review_requested_at: string | null
+          tax_review_requested_by: string | null
+          tax_review_resolved_at: string | null
           trip_end_date: string | null
           trip_start_date: string | null
           trip_type: Database["public"]["Enums"]["trip_type"] | null
@@ -1353,6 +1357,10 @@ export type Database = {
           start_lng?: number | null
           start_location?: string | null
           supply_amount?: number | null
+          tax_review_request?: string | null
+          tax_review_requested_at?: string | null
+          tax_review_requested_by?: string | null
+          tax_review_resolved_at?: string | null
           trip_end_date?: string | null
           trip_start_date?: string | null
           trip_type?: Database["public"]["Enums"]["trip_type"] | null
@@ -1427,6 +1435,10 @@ export type Database = {
           start_lng?: number | null
           start_location?: string | null
           supply_amount?: number | null
+          tax_review_request?: string | null
+          tax_review_requested_at?: string | null
+          tax_review_requested_by?: string | null
+          tax_review_resolved_at?: string | null
           trip_end_date?: string | null
           trip_start_date?: string | null
           trip_type?: Database["public"]["Enums"]["trip_type"] | null
@@ -2736,6 +2748,10 @@ export type Database = {
         Args: { p_month: string; p_reason: string }
         Returns: undefined
       }
+      request_item_tax_review: {
+        Args: { p_item_id: string; p_memo: string }
+        Returns: undefined
+      }
       save_approval_line: {
         Args: { p_approver_ids: string[]; p_department_id: string }
         Returns: string
@@ -2900,6 +2916,10 @@ export type Database = {
       }
       tax_office_month_export: {
         Args: { p_company_id: string; p_month: string }
+        Returns: Json
+      }
+      tax_office_override_item_account_title: {
+        Args: { p_account_title_id: string; p_item_id: string }
         Returns: Json
       }
       tax_office_template_list: {

@@ -28,6 +28,7 @@ export function AdminClaimDetail({
   reviewer = false,
   accountTitles,
   next = null,
+  taxOffice = null,
 }: {
   detail: ClaimDetail;
   canAct: boolean;
@@ -38,6 +39,7 @@ export function AdminClaimDetail({
   reviewer?: boolean; // 사전 검토자: [검토 승인], 마감 요약·계정과목 없음, 직원 화면 틀(왼쪽 메뉴 없음)
   accountTitles?: AccountTitleOption[]; // 관리자: 항목별 계정과목 조정 (T11-3)
   next?: { href: string; count: number } | null; // 처리 뒤 [다음 결재 n건 보기] (approver.md ① 완료 화면)
+  taxOffice?: string | null; // 세무사무소가 계정과목을 관리하면 영수증별 조정 대신 세무사 확인 요청(D-156)
 }) {
   const { claim, owner } = detail;
   const router = useRouter();
@@ -161,8 +163,9 @@ export function AdminClaimDetail({
           selected={flagged}
           onToggle={(id) => setFlagged((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]))}
           accountTitles={reviewer ? undefined : accountTitles}
-          onAccountChange={reviewer || !accountTitles ? undefined : changeAccount}
+          onAccountChange={reviewer || !accountTitles || taxOffice ? undefined : changeAccount}
           accountBusyId={accountBusy}
+          taxOffice={reviewer ? null : taxOffice}
         />
       </section>
 

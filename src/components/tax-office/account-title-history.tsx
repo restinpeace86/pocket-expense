@@ -4,7 +4,7 @@ import { classificationLabel, type Classification } from "@/lib/expense/categori
 // 세무사무소가 바꾼 계정과목·분류 연결 이력 (D-152) — 회사 계정과목 화면·사무소 계정과목 화면 공용
 export type AccountTitleChange = {
   id: string;
-  entity: "title" | "mapping";
+  entity: "title" | "mapping" | "item";
   action: "insert" | "update" | "delete";
   detail: Record<string, string | null>;
   actor_name: string | null;
@@ -16,6 +16,10 @@ const code = (c: string | null | undefined) => (c ? `코드 ${c}` : "코드 없�
 
 export function describeChange(c: AccountTitleChange): string {
   const d = c.detail;
+  if (c.entity === "item") {
+    const amt = d.amount ? ` ${Number(d.amount).toLocaleString("ko-KR")}원` : "";
+    return `영수증 ${d.expense_date ?? ""} ${d.merchant ?? ""}${amt}: ${d.old_title ?? "(없음)"} → ${d.new_title ?? "(없음)"}${d.reverted ? " (분류 기준으로 되돌림)" : ""}`;
+  }
   if (c.entity === "mapping") {
     const label = d.category
       ? classificationLabel({ category: d.category, tripType: d.trip_type ?? null, purchaseType: d.purchase_type ?? null, condolenceTarget: d.condolence_target ?? null } as Classification)

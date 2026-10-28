@@ -39,11 +39,12 @@ export function CreateCompanyForm() {
     <form action={formAction} className="flex flex-col gap-5">
       <h2 className="text-lg font-semibold">회사 정보</h2>
       <Field label="회사명" required>
-        <input name="companyName" required maxLength={100} className={inputClass} placeholder="예: 포켓컴퍼니" />
+        <input name="companyName" defaultValue={state.values?.companyName} required maxLength={100} className={inputClass} placeholder="예: 포켓컴퍼니" />
       </Field>
       <Field label="사업자등록번호" required hint="숫자 10자리 (하이픈은 있어도 없어도 됩니다)">
         <input
           name="businessNumber"
+          defaultValue={state.values?.businessNumber}
           required
           inputMode="numeric"
           pattern="[0-9]{3}-?[0-9]{2}-?[0-9]{5}"
@@ -84,10 +85,10 @@ export function CreateCompanyForm() {
 
       <h2 className="pt-2 text-lg font-semibold">대표자 / 관리자 정보</h2>
       <Field label="이름" required>
-        <input name="name" required maxLength={50} className={inputClass} autoComplete="name" />
+        <input name="name" defaultValue={state.values?.name} required maxLength={50} className={inputClass} autoComplete="name" />
       </Field>
       <Field label="휴대폰 번호" required hint="결재 요청 알림톡을 받을 번호입니다">
-        <input name="phone" required inputMode="tel" className={inputClass} placeholder="010-1234-5678" autoComplete="tel" />
+        <input name="phone" defaultValue={state.values?.phone} required inputMode="tel" className={inputClass} placeholder="010-1234-5678" autoComplete="tel" />
       </Field>
       <Field label="본인 부서" required hint="대표·임원처럼 부서에 속하지 않으면 '부서 없음'을 고르세요">
         <select
@@ -108,7 +109,7 @@ export function CreateCompanyForm() {
         </select>
       </Field>
       <Field label="직급" hint="선택">
-        <input name="position" maxLength={50} className={inputClass} placeholder="예: 대표" />
+        <input name="position" defaultValue={state.values?.position} maxLength={50} className={inputClass} placeholder="예: 대표" />
       </Field>
 
       <ConsentSection />

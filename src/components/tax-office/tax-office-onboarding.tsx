@@ -53,16 +53,16 @@ export function TaxOfficeOnboarding({ email, requests }: { email: string | null;
         <form action={formAction} className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold">세무사무소 등록 (대표·관리자)</h2>
           <Field label="세무사무소명" required>
-            <input name="officeName" defaultValue={suggested} required maxLength={100} className={inputClass} placeholder="예: OO세무사무소" />
+            <input name="officeName" defaultValue={state.values?.officeName ?? suggested} required maxLength={100} className={inputClass} placeholder="예: OO세무사무소" />
           </Field>
           <Field label="사업자등록번호" required hint="숫자 10자리 (하이픈은 있어도 없어도 됩니다)">
-            <input name="businessNumber" required inputMode="numeric" pattern="[0-9]{3}-?[0-9]{2}-?[0-9]{5}" title="사업자등록번호 10자리를 입력해 주세요" className={inputClass} placeholder="123-45-67890" />
+            <input name="businessNumber" defaultValue={state.values?.businessNumber} required inputMode="numeric" pattern="[0-9]{3}-?[0-9]{2}-?[0-9]{5}" title="사업자등록번호 10자리를 입력해 주세요" className={inputClass} placeholder="123-45-67890" />
           </Field>
           <Field label="내 이름" required>
-            <input name="name" required maxLength={50} className={inputClass} autoComplete="name" placeholder="예: 홍길동 세무사" />
+            <input name="name" defaultValue={state.values?.name} required maxLength={50} className={inputClass} autoComplete="name" placeholder="예: 홍길동 세무사" />
           </Field>
           <Field label="휴대폰 번호" hint="선택">
-            <input name="phone" inputMode="tel" className={inputClass} autoComplete="tel" placeholder="010-1234-5678" />
+            <input name="phone" defaultValue={state.values?.phone} inputMode="tel" className={inputClass} autoComplete="tel" placeholder="010-1234-5678" />
           </Field>
           <ConsentSection />
           <FormError message={state.error} />

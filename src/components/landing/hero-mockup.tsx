@@ -1,4 +1,9 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
 // 히어로 목업 애니메이션 (spec/screens/landing-page.md §3). 소개 동영상이 준비되면 교체할 수 있다.
+// 화면에 들어왔을 때만 재생하고, 벗어나면 멈췄다가 다시 보이면 이어서 재생한다(PC·휴대폰 모두 — 휴대폰은 목업이 첫 화면 아래에 있음)
 // 영수증 여러 장 촬영 → 결의서 표 자동 입력 → 대표에게 카카오톡 알림톡 결재 요청 → [결재하러 가기]로 연 결재 화면에서 [전체 승인]
 // 알림톡은 승인하라는 알림이고, 승인은 열린 결재 화면에서 한다(D-013). 알림톡은 오픈 전에 연결한다는 전제(D-142)
 const ROWS = [
@@ -8,8 +13,20 @@ const ROWS = [
 ];
 
 export function HeroMockup() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setPlaying(true);
+      return;
+    }
+    const io = new IntersectionObserver((entries) => setPlaying(entries.some((e) => e.isIntersecting)), { rootMargin: "-20% 0px -20% 0px", threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   return (
-    <div className="relative mx-auto w-full max-w-sm lg:mb-48" aria-hidden>
+    <div ref={ref} data-playing={playing ? "true" : "false"} className="landing-anim relative mx-auto w-full max-w-sm lg:mb-48" aria-hidden>
       <div className="rounded-[2rem] border border-white/15 bg-zinc-950/80 p-4 shadow-2xl shadow-blue-900/40 backdrop-blur">
         <div className="rounded-2xl bg-white p-4 text-zinc-900">
           <p className="text-xs text-zinc-500">지출결의서</p>

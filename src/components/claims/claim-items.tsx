@@ -1,5 +1,6 @@
 "use client";
 
+import { TaxReviewCell } from "./tax-review-cell";
 import { EVIDENCE_KIND_LABEL, effectiveEvidenceKind } from "@/lib/receipts/evidence-kind";
 import { AlertTriangle, Car, ChevronLeft, ChevronRight, FileText, ImageIcon, Loader2, PenLine, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -244,7 +245,18 @@ function ReceiptPanel({ items, index, cards, onIndex, onClose, showAccount }: { 
 }
 
 // 관리자만 계정과목을 보고 바꾼다 (account-titles.md §4: 직원·결재자 화면에는 보여 주지 않음)
-function AccountCell({ i, titles, onChange, busy }: { i: DetailItem; titles: AccountTitleOption[]; onChange?: (itemId: string, titleId: string | null) => void; busy: boolean }) {
+function AccountCell({ i, titles, onChange, busy, taxOffice }: { i: DetailItem; titles: AccountTitleOption[]; onChange?: (itemId: string, titleId: string | null) => void; busy: boolean; taxOffice?: string | null }) {
+  if (taxOffice)
+    return (
+      <TaxReviewCell
+        itemId={i.id}
+        accountName={i.account_title_name}
+        overridden={i.account_title_overridden}
+        request={i.tax_review_request ?? null}
+        resolved={!!i.tax_review_resolved_at}
+        officeName={taxOffice}
+      />
+    );
   if (!onChange) return <span className="text-xs text-zinc-500">{i.account_title_name ?? "계정과목 미지정"}</span>;
   return (
     <span className="mt-1 flex flex-wrap items-center gap-1">
@@ -281,6 +293,7 @@ export function ClaimItems({
   accountTitles,
   onAccountChange,
   accountBusyId,
+  taxOffice = null,
 }: {
   items: DetailItem[];
   cards: { id: string; nickname: string; last4: string }[];
@@ -291,6 +304,7 @@ export function ClaimItems({
   accountTitles?: AccountTitleOption[]; // 넘기면 관리자 화면: 계정과목 표시·조정
   onAccountChange?: (itemId: string, titleId: string | null) => void;
   accountBusyId?: string | null;
+  taxOffice?: string | null; // 세무사무소가 계정과목을 관리하면 그 사무소 이름(D-156)
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const showAccount = !!accountTitles;
@@ -336,7 +350,7 @@ export function ClaimItems({
                   <td className="whitespace-nowrap border-b border-zinc-100 px-2 py-2 text-right align-top font-semibold tabular-nums">{i.amount !== null ? formatWon(i.amount) : "-"}</td>
                   <td className="border-b border-zinc-100 px-2 py-2 align-top">
                     <span className="block">{classLabel(i)}</span>
-                    {showAccount && <AccountCell i={i} titles={accountTitles} onChange={onAccountChange} busy={accountBusyId === i.id} />}
+                    {showAccount && <AccountCell i={i} titles={accountTitles} onChange={onAccountChange} busy={accountBusyId === i.id} taxOffice={taxOffice} />}
                   </td>
                   <td className="border-b border-zinc-100 px-2 py-2 align-top">
                     <span className="block">{note.text}</span>
@@ -365,7 +379,7 @@ export function ClaimItems({
                 <p className="text-xs text-zinc-500">
                   {[i.expense_date?.replaceAll("-", "."), classLabel(i)].filter(Boolean).join(" · ")}
                 </p>
-                {showAccount && <AccountCell i={i} titles={accountTitles} onChange={onAccountChange} busy={accountBusyId === i.id} />}
+                {showAccount && <AccountCell i={i} titles={accountTitles} onChange={onAccountChange} busy={accountBusyId === i.id} taxOffice={taxOffice} />}
                 <div className="mt-1 flex flex-wrap items-center gap-1">{paymentBadge(i, cards)}</div>
                 <p className="mt-1 text-xs text-zinc-700">
                   {note.text}
