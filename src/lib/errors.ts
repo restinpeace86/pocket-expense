@@ -34,7 +34,7 @@ const MESSAGES: Record<string, string> = {
   ALREADY_TAX_OFFICE_MEMBER: "이미 세무사무소에 소속된 계정이에요. 한 계정은 한 세무사무소에만 속할 수 있어요.",
   NOT_A_TAX_OFFICE_MEMBER: "세무사무소 구성원이 아니거나 이용이 중지된 계정이에요. 화면을 새로고침해 주세요.",
   EMAIL_NOT_VERIFIED: "이메일이 확인된 계정(구글·카카오)으로 로그인해 주세요.",
-  ADMIN_MUST_TRANSFER: "사무소 관리자는 바로 나갈 수 없어요. 먼저 다른 세무사에게 관리자를 넘기거나, 사무소를 닫아 주세요.",
+  ADMIN_MUST_TRANSFER: "사무소 관리자는 바로 탈퇴할 수 없어요. 먼저 [사무소 관리자 바꾸기]로 다른 세무사에게 맡기거나, [세무사무소 삭제]를 해 주세요.",
   CONFIRM_NAME_MISMATCH: "입력한 사무소명이 달라요. 사무소명을 그대로 입력해 주세요.",
   INVALID_TEMPLATE_NAME: "양식 이름을 1~50자로 입력해 주세요.",
   INVALID_TEMPLATE: "양식 칸 설정을 확인해 주세요. 화면을 새로고침한 뒤 다시 시도해 주세요.",

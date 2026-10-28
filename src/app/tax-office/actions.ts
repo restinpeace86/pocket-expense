@@ -81,7 +81,7 @@ export async function releaseClientAction(companyId: string): Promise<Result> {
   return { error: null };
 }
 
-// 관리자 넘기기: 고른 세무사가 관리자, 나는 세무사
+// 사무소 관리자 바꾸기: 고른 세무사가 관리자, 나는 세무사
 export async function transferAdminAction(memberId: string): Promise<Result> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("transfer_tax_office_admin", { p_member_id: memberId });
@@ -90,7 +90,7 @@ export async function transferAdminAction(memberId: string): Promise<Result> {
   return { error: null };
 }
 
-// 사무소 나가기(세무사)
+// 사무소에서 탈퇴(퇴사, 세무사)
 export async function leaveOfficeAction(): Promise<Result> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("leave_tax_office");
@@ -99,7 +99,7 @@ export async function leaveOfficeAction(): Promise<Result> {
   redirect("/tax-office");
 }
 
-// 사무소 닫기(관리자, 사무소명 확인): 고객사는 '가입 대기'로, 구성원·양식은 지움 → 양식 파일도 보관함에서 지운다
+// 세무사무소 삭제(관리자, 사무소명 확인): 고객사는 '가입 대기'로, 구성원·양식은 지움 → 양식 파일도 보관함에서 지운다
 export async function closeOfficeAction(confirmName: string): Promise<Result> {
   const supabase = await createClient();
   const { data: paths, error } = await supabase.rpc("close_tax_office", { p_confirm_name: confirmName });

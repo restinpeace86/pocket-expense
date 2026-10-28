@@ -7,7 +7,7 @@ import { getMyTaxOffice, getTaxOfficeClients, isActiveMember } from "@/lib/tax-o
 
 export const metadata = { title: "사무소 관리 · PocketExpense 세무사무소" };
 
-// 사무소 관리 (D-149, D-152): 관리자 = 초대·구성원(이용 중지·관리자 넘기기)·사무소 닫기 / 세무사 = 내 사무소(나가기)
+// 사무소 관리 (D-149, D-152): 관리자 = 초대·구성원(이용 중지·사무소 관리자 바꾸기)·세무사무소 삭제 / 세무사 = 내 사무소(탈퇴)
 export default function TaxOfficeManagePage() {
   return (
     <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-zinc-100" />}>
