@@ -1,10 +1,10 @@
-// 카드사 내역 파일 → 셀 표 (브라우저 전용, D-111). xlsx / CSV(UTF-8·EUC-KR) / 표로 된 .xls(HTML). 예전 바이너리 .xls는 다시 저장을 안내.
+// 카드사 내역 파일 → 셀 표 (브라우저 전용, D-111). xlsx / CSV(UTF-8·EUC-KR) / 표로 된 .xls(HTML) / 예전 바이너리 .xls(SheetJS, D-154).
 import type { Cell } from "./statement";
 
 export async function readStatementFile(file: File): Promise<{ table: Cell[][] } | { error: string }> {
   const buf = new Uint8Array(await file.arrayBuffer());
   if (buf.length === 0) return { error: "빈 파일이에요." };
-  if (buf[0] === 0xd0 && buf[1] === 0xcf) return { error: "예전 엑셀(.xls) 파일이라 읽을 수 없어요. 엑셀에서 열어 [다른 이름으로 저장] → .xlsx 또는 .csv로 저장한 뒤 올려 주세요." };
+  if (buf[0] === 0xd0 && buf[1] === 0xcf) return readXls(buf); // 예전 엑셀(.xls, Excel 97-2003) — SheetJS(D-154)
   if (buf[0] === 0x50 && buf[1] === 0x4b) return readXlsx(buf);
   const text = decode(buf);
   if (/<table/i.test(text)) return readHtml(text);
@@ -30,6 +30,20 @@ async function readXlsx(buf: Uint8Array): Promise<{ table: Cell[][] } | { error:
     return { table: Array.from(table, (r) => r ?? []) };
   } catch {
     return { error: "엑셀 파일을 읽지 못했어요. .csv로 저장해 올려 보세요." };
+  }
+}
+
+async function readXls(buf: Uint8Array): Promise<{ table: Cell[][] } | { error: string }> {
+  try {
+    const XLSX = await import("xlsx");
+    const wb = XLSX.read(buf, { type: "array", cellDates: true });
+    // 줄이 가장 많은 시트
+    const sheets = wb.SheetNames.map((n) => XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[n], { header: 1, raw: true, defval: null }));
+    const table = sheets.sort((a, b) => b.length - a.length)[0];
+    if (!table) return { error: "시트를 찾지 못했어요." };
+    return { table: table.map((r) => (r ?? []).map((c) => cellValue(c))) };
+  } catch {
+    return { error: "엑셀(.xls) 파일을 읽지 못했어요. .xlsx나 .csv로 저장해 올려 보세요." };
   }
 }
 

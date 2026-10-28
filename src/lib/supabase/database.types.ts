@@ -418,6 +418,144 @@ export type Database = {
         }
         Relationships: []
       }
+      card_reconcile_issues: {
+        Row: {
+          amount: number | null
+          claim_title: string | null
+          company_id: string
+          expense_date: string | null
+          fingerprint: string
+          id: string
+          item_id: string | null
+          kind: string
+          last4: string | null
+          member_name: string | null
+          memo: string | null
+          merchant: string | null
+          reconciliation_id: string
+          resolved_at: string | null
+          resolved_by_name: string | null
+          status: string
+        }
+        Insert: {
+          amount?: number | null
+          claim_title?: string | null
+          company_id: string
+          expense_date?: string | null
+          fingerprint: string
+          id?: string
+          item_id?: string | null
+          kind: string
+          last4?: string | null
+          member_name?: string | null
+          memo?: string | null
+          merchant?: string | null
+          reconciliation_id: string
+          resolved_at?: string | null
+          resolved_by_name?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number | null
+          claim_title?: string | null
+          company_id?: string
+          expense_date?: string | null
+          fingerprint?: string
+          id?: string
+          item_id?: string | null
+          kind?: string
+          last4?: string | null
+          member_name?: string | null
+          memo?: string | null
+          merchant?: string | null
+          reconciliation_id?: string
+          resolved_at?: string | null
+          resolved_by_name?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_reconcile_issues_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_reconcile_issues_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "expense_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_reconcile_issues_reconciliation_id_fkey"
+            columns: ["reconciliation_id"]
+            isOneToOne: false
+            referencedRelation: "card_reconciliations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      card_reconciliations: {
+        Row: {
+          cancelled: number
+          company_id: string
+          created_at: string
+          created_by_name: string | null
+          extra: number
+          file_name: string | null
+          id: string
+          matched: number
+          missing: number
+          month: string
+          period_from: string | null
+          period_to: string | null
+          personal: number
+          updated_at: string
+        }
+        Insert: {
+          cancelled?: number
+          company_id: string
+          created_at?: string
+          created_by_name?: string | null
+          extra?: number
+          file_name?: string | null
+          id?: string
+          matched?: number
+          missing?: number
+          month: string
+          period_from?: string | null
+          period_to?: string | null
+          personal?: number
+          updated_at?: string
+        }
+        Update: {
+          cancelled?: number
+          company_id?: string
+          created_at?: string
+          created_by_name?: string | null
+          extra?: number
+          file_name?: string | null
+          id?: string
+          matched?: number
+          missing?: number
+          month?: string
+          period_from?: string | null
+          period_to?: string | null
+          personal?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_reconciliations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claim_approvals: {
         Row: {
           acted_at: string | null
@@ -2602,6 +2740,17 @@ export type Database = {
         Args: { p_approver_ids: string[]; p_department_id: string }
         Returns: string
       }
+      save_card_reconciliation: {
+        Args: {
+          p_counts: Json
+          p_file_name: string
+          p_from: string
+          p_issues: Json
+          p_month: string
+          p_to: string
+        }
+        Returns: string
+      }
       save_company_referral: {
         Args: {
           p_kind: string
@@ -2638,6 +2787,10 @@ export type Database = {
           id: string
           name: string
         }[]
+      }
+      set_card_issue_status: {
+        Args: { p_issue_id: string; p_memo: string; p_status: string }
+        Returns: Json
       }
       set_claim_category: {
         Args: {

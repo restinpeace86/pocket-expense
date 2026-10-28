@@ -3,6 +3,9 @@ import Link from "next/link";
 import type { TaxMonth } from "@/lib/tax/closing";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, statusLabel, supplyVat, type ExportRow } from "@/lib/tax/export-rows";
 import { MonthPicker } from "./month-picker";
+import { CardReconcileStatus } from "@/components/admin/card-reconcile-status";
+import { SavedReconcilePanel } from "@/components/admin/card-reconcile-saved";
+import type { SavedReconcile } from "@/lib/cards/saved";
 import { OfficeZipButton } from "./office-zip-button";
 import { TemplateDownloads, type TemplateLink } from "./template-downloads";
 
@@ -22,6 +25,7 @@ export function TaxOfficeMonthView({
   months,
   receiptUrls,
   templates = [],
+  cardReconcile = null,
 }: {
   companyId: string;
   companyName: string;
@@ -30,6 +34,7 @@ export function TaxOfficeMonthView({
   months: string[];
   receiptUrls: Record<string, string>;
   templates?: TemplateLink[];
+  cardReconcile?: SavedReconcile | null;
 }) {
   const rows = data.rows;
   const totals = rows.reduce(
@@ -89,6 +94,9 @@ export function TaxOfficeMonthView({
         </a>
         </div>
       </section>
+      {/* 회사가 한 법인카드 대조 결과와 처리(D-154) — 보기만 */}
+      <CardReconcileStatus saved={cardReconcile} month={data.month} />
+      {cardReconcile && cardReconcile.issues.length > 0 && <SavedReconcilePanel saved={cardReconcile} editable={false} />}
       <TemplateDownloads templates={templates} hrefFor={(id) => `${base}/template?id=${id}&month=${data.month}`} disabled={rows.length === 0} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

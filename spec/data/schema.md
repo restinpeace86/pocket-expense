@@ -151,6 +151,11 @@
 | closed | boolean | 받을 때 회사 마감 여부 |
 - 쓰기는 `log_tax_export`(그 회사 관리자 또는 그 회사를 볼 수 있는 사무소 구성원만), 읽기는 회사 관리자만.
 
+### 2.1a9 `card_reconciliations`·`card_reconcile_issues` — 법인카드 대조 결과 (D-154, migration 082)
+- `card_reconciliations`: 회사·달(YYYY-MM) unique, 파일명·기간·짝 맞음/사비로 올림/결의서 없음/내역에 없음/취소 건수, 저장한 사람·시각. 카드 내역 원본은 저장하지 않음.
+- `card_reconcile_issues`: 맞지 않는 건 — kind(missing·personal·extra), fingerprint(다시 대조해도 같은 건을 찾는 지문, 대조 안 unique), 사용일·가맹점·금액·카드 끝 4자리·연결 영수증(같은 회사만)·결의서 제목·직원 이름, status(open·claim_requested·personal_use·fixed·refunded·tax_review — 구분별 허용 값 제약), memo(세무사 확인 필요는 필수), 처리한 사람·시각.
+- RLS 강제. 읽기: 회사 관리자·그 회사를 보는 세무사무소 구성원. 쓰기: `save_card_reconciliation`(관리자, 같은 달 덮어쓰기 + 처리 유지)·`set_card_issue_status`(관리자).
+
 ### 2.1a4 `company_referrals` — 추천 회사·추천인 (D-147, migration 074, 회사당 1건)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|

@@ -1,6 +1,7 @@
 import "server-only";
 import { EVIDENCE_KIND_LABEL, type EvidenceKind } from "@/lib/receipts/evidence-kind";
 import ExcelJS from "exceljs";
+import { KIND_LABEL as CARD_KIND_LABEL, STATUS_LABEL as CARD_STATUS_LABEL, type SavedReconcile } from "@/lib/cards/saved";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, evidenceFile, evidenceNo, isOwnCar, settlement, statusLabel, supplyVat, upload적요, type ExportRow } from "./export-rows";
 
 // 세무 마감 엑셀 (tax-export.md §3.2~3.4): 시트1 지출내역(전체 데이터) / 시트2 요약 / 시트3·4 세무 업로드 — 법인카드·개인(사비) 따로(세무사무소 답변 2026-10-27, D-136)
@@ -181,7 +182,42 @@ function addSummary(ws: ExcelJS.Worksheet, rows: ExportRow[], title: string) {
   for (const c of byClaim.values()) ws.addRow([c.title, c.count, c.amount, c.status]).getCell(3).numFmt = WON;
 }
 
-export async function buildTaxWorkbook(opts: { month: string; companyName: string; rows: ExportRow[]; preview: boolean }): Promise<ArrayBuffer> {
+// 카드 대조 결과 시트(D-154): 대조를 했으면 맞지 않는 건과 회사가 고른 처리·메모, 안 했으면 안 했다고 적는다
+function addCardSheet(ws: ExcelJS.Worksheet, rec: SavedReconcile | null | undefined, month: string) {
+  const [y, m] = month.split("-");
+  ws.addRow([`${y}년 ${Number(m)}월 법인카드 사용 내역 대조 결과`]).font = { bold: true, size: 13 };
+  if (!rec) {
+    ws.addRow(["이 달은 법인카드 사용 내역 대조를 하지 않았어요(회사가 카드사 내역을 올리지 않음)."]);
+    ws.getColumn(1).width = 80;
+    return;
+  }
+  const open = rec.issues.filter((i) => i.status === "open").length;
+  ws.addRow([`카드 내역 파일: ${rec.file_name ?? "-"} · 기간 ${rec.period_from ?? "?"} ~ ${rec.period_to ?? "?"} · 저장 ${rec.created_by_name ?? ""}`]);
+  ws.addRow([`짝 맞음 ${rec.matched}건 · 맞지 않는 건 ${rec.issues.length}건(처리 전 ${open}건) · 카드 취소 ${rec.cancelled}건 제외`]);
+  ws.addRow([]);
+  const head = ws.addRow(["구분", "사용일", "가맹점", "금액", "카드 끝 4자리", "결의서(직원)", "회사 처리", "메모", "처리한 사람"]);
+  head.font = { bold: true };
+  head.eachCell((c) => {
+    c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF4F4F5" } };
+  });
+  for (const i of rec.issues) {
+    const row = ws.addRow([
+      CARD_KIND_LABEL[i.kind],
+      i.expense_date ?? "",
+      i.merchant ?? "",
+      i.amount ?? null,
+      i.last4 ?? "",
+      i.claim_title ? `${i.claim_title}${i.member_name ? ` (${i.member_name})` : ""}` : "",
+      CARD_STATUS_LABEL[i.status],
+      i.memo ?? "",
+      i.resolved_by_name ?? "",
+    ]);
+    row.getCell(4).numFmt = WON;
+  }
+  [28, 11, 22, 12, 12, 28, 26, 36, 12].forEach((w, k) => (ws.getColumn(k + 1).width = w));
+}
+
+export async function buildTaxWorkbook(opts: { month: string; companyName: string; rows: ExportRow[]; preview: boolean; cardReconcile?: SavedReconcile | null }): Promise<ArrayBuffer> {
   const { month, rows } = opts;
   const total = rows.length;
   const files = new Map(rows.map((r) => [r.item_id, evidenceFile(r, month, total)?.name ?? null]));
@@ -197,5 +233,6 @@ export async function buildTaxWorkbook(opts: { month: string; companyName: strin
   const personal = rows.filter((r) => r.payment_method !== "corporate_card");
   addTable(wb.addWorksheet("세무 업로드(법인카드)"), SHEET3, corporate, ctx, []);
   addTable(wb.addWorksheet("세무 업로드(개인 사비)"), SHEET3.filter((c) => c.header !== "카드 끝 4자리"), personal, ctx, []);
+  if (opts.cardReconcile !== undefined) addCardSheet(wb.addWorksheet("카드 대조 결과"), opts.cardReconcile, month);
   return (await wb.xlsx.writeBuffer()) as ArrayBuffer;
 }

@@ -36,6 +36,8 @@ const MESSAGES: Record<string, string> = {
   EMAIL_NOT_VERIFIED: "이메일이 확인된 계정(구글·카카오)으로 로그인해 주세요.",
   ADMIN_MUST_TRANSFER: "사무소 관리자는 바로 탈퇴할 수 없어요. 먼저 [사무소 관리자 바꾸기]로 다른 세무사에게 맡기거나, [세무사무소 삭제]를 해 주세요.",
   CONFIRM_NAME_MISMATCH: "입력한 사무소명이 달라요. 사무소명을 그대로 입력해 주세요.",
+  INVALID_RECONCILE: "대조 결과를 저장하지 못했어요. 다시 대조한 뒤 저장해 주세요.",
+  MEMO_REQUIRED: "세무사에게 확인을 요청하려면 무엇을 확인할지 메모를 남겨 주세요.",
   INVALID_TEMPLATE_NAME: "양식 이름을 1~50자로 입력해 주세요.",
   INVALID_TEMPLATE: "양식 칸 설정을 확인해 주세요. 화면을 새로고침한 뒤 다시 시도해 주세요.",
   TEMPLATE_LIMIT: "양식은 사무소당 10개까지예요. 안 쓰는 양식을 지운 뒤 추가해 주세요.",

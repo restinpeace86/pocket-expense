@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ReconcileLink } from "@/components/admin/reconcile-link";
+import { CardReconcileStatus } from "@/components/admin/card-reconcile-status";
+import { getSavedReconcile } from "@/lib/cards/saved-server";
 import { TaxClosingView } from "@/components/admin/tax-closing-view";
 import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
@@ -46,16 +47,17 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   // 기본은 지난달(보통 지난달을 마감한다)
   const month = typeof sp.month === "string" && MONTH.test(sp.month) && sp.month <= now ? sp.month : months[1];
   const supabase = await createClient();
-  const [res, { data: templates }, { data: downloads }] = await Promise.all([
+  const [res, { data: templates }, { data: downloads }, cardRec] = await Promise.all([
     getTaxMonth(month),
     supabase.rpc("my_company_tax_templates"),
     supabase.from("tax_export_downloads").select("id, actor_kind, actor_name, office_name, month, kind, template_name, row_count, closed, created_at").order("created_at", { ascending: false }).limit(20),
+    getSavedReconcile(membership.company_id, month),
   ]);
   if (!res.ok) notFound();
   return (
     <div className="flex flex-col gap-4">
-      {/* 마감 전에 결의서 없는 법인카드 결제가 없는지 (D-111) */}
-      <ReconcileLink href={`/workspace/${id}/admin/corporate-cards/reconcile`} />
+      {/* 이번 달 카드 내역 대조 상태(D-111, D-154): 막지 않고 보여 주며, 결과는 세무 엑셀 카드 대조 결과 시트로 함께 넘어간다 */}
+      <CardReconcileStatus saved={cardRec} month={month} href={`/workspace/${id}/admin/corporate-cards/reconcile?month=${month}`} />
       {/* 우리 세무사무소가 올린 결산 양식으로 받기 (D-150) */}
       <TemplateDownloads
         templates={(templates ?? []).map((t) => ({ id: t.id, name: t.name, target: t.target as TemplateTarget }))}

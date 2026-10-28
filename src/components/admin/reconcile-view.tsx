@@ -3,7 +3,10 @@
 import { AlertTriangle, CheckCircle2, FileSpreadsheet, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
-import { reconcileCardStatementAction } from "@/app/workspace/[id]/admin/corporate-cards/reconcile/actions";
+import { reconcileCardStatementAction, saveReconcileAction } from "@/app/workspace/[id]/admin/corporate-cards/reconcile/actions";
+import { useRouter } from "next/navigation";
+import { majorityMonth } from "@/lib/cards/saved";
+import { guardAction } from "@/lib/action-guard";
 import { FormError } from "@/components/onboarding/field";
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
@@ -15,7 +18,8 @@ import type { ClaimStatus } from "@/lib/expense/status";
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
 
-// 법인카드 사용 내역 대조 (D-111): 카드사 엑셀·CSV → 열 확인 → 영수증과 짝 맞추기. 파일은 저장하지 않는다
+// 법인카드 사용 내역 대조 (D-111, D-154): 카드사 엑셀·CSV → 열 확인 → 영수증과 짝 맞추기 → 결과 저장(달별) → 건별 처리.
+// 카드 내역 파일 자체는 저장하지 않고, 맞지 않는 건과 처리 내용만 저장해 세무 마감·세무사에게 넘긴다
 const card = "rounded-xl border border-zinc-200 bg-white p-5 shadow-sm";
 
 export function ReconcileHeading() {
@@ -23,12 +27,12 @@ export function ReconcileHeading() {
     <SectionHeading
       as="h1"
       title="법인카드 내역 대조"
-      summary="선택 기능이에요. 필요할 때(가끔, 연말, 의심될 때) 카드사 사용 내역을 올리면 결의서가 없는 결제를 찾아 줘요."
+      summary="세무 마감 전에 해 두면 좋아요. 카드사 사용 내역을 올리면 결의서가 없는 결제를 찾아 주고, 결과와 처리 내용이 세무사에게 함께 넘어가요."
       helpId="admin.reconcile"
       help={
         <>
           <p>
-            <b>꼭 해야 하나요?</b> 아니요. 하지 않아도 세무 마감은 그대로 할 수 있어요. 법인카드 결제가 많거나, 영수증을 안 올린 건·사비로 잘못 올린 건이 걱정될 때 쓰면 돼요.
+            <b>꼭 해야 하나요?</b> 막지는 않아요. 하지만 세무사는 카드 사용 내역을 따로 받는 경우가 많아서, 넘긴 자료와 카드 내역이 다르면 회사에 하나하나 물어봐요. 마감 전에 대조하고 맞지 않는 건의 처리(결의서 작성 요청·개인 사용·세무사 확인 필요 등)를 골라 두면 세무사가 다시 묻지 않아도 돼요.
           </p>
           <p>
             <b>무엇을 찾나요?</b> ① 카드는 썼는데 결의서(영수증)가 안 올라온 결제 ② 법인카드로 결제됐는데 개인(사비)으로 올린 영수증(그대로 지급하면 이중 지급) ③ 법인카드로 올렸는데 카드 내역에 없는 영수증(개인카드를 법인카드로 잘못 고른 것일 수 있음).
@@ -37,7 +41,7 @@ export function ReconcileHeading() {
             <b>어떻게 맞추나요?</b> 같은 금액 · 날짜 ±1일(승인일·매입일 차이) · 카드 끝 4자리가 같으면 같은 결제로 봐요. 작성 중인 결의서도 &ldquo;올라온 것&rdquo;으로 봐요.
           </p>
           <p>
-            <b>파일은?</b> 카드사 홈페이지(법인) › 이용내역 조회 › 엑셀 내려받기. xlsx·csv를 올려 주세요. 올린 파일은 저장하지 않고 대조에만 써요.
+            <b>파일은?</b> 카드사 홈페이지(법인) › 이용내역 조회 › 엑셀 내려받기. xlsx·xls·csv를 올려 주세요. 올린 파일 자체는 저장하지 않고, 맞지 않는 건(날짜·가맹점·금액·카드 끝 4자리)과 처리 내용만 달별로 저장해요.
           </p>
         </>
       }
@@ -102,7 +106,7 @@ export function ReconcileView({ base, holders }: { base: string; holders: Record
   return (
     <div className="flex flex-col gap-4">
       <section className={card}>
-        <SectionHeading title="1. 카드 내역 파일 올리기" summary="카드사에서 내려받은 엑셀(xlsx) 또는 CSV" />
+        <SectionHeading title="1. 카드 내역 파일 올리기" summary="카드사에서 내려받은 엑셀(xlsx·xls) 또는 CSV" />
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button type="button" onClick={() => fileRef.current?.click()} disabled={reading} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">
             {reading ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4" />}
@@ -179,6 +183,7 @@ export function ReconcileView({ base, holders }: { base: string; holders: Record
       )}
 
       {result && <Results result={result} base={base} holders={holders} />}
+      {result && parsed && <SaveResult result={result} fileName={fileName} dates={parsed.rows.filter((x) => !x.cancelled).map((x) => x.date)} />}
     </div>
   );
 }
@@ -294,5 +299,53 @@ function ClaimLink({ base, id, title, status, member }: { base: string; id: stri
     </Link>
   ) : (
     <span className="w-full break-words text-xs text-zinc-500">{body}</span>
+  );
+}
+
+// 4. 결과 저장(달별, D-154): 같은 달은 덮어쓰고 이미 고른 처리는 유지
+function SaveResult({ result, fileName, dates }: { result: ReconcileResult; fileName: string; dates: string[] }) {
+  const router = useRouter();
+  const months = [...new Set(dates.map((d) => d.slice(0, 7)))].sort().reverse();
+  const [month, setMonth] = useState(majorityMonth(dates) ?? months[0] ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const sorted = [...dates].sort();
+  const issues = result.missing.length + result.personal.length + result.extra.length;
+  return (
+    <section className={card} aria-label="대조 결과 저장">
+      <SectionHeading title="4. 결과 저장" summary="저장하면 맞지 않는 건마다 처리를 고를 수 있고, 세무 마감 화면과 세무사 자료에 함께 들어가요." />
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="flex items-center gap-2 text-sm">
+          <span className="shrink-0 font-medium text-zinc-800">어느 달 대조인가요?</span>
+          <select aria-label="대조한 달" value={month} onChange={(e) => setMonth(e.target.value)} className={`${inputClass} sm:w-40`}>
+            {months.map((m) => (
+              <option key={m} value={m}>
+                {m.slice(0, 4)}년 {Number(m.slice(5))}월
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          disabled={pending || !month}
+          onClick={() => {
+            setError(null);
+            startTransition(async () => {
+              const r = await guardAction(() => saveReconcileAction(month, fileName, result, { from: sorted[0] ?? null, to: sorted[sorted.length - 1] ?? null }));
+              if (!r.ok) return setError(r.error);
+              router.push(`?month=${month}`);
+              router.refresh();
+            });
+          }}
+          className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+        >
+          {pending && <Loader2 className="size-4 animate-spin" />}
+          대조 결과 저장 (맞지 않는 {issues}건)
+        </button>
+      </div>
+      <div className="mt-2">
+        <FormError message={error} />
+      </div>
+    </section>
   );
 }
