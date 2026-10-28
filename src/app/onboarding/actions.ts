@@ -30,7 +30,8 @@ export async function createCompanyAction(_prev: FormState, formData: FormData):
     p_terms_agreed: formData.get("terms") === "on",
   });
   if (error || !companyId) return { error: messageForDbError(error) };
-  redirect(`/workspace/${companyId}/admin`);
+  // 다음 단계: 추천인·추천 회사(선택, 건너뛰면 관리자 홈) (D-147)
+  redirect("/onboarding/referral");
 }
 
 // 직원 가입: 공용 코드(승인 대기) 또는 개별 초대 토큰(즉시 활성) (D-042)

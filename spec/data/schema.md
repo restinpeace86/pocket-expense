@@ -80,6 +80,19 @@
 | is_purchasable | boolean | default false | 결제 연동 전까지 false |
 - 로그인 사용자 읽기만(anon 불가), 쓰기는 마이그레이션으로만.
 
+### 2.1a4 `company_referrals` — 추천 회사·추천인 (D-147, migration 074, 회사당 1건)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| company_id | uuid | PK, FK companies (cascade) | 추천을 적은(가입한) 회사 |
+| member_id | uuid | (member_id, company_id) FK, null | 적은 최고 관리자 |
+| kind | text | company / person | 추천 유형 |
+| referrer_company_id | uuid | FK companies (set null), 자기 회사 불가 | 추천 회사 |
+| referrer_company_name | text | 1~100자 | 적을 때의 추천 회사 이름(회사가 지워져도 남음) |
+| referrer_name | text | 1~50자 | 추천인 이름 |
+| referrer_phone | text | 010 형식 숫자 | 추천인 휴대폰 |
+| created_at | timestamptz | | 적은 시각 |
+- RLS 강제. 고객은 자기 회사 최고 관리자만 읽기(적었는지 확인), 쓰기는 `save_company_referral`(최고 관리자, 회사당 1회, 고치기·지우기 없음)로만. 회사 검색은 `search_referral_companies`(최고 관리자, 2자 이상, 8곳, 이름만, 자기 회사 제외). 운영자는 service role로 읽는다.
+
 ### 2.1a3 `feedback_surveys` — 후기·설문 (D-130, 회사당 1건)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|

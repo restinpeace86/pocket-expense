@@ -544,6 +544,61 @@ export type Database = {
         }
         Relationships: []
       }
+      company_referrals: {
+        Row: {
+          company_id: string
+          created_at: string
+          kind: string
+          member_id: string | null
+          referrer_company_id: string | null
+          referrer_company_name: string | null
+          referrer_name: string | null
+          referrer_phone: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          kind: string
+          member_id?: string | null
+          referrer_company_id?: string | null
+          referrer_company_name?: string | null
+          referrer_name?: string | null
+          referrer_phone?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          kind?: string
+          member_id?: string | null
+          referrer_company_id?: string | null
+          referrer_company_name?: string | null
+          referrer_name?: string | null
+          referrer_phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_referrals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_referrals_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "company_referrals_referrer_company_id_fkey"
+            columns: ["referrer_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_vehicles: {
         Row: {
           company_id: string
@@ -2176,6 +2231,15 @@ export type Database = {
         Args: { p_approver_ids: string[]; p_department_id: string }
         Returns: string
       }
+      save_company_referral: {
+        Args: {
+          p_kind: string
+          p_referrer_company_id: string
+          p_referrer_name: string
+          p_referrer_phone: string
+        }
+        Returns: undefined
+      }
       save_form_template: {
         Args: {
           p_ai_extracted?: Json
@@ -2183,6 +2247,13 @@ export type Database = {
           p_source_file_path?: string
         }
         Returns: string
+      }
+      search_referral_companies: {
+        Args: { p_query: string }
+        Returns: {
+          id: string
+          name: string
+        }[]
       }
       set_claim_category: {
         Args: {

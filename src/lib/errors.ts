@@ -26,6 +26,8 @@ const MESSAGES: Record<string, string> = {
   INVALID_SURVEY: "설문 항목을 모두 골라 주세요. 한 줄 후기는 100자까지 쓸 수 있어요.",
   SURVEY_REVIEW_TOO_SHORT: "한 줄 후기를 공백 빼고 10자 이상 써 주세요.",
   SURVEY_CONSENT_REQUIRED: "100장은 홈페이지에 소개할 후기를 남겨 주신 분께 드려요. 소개 동의에 체크해 주세요.",
+  INVALID_REFERRAL: "추천 회사는 목록에서 골라 주세요. 추천인은 이름을 1~50자로 적어 주세요.",
+  REFERRAL_ALREADY_SAVED: "추천 정보는 이미 저장됐어요. 회사당 한 번만 적을 수 있어요.",
   SURVEY_ALREADY_DONE: "이미 설문에 참여해 100장을 받았어요. 설문 크레딧은 회사당 한 번만 드려요.",
   INVALID_FORM_LAYOUT: "양식에 영수증 표 칸이 하나 이상 있어야 해요.",
   INVALID_FORM_SOURCE: "양식 파일 경로가 올바르지 않아요. 다시 올려 주세요.",
