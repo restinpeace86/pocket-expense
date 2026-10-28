@@ -2039,6 +2039,54 @@ export type Database = {
           },
         ]
       }
+      tax_agent_links: {
+        Row: {
+          agent_email: string
+          agent_name: string
+          agent_phone: string | null
+          company_id: string
+          created_at: string
+          office_name: string
+          updated_at: string
+          updated_by_member_id: string | null
+        }
+        Insert: {
+          agent_email: string
+          agent_name: string
+          agent_phone?: string | null
+          company_id: string
+          created_at?: string
+          office_name: string
+          updated_at?: string
+          updated_by_member_id?: string | null
+        }
+        Update: {
+          agent_email?: string
+          agent_name?: string
+          agent_phone?: string | null
+          company_id?: string
+          created_at?: string
+          office_name?: string
+          updated_at?: string
+          updated_by_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_agent_links_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_agent_links_updated_by_member_id_company_id_fkey"
+            columns: ["updated_by_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2118,6 +2166,7 @@ export type Database = {
       check_claim_for_submit: { Args: { p_claim_id: string }; Returns: Json }
       claim_duplicate_receipts: { Args: { p_claim_id: string }; Returns: Json }
       clear_form_template: { Args: never; Returns: undefined }
+      clear_tax_agent: { Args: never; Returns: undefined }
       close_tax_month: { Args: { p_month: string }; Returns: Json }
       consume_receipt_credit: {
         Args: {
@@ -2190,6 +2239,17 @@ export type Database = {
       move_item_to_new_claim: { Args: { p_item_id: string }; Returns: Json }
       my_employee_summary: { Args: never; Returns: Json }
       my_membership: { Args: never; Returns: Json }
+      my_tax_agent_companies: {
+        Args: never
+        Returns: {
+          agent_name: string
+          business_number: string
+          company_id: string
+          company_name: string
+          linked_at: string
+          office_name: string
+        }[]
+      }
       override_item_account_title: {
         Args: { p_account_title_id: string; p_item_id: string }
         Returns: undefined
@@ -2295,6 +2355,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_tax_agent: {
+        Args: {
+          p_agent_email: string
+          p_agent_name: string
+          p_agent_phone: string
+          p_office_name: string
+        }
+        Returns: undefined
+      }
       submit_claim: {
         Args: { p_claim_id: string }
         Returns: Database["public"]["Enums"]["claim_status"]
@@ -2310,6 +2379,10 @@ export type Database = {
           p_useful_feature: string
         }
         Returns: number
+      }
+      tax_agent_month_export: {
+        Args: { p_company_id: string; p_month: string }
+        Returns: Json
       }
       tax_month_export: { Args: { p_month: string }; Returns: Json }
       tax_month_items: {

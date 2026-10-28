@@ -2,8 +2,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { InviteCodeForm } from "@/components/onboarding/invite-code-form";
-import { buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
+import { buttonPrimary, buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
 import { requireNoMembership } from "@/lib/auth/guards";
+import { isTaxAgent } from "@/lib/tax-office/queries";
 
 export const metadata = { title: "시작하기 · PocketExpense" };
 
@@ -20,8 +21,18 @@ export default function OnboardingPage() {
 
 async function OnboardingChoices() {
   await requireNoMembership("/onboarding");
+  const taxAgent = await isTaxAgent();
   return (
     <>
+      {taxAgent && (
+        <Card>
+          <h2 className="text-lg font-semibold">담당 세무사로 연결된 회사가 있어요</h2>
+          <p className="mb-4 mt-1 break-keep text-sm text-zinc-600">고객사가 이 계정의 이메일을 담당 세무사로 등록했어요. 승인된 지출과 세무용 엑셀을 볼 수 있어요.</p>
+          <Link href="/tax-office" className={buttonPrimary}>
+            세무사 화면으로 가기
+          </Link>
+        </Card>
+      )}
       <Card>
         <h2 className="text-lg font-semibold">초대 코드로 회사 합류</h2>
         <p className="mb-4 mt-1 text-sm text-zinc-600">관리자에게 받은 초대 링크가 없다면 코드를 직접 입력하세요.</p>

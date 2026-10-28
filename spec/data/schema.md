@@ -80,6 +80,18 @@
 | is_purchasable | boolean | default false | 결제 연동 전까지 false |
 - 로그인 사용자 읽기만(anon 불가), 쓰기는 마이그레이션으로만.
 
+### 2.1a5 `tax_agent_links` — 담당 세무사 연결 (D-148, migration 075, 회사당 1건)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| company_id | uuid | PK, FK companies (cascade) | 연결한 회사 |
+| office_name | text | 1~100자 | 세무사무소명 |
+| agent_name | text | 1~50자 | 담당 세무사·직원 이름 |
+| agent_email | text | 소문자, 이메일 형식, 254자 이하 (index) | 세무사가 로그인할 계정 이메일. 로그인 계정의 **확인된** 이메일과 같으면 연결 |
+| agent_phone | text | null, 숫자 9~11자리(0으로 시작) | 연락처(선택) |
+| updated_by_member_id | uuid | (member_id, company_id) FK, null | 마지막으로 저장한 관리자 |
+| created_at / updated_at | timestamptz | | |
+- 세무사는 `members`에 없다(D-004와 별개, 여러 회사와 연결 가능). RLS 강제, 고객 읽기는 자기 회사 관리자만, 쓰기는 `set_tax_agent`·`clear_tax_agent`. 세무사 쪽은 `my_tax_agent_companies`·`tax_agent_month_export`(= `private.tax_month_export_for`, 관리자 `tax_month_export`와 같은 함수)와 `account_titles`·`account_title_mappings`의 세무사 정책(조회·추가·수정).
+
 ### 2.1a4 `company_referrals` — 추천 회사·추천인 (D-147, migration 074, 회사당 1건)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|

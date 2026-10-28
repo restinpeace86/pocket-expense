@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Card, PageShell } from "@/components/ui/page-shell";
 import { destinationAfterLogin } from "@/lib/auth/paths";
+import { isTaxAgent } from "@/lib/tax-office/queries";
 import { getCurrentUserId, getMembership } from "@/lib/auth/session";
 
 export const metadata = { title: "로그인 · PocketExpense" };
@@ -41,7 +42,8 @@ async function LoginContent({ searchParams }: { searchParams: PageProps<"/login"
 
   // 이미 로그인했다면 소속에 맞는 화면으로
   if (await getCurrentUserId()) {
-    redirect(destinationAfterLogin(await getMembership(), next));
+    const membership = await getMembership();
+    redirect(destinationAfterLogin(membership, next, { taxAgent: !membership && (await isTaxAgent()) }));
   }
 
   return (

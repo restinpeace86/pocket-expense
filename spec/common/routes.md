@@ -15,6 +15,8 @@
 | `/onboarding` | 진입 분기: [초대 코드로 회사 합류] / [새 회사 만들기] | 로그인 + member 없음 |
 | `/onboarding/join` | 직원 정보 입력 | 로그인 + member 없음 |
 | `/onboarding/create-company` | 회사 생성 위저드 (`spec/screens/admin-onboarding.md`) | 로그인 + member 없음 |
+| `/tax-office` | 세무사 화면: 담당 회사 목록 (`spec/screens/tax-office.md`, D-148) | 로그인 + 담당 세무사로 연결된 회사(멤버 소속과 별개) |
+| `/tax-office/[companyId]` | 세무사: 월별 세무 자료·영수증·세무용 엑셀(`/xlsx`)·계정과목(`/account-titles`) | 그 회사에 연결된 세무사 |
 | `/onboarding/referral` | 회사 등록 다음 단계: 추천 회사·추천인(선택, D-147) | 최고 관리자 + 추천 미입력 |
 | `/onboarding/pending` | 승인 대기 안내 | `pending` 멤버 |
 | `/auth/callback` | OAuth 콜백 | — |

@@ -12,10 +12,18 @@ import { FormError } from "@/components/onboarding/field";
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { AccountTitleRow, MappingRow } from "@/lib/admin/queries";
-import { classificationLabel, MAPPING_ROWS } from "@/lib/expense/categories";
+import { classificationLabel, MAPPING_ROWS, type Classification } from "@/lib/expense/categories";
 import { measureAction } from "@/lib/perf/client";
 
 type Result = { error: string | null };
+// 세무사 화면(D-148)은 같은 화면에 세무사용 작업을 넘긴다(삭제 없음)
+export type AccountTitleActions = {
+  add: (name: string, code: string) => Promise<Result>;
+  update: (id: string, name: string, code: string) => Promise<Result>;
+  remove?: (id: string) => Promise<Result>;
+  setMapping: (c: Classification, accountTitleId: string) => Promise<Result>;
+};
+const ADMIN_ACTIONS: AccountTitleActions = { add: addAccountTitleAction, update: updateAccountTitleAction, remove: deleteAccountTitleAction, setMapping: setMappingAction };
 const card = "rounded-xl border border-zinc-200 bg-white p-5 shadow-sm";
 const iconButton =
   "inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-zinc-600 hover:bg-zinc-100 disabled:opacity-30 disabled:hover:bg-transparent";
@@ -51,7 +59,17 @@ export function AccountTitlesHeading() {
   );
 }
 
-export function AccountTitlesView({ titles, mappings, preview = false }: { titles: AccountTitleRow[]; mappings: MappingRow[]; preview?: boolean }) {
+export function AccountTitlesView({
+  titles,
+  mappings,
+  preview = false,
+  actions = ADMIN_ACTIONS,
+}: {
+  titles: AccountTitleRow[];
+  mappings: MappingRow[];
+  preview?: boolean;
+  actions?: AccountTitleActions;
+}) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -98,7 +116,7 @@ export function AccountTitlesView({ titles, mappings, preview = false }: { title
                   onChange={(e) =>
                     run(
                       "map",
-                      () => setMappingAction(r, e.target.value),
+                      () => actions.setMapping(r, e.target.value),
                       undefined,
                       "저장했어요. 이후 상신되는 결의서부터 적용돼요.",
                     )
@@ -125,7 +143,7 @@ export function AccountTitlesView({ titles, mappings, preview = false }: { title
             e.preventDefault();
             run(
               "add",
-              () => addAccountTitleAction(name, code),
+              () => actions.add(name, code),
               () => {
                 setName("");
                 setCode("");
@@ -149,11 +167,15 @@ export function AccountTitlesView({ titles, mappings, preview = false }: { title
               key={t.id}
               title={t}
               busy={pending}
-              onSave={(n, c, done) => run("update", () => updateAccountTitleAction(t.id, n, c), done)}
-              onDelete={() => {
-                if (!confirm(`'${t.name}' 계정과목을 삭제할까요?`)) return;
-                run("delete", () => deleteAccountTitleAction(t.id));
-              }}
+              onSave={(n, c, done) => run("update", () => actions.update(t.id, n, c), done)}
+              onDelete={
+                actions.remove
+                  ? () => {
+                      if (!confirm(`'${t.name}' 계정과목을 삭제할까요?`)) return;
+                      run("delete", () => actions.remove!(t.id));
+                    }
+                  : undefined
+              }
             />
           ))}
         </ul>
@@ -171,7 +193,7 @@ function TitleItem({
   title: AccountTitleRow;
   busy: boolean;
   onSave: (name: string, code: string, done: () => void) => void;
-  onDelete: () => void;
+  onDelete?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(t.name);
@@ -220,6 +242,7 @@ function TitleItem({
       <button type="button" className={iconButton} disabled={busy} onClick={() => setEditing(true)} aria-label={`${t.name} 수정`}>
         <Pencil className="size-4" />
       </button>
+      {onDelete && (
       <button
         type="button"
         className={`${iconButton} hover:text-red-600`}
@@ -230,6 +253,7 @@ function TitleItem({
       >
         <Trash2 className="size-4" />
       </button>
+      )}
     </li>
   );
 }

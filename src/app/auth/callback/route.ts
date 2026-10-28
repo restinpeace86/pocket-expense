@@ -20,7 +20,9 @@ export async function GET(request: NextRequest) {
 
   const { data } = await supabase.rpc("my_membership");
   const membership = (data ?? null) as unknown as Membership | null;
-  const response = NextResponse.redirect(new URL(destinationAfterLogin(membership, next), origin));
+  // 소속이 없으면 담당 세무사로 연결된 회사가 있는지(D-148)
+  const taxAgent = !membership && ((await supabase.rpc("my_tax_agent_companies")).data ?? []).length > 0;
+  const response = NextResponse.redirect(new URL(destinationAfterLogin(membership, next, { taxAgent }), origin));
   response.headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate, max-age=0");
   return response;
 }

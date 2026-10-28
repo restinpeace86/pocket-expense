@@ -45,6 +45,7 @@
  ├── 🏢 부서                         /admin/departments (`admin-dashboard.md` ⑤)
  ├── 🧭 사전 검토 결재라인(선택)       /admin/approval-lines (`admin-dashboard.md` ⑥)
  ├── 📚 계정과목                      /admin/account-titles (`admin-dashboard.md` ⑪)
+ ├── 🏛️ 담당 세무사                   /admin/tax-agent (`tax-office.md` §2, D-148) — 세무사무소·담당자 이메일 → 외부 열람자 연결
  ├── 💳 요금제                        /admin/billing (`admin-billing.md`)
  └── 🔔 알림 이력                     /admin/notifications (`admin-dashboard.md` ⑩)
 ```
