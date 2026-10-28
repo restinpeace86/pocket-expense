@@ -2166,6 +2166,66 @@ export type Database = {
           },
         ]
       }
+      tax_office_templates: {
+        Row: {
+          columns: Json
+          created_at: string
+          created_by: string | null
+          file_name: string | null
+          file_path: string | null
+          header_row: number
+          id: string
+          name: string
+          office_id: string
+          sheet_name: string | null
+          target: string
+          updated_at: string
+        }
+        Insert: {
+          columns: Json
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          header_row?: number
+          id?: string
+          name: string
+          office_id: string
+          sheet_name?: string | null
+          target?: string
+          updated_at?: string
+        }
+        Update: {
+          columns?: Json
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          header_row?: number
+          id?: string
+          name?: string
+          office_id?: string
+          sheet_name?: string | null
+          target?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_office_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "tax_office_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_office_templates_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "tax_offices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_offices: {
         Row: {
           business_number: string
@@ -2310,6 +2370,7 @@ export type Database = {
         Returns: Json
       }
       deactivate_member: { Args: { p_member_id: string }; Returns: undefined }
+      delete_tax_office_template: { Args: { p_id: string }; Returns: string }
       detach_item_evidence: { Args: { p_item_id: string }; Returns: Json }
       detach_odometer_photo: {
         Args: { p_item_id: string; p_which: string }
@@ -2362,6 +2423,15 @@ export type Database = {
       }
       move_item_to_new_claim: { Args: { p_item_id: string }; Returns: Json }
       my_company_tax_office: { Args: never; Returns: Json }
+      my_company_tax_templates: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          office_name: string
+          target: string
+        }[]
+      }
       my_employee_summary: { Args: never; Returns: Json }
       my_membership: { Args: never; Returns: Json }
       my_tax_office: { Args: never; Returns: Json }
@@ -2432,6 +2502,19 @@ export type Database = {
           p_ai_extracted?: Json
           p_schema: Json
           p_source_file_path?: string
+        }
+        Returns: string
+      }
+      save_tax_office_template: {
+        Args: {
+          p_columns: Json
+          p_file_name: string
+          p_file_path: string
+          p_header_row: number
+          p_id: string
+          p_name: string
+          p_sheet_name: string
+          p_target: string
         }
         Returns: string
       }
@@ -2550,6 +2633,23 @@ export type Database = {
       }
       tax_office_month_export: {
         Args: { p_company_id: string; p_month: string }
+        Returns: Json
+      }
+      tax_office_template_list: {
+        Args: never
+        Returns: {
+          columns: Json
+          file_name: string
+          header_row: number
+          id: string
+          name: string
+          sheet_name: string
+          target: string
+          updated_at: string
+        }[]
+      }
+      tax_template_for_export: {
+        Args: { p_company_id: string; p_template_id: string }
         Returns: Json
       }
       transfer_super_admin: {

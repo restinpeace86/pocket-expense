@@ -114,6 +114,20 @@
 | updated_by_member_id | uuid | (member_id, company_id) FK, null | 마지막으로 저장한 회사 관리자 |
 - 세 테이블 모두 RLS 강제. 고객 읽기는 `company_tax_offices`만, 자기 회사 관리자만. 나머지는 모두 함수로(`spec/screens/tax-office.md` §4). 계정과목·분류 연결에는 사무소 정책(열람 가능한 회사만 조회·추가·수정).
 
+### 2.1a6 `tax_office_templates` — 세무사무소 월말 결산 양식 (D-150, migration 077)
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | uuid | PK | |
+| office_id | uuid | FK tax_offices (cascade) | 사무소당 10개까지 |
+| name | text | 1~50자 | 양식 이름 |
+| target | text | all / corporate_card / personal | 넣을 지출 |
+| file_path | text | null 또는 `{office_id}/{uuid}.xlsx` | 올린 양식 파일(null = 초안, 칸 구성만) |
+| file_name / sheet_name | text | | 원래 파일명 / 채울 시트 |
+| header_row | integer | 1~50 | 머리글 줄(그 아래부터 채움) |
+| columns | jsonb | 1~80칸 `[{index, header, field, fixed?}]`, `private.valid_template_columns` | 칸 → 항목 연결 |
+| created_by | uuid | FK tax_office_members (set null) | |
+- RLS 강제, 사용자 직접 접근 없음(함수로만). 파일 보관함 `tax-office-templates`는 비공개·사용자 정책 없음(서버 운영 키만).
+
 ### 2.1a4 `company_referrals` — 추천 회사·추천인 (D-147, migration 074, 회사당 1건)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|

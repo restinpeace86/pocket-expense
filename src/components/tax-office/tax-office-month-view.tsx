@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { TaxMonth } from "@/lib/tax/closing";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, statusLabel, supplyVat, type ExportRow } from "@/lib/tax/export-rows";
 import { MonthPicker } from "./month-picker";
+import { TemplateDownloads, type TemplateLink } from "./template-downloads";
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const th = "whitespace-nowrap border-b border-zinc-200 px-2 py-2 text-left text-xs font-medium text-zinc-500";
@@ -19,6 +20,7 @@ export function TaxOfficeMonthView({
   data,
   months,
   receiptUrls,
+  templates = [],
 }: {
   companyId: string;
   companyName: string;
@@ -26,6 +28,7 @@ export function TaxOfficeMonthView({
   data: TaxMonth;
   months: string[];
   receiptUrls: Record<string, string>;
+  templates?: TemplateLink[];
 }) {
   const rows = data.rows;
   const totals = rows.reduce(
@@ -82,6 +85,7 @@ export function TaxOfficeMonthView({
           세무용 엑셀 다운로드
         </a>
       </section>
+      <TemplateDownloads templates={templates} hrefFor={(id) => `${base}/template?id=${id}&month=${data.month}`} disabled={rows.length === 0} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label={`${m}월 승인 지출`} value={`${rows.length.toLocaleString("ko-KR")}건`} />

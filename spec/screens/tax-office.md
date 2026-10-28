@@ -25,9 +25,17 @@
 - `/tax-join/[code]`: 사무소명 표시 + 이름·휴대폰(선택)·동의 → 합류(세무사). 없는 코드면 안내. 이미 사무소 구성원이면 `/tax-office`.
 - `/tax-office/[companyId]?month=` · `/xlsx` · `/account-titles`: 월별 세무 자료(요약·계정과목별·지출 내역·영수증 10분 링크)·세무용 엑셀(관리자 세무 마감과 같은 장부, 회사 마감 전이면 미리보기)·계정과목(삭제 버튼 없음). 볼 수 없는 회사는 "찾는 화면이 없어요"/404.
 
+## 3a. 월말 결산 양식 (`/tax-office/templates`, D-150)
+- 머리글 메뉴 [결산 양식]. 사무소 관리자만 추가·고치기·지우기, 세무사는 목록만. 사무소당 10개.
+- **양식 파일 올리기**: .xlsx(5MB). .xls면 "엑셀에서 Excel 통합 문서(.xlsx)로 저장한 뒤 올려 주세요". 첫 시트 위쪽 20줄에서 글자 칸이 가장 많은 줄(2칸 이상)을 머리글로 읽고, 칸마다 넣을 값을 추정 → **칸 연결 확인**: 칸(A·B…·머리글)마다 항목 선택(비워 두기·고정값 포함), 양식 이름, 넣을 지출(전체/법인카드만/개인(사비)만) → [양식 저장]. 머리글을 못 찾으면 안내.
+- **초안으로 시작**(파일 없음): 더존 위하고 신용카드 매입(초안) · 일반 지출 목록(월·일 분리, 초안). 실제 프로그램 양식과 다를 수 있다는 안내.
+- 항목: 순번, 거래일자(날짜 / 20261015 글자), 월, 일, 거래처명(가맹점), 거래처코드(빈칸), 사업자등록번호(하이픈 / 숫자만), 계정과목명, 계정코드, 적요, 공급가액, 부가세, 합계, 봉사료(0), 증빙구분, 결제수단, 카드 끝 4자리, 카드 별칭, 사용자, 부서·프로젝트, 결의서 제목, 분류, 지출 목적, 증빙 파일명(ZIP 매칭) (`src/lib/tax-office/template-fields.ts`).
+- **받기**: 고객사 세무 자료 화면(`/tax-office/[companyId]/template?id=&month=`)과 회사 관리자 세무 마감 화면(`/workspace/[id]/admin/export/template?id=&month=`, 연결된 사무소 양식만)에 [OO 결산 양식으로 받기]. 올린 파일 그대로(머리글 위 줄·서식 유지, 머리글 아래 예시 줄은 지움) 세무 마감과 같은 행을 머리글 아래부터 채움. 날짜 = 엑셀 날짜(yyyy-mm-dd), 금액 = 숫자. 회사 마감 전이면 파일명 끝 "_마감전". 승인 지출이 없으면 버튼 꺼짐.
+
 ## 4. 데이터 (migration 076, `spec/data/schema.md` 2.1a5)
 - `tax_offices`(사무소), `tax_office_members`(구성원, 계정당 1개), `company_tax_offices`(회사 → 사무소 연결·배정, 회사당 1행).
 - 회사 함수: `set_company_tax_office`·`clear_company_tax_office`·`my_company_tax_office`(관리자 이상).
 - 사무소 함수: `my_tax_office`, `register_tax_office`, `get_tax_office_by_code`, `join_tax_office`, `tax_office_clients`, `assign_tax_office_agent`·`tax_office_member_list`·`set_tax_office_member_status`·`regenerate_tax_office_code`(관리자), `tax_office_month_export`. 계정과목·분류 연결은 RLS 정책(`*_tax_office_*`).
 - 영수증 사진: 사무소 구성원은 저장소 권한이 없어, 열람을 확인한 함수가 돌려준 행의 사진(그 회사 폴더)만 서버가 운영 키로 10분 링크 발급.
-- 격리 테스트: `supabase/tests/047_tax_offices.sql`(출시 차단 조건).
+- 결산 양식(migration 077): `tax_office_templates`(사무소 → 양식, 칸 설정 jsonb, 파일은 비공개 보관함 `tax-office-templates/{사무소}/{uuid}.xlsx` — 서버가 운영 키로만 읽고 씀). 함수 `save_tax_office_template`·`delete_tax_office_template`(관리자), `tax_office_template_list`(구성원), `my_company_tax_templates`(회사 관리자), `tax_template_for_export`(내려받기 권한: 그 고객사를 볼 수 있는 사무소 구성원 또는 연결된 회사 관리자).
+- 격리 테스트: `supabase/tests/047_tax_offices.sql`, `048_tax_office_templates.sql`(출시 차단 조건).

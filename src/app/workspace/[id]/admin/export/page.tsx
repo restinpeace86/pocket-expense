@@ -6,6 +6,9 @@ import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { currentMonthKst } from "@/lib/dates";
 import { getTaxMonth, MONTH } from "@/lib/tax/closing";
+import { TemplateDownloads } from "@/components/tax-office/template-downloads";
+import { createClient } from "@/lib/supabase/server";
+import type { TemplateTarget } from "@/lib/tax-office/template-fields";
 
 export const metadata = { title: "세무 마감 · PocketExpense" };
 
@@ -41,12 +44,20 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   const months = recentMonths(now);
   // 기본은 지난달(보통 지난달을 마감한다)
   const month = typeof sp.month === "string" && MONTH.test(sp.month) && sp.month <= now ? sp.month : months[1];
-  const res = await getTaxMonth(month);
+  const supabase = await createClient();
+  const [res, { data: templates }] = await Promise.all([getTaxMonth(month), supabase.rpc("my_company_tax_templates")]);
   if (!res.ok) notFound();
   return (
     <div className="flex flex-col gap-4">
       {/* 마감 전에 결의서 없는 법인카드 결제가 없는지 (D-111) */}
       <ReconcileLink href={`/workspace/${id}/admin/corporate-cards/reconcile`} />
+      {/* 우리 세무사무소가 올린 결산 양식으로 받기 (D-150) */}
+      <TemplateDownloads
+        templates={(templates ?? []).map((t) => ({ id: t.id, name: t.name, target: t.target as TemplateTarget }))}
+        officeName={templates?.[0]?.office_name}
+        hrefFor={(tid) => `/workspace/${id}/admin/export/template?id=${tid}&month=${month}`}
+        disabled={res.data.rows.length === 0}
+      />
       <TaxClosingView
       key={month}
       data={res.data}

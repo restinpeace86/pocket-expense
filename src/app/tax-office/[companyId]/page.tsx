@@ -3,7 +3,9 @@ import { Suspense } from "react";
 import { TaxOfficeMonthView } from "@/components/tax-office/tax-office-month-view";
 import { currentMonthKst } from "@/lib/dates";
 import { MONTH } from "@/lib/tax/closing";
+import { createClient } from "@/lib/supabase/server";
 import { getTaxOfficeClients, getTaxOfficeMonth, signTaxOfficeReceipts } from "@/lib/tax-office/queries";
+import type { TemplateTarget } from "@/lib/tax-office/template-fields";
 
 export const metadata = { title: "세무 자료 · PocketExpense 세무사무소" };
 
@@ -35,7 +37,8 @@ async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[co
   const month = typeof sp.month === "string" && MONTH.test(sp.month) && sp.month <= now ? sp.month : months[1];
   const data = await getTaxOfficeMonth(companyId, month);
   if (!data) notFound();
-  const urls = await signTaxOfficeReceipts(companyId, data.rows);
+  const supabase = await createClient();
+  const [urls, { data: templates }] = await Promise.all([signTaxOfficeReceipts(companyId, data.rows), supabase.rpc("tax_office_template_list")]);
   return (
     <TaxOfficeMonthView
       companyId={companyId}
@@ -44,6 +47,7 @@ async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[co
       data={data}
       months={months.includes(month) ? months : [month, ...months]}
       receiptUrls={Object.fromEntries(urls)}
+      templates={(templates ?? []).map((t) => ({ id: t.id, name: t.name, target: t.target as TemplateTarget }))}
     />
   );
 }
