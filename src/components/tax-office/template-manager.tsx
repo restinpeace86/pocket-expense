@@ -58,7 +58,7 @@ export function TemplateManager({ templates, canEdit }: { templates: OfficeTempl
       try {
         const r = await uploadTemplateFileAction(fd);
         if (!r.ok) return setError(r.error);
-        setDraft({ id: null, name: file.name.replace(/\.xlsx$/i, "").slice(0, 50), target: "all", filePath: r.filePath, fileName: r.fileName, sheetName: r.sheetName, headerRow: r.headerRow, columns: r.columns });
+        setDraft({ id: null, name: file.name.replace(/\.xlsx?$/i, "").slice(0, 50), target: "all", filePath: r.filePath, fileName: r.fileName, sheetName: r.sheetName, headerRow: r.headerRow, columns: r.columns });
       } catch {
         setError(thrownActionMessage());
       }
@@ -101,12 +101,12 @@ export function TemplateManager({ templates, canEdit }: { templates: OfficeTempl
         <section className={card} aria-label="양식 추가">
           <h2 className="font-semibold">양식 추가</h2>
           <p className="mt-1 break-keep text-sm text-zinc-600">
-            회계 프로그램에서 받은 엑셀 업로드 양식(.xlsx)을 그대로 올리세요. 칸 이름(거래일자·거래처명·공급가액 등)을 보고 어떤 값을 넣을지 자동으로 맞춰 드려요.
+            회계 프로그램에서 받은 엑셀 업로드 양식(.xlsx 또는 예전 .xls)을 그대로 올리세요. .xls로 올린 양식은 받을 때도 .xls로 드려요. 칸 이름(거래일자·거래처명·공급가액 등)을 보고 어떤 값을 넣을지 자동으로 맞춰 드려요.
           </p>
           <input
             ref={fileRef}
             type="file"
-            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
             className="hidden"
             aria-label="양식 파일"
             onChange={(e) => {

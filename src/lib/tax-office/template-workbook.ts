@@ -1,6 +1,7 @@
 import "server-only";
 import ExcelJS from "exceljs";
 import { NextResponse } from "next/server";
+import * as XLSX from "xlsx";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ExportRow } from "@/lib/tax/export-rows";
 import { autoMap, cellValue, rowsForTarget, type TemplateColumn, type TemplateTarget } from "./template-fields";
@@ -8,6 +9,28 @@ import { autoMap, cellValue, rowsForTarget, type TemplateColumn, type TemplateTa
 // 세무사무소 월말 결산 양식 엑셀 (D-150): 올린 양식 읽기(머리글 찾기)와, 양식에 세무 마감 행을 채워 내보내기.
 export const TEMPLATE_BUCKET = "tax-office-templates";
 export const TEMPLATE_MAX_BYTES = 5 * 1024 * 1024;
+
+// 예전 엑셀(.xls, Excel 97-2003) 지원: 읽을 때는 .xlsx로 바꿔 같은 방식으로 다루고, 원본이 .xls인 양식은 받을 때 .xls로 돌려준다(SheetJS)
+// .xlsx = zip(PK…). 그 밖(.xls의 OLE 파일, 프로그램이 내보낸 HTML 표 등)은 SheetJS로 읽어 .xlsx로 바꾼다
+export const isZip = (buf: ArrayBuffer) => {
+  const b = new Uint8Array(buf, 0, Math.min(4, buf.byteLength));
+  return b[0] === 0x50 && b[1] === 0x4b;
+};
+export function toXlsx(buf: ArrayBuffer): ArrayBuffer | null {
+  if (isZip(buf)) return buf;
+  try {
+    const wb = XLSX.read(new Uint8Array(buf), { type: "array", cellDates: true });
+    if (wb.SheetNames.length === 0) return null;
+    return XLSX.write(wb, { bookType: "xlsx", type: "array" }) as ArrayBuffer;
+  } catch {
+    return null;
+  }
+}
+export function xlsxToXls(buf: ArrayBuffer): ArrayBuffer {
+  const wb = XLSX.read(new Uint8Array(buf), { type: "array", cellDates: true });
+  return XLSX.write(wb, { bookType: "xls", type: "array" }) as ArrayBuffer;
+}
+export const wantsXls = (fileName: string | null | undefined) => !!fileName && /\.xls$/i.test(fileName);
 
 const text = (v: ExcelJS.CellValue): string => {
   if (v == null) return "";
@@ -96,6 +119,7 @@ export type TemplateForExport = {
   name: string;
   target: TemplateTarget;
   file_path: string | null;
+  file_name?: string | null;
   sheet_name: string | null;
   header_row: number;
   columns: TemplateColumn[];
@@ -111,13 +135,17 @@ export async function templateResponse(tpl: TemplateForExport, rows: ExportRow[]
     if (!data) return new NextResponse("Template file missing", { status: 404 });
     file = await data.arrayBuffer();
   }
-  const buf = await buildTemplateWorkbook({ file, sheetName: tpl.sheet_name, headerRow: tpl.header_row, columns: tpl.columns, target: tpl.target, rows, month });
+  const xlsx = await buildTemplateWorkbook({ file, sheetName: tpl.sheet_name, headerRow: tpl.header_row, columns: tpl.columns, target: tpl.target, rows, month });
+  // 원본 양식이 .xls(Excel 97-2003)였으면 받는 파일도 .xls로(회계 프로그램이 .xls만 받는 경우)
+  const xls = wantsXls(tpl.file_name);
+  const buf = xls ? xlsxToXls(xlsx) : xlsx;
+  const ext = xls ? "xls" : "xlsx";
   const [y, mm] = month.split("-");
-  const name = `${companyName}_${y}년${Number(mm)}월_${tpl.name}${preview ? "_마감전" : ""}.xlsx`.replace(/[\\/:*?"<>|]/g, "");
+  const name = `${companyName}_${y}년${Number(mm)}월_${tpl.name}${preview ? "_마감전" : ""}.${ext}`.replace(/[\\/:*?"<>|]/g, "");
   return new NextResponse(buf, {
     headers: {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="template.xlsx"; filename*=UTF-8''${encodeURIComponent(name)}`,
+      "Content-Type": xls ? "application/vnd.ms-excel" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": `attachment; filename="template.${ext}"; filename*=UTF-8''${encodeURIComponent(name)}`,
       "Cache-Control": "private, no-store",
     },
   });

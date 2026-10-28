@@ -4,7 +4,8 @@ import type { ExportRow } from "@/lib/tax/export-rows";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => null }));
-const { buildTemplateWorkbook, parseTemplateXlsx } = await import("./template-workbook");
+const { buildTemplateWorkbook, parseTemplateXlsx, toXlsx, xlsxToXls, wantsXls } = await import("./template-workbook");
+const XLSX = await import("xlsx");
 
 const row = (o: Partial<ExportRow>): ExportRow =>
   ({ seq: 1, kind: "current", claim_id: "c", claim_title: "t", claim_description: null, item_id: "i", expense_date: "2026-09-15", merchant_name: "김밥", merchant_business_number: "1234567890",
@@ -60,5 +61,28 @@ describe("세무사무소 결산 양식 엑셀 (D-150)", () => {
     expect(ws.getRow(1).getCell(1).value).toBe("월");
     expect(ws.getRow(2).getCell(1).value).toBe(9);
     expect(ws.getRow(2).getCell(2).value).toBe(10000);
+  });
+  it(".xls(Excel 97-2003): 읽어서 .xlsx로 바꾸고, 채운 결과를 다시 .xls로", async () => {
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([["카드 매입 양식"], [], ["거래일자", "거래처명", "합계"]]), "매입");
+    const xls = XLSX.write(book, { bookType: "xls", type: "array" }) as ArrayBuffer;
+    expect(new Uint8Array(xls)[0]).toBe(0xd0); // OLE 파일(진짜 .xls)
+    const xlsx = toXlsx(xls)!;
+    const p = (await parseTemplateXlsx(xlsx))!;
+    expect(p.headerRow).toBe(3);
+    expect(p.columns.map((c) => c.field)).toEqual(["date", "merchant", "amount"]);
+    const filled = await buildTemplateWorkbook({ file: xlsx, sheetName: p.sheetName, headerRow: p.headerRow, columns: p.columns, target: "all", month: "2026-09", rows: [row({})] });
+    const back = xlsxToXls(filled);
+    expect(new Uint8Array(back)[0]).toBe(0xd0);
+    const ws = XLSX.read(new Uint8Array(back), { type: "array" }).Sheets["매입"];
+    expect(ws.A1.v).toBe("카드 매입 양식");
+    expect(ws.B4.v).toBe("김밥");
+    expect(ws.C4.v).toBe(10000);
+    expect(wantsXls("양식.XLS")).toBe(true);
+    expect(wantsXls("양식.xlsx")).toBe(false);
+  });
+  it("엑셀이 아닌 파일은 머리글을 찾지 못해 안내로 끝남", async () => {
+    const buf = toXlsx(new TextEncoder().encode("그냥 메모").buffer as ArrayBuffer);
+    expect(buf === null || (await parseTemplateXlsx(buf)) === null).toBe(true);
   });
 });
