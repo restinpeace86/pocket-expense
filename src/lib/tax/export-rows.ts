@@ -2,6 +2,7 @@
 // DB 함수 tax_month_export가 돌려준 행(순번 순)을 엑셀 시트·ZIP 파일명으로 바꾼다. 순수 함수 — 서버·브라우저 공용.
 import { CATEGORY_LABEL, CONDOLENCE_LIMIT, PURCHASE_TYPE_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, type PurchaseType, type TripType } from "@/lib/expense/categories";
 import { fuelOf, routeFormula } from "@/lib/expense/route";
+import { noEvidenceCheck } from "@/lib/expense/evidence-penalty";
 
 export type ExportRow = {
   seq: number;
@@ -124,7 +125,10 @@ export function checks(r: ExportRow, hasFile: boolean): string[] {
   if (r.category === "condolence" && (r.amount ?? 0) > CONDOLENCE_LIMIT) out.push("경조사비 20만원 초과");
   if (!r.merchant_business_number && r.category !== "condolence") out.push("사업자번호 없음");
   if (r.supply_amount == null || r.vat_amount == null) out.push("부가세 미구분");
-  if (!hasFile) out.push("영수증 파일 없음");
+  // 증빙 없음은 금액 기준으로 가산세 확인 여부를 함께(D-153). 증빙 없음이면 '영수증 파일 없음'은 겹치므로 빼고 이걸로
+  const noEv = noEvidenceCheck(r.evidence_kind, r.amount);
+  if (noEv) out.push(noEv);
+  else if (!hasFile) out.push("영수증 파일 없음");
   return out;
 }
 

@@ -56,13 +56,16 @@ export type ClaimDoc = {
 const ITEM_COLS =
   "id, claim_id, sort_order, expense_date, merchant_name, category, trip_type, purchase_type, payment_method, evidence_type, supply_amount, vat_amount, amount, purpose, headcount, attendees, client_name, start_location, end_location, is_round_trip, route_one_way_km, company_supported_amount, personal_burden_amount, account_title_name, line_items";
 
-export async function getClaimDocs(companyId: string, rows: Pick<ExportRow, "claim_id">[]): Promise<ClaimDoc[]> {
-  return getClaimDocsByIds(companyId, [...new Set(rows.map((r) => r.claim_id))]);
+// opts.client: 세무사무소 ZIP(D-153)은 회사 멤버가 아니라 접근 확인 뒤 운영 키로 읽는다. opts.withBank=false면 직원 정산 계좌를 넣지 않는다
+type DocOpts = { client?: Awaited<ReturnType<typeof createClient>>; withBank?: boolean };
+
+export async function getClaimDocs(companyId: string, rows: Pick<ExportRow, "claim_id">[], opts: DocOpts = {}): Promise<ClaimDoc[]> {
+  return getClaimDocsByIds(companyId, [...new Set(rows.map((r) => r.claim_id))], opts);
 }
 
-export async function getClaimDocsByIds(companyId: string, ids: string[]): Promise<ClaimDoc[]> {
+export async function getClaimDocsByIds(companyId: string, ids: string[], opts: DocOpts = {}): Promise<ClaimDoc[]> {
   if (!ids.length) return [];
-  const supabase = await createClient();
+  const supabase = opts.client ?? (await createClient());
   const claims: Record<string, unknown>[] = [];
   const items: Record<string, unknown>[] = [];
   const steps: Record<string, unknown>[] = [];
@@ -88,7 +91,7 @@ export async function getClaimDocsByIds(companyId: string, ids: string[]): Promi
   const mem = new Map((members ?? []).map((m) => [m.id, m]));
   // 입금 정보(양식에 '입금 정보' 칸이 있을 때 씀, D-118) — 관리자는 같은 회사 직원 계좌를 읽을 수 있다(RLS bank_select)
   const ownerIds = [...new Set(claims.map((c) => c.member_id as string))];
-  const { data: banks } = ownerIds.length
+  const { data: banks } = ownerIds.length && opts.withBank !== false
     ? await supabase.from("member_bank_accounts").select("member_id, bank_name, account_number, account_holder").eq("company_id", companyId).in("member_id", ownerIds)
     : { data: [] };
   const bank = new Map((banks ?? []).map((b) => [b.member_id, { bank_name: b.bank_name, account_number: b.account_number, account_holder: b.account_holder }]));

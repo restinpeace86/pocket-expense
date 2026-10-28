@@ -138,6 +138,19 @@
 | created_at | timestamptz | |
 - 트리거(`account_titles`·`account_title_mappings`)가 그 회사를 볼 수 있는 사무소 구성원의 변경만 기록. 읽기: 회사 관리자·그 회사를 보는 사무소 구성원. `company_tax_offices`에 `released_at`·`released_office_name`(사무소가 해제) 추가.
 
+### 2.1a8 `tax_export_downloads` — 세무 자료 내려받기 기록 (D-153, migration 081)
+| 컬럼 | 타입 | 설명 |
+|---|---|---|
+| company_id | uuid FK companies (cascade) | |
+| actor_kind | text | company / tax_office |
+| actor_name / office_name | text | 받은 사람 / 세무사무소명 |
+| month | text | YYYY-MM |
+| kind | text | preview / package / office_xlsx / office_zip / template |
+| template_name | text | 결산 양식 이름 |
+| row_count | integer | 그 달 승인 지출 건수 |
+| closed | boolean | 받을 때 회사 마감 여부 |
+- 쓰기는 `log_tax_export`(그 회사 관리자 또는 그 회사를 볼 수 있는 사무소 구성원만), 읽기는 회사 관리자만.
+
 ### 2.1a4 `company_referrals` — 추천 회사·추천인 (D-147, migration 074, 회사당 1건)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|

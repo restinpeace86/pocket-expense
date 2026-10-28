@@ -19,6 +19,7 @@ import { CATEGORY_LABEL, TRIP_TYPE_LABEL, type ExpenseCategory, type PurchaseTyp
 import { formatWon } from "@/lib/format";
 import { evidenceReason } from "@/lib/receipts/evidence-reason";
 import { guardAction } from "@/lib/action-guard";
+import { noEvidenceNotice } from "@/lib/expense/evidence-penalty";
 import { measureAction } from "@/lib/perf/client";
 
 // 영수증 항목 편집 — 결의서 화면 안 인라인(아코디언) (worker-tax-processing.md §2·§3-3, smart-meal.md §4, corporate-cards.md §3, todo_improvement(2차) 3)
@@ -421,7 +422,21 @@ export function ItemInlineForm({
                 onChange={(e) => set("noEvidenceReason", e.target.value)}
               />
               {input.noEvidenceReason.trim().length < NO_EVIDENCE_MIN && <p className="text-xs text-zinc-500">{NO_EVIDENCE_MIN}자 이상 적어 주세요.</p>}
-              <Warn>결재 화면에 &ldquo;증빙 없음&rdquo;으로 표시되고, 세무사 자료에도 사유가 함께 넘어가요. 3만 원이 넘는 지출은 증빙이 없으면 회사가 가산세를 낼 수 있어요.</Warn>
+              {(() => {
+                // 금액에 맞는 가산세 안내 + 적용 기준(D-153). 3만 원 이하는 겁주지 않는다
+                const n = noEvidenceNotice(amount);
+                const body = (
+                  <>
+                    결재 화면에 &ldquo;증빙 없음&rdquo;으로 표시되고, 세무사 자료에도 사유가 함께 넘어가요. {n.text}
+                    <span className="mt-1 block text-xs opacity-80">{n.basis}</span>
+                  </>
+                );
+                return n.level === "warn" ? (
+                  <Warn>{body}</Warn>
+                ) : (
+                  <p className="rounded-xl bg-zinc-100 px-3 py-2 text-sm text-zinc-700">{body}</p>
+                );
+              })()}
               <button type="button" onClick={() => set("evidenceKind", null)} className="self-start text-zinc-500 underline underline-offset-2">
                 자료 올리기로 돌아가기
               </button>

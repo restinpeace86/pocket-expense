@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MONTH } from "@/lib/tax/closing";
 import { getTaxOfficeClients, getTaxOfficeMonth } from "@/lib/tax-office/queries";
 import { templateResponse, type TemplateForExport } from "@/lib/tax-office/template-workbook";
+import { logTaxExport } from "@/lib/tax/download-log";
 
 // 세무사무소: 고객사 월말 자료를 사무소 결산 양식으로 (D-150). ?id=양식&month=YYYY-MM
 export async function GET(request: NextRequest, ctx: RouteContext<"/tax-office/[companyId]/template">) {
@@ -17,5 +18,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/tax-office/[
   if (error || !tpl) return new NextResponse("Not Found", { status: 404 });
   const data = await getTaxOfficeMonth(companyId, month);
   if (!data) return new NextResponse("Not Found", { status: 404 });
-  return templateResponse(tpl as unknown as TemplateForExport, data.rows, month, company.company_name, data.status !== "closed");
+  const t = tpl as unknown as TemplateForExport;
+  await logTaxExport(companyId, month, "template", data.rows.length, data.status === "closed", t.name);
+  return templateResponse(t, data.rows, month, company.company_name, data.status !== "closed");
 }

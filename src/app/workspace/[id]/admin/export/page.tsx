@@ -7,6 +7,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { currentMonthKst } from "@/lib/dates";
 import { getTaxMonth, MONTH } from "@/lib/tax/closing";
 import { TemplateDownloads } from "@/components/tax-office/template-downloads";
+import { TaxDownloadLog, type TaxDownloadRow } from "@/components/admin/tax-download-log";
 import { createClient } from "@/lib/supabase/server";
 import type { TemplateTarget } from "@/lib/tax-office/template-fields";
 
@@ -45,7 +46,11 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   // 기본은 지난달(보통 지난달을 마감한다)
   const month = typeof sp.month === "string" && MONTH.test(sp.month) && sp.month <= now ? sp.month : months[1];
   const supabase = await createClient();
-  const [res, { data: templates }] = await Promise.all([getTaxMonth(month), supabase.rpc("my_company_tax_templates")]);
+  const [res, { data: templates }, { data: downloads }] = await Promise.all([
+    getTaxMonth(month),
+    supabase.rpc("my_company_tax_templates"),
+    supabase.from("tax_export_downloads").select("id, actor_kind, actor_name, office_name, month, kind, template_name, row_count, closed, created_at").order("created_at", { ascending: false }).limit(20),
+  ]);
   if (!res.ok) notFound();
   return (
     <div className="flex flex-col gap-4">
@@ -67,6 +72,8 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
       companyName={membership.company_name}
       isSuper={membership.role === "super_admin"}
     />
+      {/* 세무 자료 내려받은 기록(D-153) */}
+      <TaxDownloadLog rows={(downloads ?? []) as TaxDownloadRow[]} />
     </div>
   );
 }

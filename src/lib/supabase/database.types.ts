@@ -2157,6 +2157,56 @@ export type Database = {
           },
         ]
       }
+      tax_export_downloads: {
+        Row: {
+          actor_kind: string
+          actor_name: string | null
+          closed: boolean
+          company_id: string
+          created_at: string
+          id: string
+          kind: string
+          month: string
+          office_name: string | null
+          row_count: number
+          template_name: string | null
+        }
+        Insert: {
+          actor_kind: string
+          actor_name?: string | null
+          closed?: boolean
+          company_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          month: string
+          office_name?: string | null
+          row_count?: number
+          template_name?: string | null
+        }
+        Update: {
+          actor_kind?: string
+          actor_name?: string | null
+          closed?: boolean
+          company_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          month?: string
+          office_name?: string | null
+          row_count?: number
+          template_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_export_downloads_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_office_members: {
         Row: {
           auth_user_id: string
@@ -2465,6 +2515,17 @@ export type Database = {
         Returns: string
       }
       leave_tax_office: { Args: never; Returns: undefined }
+      log_tax_export: {
+        Args: {
+          p_closed: boolean
+          p_company_id: string
+          p_kind: string
+          p_month: string
+          p_row_count: number
+          p_template_name: string
+        }
+        Returns: undefined
+      }
       mark_claims_paid: { Args: { p_claim_ids: string[] }; Returns: number }
       member_deactivation_check: {
         Args: { p_member_id: string }

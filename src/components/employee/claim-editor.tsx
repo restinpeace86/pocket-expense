@@ -882,13 +882,18 @@ export function ClaimEditor({
               <input id="claim-meeting-purpose" className={inputClass} value={form.meetingPurpose} maxLength={200} placeholder="예: A사 신규 계약 협의" onChange={(e) => set("meetingPurpose", e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="claim-client">거래처명</Label>
+              <Label htmlFor="claim-client" required>
+                거래처명
+              </Label>
               <input id="claim-client" className={inputClass} value={form.clientName} maxLength={100} placeholder="예: (주)에이컴퍼니" onChange={(e) => set("clientName", e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="claim-attendees">참석자</Label>
+              <Label htmlFor="claim-attendees" required>
+                참석자
+              </Label>
               <input id="claim-attendees" className={inputClass} value={form.attendees} maxLength={200} placeholder="예: A사 김부장, 우리 회사 박과장" onChange={(e) => set("attendees", e.target.value)} />
             </div>
+            <p className="break-keep text-xs text-zinc-500">외부 미팅비는 세무에서 접대비(기업업무추진비)로 보는 지출이라, 누구와 무엇 때문에 만났는지가 꼭 필요해요. 세 칸 모두 적어야 상신할 수 있어요.</p>
           </div>
         )}
         {category === "purchase" && (

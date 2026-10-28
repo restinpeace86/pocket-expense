@@ -4,6 +4,7 @@ import { getMembership } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getTaxMonth, MONTH } from "@/lib/tax/closing";
 import { templateResponse, type TemplateForExport } from "@/lib/tax-office/template-workbook";
+import { logTaxExport } from "@/lib/tax/download-log";
 
 // 회사 관리자: 우리 세무사무소가 올린 결산 양식으로 세무 마감 자료 받기 (D-150). ?id=양식&month=YYYY-MM
 export async function GET(request: NextRequest, ctx: RouteContext<"/workspace/[id]/admin/export/template">) {
@@ -18,5 +19,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/workspace/[i
   if (error || !tpl) return new NextResponse("Not Found", { status: 404 });
   const res = await getTaxMonth(month);
   if (!res.ok) return new NextResponse("Not Found", { status: 404 });
-  return templateResponse(tpl as unknown as TemplateForExport, res.data.rows, month, m.company_name, res.data.status !== "closed");
+  const t = tpl as unknown as TemplateForExport;
+  await logTaxExport(companyId, month, "template", res.data.rows.length, res.data.status === "closed", t.name);
+  return templateResponse(t, res.data.rows, month, m.company_name, res.data.status !== "closed");
 }

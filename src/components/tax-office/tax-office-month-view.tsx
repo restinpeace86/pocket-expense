@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { TaxMonth } from "@/lib/tax/closing";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, statusLabel, supplyVat, type ExportRow } from "@/lib/tax/export-rows";
 import { MonthPicker } from "./month-picker";
+import { OfficeZipButton } from "./office-zip-button";
 import { TemplateDownloads, type TemplateLink } from "./template-downloads";
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
@@ -74,16 +75,19 @@ export function TaxOfficeMonthView({
             <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">마감 전 · 승인분이 더 늘 수 있어요</span>
           )}
         </div>
+        <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-start">
+        <OfficeZipButton companyId={companyId} companyName={companyName} month={data.month} closed={data.status === "closed"} disabled={rows.length === 0} />
         <a
           href={`${base}/xlsx?month=${data.month}`}
           aria-disabled={rows.length === 0}
-          className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl px-4 font-semibold ${
+          className={`inline-flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-4 font-semibold ${
             rows.length === 0 ? "pointer-events-none bg-zinc-200 text-zinc-500" : "bg-brand-600 text-white hover:bg-brand-700"
           }`}
         >
           <Download className="size-4" aria-hidden />
           세무용 엑셀 다운로드
         </a>
+        </div>
       </section>
       <TemplateDownloads templates={templates} hrefFor={(id) => `${base}/template?id=${id}&month=${data.month}`} disabled={rows.length === 0} />
 
