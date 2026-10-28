@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { CloseOfficeSection, LeaveOfficeSection } from "@/components/tax-office/office-actions";
 import { OfficeInvite, OfficeMembers } from "@/components/tax-office/office-manage";
 import { createClient } from "@/lib/supabase/server";
-import { getMyTaxOffice, isActiveMember } from "@/lib/tax-office/queries";
+import { getMyTaxOffice, getTaxOfficeClients, isActiveMember } from "@/lib/tax-office/queries";
 
 export const metadata = { title: "사무소 관리 · PocketExpense 세무사무소" };
 
-// 사무소 관리(관리자, D-149): 소속 세무사 초대 링크·코드, 구성원 목록·이용 중지
+// 사무소 관리 (D-149, D-152): 관리자 = 초대·구성원(이용 중지·관리자 넘기기)·사무소 닫기 / 세무사 = 내 사무소(나가기)
 export default function TaxOfficeManagePage() {
   return (
     <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-zinc-100" />}>
@@ -17,9 +18,23 @@ export default function TaxOfficeManagePage() {
 
 async function Content() {
   const state = await getMyTaxOffice();
-  if (!isActiveMember(state) || state.role !== "admin" || !state.invite_code) notFound();
+  if (!isActiveMember(state)) notFound();
+  if (state.role !== "admin" || !state.invite_code) {
+    return (
+      <>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">내 사무소</h1>
+          <p className="mt-1 break-keep text-sm text-zinc-600">
+            {state.office_name}의 소속 세무사예요. 고객사 배정·초대·양식 관리는 사무소 관리자가 해요.
+          </p>
+        </div>
+        <LeaveOfficeSection officeName={state.office_name} />
+      </>
+    );
+  }
   const supabase = await createClient();
-  const { data } = await supabase.rpc("tax_office_member_list");
+  const [{ data }, clients] = await Promise.all([supabase.rpc("tax_office_member_list"), getTaxOfficeClients()]);
+  const members = (data ?? []).map((m) => ({ ...m, assigned_count: Number(m.assigned_count) }));
   return (
     <>
       <div>
@@ -27,7 +42,8 @@ async function Content() {
         <p className="mt-1 break-keep text-sm text-zinc-600">소속 세무사·직원을 초대하고, 고객사 목록에서 담당을 배정해요. 세무사는 배정된 고객사만 볼 수 있어요.</p>
       </div>
       <OfficeInvite code={state.invite_code} officeName={state.office_name} />
-      <OfficeMembers members={(data ?? []).map((m) => ({ ...m, assigned_count: Number(m.assigned_count) }))} myId={state.member_id} />
+      <OfficeMembers members={members} myId={state.member_id} />
+      <CloseOfficeSection officeName={state.office_name} memberCount={members.length} clientCount={clients.length} />
     </>
   );
 }

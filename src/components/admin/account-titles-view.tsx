@@ -64,11 +64,14 @@ export function AccountTitlesView({
   mappings,
   preview = false,
   actions = ADMIN_ACTIONS,
+  readOnly = false,
 }: {
   titles: AccountTitleRow[];
   mappings: MappingRow[];
   preview?: boolean;
   actions?: AccountTitleActions;
+  // 세무사무소가 관리하는 회사(D-152): 보기만
+  readOnly?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -111,7 +114,7 @@ export function AccountTitlesView({
                 <select
                   className={`${inputClass} sm:w-56`}
                   value={value}
-                  disabled={pending}
+                  disabled={pending || readOnly}
                   aria-label={`${label} 계정과목`}
                   onChange={(e) =>
                     run(
@@ -137,6 +140,7 @@ export function AccountTitlesView({
 
       <section className={card}>
         <SectionHeading title="계정과목 목록" summary="기본 계정코드는 더존(Smart A·위하고)의 기본 계정코드라 회사 회계 프로그램과 다를 수 있어요. 회계 프로그램에서 확인하고 다르면 바꿔 주세요. 분류에 연결된 계정과목은 삭제할 수 없어요." />
+        {!readOnly && (
         <form
           className="mt-4 flex flex-col gap-2 sm:flex-row"
           onSubmit={(e) => {
@@ -161,12 +165,14 @@ export function AccountTitlesView({
             <Plus className="size-4" /> 추가
           </button>
         </form>
+        )}
         <ul className="mt-3 flex flex-col gap-2">
           {titles.map((t) => (
             <TitleItem
               key={t.id}
               title={t}
               busy={pending}
+              readOnly={readOnly}
               onSave={(n, c, done) => run("update", () => actions.update(t.id, n, c), done)}
               onDelete={
                 actions.remove
@@ -187,11 +193,13 @@ export function AccountTitlesView({
 function TitleItem({
   title: t,
   busy,
+  readOnly = false,
   onSave,
   onDelete,
 }: {
   title: AccountTitleRow;
   busy: boolean;
+  readOnly?: boolean;
   onSave: (name: string, code: string, done: () => void) => void;
   onDelete?: () => void;
 }) {
@@ -239,10 +247,12 @@ function TitleItem({
         <p className="break-words font-medium">{t.name}</p>
         <p className="text-xs text-zinc-500">{t.code ? `코드 ${t.code}` : "코드 없음"}{t.used && " · 분류에 연결됨"}</p>
       </div>
+      {!readOnly && (
       <button type="button" className={iconButton} disabled={busy} onClick={() => setEditing(true)} aria-label={`${t.name} 수정`}>
         <Pencil className="size-4" />
       </button>
-      {onDelete && (
+      )}
+      {onDelete && !readOnly && (
       <button
         type="button"
         className={`${iconButton} hover:text-red-600`}

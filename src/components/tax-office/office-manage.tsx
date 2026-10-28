@@ -4,6 +4,7 @@ import { Check, Copy, RefreshCw } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { regenerateTaxOfficeCodeAction, setTaxOfficeMemberStatusAction } from "@/app/tax-office/actions";
 import { FormError } from "@/components/onboarding/field";
+import { TransferAdminButton } from "./office-actions";
 import { guardAction } from "@/lib/action-guard";
 
 const card = "rounded-xl border border-zinc-200 bg-white p-5 shadow-sm";
@@ -87,19 +88,22 @@ export function OfficeMembers({ members, myId }: { members: Member[]; myId: stri
       <h2 className="font-semibold">구성원 {members.length}명</h2>
       <ul className="mt-3 flex flex-col divide-y divide-zinc-100">
         {members.map((m) => (
-          <li key={m.id} className="flex flex-wrap items-center gap-3 py-3">
+          <li key={m.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-3">
             <div className="min-w-0 flex-1">
               <p className="font-medium text-zinc-900">
                 {m.name}
-                <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${m.role === "admin" ? "bg-brand-50 text-brand-700" : "bg-zinc-100 text-zinc-600"}`}>
+                <span className={`ml-2 whitespace-nowrap rounded-full px-2 py-0.5 text-xs ${m.role === "admin" ? "bg-brand-50 text-brand-700" : "bg-zinc-100 text-zinc-600"}`}>
                   {m.role === "admin" ? "관리자" : "세무사"}
                 </span>
-                {m.status !== "active" && <span className="ml-1 rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700">이용 중지</span>}
+                {m.status !== "active" && <span className="ml-1 whitespace-nowrap rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700">이용 중지</span>}
               </p>
               <p className="break-all text-xs text-zinc-500">
                 {m.email ?? "이메일 없음"} · 맡은 고객사 {m.assigned_count}곳
               </p>
             </div>
+            {m.id !== myId && (
+              <div className="flex flex-wrap gap-2">
+            {m.id !== myId && m.status === "active" && m.role !== "admin" && <TransferAdminButton memberId={m.id} name={m.name} />}
             {m.id !== myId &&
               (m.status === "active" ? (
                 <button type="button" disabled={pending} onClick={() => setStatus(m, "inactive")} className={`${secondary} text-red-700`}>
@@ -110,6 +114,8 @@ export function OfficeMembers({ members, myId }: { members: Member[]; myId: stri
                   다시 사용
                 </button>
               ))}
+              </div>
+            )}
           </li>
         ))}
       </ul>

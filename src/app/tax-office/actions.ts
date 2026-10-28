@@ -4,7 +4,9 @@ import { refresh, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { recordBusinessCheck } from "@/lib/business/record";
 import { messageForDbError } from "@/lib/errors";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { TEMPLATE_BUCKET } from "@/lib/tax-office/template-workbook";
 
 // 세무사무소 워크스페이스 작업 (D-149). 권한(사무소 관리자)·범위는 DB 함수가 다시 확인한다
 export type OfficeFormState = { error: string | null };
@@ -67,4 +69,43 @@ export async function regenerateTaxOfficeCodeAction(): Promise<Result> {
   if (error) return { error: messageForDbError(error) };
   refresh();
   return { error: null };
+}
+
+// ── 운영 보완 (D-152) ──
+// 고객사 연결 해제(사무소 관리자): 회사에는 "사무소가 연결을 해제했어요", 계정과목은 다시 회사가 관리
+export async function releaseClientAction(companyId: string): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("release_tax_office_client", { p_company_id: companyId });
+  if (error) return { error: messageForDbError(error) };
+  revalidatePath("/tax-office", "layout");
+  return { error: null };
+}
+
+// 관리자 넘기기: 고른 세무사가 관리자, 나는 세무사
+export async function transferAdminAction(memberId: string): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("transfer_tax_office_admin", { p_member_id: memberId });
+  if (error) return { error: messageForDbError(error) };
+  revalidatePath("/tax-office", "layout");
+  return { error: null };
+}
+
+// 사무소 나가기(세무사)
+export async function leaveOfficeAction(): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("leave_tax_office");
+  if (error) return { error: messageForDbError(error) };
+  revalidatePath("/tax-office", "layout");
+  redirect("/tax-office");
+}
+
+// 사무소 닫기(관리자, 사무소명 확인): 고객사는 '가입 대기'로, 구성원·양식은 지움 → 양식 파일도 보관함에서 지운다
+export async function closeOfficeAction(confirmName: string): Promise<Result> {
+  const supabase = await createClient();
+  const { data: paths, error } = await supabase.rpc("close_tax_office", { p_confirm_name: confirmName });
+  if (error) return { error: messageForDbError(error) };
+  const admin = createAdminClient();
+  if (admin && paths?.length) await admin.storage.from(TEMPLATE_BUCKET).remove(paths);
+  revalidatePath("/tax-office", "layout");
+  redirect("/tax-office");
 }

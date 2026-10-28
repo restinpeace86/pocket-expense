@@ -32,10 +32,17 @@
 - 항목: 순번, 거래일자(날짜 / 20261015 글자), 월, 일, 거래처명(가맹점), 거래처코드(빈칸), 사업자등록번호(하이픈 / 숫자만), 계정과목명, 계정코드, 적요, 공급가액, 부가세, 합계, 봉사료(0), 증빙구분, 결제수단, 카드 끝 4자리, 카드 별칭, 사용자, 부서·프로젝트, 결의서 제목, 분류, 지출 목적, 증빙 파일명(ZIP 매칭) (`src/lib/tax-office/template-fields.ts`).
 - **받기**: 고객사 세무 자료 화면(`/tax-office/[companyId]/template?id=&month=`)과 회사 관리자 세무 마감 화면(`/workspace/[id]/admin/export/template?id=&month=`, 연결된 사무소 양식만)에 [OO 결산 양식으로 받기]. 올린 파일 그대로(머리글 위 줄·서식 유지, 머리글 아래 예시 줄은 지움) 세무 마감과 같은 행을 머리글 아래부터 채움. 날짜 = 엑셀 날짜(yyyy-mm-dd), 금액 = 숫자. 회사 마감 전이면 파일명 끝 "_마감전". 원본 양식이 .xls면 받는 파일도 .xls. 승인 지출이 없으면 버튼 꺼짐.
 
+## 3b. 운영 보완 (D-152)
+- **고객사 해제**(사무소 관리자): 고객사 카드 [고객사 해제](확인 창) → 목록에서 빠지고 즉시 못 봄. 회사 [설정 › 세무사무소]에 "세무사무소가 연결을 해제했어요"(빨강) + 안내, 담당 세무사 "없음 (연결 해제)". 회사가 [정보 바꾸기]로 다시 저장하기 전에는 다시 붙지 않음.
+- **계정과목은 사무소가 관리**: 등록된 사무소와 연결된 회사는 계정과목·계정코드·분류 연결을 바꿀 수 없다(DB 정책). 회사 [계정과목] = 안내("OO이 우리 회사 계정과목을 관리해요…") + 보기만(추가·수정·삭제 없음, 연결 고르기 꺼짐) + **세무사무소 변경 이력**(최근 30건: 무엇·언제·누가(사무소)). 최근 7일 안에 변경이 있으면 관리자 홈 맨 위에 "세무사무소가 최근 7일 동안 계정과목을 N건 바꿨어요 [이력 보기 →]". 사무소 계정과목 화면에도 같은 이력. 가입 전·해제·닫기 뒤에는 회사가 다시 관리.
+- **사무소 관리 / 내 사무소**: 머리글 메뉴는 관리자 "사무소 관리", 세무사 "내 사무소". 관리자: 구성원마다 [관리자 넘기기](확인 창, 나는 세무사가 됨)·[이용 중지], 맨 아래 **사무소 닫기**(사무소명을 그대로 입력해야 버튼이 켜짐 → 구성원·결산 양식 삭제, 고객사는 가입 대기). 세무사: [사무소 나가기](맡던 배정 풀림). 관리자는 넘기거나 닫기 전에는 나갈 수 없음.
+- 세무사무소 이용은 무료(약관 제16조의2). 회사 화면과 사무소 화면을 오가는 링크는 두지 않는다.
+
 ## 4. 데이터 (migration 076, `spec/data/schema.md` 2.1a5)
 - `tax_offices`(사무소), `tax_office_members`(구성원, 계정당 1개), `company_tax_offices`(회사 → 사무소 연결·배정, 회사당 1행).
 - 회사 함수: `set_company_tax_office`·`clear_company_tax_office`·`my_company_tax_office`(관리자 이상).
 - 사무소 함수: `my_tax_office`, `register_tax_office`, `get_tax_office_by_code`, `join_tax_office`, `tax_office_clients`, `assign_tax_office_agent`·`tax_office_member_list`·`set_tax_office_member_status`·`regenerate_tax_office_code`(관리자), `tax_office_month_export`. 계정과목·분류 연결은 RLS 정책(`*_tax_office_*`).
 - 영수증 사진: 사무소 구성원은 저장소 권한이 없어, 열람을 확인한 함수가 돌려준 행의 사진(그 회사 폴더)만 서버가 운영 키로 10분 링크 발급.
 - 결산 양식(migration 077): `tax_office_templates`(사무소 → 양식, 칸 설정 jsonb, 파일은 비공개 보관함 `tax-office-templates/{사무소}/{uuid}.xlsx` — 서버가 운영 키로만 읽고 씀). 함수 `save_tax_office_template`·`delete_tax_office_template`(관리자), `tax_office_template_list`(구성원), `my_company_tax_templates`(회사 관리자), `tax_template_for_export`(내려받기 권한: 그 고객사를 볼 수 있는 사무소 구성원 또는 연결된 회사 관리자).
-- 격리 테스트: `supabase/tests/047_tax_offices.sql`, `048_tax_office_templates.sql`(출시 차단 조건).
+- 운영 보완(migration 079): `company_tax_offices.released_at·released_office_name`, `account_title_changes`(사무소 변경 이력, 트리거가 사무소 구성원 변경만 기록, 회사 관리자·그 회사를 보는 사무소 구성원만 읽기), `private.company_tax_office_managed`(회사 쪽 계정과목 쓰기 정책에서 막음), 함수 `release_tax_office_client`·`transfer_tax_office_admin`·`leave_tax_office`·`close_tax_office`.
+- 격리 테스트: `supabase/tests/047_tax_offices.sql`, `048_tax_office_templates.sql`, `049_tax_office_governance.sql`(출시 차단 조건).

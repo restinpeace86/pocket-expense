@@ -128,6 +128,16 @@
 | created_by | uuid | FK tax_office_members (set null) | |
 - RLS 강제, 사용자 직접 접근 없음(함수로만). 파일 보관함 `tax-office-templates`는 비공개·사용자 정책 없음(서버 운영 키만).
 
+### 2.1a7 `account_title_changes` — 세무사무소 계정과목 변경 이력 (D-152, migration 079)
+| 컬럼 | 타입 | 설명 |
+|---|---|---|
+| company_id | uuid FK companies (cascade) | |
+| entity / action | text | title·mapping / insert·update·delete |
+| detail | jsonb | 계정과목: old/new name·code, 연결: category·trip_type·purchase_type·condolence_target·old/new title |
+| actor_name / office_name | text | 바꾼 사무소 구성원·사무소명(사무소가 지워져도 남음) |
+| created_at | timestamptz | |
+- 트리거(`account_titles`·`account_title_mappings`)가 그 회사를 볼 수 있는 사무소 구성원의 변경만 기록. 읽기: 회사 관리자·그 회사를 보는 사무소 구성원. `company_tax_offices`에 `released_at`·`released_office_name`(사무소가 해제) 추가.
+
 ### 2.1a4 `company_referrals` — 추천 회사·추천인 (D-147, migration 074, 회사당 1건)
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|

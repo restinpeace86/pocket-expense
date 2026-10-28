@@ -34,11 +34,9 @@ export function TaxOfficeShell({ officeName, isAdmin, companies, children }: { o
             <Link href="/tax-office/templates" aria-current={pathname === "/tax-office/templates" ? "page" : undefined} className={top(pathname === "/tax-office/templates")}>
               결산 양식
             </Link>
-            {isAdmin && (
-              <Link href="/tax-office/manage" aria-current={pathname === "/tax-office/manage" ? "page" : undefined} className={top(pathname === "/tax-office/manage")}>
-                사무소 관리
-              </Link>
-            )}
+            <Link href="/tax-office/manage" aria-current={pathname === "/tax-office/manage" ? "page" : undefined} className={top(pathname === "/tax-office/manage")}>
+              {isAdmin ? "사무소 관리" : "내 사무소"}
+            </Link>
             <SignOutButton />
           </div>
         </div>

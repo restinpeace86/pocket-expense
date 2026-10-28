@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { Suspense } from "react";
+import { createClient } from "@/lib/supabase/server";
 import { getRecentNotices } from "@/lib/push/notices";
 import { NoticeStrip } from "@/components/push/notice-strip";
 import { AdminHomeView } from "@/components/admin/admin-home-view";
@@ -23,12 +25,30 @@ export default function AdminHomePage({ params }: PageProps<"/workspace/[id]/adm
 async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin">["params"] }) {
   const { id } = await params;
   const membership = await requireWorkspace(id, { admin: true });
-  const [{ company }, credit, dashboard, notices] = await Promise.all([getCompanySummary(membership.company_id), getCreditStatus(membership.company_id), getDashboard(currentMonthKst()), getRecentNotices()]);
+  const supabase = await createClient();
+  const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString();
+  const [{ company }, credit, dashboard, notices, { count: titleChanges }] = await Promise.all([
+    getCompanySummary(membership.company_id),
+    getCreditStatus(membership.company_id),
+    getDashboard(currentMonthKst()),
+    getRecentNotices(),
+    // 세무사무소가 최근 7일 안에 계정과목을 바꿨으면 알림(D-152)
+    supabase.from("account_title_changes").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
+  ]);
   if (!company || !dashboard) return null;
   return (
     <>
       {/* 이벤트 추가 지급 뒤 처음 접속하면 상단 배너 (pricing-policy.md §5) */}
       {credit?.showEventBanner && <EventBonusBanner amount={credit.eventAmount} count={credit.eventCount} total={credit.eventTotal} />}
+      {!!titleChanges && (
+        <Link
+          href={`/workspace/${membership.company_id}/admin/account-titles`}
+          className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900 hover:bg-brand-100"
+        >
+          <span className="break-keep">세무사무소가 최근 7일 동안 계정과목을 {titleChanges}건 바꿨어요.</span>
+          <span className="shrink-0 font-semibold">이력 보기 →</span>
+        </Link>
+      )}
       <AdminHomeView
       adminName={membership.name}
       companyName={company.name}

@@ -18,6 +18,8 @@ export type CompanyTaxOffice = {
   assigned_name: string | null;
   assigned_email: string | null;
   updated_at: string;
+  released_at?: string | null; // 세무사무소가 연결을 해제함(D-152)
+  released_office_name?: string | null;
 };
 
 // 지역번호(02) 전화도 보기 좋게
@@ -99,8 +101,8 @@ export function CompanyTaxOfficeForm({ current, companyName }: { current: Compan
               {current.registered ? <Landmark className="size-5" aria-hidden /> : <Clock className="size-5" aria-hidden />}
             </span>
             <div className="min-w-0 flex-1">
-              <p className={`text-xs font-medium ${current.registered ? "text-emerald-700" : "text-amber-700"}`}>
-                {current.registered ? "연결됨" : "세무사무소 가입 대기"}
+              <p className={`text-xs font-medium ${current.registered ? "text-emerald-700" : current.released_at ? "text-red-700" : "text-amber-700"}`}>
+                {current.registered ? "연결됨" : current.released_at ? "세무사무소가 연결을 해제했어요" : "세무사무소 가입 대기"}
               </p>
               <p className="break-keep font-semibold text-zinc-900">{current.registered_name ?? current.office_name}</p>
               <p className="break-all text-sm text-zinc-600">{current.office_email}</p>
@@ -110,7 +112,9 @@ export function CompanyTaxOfficeForm({ current, companyName }: { current: Compan
             <div className="flex flex-wrap gap-x-2">
               <dt className="text-zinc-500">담당 세무사</dt>
               <dd className="font-medium text-zinc-900">
-                {current.assigned_name
+                {current.released_at && !current.registered
+                  ? "없음 (연결 해제)"
+                  : current.assigned_name
                   ? `${current.assigned_name} (사무소 배정)`
                   : current.registered
                     ? "사무소에서 배정 전이에요"
@@ -126,7 +130,13 @@ export function CompanyTaxOfficeForm({ current, companyName }: { current: Compan
               </div>
             )}
           </dl>
-          {!current.registered && (
+          {current.released_at && !current.registered && (
+            <p className="mt-3 break-keep rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">
+              {current.released_office_name ?? current.office_name}에서 우리 회사와의 연결을 해제했어요. 지금은 세무사무소가 우리 회사 자료를 볼 수 없고, 계정과목은 다시 우리 회사가
+              관리해요. 계약이 계속된다면 세무사무소에 확인한 뒤 [정보 바꾸기]에서 다시 저장해 주세요.
+            </p>
+          )}
+          {!current.registered && !current.released_at && (
             <p className="mt-3 break-keep text-sm text-zinc-600">
               세무사무소가 아직 PocketExpense에 없어요. 아래 안내를 보내 주세요. {current.office_email}(으)로 로그인해 사무소를 등록하면 바로 연결돼요.
             </p>

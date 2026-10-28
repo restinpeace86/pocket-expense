@@ -2,6 +2,7 @@ import { Building2, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AssignSelect } from "@/components/tax-office/assign-select";
+import { ReleaseClientButton } from "@/components/tax-office/office-actions";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTaxOffice, getTaxOfficeClients, isActiveMember } from "@/lib/tax-office/queries";
 
@@ -34,7 +35,7 @@ async function Clients() {
         <h1 className="text-2xl font-bold tracking-tight">{isAdmin ? "고객사" : "맡은 고객사"}</h1>
         <p className="mt-1 break-keep text-sm text-zinc-600">
           {isAdmin
-            ? "고객사가 [설정 › 세무사무소]에 우리 사무소 이메일을 넣으면 자동으로 늘어나요. 담당 세무사를 배정하면 그 세무사도 볼 수 있어요."
+            ? "고객사가 [설정 › 세무사무소]에 우리 사무소 이메일을 넣으면 자동으로 늘어나요. 담당 세무사를 배정하면 그 세무사도 볼 수 있어요. 계약하지 않은 회사라면 [고객사 해제]로 빼 주세요."
             : "사무소 관리자가 배정한 고객사예요. 회사를 고르면 승인된 지출과 세무용 엑셀을 볼 수 있어요."}
         </p>
       </div>
@@ -68,6 +69,7 @@ async function Clients() {
                       {c.agent_email && ` (${c.agent_email})`}
                     </p>
                   )}
+                  <ReleaseClientButton companyId={c.company_id} companyName={c.company_name} />
                 </div>
               )}
             </li>

@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_title_changes: {
+        Row: {
+          action: string
+          actor_name: string | null
+          company_id: string
+          created_at: string
+          detail: Json
+          entity: string
+          id: string
+          office_name: string | null
+        }
+        Insert: {
+          action: string
+          actor_name?: string | null
+          company_id: string
+          created_at?: string
+          detail?: Json
+          entity: string
+          id?: string
+          office_name?: string | null
+        }
+        Update: {
+          action?: string
+          actor_name?: string | null
+          company_id?: string
+          created_at?: string
+          detail?: Json
+          entity?: string
+          id?: string
+          office_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_title_changes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       account_title_mappings: {
         Row: {
           account_title_id: string
@@ -610,6 +651,8 @@ export type Database = {
           office_email: string
           office_id: string | null
           office_name: string
+          released_at: string | null
+          released_office_name: string | null
           updated_at: string
           updated_by_member_id: string | null
         }
@@ -623,6 +666,8 @@ export type Database = {
           office_email: string
           office_id?: string | null
           office_name: string
+          released_at?: string | null
+          released_office_name?: string | null
           updated_at?: string
           updated_by_member_id?: string | null
         }
@@ -636,6 +681,8 @@ export type Database = {
           office_email?: string
           office_id?: string | null
           office_name?: string
+          released_at?: string | null
+          released_office_name?: string | null
           updated_at?: string
           updated_by_member_id?: string | null
         }
@@ -2341,6 +2388,7 @@ export type Database = {
       clear_company_tax_office: { Args: never; Returns: undefined }
       clear_form_template: { Args: never; Returns: undefined }
       close_tax_month: { Args: { p_month: string }; Returns: Json }
+      close_tax_office: { Args: { p_confirm_name: string }; Returns: string[] }
       consume_receipt_credit: {
         Args: {
           p_event_amount: number
@@ -2416,6 +2464,7 @@ export type Database = {
         }
         Returns: string
       }
+      leave_tax_office: { Args: never; Returns: undefined }
       mark_claims_paid: { Args: { p_claim_ids: string[] }; Returns: number }
       member_deactivation_check: {
         Args: { p_member_id: string }
@@ -2469,6 +2518,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["claim_status"]
       }
       reject_member: { Args: { p_member_id: string }; Returns: undefined }
+      release_tax_office_client: {
+        Args: { p_company_id: string }
+        Returns: undefined
+      }
       reminder_candidates: {
         Args: never
         Returns: {
@@ -2653,6 +2706,10 @@ export type Database = {
         Returns: Json
       }
       transfer_super_admin: {
+        Args: { p_member_id: string }
+        Returns: undefined
+      }
+      transfer_tax_office_admin: {
         Args: { p_member_id: string }
         Returns: undefined
       }
