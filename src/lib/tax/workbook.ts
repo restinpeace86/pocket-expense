@@ -4,7 +4,7 @@ import ExcelJS from "exceljs";
 import { KIND_LABEL as CARD_KIND_LABEL, STATUS_LABEL as CARD_STATUS_LABEL, type SavedReconcile } from "@/lib/cards/saved";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, evidenceFile, evidenceNo, isOwnCar, settlement, statusLabel, supplyVat, upload적요, type ExportRow } from "./export-rows";
 
-// 세무 마감 엑셀 (tax-export.md §3.2~3.4): 시트1 지출내역(전체 데이터) / 시트2 요약 / 시트3·4 세무 업로드 — 법인카드·개인(사비) 따로(세무사무소 답변 2026-10-27, D-136)
+// 세무 마감 엑셀 (tax-export.md §3.2~3.4): 시트1 지출내역(전체 데이터) / 시트2 요약 / 시트3·4 세무 업로드 — 법인카드·개인(사비) 따로(세무사무소 답변 2026-10-27, D-136) / 시트5 위하고 일반전표(사비 두 줄, D-176)
 type Col = { header: string; width?: number; kind?: "won" | "date" | "datetime" | "num"; value: (r: ExportRow, ctx: Ctx) => unknown };
 type Ctx = { month: string; total: number; files: Map<string, string | null> };
 
@@ -114,6 +114,39 @@ function addTable(ws: ExcelJS.Worksheet, cols: Col[], rows: ExportRow[], ctx: Ct
     const sum = ws.addRow(cols.map((c, i) => (i === 0 ? "합계" : totals.includes(c.header) ? rows.reduce((s, r) => s + (Number(c.value(r, ctx)) || 0), 0) : null)));
     sum.font = { bold: true };
   }
+}
+
+// 더존 위하고 일반전표 [엑셀올리기]용 두 줄 전표(D-176) — 사비 지출만. 법인카드는 사무소가 위하고 카드 자동수집으로 받아 분개하므로 넣지 않는다(중복 전표 방지).
+// 지출 1건 = 차변(비용 계정, 거래처 = 가맹점) + 대변(253 미지급금, 거래처 = 직원). 금액 = 직원에게 줄 회사지원금(개인부담분은 회사 비용이 아님).
+// 부가세 공제 판단은 하지 않는다(합계 그대로 일반전표, 매입매출 전환은 사무소). 구분 3 = 차변, 4 = 대변.
+// 위하고는 정해진 양식 없이 [엑셀제목설정]으로 칸을 지정하므로 머리글 한 줄 + 전표 줄만 둔다(합계 줄 없음)
+const PAYABLE = { code: "253", name: "미지급금" };
+const JOURNAL_HEAD: [string, number][] = [["연도", 6], ["월", 5], ["일", 5], ["구분", 5], ["계정과목코드", 12], ["계정과목", 14], ["거래처코드", 10], ["거래처", 20], ["적요", 40], ["차변", 12], ["대변", 12]];
+
+export function wehagoJournalLines(rows: ExportRow[]): (string | number | null)[][] {
+  const out: (string | number | null)[][] = [];
+  for (const r of rows) {
+    if (r.payment_method === "corporate_card") continue;
+    const amount = r.company_supported_amount ?? r.amount ?? 0; // 상신 때 계산된 회사지원금, 계산 전 데이터는 합계(관리자 집계와 같은 규칙)
+    if (!(amount > 0)) continue;
+    const [y, m, day] = r.expense_date.slice(0, 10).split("-").map(Number);
+    const memo = upload적요(r);
+    const merchant = isOwnCar(r) ? `자차 ${r.start_location ?? ""}→${r.end_location ?? ""}` : (r.merchant_name ?? "");
+    out.push([y, m, day, 3, r.account_title_code ?? "", r.account_title_name ?? "", "", merchant, memo, amount, null]);
+    out.push([y, m, day, 4, PAYABLE.code, PAYABLE.name, "", r.member_name, memo, null, amount]);
+  }
+  return out;
+}
+
+function addWehagoJournal(ws: ExcelJS.Worksheet, rows: ExportRow[]) {
+  ws.columns = JOURNAL_HEAD.map(([header, width]) => ({ header, width }));
+  for (const line of wehagoJournalLines(rows)) ws.addRow(line);
+  ws.getColumn(10).numFmt = WON;
+  ws.getColumn(11).numFmt = WON;
+  const head = ws.getRow(1);
+  head.font = { bold: true };
+  head.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEF2FF" } };
+  ws.views = [{ state: "frozen", ySplit: 1 }];
 }
 
 type Group = { label: string; count: number; amount: number };
@@ -233,6 +266,7 @@ export async function buildTaxWorkbook(opts: { month: string; companyName: strin
   const personal = rows.filter((r) => r.payment_method !== "corporate_card");
   addTable(wb.addWorksheet("세무 업로드(법인카드)"), SHEET3, corporate, ctx, []);
   addTable(wb.addWorksheet("세무 업로드(개인 사비)"), SHEET3.filter((c) => c.header !== "카드 끝 4자리"), personal, ctx, []);
+  addWehagoJournal(wb.addWorksheet("위하고 일반전표(사비)"), personal);
   if (opts.cardReconcile !== undefined) addCardSheet(wb.addWorksheet("카드 대조 결과"), opts.cardReconcile, month);
   return (await wb.xlsx.writeBuffer()) as ArrayBuffer;
 }
