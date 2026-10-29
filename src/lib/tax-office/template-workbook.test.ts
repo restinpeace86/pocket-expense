@@ -50,6 +50,24 @@ describe("세무사무소 결산 양식 엑셀 (D-150)", () => {
     expect((ws.getRow(4).getCell(1).value as Date).toISOString().slice(0, 10)).toBe("2026-09-15");
     expect(ws.getRow(5).getCell(2).value ?? null).toBeNull(); // 사비 줄·예시 줄 없음
   });
+  it("예시 줄이 여러 개여도 모두 지우고, 연결하지 않은 칸에 예시 값이 남지 않는다(위하고 일반전표 두 줄 예시)", async () => {
+    const src = new ExcelJS.Workbook();
+    const sw = src.addWorksheet("Sheet1");
+    sw.getRow(1).values = ["연도", "월", "일", "구분", "계정과목코드", "계정과목", "거래처코드", "거래처", "적요", "차변", "대변"];
+    sw.getRow(2).values = ["2025", "03", "26", 3, 824, "택배비", null, null, null, 72881, 0];
+    sw.getRow(3).values = ["2025", "01", "02", 4, 131, "선급금", null, null, null, 0, 72881];
+    const file = (await src.xlsx.writeBuffer()) as ArrayBuffer;
+    const p = (await parseTemplateXlsx(file))!;
+    const out = await buildTemplateWorkbook({ file, sheetName: p.sheetName, headerRow: p.headerRow, columns: p.columns, target: "all", month: "2026-09", rows: [row({})] });
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(out);
+    const ws = wb.worksheets[0];
+    expect(ws.getRow(2).getCell(2).value).toBe(9);
+    expect(ws.getRow(2).getCell(10).value).toBe(10000);
+    expect(ws.getRow(2).getCell(1).value ?? null).toBeNull(); // 연도(연결 안 함): 예시 "2025"가 남지 않음
+    expect(ws.getRow(2).getCell(11).value ?? null).toBeNull(); // 대변(연결 안 함)
+    expect(ws.getRow(3).getCell(6).value ?? null).toBeNull(); // 둘째 예시 줄 "선급금" 없음
+  });
   it("양식 파일이 없으면(초안) 머리글 + 행", async () => {
     const out = await buildTemplateWorkbook({
       file: null, sheetName: null, headerRow: 1, target: "all", month: "2026-09", rows: [row({})],

@@ -85,7 +85,8 @@ export async function buildTemplateWorkbook(input: BuildInput): Promise<ArrayBuf
   if (input.file) {
     await wb.xlsx.load(input.file);
     ws = (input.sheetName && wb.getWorksheet(input.sheetName)) || wb.worksheets[0];
-    if (ws.rowCount > headerRow) ws.spliceRows(headerRow + 1, ws.rowCount - headerRow);
+    // 머리글 아래 예시 줄은 값을 비운다(서식은 유지). exceljs spliceRows는 마지막 줄까지 한 번에 지우면 아무것도 지우지 않아 예시가 남았다
+    for (let r = headerRow + 1; r <= ws.rowCount; r++) ws.getRow(r).eachCell({ includeEmpty: true }, (cell) => void (cell.value = null));
   } else {
     ws = wb.addWorksheet("결산자료");
     headerRow = 1;

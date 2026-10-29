@@ -58,10 +58,10 @@ export const FIELDS: FieldDef[] = [
   { key: "biz_no_digits", label: "사업자등록번호(숫자만)", synonyms: [], value: (r) => (isOwnCar(r) ? "" : (r.merchant_business_number ?? "")) },
   { key: "account_name", label: "계정과목명", synonyms: ["계정과목", "계정과목명", "계정명", "계정"], value: (r) => r.account_title_name ?? "" },
   { key: "account_code", label: "계정코드", synonyms: ["계정코드", "계정과목코드", "계정cd", "코드"], value: (r) => r.account_title_code ?? "" },
-  { key: "memo", label: "적요(사유·목적)", synonyms: ["적요", "적요내용", "내용", "품명", "비고", "거래내용"], value: (r) => upload적요(r) },
+  { key: "memo", label: "적요(사유·목적)", synonyms: ["적요", "적요명", "적요내용", "내용", "품명", "비고", "거래내용"], value: (r) => upload적요(r) },
   { key: "supply", label: "공급가액", synonyms: ["공급가액", "공급가", "공급금액"], value: (r) => supplyVat(r).supply },
   { key: "vat", label: "부가세", synonyms: ["부가세", "세액", "부가세액", "부가가치세", "vat"], value: (r) => supplyVat(r).vat },
-  { key: "amount", label: "합계 금액", synonyms: ["합계", "합계금액", "총액", "총금액", "금액", "결제금액", "거래금액", "이용금액", "승인금액"], value: (r) => r.amount ?? 0 },
+  { key: "amount", label: "합계 금액", synonyms: ["합계", "합계금액", "총액", "총금액", "금액", "결제금액", "거래금액", "이용금액", "승인금액", "차변", "차변금액", "차변출금", "출금", "출금액", "출금금액"], value: (r) => r.amount ?? 0 },
   { key: "service_fee", label: "봉사료(0)", synonyms: ["봉사료"], value: () => 0 },
   { key: "evidence", label: "증빙구분", synonyms: ["증빙", "증빙구분", "증빙유형", "증빙종류"], value: (r) => (r.evidence_type ? (EVIDENCE_LABEL[r.evidence_type] ?? "기타") : "") },
   { key: "payment", label: "결제수단(법인카드/개인)", synonyms: ["결제수단", "결제구분", "지불수단", "결제방법"], value: (r) => (r.payment_method === "corporate_card" ? "법인카드" : "개인(사비)") },
@@ -79,15 +79,20 @@ export const FIELD_KEYS = FIELDS.map((f) => f.key);
 export const fieldLabel = (k: FieldKey) => BY_KEY.get(k)?.label ?? k;
 
 const norm = (s: string) => s.toLowerCase().replace(/[\s()[\]{}<>/\\·.,:;\-_*~"'`]/g, "");
+// 위하고 일반전표처럼 머리글 앞에 칸 번호를 붙인 양식("1.월", "4.계정과목코드") — 번호는 떼고 본다
+const stripNo = (s: string) => s.replace(/^\s*\d{1,2}\s*[.)]\s*/, "");
+const isCode = (s: string) => s.includes("코드") || s.endsWith("cd");
 
-// 머리글로 항목 추정: 같은 이름 > 머리글이 동의어로 시작 > 포함. 두 글자 이하 동의어(월·일·코드·금액 등)는 정확히 같을 때만. 이미 쓴 항목은 다시 고르지 않는다
+// 머리글로 항목 추정: 같은 이름 > 머리글이 동의어로 시작 > 포함. 두 글자 이하 동의어(월·일·코드·금액 등)는 정확히 같을 때만. 이미 쓴 항목은 다시 고르지 않는다.
+// "코드"가 든 머리글은 코드 항목끼리만 맞춘다("계정과목코드"가 계정과목명으로, "거래처코드"가 거래처명으로 가지 않게)
 export function guessField(header: string, used: Set<FieldKey> = new Set()): FieldKey {
-  const h = norm(header);
+  const h = norm(stripNo(header));
   if (!h) return "empty";
+  const code = isCode(h);
   const pick = (test: (syn: string) => boolean) => {
     for (const f of FIELDS) {
       if (used.has(f.key) || f.synonyms.length === 0) continue;
-      if (f.synonyms.some((s) => (s.length <= 2 ? h === s : test(s)))) return f.key;
+      if (f.synonyms.some((s) => isCode(s) === code && (s.length <= 2 ? h === s : test(s)))) return f.key;
     }
     return null;
   };
@@ -139,6 +144,24 @@ export const PRESETS: Preset[] = [
       { header: "합계", field: "amount" },
       { header: "공제여부", field: "empty" },
       { header: "거래구분", field: "empty" },
+    ],
+  },
+  {
+    // 실제 위하고 일반전표 [엑셀올리기]용 양식(reference/더존위하고 일반전표입력 엑셀 양식.xlsx)과 같은 9칸
+    id: "wehago_journal_cash",
+    name: "더존 위하고 일반전표 · 출금 한 줄(초안)",
+    target: "all",
+    note: "위하고 일반전표 [엑셀올리기]용 9칸이에요. 구분 '출금'은 상대 계정이 현금으로 잡혀요 — 법인카드·사비를 미지급금으로 넣는다면 위하고에서 상대 계정을 바꿔 주세요. 위하고 [엑셀제목설정]에서 칸 번호를 맞추고, 적요가 너무 길면 올라가지 않을 수 있어요.",
+    columns: [
+      { header: "1.월", field: "month" },
+      { header: "2.일", field: "day" },
+      { header: "3.구분", field: "fixed", fixed: "출금" },
+      { header: "4.계정과목코드", field: "account_code" },
+      { header: "5.계정과목명", field: "account_name" },
+      { header: "6.거래처코드", field: "client_code" },
+      { header: "7.거래처명", field: "merchant" },
+      { header: "8.적요명", field: "memo" },
+      { header: "9.차변(출금)", field: "amount" },
     ],
   },
   {

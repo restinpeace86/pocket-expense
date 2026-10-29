@@ -30,6 +30,21 @@ describe("guessField (D-150)", () => {
     expect(guessField("알수없는칸")).toBe("empty");
     expect(guessField("")).toBe("empty");
   });
+  it("위하고 일반전표 양식(칸 번호 붙은 머리글)을 알아본다", () => {
+    const wehago = ["1.월", "2.일", "3.구분", "4.계정과목코드", "5.계정과목명", "6.거래처코드", "7.거래처명", "8.적요명", " 9.차변(출금) "];
+    expect(autoMap(wehago.map((header, i) => ({ index: i + 1, header }))).map((c) => c.field)).toEqual([
+      "month", "day", "empty", "account_code", "account_name", "client_code", "merchant", "memo", "amount",
+    ]);
+    const twoLine = ["연도", "월", "일", "구분", "계정과목코드", "계정과목", "거래처코드", "거래처", "적요", "차변", "대변"];
+    expect(autoMap(twoLine.map((header, i) => ({ index: i + 1, header }))).map((c) => c.field)).toEqual([
+      "empty", "month", "day", "empty", "account_code", "account_name", "client_code", "merchant", "memo", "amount", "empty",
+    ]);
+  });
+  it("코드 머리글은 이름 항목으로 가지 않는다", () => {
+    expect(guessField("계정과목 코드(필수)")).toBe("account_code");
+    expect(guessField("거래처코드")).toBe("client_code");
+    expect(guessField("계정과목")).toBe("account_name");
+  });
   it("같은 항목을 두 칸에 넣지 않는다", () => {
     const cols = autoMap([
       { index: 1, header: "금액" },
