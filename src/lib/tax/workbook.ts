@@ -117,23 +117,28 @@ function addTable(ws: ExcelJS.Worksheet, cols: Col[], rows: ExportRow[], ctx: Ct
 }
 
 // 더존 위하고 일반전표 [엑셀올리기]용 두 줄 전표(D-176) — 사비 지출만. 법인카드는 사무소가 위하고 카드 자동수집으로 받아 분개하므로 넣지 않는다(중복 전표 방지).
-// 지출 1건 = 차변(비용 계정, 거래처 = 가맹점) + 대변(253 미지급금, 거래처 = 직원). 금액 = 직원에게 줄 회사지원금(개인부담분은 회사 비용이 아님).
+// 지출 1건 = 차변(비용 계정) + 대변(253 미지급금, 거래처 = 직원 — 사무소가 이름으로 거래처 코드를 찾는다). 금액 = 직원에게 줄 회사지원금(개인부담분은 회사 비용이 아님).
+// 두 줄은 같은 날짜·같은 전표번호(날짜마다 1부터). 차변 거래처는 비우고(가맹점이 위하고 거래처로 쌓이지 않게) 가맹점은 적요 앞에 둔다(D-177)
 // 부가세 공제 판단은 하지 않는다(합계 그대로 일반전표, 매입매출 전환은 사무소). 구분 3 = 차변, 4 = 대변.
 // 위하고는 정해진 양식 없이 [엑셀제목설정]으로 칸을 지정하므로 머리글 한 줄 + 전표 줄만 둔다(합계 줄 없음)
 const PAYABLE = { code: "253", name: "미지급금" };
-const JOURNAL_HEAD: [string, number][] = [["연도", 6], ["월", 5], ["일", 5], ["구분", 5], ["계정과목코드", 12], ["계정과목", 14], ["거래처코드", 10], ["거래처", 20], ["적요", 40], ["차변", 12], ["대변", 12]];
+const JOURNAL_HEAD: [string, number][] = [["연도", 6], ["월", 5], ["일", 5], ["전표번호", 8], ["구분", 5], ["계정과목코드", 12], ["계정과목", 14], ["거래처코드", 10], ["거래처", 20], ["적요", 40], ["차변", 12], ["대변", 12]];
 
 export function wehagoJournalLines(rows: ExportRow[]): (string | number | null)[][] {
   const out: (string | number | null)[][] = [];
+  const perDay = new Map<string, number>();
   for (const r of rows) {
     if (r.payment_method === "corporate_card") continue;
     const amount = r.company_supported_amount ?? r.amount ?? 0; // 상신 때 계산된 회사지원금, 계산 전 데이터는 합계(관리자 집계와 같은 규칙)
     if (!(amount > 0)) continue;
     const [y, m, day] = r.expense_date.slice(0, 10).split("-").map(Number);
-    const memo = upload적요(r);
-    const merchant = isOwnCar(r) ? `자차 ${r.start_location ?? ""}→${r.end_location ?? ""}` : (r.merchant_name ?? "");
-    out.push([y, m, day, 3, r.account_title_code ?? "", r.account_title_name ?? "", "", merchant, memo, amount, null]);
-    out.push([y, m, day, 4, PAYABLE.code, PAYABLE.name, "", r.member_name, memo, null, amount]);
+    const no = (perDay.get(r.expense_date.slice(0, 10)) ?? 0) + 1;
+    perDay.set(r.expense_date.slice(0, 10), no);
+    // 자차는 적요에 이미 경로가 있다
+    const merchant = isOwnCar(r) ? "" : (r.merchant_name ?? "");
+    const memo = [merchant, upload적요(r)].filter((x) => x && x.trim()).join(" · ");
+    out.push([y, m, day, no, 3, r.account_title_code ?? "", r.account_title_name ?? "", "", "", memo, amount, null]);
+    out.push([y, m, day, no, 4, PAYABLE.code, PAYABLE.name, "", r.member_name, memo, null, amount]);
   }
   return out;
 }
@@ -141,8 +146,8 @@ export function wehagoJournalLines(rows: ExportRow[]): (string | number | null)[
 function addWehagoJournal(ws: ExcelJS.Worksheet, rows: ExportRow[]) {
   ws.columns = JOURNAL_HEAD.map(([header, width]) => ({ header, width }));
   for (const line of wehagoJournalLines(rows)) ws.addRow(line);
-  ws.getColumn(10).numFmt = WON;
   ws.getColumn(11).numFmt = WON;
+  ws.getColumn(12).numFmt = WON;
   const head = ws.getRow(1);
   head.font = { bold: true };
   head.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEF2FF" } };

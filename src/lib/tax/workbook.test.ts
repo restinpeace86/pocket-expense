@@ -64,24 +64,24 @@ describe("세무 마감 엑셀", () => {
     ]);
   });
 
-  it("위하고 일반전표(사비): 사비 1건 = 차변(비용·가맹점) + 대변(253 미지급금·직원), 금액은 정산금액, 법인카드·0원 제외 (D-176)", async () => {
+  it("위하고 일반전표(사비): 사비 1건 = 차변(비용) + 대변(253 미지급금·직원), 같은 날은 전표번호 1·2…, 가맹점은 적요 앞, 법인카드·0원 제외 (D-176·D-177)", async () => {
     const rows = [
       row({ item_id: "a", payment_method: "corporate_card", amount: 12000 }),
       row({ item_id: "b", payment_method: "personal_card", expense_date: "2026-10-05", amount: 15000, company_supported_amount: 12000, personal_burden_amount: 3000, account_title_code: "811", merchant_name: "김밥천국", member_name: "최직원", claim_description: "팀 점심", purpose: null }),
       row({ item_id: "c", payment_method: "personal_card", amount: 5000, company_supported_amount: 0 }),
-      row({ item_id: "d", payment_method: "personal_card", expense_date: "2026-10-07", amount: 7000, company_supported_amount: null, account_title_code: "812", account_title_name: "여비교통비", merchant_name: "택시", member_name: "김직원", claim_description: "거래처 방문", purpose: null }),
+      row({ item_id: "d", payment_method: "personal_card", expense_date: "2026-10-05", amount: 7000, company_supported_amount: null, account_title_code: "812", account_title_name: "여비교통비", merchant_name: "택시", member_name: "김직원", claim_description: "거래처 방문", purpose: null }),
     ];
     expect(wehagoJournalLines(rows)).toEqual([
-      [2026, 10, 5, 3, "811", "복리후생비", "", "김밥천국", "팀 점심", 12000, null],
-      [2026, 10, 5, 4, "253", "미지급금", "", "최직원", "팀 점심", null, 12000],
-      [2026, 10, 7, 3, "812", "여비교통비", "", "택시", "거래처 방문", 7000, null],
-      [2026, 10, 7, 4, "253", "미지급금", "", "김직원", "거래처 방문", null, 7000],
+      [2026, 10, 5, 1, 3, "811", "복리후생비", "", "", "김밥천국 · 팀 점심", 12000, null],
+      [2026, 10, 5, 1, 4, "253", "미지급금", "", "최직원", "김밥천국 · 팀 점심", null, 12000],
+      [2026, 10, 5, 2, 3, "812", "여비교통비", "", "", "택시 · 거래처 방문", 7000, null],
+      [2026, 10, 5, 2, 4, "253", "미지급금", "", "김직원", "택시 · 거래처 방문", null, 7000],
     ]);
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(await buildTaxWorkbook({ month: "2026-10", companyName: "포켓", rows, preview: false }));
     const ws = wb.getWorksheet("위하고 일반전표(사비)")!;
-    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["연도", "월", "일", "구분", "계정과목코드", "계정과목", "거래처코드", "거래처", "적요", "차변", "대변"]);
+    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["연도", "월", "일", "전표번호", "구분", "계정과목코드", "계정과목", "거래처코드", "거래처", "적요", "차변", "대변"]);
     expect(ws.rowCount).toBe(1 + 4); // 합계 줄 없음(위하고가 전표로 읽음)
-    expect(ws.getRow(3).getCell(11).value).toBe(12000);
+    expect(ws.getRow(3).getCell(12).value).toBe(12000);
   });
 });
