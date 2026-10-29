@@ -124,16 +124,40 @@ export function recurringReady(p: { companyId: string; claimId: string; serviceN
 
 // 월말 마감 알림 (D-161, 개선사항 1): 1일 마감 주간 시작 / 3일 홈택스 자료 미업로드 / 5일 세무 마감 당일. 날짜는 영업일로 당긴 날
 export type ClosingKind = "week_start" | "hometax_missing" | "close_due";
-export function closingNotice(p: { companyId: string; companyName: string; kind: ClosingKind; month: string; cutoff: string; due: string }): BuiltMessage {
+// pending: 지난달까지 쓴 영수증이 든 승인 대기 결의서 수 — 3일·5일에는 승인·반려 독촉을 앞에 둔다(D-166)
+export type ClosingNoticeInput = {
+  companyId: string;
+  companyName: string;
+  kind: ClosingKind;
+  month: string;
+  cutoff: string;
+  due: string;
+  pending?: number;
+  hometaxMissing?: boolean;
+  closed?: boolean;
+};
+export function closingNotice(p: ClosingNoticeInput): BuiltMessage {
   const m = `${Number(p.month.slice(5, 7))}월`;
   const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
-  const text =
-    p.kind === "week_start"
-      ? `[${p.companyName}] 지출 마감 주간이 시작됐어요. 직원 청구 마감은 ${md(p.cutoff)}, ${m}분 세무 마감은 ${md(p.due)}까지예요. 홈택스에서 ${m} 세금계산서·카드 매입 자료를 내려받아 올려 주세요.`
-      : p.kind === "hometax_missing"
-        ? `[${p.companyName}] ${m} 홈택스 자료가 아직 올라오지 않았어요. ${md(p.due)}까지 올리고 마감을 완료해 주세요.`
-        : `[${p.companyName}] 오늘(${md(p.due)})이 ${m} 지출 세무 마감일이에요. 누락 내역을 확인하고 마감을 완료해 주세요.`;
-  return { template: "CLOSING", text, buttonLabel: "세무 마감 열기", buttonPath: `/workspace/${p.companyId}/admin/export?month=${p.month}`, vars: { kind: p.kind, month: p.month } };
+  const pending = p.pending ?? 0;
+  const nag = p.kind !== "week_start" && pending > 0;
+  const parts: string[] = [];
+  if (p.kind === "week_start") {
+    parts.push(`지출 마감 주간이 시작됐어요. 직원 청구 마감은 ${md(p.cutoff)}, ${m}분 세무 마감은 ${md(p.due)}까지예요. 홈택스에서 ${m} 세금계산서·카드 매입 자료를 내려받아 올려 주세요.`);
+    if (pending > 0) parts.push(`승인 대기 결의서 ${pending}건도 마감 전에 승인 또는 반려해 주세요.`);
+  } else {
+    if (p.kind === "close_due") parts.push(`오늘(${md(p.due)})이 ${m} 지출 세무 마감일이에요.`);
+    if (nag) parts.push(`${m}까지 쓴 결의서 ${pending}건이 아직 승인 대기 중이에요. ${p.kind === "close_due" ? "오늘" : `${md(p.due)}`}까지 승인 또는 반려해 주세요. 처리하지 않으면 ${m} 세무 자료에서 빠져요.`);
+    if (p.kind === "hometax_missing" && (p.hometaxMissing ?? true)) parts.push(`${m} 홈택스 자료가 아직 올라오지 않았어요. ${md(p.due)}까지 올려 주세요.`);
+    if (p.kind === "close_due" && !p.closed) parts.push("누락 내역을 확인하고 마감을 완료해 주세요.");
+  }
+  return {
+    template: "CLOSING",
+    text: `[${p.companyName}] ${parts.join(" ")}`,
+    buttonLabel: nag ? "승인 대기 보기" : "세무 마감 열기",
+    buttonPath: nag ? `/workspace/${p.companyId}/admin/claims?tab=pending` : `/workspace/${p.companyId}/admin/export?month=${p.month}`,
+    vars: { kind: p.kind, month: p.month, pending: String(pending) },
+  };
 }
 
 // 수신 번호: 휴대폰 번호만 (members.phone은 숫자만 저장)

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CardReconcileStatus } from "@/components/admin/card-reconcile-status";
@@ -51,14 +52,19 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   // 기본은 지난달(보통 지난달을 마감한다)
   const month = typeof sp.month === "string" && MONTH.test(sp.month) && sp.month <= now ? sp.month : months[1];
   const supabase = await createClient();
-  const [res, { data: templates }, { data: downloads }, cardRec, hometax, holidays] = await Promise.all([
+  const [y0, m0] = month.split("-").map(Number);
+  const nextFirst = new Date(Date.UTC(y0, m0, 1)).toISOString().slice(0, 10);
+  const [res, { data: templates }, { data: downloads }, cardRec, hometax, holidays, { data: pendingItems }] = await Promise.all([
     getTaxMonth(month),
     supabase.rpc("my_company_tax_templates"),
     supabase.from("tax_export_downloads").select("id, actor_kind, actor_name, office_name, month, kind, template_name, row_count, closed, created_at").order("created_at", { ascending: false }).limit(20),
     getSavedReconcile(membership.company_id, month),
     listHometax(membership.company_id, month),
     getHolidays(),
+    // 이 달까지 쓴 영수증이 든 승인 대기 결의서(D-166) — 마감 전에 승인·반려하라고 보여 준다
+    supabase.from("expense_items").select("claim_id, expense_claims!inner(status)").eq("company_id", membership.company_id).eq("expense_claims.status", "submitted").lt("expense_date", nextFirst).limit(1000),
   ]);
+  const pendingClaims = new Set((pendingItems ?? []).map((i) => i.claim_id)).size;
   const cutoff = claimCutoff(month, holidays);
   const due = taxCloseDue(month, holidays);
   if (!res.ok) notFound();
@@ -68,6 +74,16 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
       <p className="break-keep rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
         {monthLabel(month)}분 <b>세무 마감일은 {mdLabel(due)}</b>이에요(직원 청구 마감 {mdLabel(cutoff)}). 홈택스 자료를 올리고 마감해 세무사무소에 넘겨 주세요. 청구 마감 뒤에 상신된 {monthLabel(month)} 영수증은 다음 달 세무 마감의 &ldquo;전월 추가분&rdquo;으로 들어가요.
       </p>
+      {pendingClaims > 0 && (
+        <div role="alert" className="flex flex-col gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="break-keep text-sm text-red-900">
+            <b>{monthLabel(month)}까지 쓴 결의서 {pendingClaims}건이 아직 승인 대기 중이에요.</b> 마감일({mdLabel(due)})까지 승인 또는 반려해 주세요. 처리하지 않으면 이번 세무 자료에서 빠지고 다음 달로 넘어가요.
+          </p>
+          <Link href={`/workspace/${id}/admin/claims?tab=pending`} className="inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700">
+            승인하러 가기
+          </Link>
+        </div>
+      )}
       {/* 이번 달 카드 내역 대조 상태(D-111, D-154): 막지 않고 보여 주며, 결과는 세무 엑셀 카드 대조 결과 시트로 함께 넘어간다 */}
       <CardReconcileStatus saved={cardRec} month={month} href={`/workspace/${id}/admin/corporate-cards/reconcile?month=${month}`} />
       {/* 우리 세무사무소가 올린 결산 양식으로 받기 (D-150) */}

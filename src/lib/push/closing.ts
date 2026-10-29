@@ -5,9 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { pushConfigured, pushToMembers } from "./server";
 
 // 관리자 월말 마감 알림 (D-161, 개선사항 1). 매일 아침 cron이 부른다(service role).
-// 1일 마감 주간 시작(전체 관리자) / 3일 그 달 홈택스 자료 0개 / 5일 그 달 세무 마감 안 함 — 쉬는 날이면 앞 영업일(DB가 계산).
+// 1일 마감 주간 시작(전체 관리자) / 3일 홈택스 자료 0개·승인 대기 / 5일 세무 마감 안 함·승인 대기(D-166) — 쉬는 날이면 앞 영업일(DB가 계산).
 // 웹푸시 + 알림톡(대행사 연결 전에는 기록만, O-01). 같은 날 같은 알림은 한 번만(push_logs).
-type Target = { company_id: string; member_id: string; kind: ClosingKind; month: string; cutoff: string; due: string };
+type Target = { company_id: string; member_id: string; kind: ClosingKind; month: string; cutoff: string; due: string; pending: number; hometax_missing: boolean; closed: boolean };
 
 export async function runClosingReminders(today?: string): Promise<{ targets: number; pushed: number; alimtalk: number }> {
   const admin = createAdminClient();
@@ -26,13 +26,31 @@ export async function runClosingReminders(today?: string): Promise<{ targets: nu
       .upsert({ company_id: t.company_id, member_id: t.member_id, kind: "closing", ref: `${t.kind}:${t.month}` }, { onConflict: "member_id,kind,ref,sent_on", ignoreDuplicates: true })
       .select("member_id");
     if (!fresh?.length) continue;
-    const msg = closingNotice({ companyId: t.company_id, companyName: names.get(t.company_id) ?? "", kind: t.kind, month: t.month, cutoff: t.cutoff, due: t.due });
+    const input = {
+      companyId: t.company_id,
+      companyName: names.get(t.company_id) ?? "",
+      kind: t.kind,
+      month: t.month,
+      cutoff: t.cutoff,
+      due: t.due,
+      pending: Number(t.pending ?? 0),
+      hometaxMissing: !!t.hometax_missing,
+      closed: !!t.closed,
+    };
+    const msg = closingNotice(input);
     if (pushConfigured()) {
-      const title = t.kind === "week_start" ? "지출 마감 주간 시작" : t.kind === "hometax_missing" ? "홈택스 자료를 올려 주세요" : "오늘이 세무 마감일이에요";
+      const title =
+        t.kind === "week_start"
+          ? "지출 마감 주간 시작"
+          : input.pending > 0
+            ? `승인 대기 ${input.pending}건 — ${t.kind === "close_due" ? "오늘" : "마감 전"}까지 처리해 주세요`
+            : t.kind === "hometax_missing"
+              ? "홈택스 자료를 올려 주세요"
+              : "오늘이 세무 마감일이에요";
       const r = await pushToMembers(t.company_id, [t.member_id], { title, body: msg.text, url: msg.buttonPath, tag: "closing" });
       pushed += r.sent;
     }
-    if (await sendClosingNotice({ companyId: t.company_id, companyName: names.get(t.company_id) ?? "", memberId: t.member_id, kind: t.kind, month: t.month, cutoff: t.cutoff, due: t.due })) alimtalk++;
+    if (await sendClosingNotice({ ...input, memberId: t.member_id })) alimtalk++;
   }
   return { targets: rows.length, pushed, alimtalk };
 }

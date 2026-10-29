@@ -63,6 +63,23 @@ begin
 end;
 $$;
 
+-- D-166: 마감한 B라도 9월 영수증이 든 승인 대기 결의서가 있으면 5일(10/2)·3일(11/3, 10월 영수증)에 독촉
+insert into public.expense_claims (id, company_id, member_id, title, category, status, submitted_at, current_round) values
+  ('c5620000-0000-0000-0000-000000000003', 'c5600000-0000-0000-0000-00000000000b', 'a5610000-0000-0000-0000-000000000002', '승인 대기', 'meal', 'submitted', '2026-10-01 01:00+00', 1);
+insert into public.expense_items (claim_id, company_id, sort_order, category, payment_method, expense_date, amount, headcount, merchant_name, evidence_type) values
+  ('c5620000-0000-0000-0000-000000000003', 'c5600000-0000-0000-0000-00000000000b', 1, 'meal', 'personal_card', '2026-09-25', 9000, 1, '대기식당', 'card_slip');
+do $$
+declare j jsonb;
+begin
+  j := public.closing_admin_targets('2026-10-02');
+  if not exists (select 1 from jsonb_array_elements(j) e where e->>'member_id' = 'a5610000-0000-0000-0000-000000000002' and e->>'kind' = 'close_due'
+                   and (e->>'pending')::int = 1 and (e->>'closed')::boolean) then raise exception 'FAIL [closed B nagged for pending] %', j; end if;
+  if not exists (select 1 from jsonb_array_elements(j) e where e->>'member_id' = 'a5610000-0000-0000-0000-000000000001' and (e->>'pending')::int = 0 and not (e->>'closed')::boolean) then raise exception 'FAIL [A pending 0]'; end if;
+  j := public.closing_admin_targets('2026-11-03');
+  if not exists (select 1 from jsonb_array_elements(j) e where e->>'member_id' = 'a5610000-0000-0000-0000-000000000002' and (e->>'pending')::int = 1) then raise exception 'FAIL [B d3 pending] %', j; end if;
+end;
+$$;
+
 -- 직원 마감 푸시: 다음 마감(11/2 월)의 3일 전 = 10/30
 insert into public.expense_claims (company_id, member_id, title, category, status, current_round) values
   ('c5600000-0000-0000-0000-00000000000a', 'a5610000-0000-0000-0000-000000000001', '작성중', 'meal', 'draft', 1) ;
