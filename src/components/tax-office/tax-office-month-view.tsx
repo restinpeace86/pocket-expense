@@ -10,6 +10,7 @@ import type { SavedReconcile } from "@/lib/cards/saved";
 import { OfficeZipButton } from "./office-zip-button";
 import { TemplateDownloads, type TemplateLink } from "./template-downloads";
 import { HometaxFiles } from "./hometax-files";
+import { BulkAccountProvider, BulkCheck } from "./office-bulk-account";
 import type { HometaxUpload } from "@/lib/hometax/kinds";
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
@@ -44,6 +45,7 @@ export function TaxOfficeMonthView({
   hometax?: HometaxUpload[]; // 회사가 올린 홈택스 자료(D-158)
 }) {
   const locked = data.status === "closed"; // 회사가 마감한 달은 바꿀 수 없음(D-045)
+  const bulk = accountTitles.length > 0 && !locked;
   const accountCell = (r: ExportRow) =>
     accountTitles.length ? (
       <OfficeItemAccount
@@ -170,6 +172,8 @@ export function TaxOfficeMonthView({
 
           <section className="rounded-xl border border-zinc-200 bg-white">
             <h2 className="border-b border-zinc-100 px-4 py-3 font-semibold">지출 내역 · 증빙</h2>
+            {/* 여러 건 계정과목 한 번에(D-165) — 계정과목을 고를 수 있고 마감 전인 달만 */}
+            <BulkWrap on={bulk} itemIds={rows.map((r) => r.item_id)} titles={accountTitles}>
             {/* 휴대폰: 카드 */}
             <ul className="divide-y divide-zinc-100 md:hidden">
               {rows.map((r) => {
@@ -178,7 +182,8 @@ export function TaxOfficeMonthView({
                 return (
                   <li key={r.item_id} className="flex flex-col gap-1 px-4 py-3 text-sm">
                     <div className="flex items-start justify-between gap-3">
-                      <span className="min-w-0 break-keep font-medium text-zinc-900">{r.merchant_name ?? classLabels(r).category}</span>
+                      {bulk && <BulkCheck itemId={r.item_id} label={r.merchant_name ?? classLabels(r).category} />}
+                      <span className="min-w-0 flex-1 break-keep font-medium text-zinc-900">{r.merchant_name ?? classLabels(r).category}</span>
                       <span className="whitespace-nowrap font-semibold tabular-nums">{won(r.amount ?? 0)}</span>
                     </div>
                     <p className="text-xs text-zinc-500">
@@ -208,6 +213,7 @@ export function TaxOfficeMonthView({
               <table className="w-full min-w-[860px] border-collapse">
                 <thead>
                   <tr>
+                    {bulk && <th className={th}><span className="sr-only">고르기</span></th>}
                     <th className={th}>번호</th>
                     <th className={th}>사용일</th>
                     <th className={th}>가맹점 · 사업자번호</th>
@@ -228,6 +234,11 @@ export function TaxOfficeMonthView({
                     const warn = checks(r, !!r.receipt_path || !!r.route_card_path).filter((w) => !w.startsWith("세무사 확인 요청"));
                     return (
                       <tr key={r.item_id}>
+                        {bulk && (
+                          <td className={td}>
+                            <BulkCheck itemId={r.item_id} label={`${r.seq}번 ${r.merchant_name ?? ""}`} />
+                          </td>
+                        )}
                         <td className={`${td} tabular-nums text-zinc-500`}>
                           {r.seq}
                           {r.kind === "carryover" && <span className="block text-xs text-amber-700">전월 추가</span>}
@@ -263,6 +274,7 @@ export function TaxOfficeMonthView({
                 </tbody>
               </table>
             </div>
+            </BulkWrap>
           </section>
           <p className="text-xs text-zinc-500">영수증 링크는 10분 동안 열려요. 지나면 화면을 새로고침해 주세요.</p>
         </>
@@ -277,5 +289,15 @@ function Stat({ label, value, strong }: { label: string; value: string; strong?:
       <p className="text-xs text-zinc-500">{label}</p>
       <p className={`mt-1 break-all text-lg font-bold tabular-nums ${strong ? "text-brand-800" : ""}`}>{value}</p>
     </div>
+  );
+}
+
+function BulkWrap({ on, itemIds, titles, children }: { on: boolean; itemIds: string[]; titles: { id: string; name: string; code: string | null }[]; children: React.ReactNode }) {
+  return on ? (
+    <BulkAccountProvider itemIds={itemIds} titles={titles}>
+      {children}
+    </BulkAccountProvider>
+  ) : (
+    <>{children}</>
   );
 }

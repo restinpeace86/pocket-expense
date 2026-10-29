@@ -1054,6 +1054,8 @@ export type Database = {
           member_id: string
           paid_at: string | null
           paid_by_member_id: string | null
+          payout_proof_name: string | null
+          payout_proof_path: string | null
           purchase_items: string | null
           purchase_purpose: string | null
           purchase_type: Database["public"]["Enums"]["purchase_type"] | null
@@ -1099,6 +1101,8 @@ export type Database = {
           member_id: string
           paid_at?: string | null
           paid_by_member_id?: string | null
+          payout_proof_name?: string | null
+          payout_proof_path?: string | null
           purchase_items?: string | null
           purchase_purpose?: string | null
           purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
@@ -1144,6 +1148,8 @@ export type Database = {
           member_id?: string
           paid_at?: string | null
           paid_by_member_id?: string | null
+          payout_proof_name?: string | null
+          payout_proof_path?: string | null
           purchase_items?: string | null
           purchase_purpose?: string | null
           purchase_type?: Database["public"]["Enums"]["purchase_type"] | null
@@ -2968,6 +2974,10 @@ export type Database = {
           p_start: Json
         }
         Returns: undefined
+      }
+      set_payout_proof: {
+        Args: { p_claim_ids: string[]; p_name: string; p_path: string }
+        Returns: number
       }
       set_tax_office_member_status: {
         Args: { p_member_id: string; p_status: string }

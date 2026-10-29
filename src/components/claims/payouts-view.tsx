@@ -1,10 +1,11 @@
 "use client";
 
-import { Copy, Loader2 } from "lucide-react";
+import { Copy, FileCheck2, Loader2, Paperclip } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { markClaimsPaidAction } from "@/lib/claims/actions";
+import { uploadPayoutProofAction } from "@/lib/claims/payout-proof";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import type { PayoutGroup } from "@/lib/claims/payouts";
 import { formatWon } from "@/lib/format";
@@ -35,10 +36,58 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
+const PROOF_ACCEPT = "image/jpeg,image/png,image/webp,application/pdf";
+
+// 지급 완료 탭: 결의서별 송금 확인증 보기·올리기(바꾸기) (D-164)
+function ProofCell({ claimId, name, base }: { claimId: string; name: string | null | undefined; base: string }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <span className="flex flex-wrap items-center gap-2 pb-3 text-xs">
+      {name ? (
+        <a href={`${base}/proof?claim=${claimId}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-emerald-50 px-2 text-emerald-800 hover:bg-emerald-100">
+          <FileCheck2 className="size-3.5" aria-hidden />
+          송금 확인증 보기
+        </a>
+      ) : (
+        <span className="text-zinc-500">송금 확인증 없음</span>
+      )}
+      <label className="inline-flex min-h-9 cursor-pointer items-center gap-1 rounded-lg border border-zinc-300 bg-white px-2 hover:bg-zinc-50">
+        <Paperclip className="size-3.5" aria-hidden />
+        {pending ? "올리는 중..." : name ? "바꾸기" : "올리기"}
+        <input
+          type="file"
+          accept={PROOF_ACCEPT}
+          className="sr-only"
+          disabled={pending}
+          aria-label="송금 확인증 파일"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (!f) return;
+            setError(null);
+            start(async () => {
+              const fd = new FormData();
+              fd.set("file", f);
+              fd.set("claimIds", JSON.stringify([claimId]));
+              const res = await guardAction(() => uploadPayoutProofAction(fd));
+              if (!res.ok) return setError(res.error);
+              router.refresh();
+            });
+          }}
+        />
+      </label>
+      {error && <span role="alert" className="text-red-700">{error}</span>}
+    </span>
+  );
+}
+
 export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutGroup[]; tab: "waiting" | "paid"; base: string; claimsBase: string }) {
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>([]);
   const [confirm, setConfirm] = useState(false);
+  const [proof, setProof] = useState<File | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [pending, start] = useTransition();
   const all = groups.flatMap((g) => g.claims);
@@ -123,7 +172,7 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
                 </div>
                 <ul className="divide-y divide-zinc-100">
                   {g.claims.map((c) => (
-                    <li key={c.id} className="flex items-center gap-3 px-4 text-sm">
+                    <li key={c.id} className="flex flex-wrap items-center gap-x-3 px-4 text-sm">
                       {tab === "waiting" && (
                         <label className="-mx-3 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center">
                           <input type="checkbox" className="size-5" aria-label={`${c.title} 선택`} checked={selected.includes(c.id)} onChange={(e) => toggle([c.id], e.target.checked)} />
@@ -137,6 +186,11 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
                         {formatWon(c.payout)}
                         {c.payback > 0 && <span className="block text-xs text-zinc-500">납부 {formatWon(c.payback)}</span>}
                       </span>
+                      {tab === "paid" && (
+                        <span className="w-full">
+                          <ProofCell claimId={c.id} name={c.proof_name} base={base} />
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -177,6 +231,17 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
               {sel.some((c) => c.payback > 0) && ` / 납부 확인 ${formatWon(sel.reduce((s, c) => s + c.payback, 0))}`}
             </p>
             <p className="mt-2 rounded-xl bg-zinc-50 px-3 py-2 text-sm text-zinc-600">이체는 회사 은행에서 먼저 해 주세요. 처리하면 직원 화면에 &ldquo;정산 지급 완료&rdquo;로 바뀌고 되돌릴 수 없어요.</p>
+            {/* 송금 확인증(선택, D-164): 이체 확인 화면 캡처·PDF 1개 — 고른 결의서 모두에 붙고 세무 마감 ZIP에 들어가요 */}
+            <label className="mt-3 flex flex-col gap-1 text-sm">
+              <span className="font-medium text-zinc-700">송금 확인증 (선택)</span>
+              <input
+                type="file"
+                accept={PROOF_ACCEPT}
+                onChange={(e) => setProof(e.target.files?.[0] ?? null)}
+                className="block w-full min-w-0 text-sm file:mr-2 file:min-h-10 file:rounded-lg file:border-0 file:bg-zinc-100 file:px-3 file:font-medium"
+              />
+              <span className="text-xs text-zinc-500">은행 앱의 이체 확인 화면 캡처나 PDF. 나중에 [지급 완료] 탭에서 붙여도 돼요.</span>
+            </label>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setConfirm(false)} className="min-h-12 rounded-xl border border-zinc-300 font-medium">
                 취소
@@ -189,8 +254,17 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
                     const res = await guardAction(() => measureAction("admin.mark_paid", () => markClaimsPaidAction(sel.map((c) => c.id))));
                     setConfirm(false);
                     if (!res.ok) return setMessage({ kind: "error", text: res.error });
+                    let proofNote = "";
+                    if (proof) {
+                      const fd = new FormData();
+                      fd.set("file", proof);
+                      fd.set("claimIds", JSON.stringify(sel.map((c) => c.id)));
+                      const up = await guardAction(() => uploadPayoutProofAction(fd));
+                      proofNote = up.ok ? " 송금 확인증도 붙였어요." : ` 송금 확인증은 붙이지 못했어요(${up.error}) — [지급 완료] 탭에서 다시 올려 주세요.`;
+                    }
                     setSelected([]);
-                    setMessage({ kind: "ok", text: `결의서 ${res.count}건을 지급 완료로 처리했어요.` });
+                    setProof(null);
+                    setMessage({ kind: proofNote.includes("못했어요") ? "error" : "ok", text: `결의서 ${res.count}건을 지급 완료로 처리했어요.${proofNote}` });
                     router.refresh();
                   })
                 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { closeTaxMonthAction, reopenTaxMonthAction, taxClaimDocsAction, taxEvidenceFilesAction } from "@/app/workspace/[id]/admin/export/actions";
-import { hometaxZipFilesAction } from "@/app/workspace/[id]/admin/export/hometax-actions";
+import { zipAttachmentsAction } from "@/app/workspace/[id]/admin/export/hometax-actions";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
@@ -76,15 +76,15 @@ export function TaxClosingView({
       setProgress(null);
       return setMessage({ kind: "error", text: list.error });
     }
-    // 회사가 올린 홈택스 원본도 함께(홈택스자료/, D-158). 누락분 다시 받기에는 넣지 않는다
-    const hometax = only ? null : await hometaxZipFilesAction(month).catch(() => null);
+    // 회사가 올린 홈택스 원본(홈택스자료/, D-158)·송금 확인증(지급확인증/, D-164)도 함께. 누락분 다시 받기에는 넣지 않는다
+    const extras = only ? null : await zipAttachmentsAction(month).catch(() => null);
     setProgress({ step: "영수증 받는 중", done: 0, total: list.files.length, failed: 0 });
     const t0 = performance.now();
     let pdfNote = "";
     const { parts, failed, extraAdded, attachmentsFailed } = await buildTaxZip({
       workbook,
       files: list.files,
-      attachments: hometax?.ok && hometax.files.length ? { folder: "홈택스자료", files: hometax.files } : undefined,
+      attachments: extras?.ok ? extras.attachments : undefined,
       refreshUrls: async (names) => {
         const r = await taxEvidenceFilesAction(month, names);
         return r.ok ? r.files : [];
@@ -125,8 +125,10 @@ export function TaxClosingView({
           },
     });
     if (!only && !extraAdded && !pdfNote) pdfNote = " 지출결의서 PDF는 만들지 못했어요 — 다시 받기를 눌러 주세요.";
-    const htCount = (hometax?.ok ? hometax.files.length : 0) - attachmentsFailed.length;
-    const htNote = attachmentsFailed.length ? ` 홈택스 자료 ${attachmentsFailed.length}개는 넣지 못했어요 — 아래 홈택스 자료에서 따로 받아 주세요.` : "";
+    const countOf = (folder: string) => (extras?.ok ? (extras.attachments.find((a) => a.folder === folder)?.files.length ?? 0) : 0) - attachmentsFailed.filter((n) => n.startsWith(`${folder}/`)).length;
+    const htCount = countOf("홈택스자료");
+    const proofCount = countOf("지급확인증");
+    const htNote = attachmentsFailed.length ? ` 함께 넣을 파일 ${attachmentsFailed.length}개(홈택스 자료·송금 확인증)는 넣지 못했어요 — 다시 받아 주세요.` : "";
     parts.forEach((b, i) => saveBlob(b, `${zipBase}${only ? "_누락분" : ""}${parts.length > 1 ? `_${i + 1}` : ""}.zip`));
     setProgress(null);
     setMissing(failed);
@@ -134,7 +136,7 @@ export function TaxClosingView({
     setMessage(
       failed.length
         ? { kind: "error", text: `ZIP을 저장했지만 영수증 ${failed.length}장을 받지 못했어요. [못 받은 영수증 다시 받기]를 눌러 주세요.` }
-        : { kind: pdfNote || htNote ? "error" : "ok", text: `${label} 패키지를 저장했어요 (영수증 ${list.files.length}장${extraAdded ? " + 지출결의서 PDF" : ""}${htCount ? ` + 홈택스 자료 ${htCount}개` : ""}${parts.length > 1 ? `, ${parts.length}개 파일로 나눔` : ""}, ${secs}초).${pdfNote}${htNote}` },
+        : { kind: pdfNote || htNote ? "error" : "ok", text: `${label} 패키지를 저장했어요 (영수증 ${list.files.length}장${extraAdded ? " + 지출결의서 PDF" : ""}${htCount ? ` + 홈택스 자료 ${htCount}개` : ""}${proofCount ? ` + 송금 확인증 ${proofCount}개` : ""}${parts.length > 1 ? `, ${parts.length}개 파일로 나눔` : ""}, ${secs}초).${pdfNote}${htNote}` },
     );
     router.refresh();
   }

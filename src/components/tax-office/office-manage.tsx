@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Copy, RefreshCw } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition, useSyncExternalStore } from "react";
 import { regenerateTaxOfficeCodeAction, setTaxOfficeMemberStatusAction } from "@/app/tax-office/actions";
 import { FormError } from "@/components/onboarding/field";
 import { TransferAdminButton } from "./office-actions";
@@ -11,13 +11,15 @@ const card = "rounded-xl border border-zinc-200 bg-white p-5 shadow-sm";
 const secondary =
   "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-50";
 
+const noopSubscribe = () => () => {};
+
 // 소속 세무사 초대 링크 (D-149)
 export function OfficeInvite({ code, officeName }: { code: string; officeName: string }) {
-  const [origin, setOrigin] = useState("");
+  // 서버에서는 빈 값, 브라우저에서는 현재 주소(hydration 뒤)
+  const origin = useSyncExternalStore(noopSubscribe, () => window.location.origin, () => "");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  useEffect(() => setOrigin(window.location.origin), []);
   const link = `${origin}/tax-join/${code}`;
 
   async function copy() {

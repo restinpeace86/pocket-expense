@@ -44,6 +44,7 @@ async function Content({ params, searchParams }: Pick<PageProps<"/workspace/[id]
   const now = currentMonthKst();
   const months = recentMonths(now);
   const month = typeof sp.month === "string" && MONTH.test(sp.month) && sp.month <= now ? sp.month : months[0];
+  const byDept = sp.view === "dept"; // 부서별 보기(reference 4-1 ⑦)
   const supabase = await createClient();
   const [res, { data: office }, { data: changes }] = await Promise.all([
     getTaxMonth(month),
@@ -52,32 +53,36 @@ async function Content({ params, searchParams }: Pick<PageProps<"/workspace/[id]
   ]);
   if (!res.ok) notFound();
   const o = office as { registered?: boolean; registered_name?: string | null } | null;
-  const byTitle = new Map<string, SpendingGroup>();
+  const byKey = new Map<string, SpendingGroup>();
   let total = 0;
   for (const r of res.data.rows) {
     const amount = r.amount ?? 0;
     total += amount;
-    const key = r.account_title_name ?? "";
-    const g = byTitle.get(key) ?? { key: key || "-", name: r.account_title_name ?? "미지정", code: r.account_title_code, amount: 0, items: [] };
+    const key = (byDept ? r.department : r.account_title_name) ?? "";
+    const g =
+      byKey.get(key) ??
+      (byDept
+        ? { key: key || "-", name: r.department ?? "부서 없음", code: null, amount: 0, items: [] }
+        : { key: key || "-", name: r.account_title_name ?? "미지정", code: r.account_title_code, amount: 0, items: [] });
     g.amount += amount;
     g.items.push({
       id: r.item_id,
       date: r.expense_date,
       merchant: isOwnCar(r) ? `자차 ${r.start_location ?? ""}→${r.end_location ?? ""}` : (r.merchant_name ?? "-"),
-      member: r.member_name,
+      member: byDept ? `${r.member_name} · ${r.account_title_name ?? "미지정"}` : r.member_name,
       amount,
       overridden: !!r.account_title_overridden,
     });
-    byTitle.set(key, g);
+    byKey.set(key, g);
   }
-  const groups = [...byTitle.values()].sort((a, b) => b.amount - a.amount);
+  const groups = [...byKey.values()].sort((a, b) => b.amount - a.amount);
   const [y, m] = month.split("-").map(Number);
   const base = `/workspace/${id}/admin/spending`;
 
   return (
     <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <MonthPicker months={months.includes(month) ? months : [month, ...months]} value={month} base={base} label="볼 달" />
+        <MonthPicker months={months.includes(month) ? months : [month, ...months]} value={month} base={base} label="볼 달" query={byDept ? "&view=dept" : ""} />
         <p className="text-sm text-zinc-600">
           {y}년 {m}월 승인 지출 <b className="text-lg tabular-nums text-zinc-900">{total.toLocaleString("ko-KR")}원</b> · {res.data.rows.length}건
         </p>
@@ -91,8 +96,25 @@ async function Content({ params, searchParams }: Pick<PageProps<"/workspace/[id]
           <>이 화면은 보기만 할 수 있어요. 분류 기준(지출 종류 → 계정과목)은 아래 [계정과목 분류 기준]에서 확인해요.</>
         )}
       </p>
-      <section className="min-w-0 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5" aria-label="계정과목별 지출">
-        <h2 className="font-semibold">계정과목별 지출</h2>
+      <section className="min-w-0 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5" aria-label={byDept ? "부서별 지출" : "계정과목별 지출"}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">{byDept ? "부서별 지출" : "계정과목별 지출"}</h2>
+          <nav aria-label="보기 방식" className="flex gap-1 rounded-xl bg-zinc-100 p-1 text-sm">
+            {[
+              ["", "계정과목별"],
+              ["dept", "부서별"],
+            ].map(([v, label]) => (
+              <Link
+                key={label}
+                href={`${base}?month=${month}${v ? `&view=${v}` : ""}`}
+                aria-current={(v === "dept") === byDept ? "page" : undefined}
+                className={`inline-flex min-h-9 items-center rounded-lg px-3 ${(v === "dept") === byDept ? "bg-white font-semibold shadow-sm" : "text-zinc-600"}`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </div>
         {groups.length === 0 ? (
           <p className="mt-2 text-sm text-zinc-500">이 달에 승인된 지출이 없어요.</p>
         ) : (

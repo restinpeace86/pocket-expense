@@ -9,6 +9,7 @@ import { MONTH } from "@/lib/tax/closing";
 import { evidenceFile, type ExportRow } from "@/lib/tax/export-rows";
 import { getTaxOfficeMonth } from "@/lib/tax-office/queries";
 import { hometaxZipFiles } from "@/lib/hometax/server";
+import { payoutProofZipFiles } from "@/lib/claims/payout-proof-server";
 
 // 세무사무소 증빙 묶음(ZIP) (D-153): 회사 세무 마감 ZIP과 같은 구성(장부 + 영수증 + 지출결의서 PDF).
 // 볼 수 있는 고객사인지는 tax_office_month_export가 확인하고, 그 결과의 행·결의서만 운영 키로 읽는다(그 회사 폴더·그 회사 결의서만).
@@ -46,9 +47,12 @@ export async function officeClaimDocsAction(companyId: string, month: string): P
   return { ok: true, docs, rows: data.rows, layout: form?.layout ?? null };
 }
 
-// 회사가 올린 홈택스 원본(홈택스자료/ 폴더, D-158). 볼 수 있는 고객사인지는 tax_office_month_export·RLS가 확인
-export async function officeHometaxFilesAction(companyId: string, month: string): Promise<Result<{ files: { name: string; url: string | null }[] }>> {
+// 함께 넣을 폴더: 회사가 올린 홈택스 원본(홈택스자료/, D-158) · 송금 확인증(지급확인증/, D-164).
+// 볼 수 있는 고객사인지는 tax_office_month_export가 확인하고, 그 결과의 결의서만 운영 키로 읽는다
+export async function officeZipAttachmentsAction(companyId: string, month: string): Promise<Result<{ attachments: { folder: string; files: { name: string; url: string | null }[] }[] }>> {
   if (!MONTH.test(month)) return fail("INVALID_MONTH");
-  if (!(await getTaxOfficeMonth(companyId, month))) return fail("NOT_FOUND");
-  return { ok: true, files: await hometaxZipFiles(companyId, month) };
+  const data = await getTaxOfficeMonth(companyId, month);
+  if (!data) return fail("NOT_FOUND");
+  const [hometax, proofs] = await Promise.all([hometaxZipFiles(companyId, month), payoutProofZipFiles(companyId, data.rows.map((r) => r.claim_id))]);
+  return { ok: true, attachments: [{ folder: "홈택스자료", files: hometax }, { folder: "지급확인증", files: proofs }].filter((a) => a.files.length) };
 }

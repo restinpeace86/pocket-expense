@@ -22,11 +22,16 @@ export default function AdminHomePage({ params }: PageProps<"/workspace/[id]/adm
   );
 }
 
+// 세무사무소 계정과목 변경 알림 기준(최근 7일) — 요청 시각 기준
+function daysAgoIso(days: number): string {
+  return new Date(Date.now() - days * 86400_000).toISOString();
+}
+
 async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin">["params"] }) {
   const { id } = await params;
   const membership = await requireWorkspace(id, { admin: true });
   const supabase = await createClient();
-  const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString();
+  const weekAgo = daysAgoIso(7);
   const [{ company }, credit, dashboard, notices, { count: titleChanges }] = await Promise.all([
     getCompanySummary(membership.company_id),
     getCreditStatus(membership.company_id),

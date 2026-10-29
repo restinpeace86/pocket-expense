@@ -7,9 +7,10 @@ import { messageForDbError } from "@/lib/errors";
 import { HOMETAX_BUCKET, HOMETAX_EXT, HOMETAX_KINDS, HOMETAX_MAX_BYTES, type HometaxKind } from "@/lib/hometax/kinds";
 import { readHometaxTable } from "@/lib/hometax/parse";
 import { hometaxZipFiles } from "@/lib/hometax/server";
+import { payoutProofZipFiles } from "@/lib/claims/payout-proof-server";
+import { getTaxMonth, MONTH } from "@/lib/tax/closing";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { MONTH } from "@/lib/tax/closing";
 
 // 회사 관리자: 홈택스에서 내려받은 파일을 그 달 세무 자료에 올리기·지우기 (D-158). 권한·회사 격리는 DB 함수가 다시 확인한다
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -72,10 +73,14 @@ export async function deleteHometaxAction(id: string): Promise<Result> {
   return { ok: true };
 }
 
-// 세무 마감 ZIP의 홈택스자료/ 폴더
-export async function hometaxZipFilesAction(month: string): Promise<Result<{ files: { name: string; url: string | null }[] }>> {
+// 세무 마감 ZIP에 함께 넣을 폴더: 홈택스자료/(D-158) · 지급확인증/(그 달 결의서의 송금 확인증, D-164)
+export type ZipAttachments = { folder: string; files: { name: string; url: string | null }[] }[];
+export async function zipAttachmentsAction(month: string): Promise<Result<{ attachments: ZipAttachments }>> {
   const m = await admin();
   if (!m) return fail(messageForDbError({ message: "NOT_ALLOWED" }));
   if (!MONTH.test(month)) return fail(messageForDbError({ message: "INVALID_MONTH" }));
-  return { ok: true, files: await hometaxZipFiles(m.company_id, month) };
+  const res = await getTaxMonth(month);
+  const claimIds = res.ok ? res.data.rows.map((r) => r.claim_id) : [];
+  const [hometax, proofs] = await Promise.all([hometaxZipFiles(m.company_id, month), payoutProofZipFiles(m.company_id, claimIds)]);
+  return { ok: true, attachments: [{ folder: "홈택스자료", files: hometax }, { folder: "지급확인증", files: proofs }].filter((a) => a.files.length) };
 }

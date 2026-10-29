@@ -1,6 +1,7 @@
 import "server-only";
 import { deadlineDate, isOverdue, kstDate, type DeadlinePolicy } from "@/lib/expense/deadline";
 import { getHolidays } from "@/lib/expense/holidays";
+import { anomalyFlags, type AnomalyPeer } from "./anomaly";
 import { todayKst } from "@/lib/dates";
 import { routeCardFrom } from "@/lib/expense/route";
 import { signReceiptUrls } from "@/lib/storage/signed-urls";
@@ -48,7 +49,17 @@ export async function getClaimDetail(companyId: string, claimId: string, opts: {
   const rows = itemsRes.data ?? [];
   const urls = await signReceiptUrls(supabase, rows.flatMap((r) => [r.receipt_thumb_path, r.route_card_path, r.odometer_start_path, r.odometer_end_path]));
   const dups = (dupRes.data ?? {}) as Record<string, { mine: unknown[]; others: number }>;
-  const policy: DeadlinePolicy = { holidays: await getHolidays() };
+  const holidays = await getHolidays();
+  const policy: DeadlinePolicy = { holidays };
+  // 이상 거래 표시(D-162): 결재하는 사람 화면에서만. 같은 직원의 최근 120일 결제(볼 수 있는 범위 — RLS)와 비교
+  let peers: AnomalyPeer[] = [];
+  if (!opts.ownerMemberId) {
+    const since = new Date(Date.now() - 120 * 86400_000).toISOString().slice(0, 10);
+    const { data: peerClaims } = await supabase.from("expense_claims").select("id").eq("company_id", companyId).eq("member_id", claim.member_id).neq("status", "draft");
+    const ids = [...new Set([claimId, ...(peerClaims ?? []).map((c) => c.id)])];
+    const { data: peerItems } = await supabase.from("expense_items").select("id, expense_date, merchant_name, amount").eq("company_id", companyId).in("claim_id", ids).gte("expense_date", since).limit(1000);
+    peers = (peerItems ?? []) as AnomalyPeer[];
+  }
   const refDate = claimRes.data?.submitted_at ? kstDate(claimRes.data.submitted_at) : todayKst();
   const items: DetailItem[] = rows.map(({ receipt_thumb_path, ai_parsed_payload, line_items, paid_time, start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, route_card_path, odometer_start_path, odometer_end_path, ...r }) => ({
     ...r,
@@ -58,6 +69,7 @@ export async function getClaimDetail(companyId: string, claimId: string, opts: {
         ? { startUrl: odometer_start_path ? (urls.get(odometer_start_path) ?? null) : null, endUrl: odometer_end_path ? (urls.get(odometer_end_path) ?? null) : null }
         : null,
     overdueDeadline: isOverdue(r.expense_date, policy, refDate) ? deadlineDate(r.expense_date, policy) : null,
+    anomalies: opts.ownerMemberId || start_location ? [] : anomalyFlags({ id: r.id, expense_date: r.expense_date, paid_time, merchant_name: r.merchant_name, amount: r.amount }, peers, holidays),
     // 자차 유류비: 영수증 대신 경로 요약 카드(D-085)
     route:
       r.category === "trip" && r.trip_type === "own_car"

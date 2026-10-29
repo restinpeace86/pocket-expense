@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
 // 정산 지급 관리 (admin-payouts.md §2·§3): 승인됐지만 지급·납부가 남은 결의서(approved), 직원별 묶음. 같은 회사만(RLS)
-export type PayoutClaim = { id: string; title: string; approved_at: string | null; paid_at: string | null; payout: number; payback: number };
+export type PayoutClaim = { id: string; title: string; approved_at: string | null; paid_at: string | null; payout: number; payback: number; proof_name?: string | null };
 export type PayoutGroup = {
   member_id: string;
   name: string;
@@ -15,7 +15,7 @@ export type PayoutGroup = {
 
 export async function getPayoutGroups(companyId: string, tab: "waiting" | "paid"): Promise<PayoutGroup[]> {
   const supabase = await createClient();
-  let q = supabase.from("expense_claims").select("id, title, member_id, approved_at, paid_at").eq("company_id", companyId).limit(300);
+  let q = supabase.from("expense_claims").select("id, title, member_id, approved_at, paid_at, payout_proof_name").eq("company_id", companyId).limit(300);
   q = tab === "waiting" ? q.eq("status", "approved").order("approved_at") : q.eq("status", "paid").eq("settlement_required", true).order("paid_at", { ascending: false });
   const { data: claims } = await q;
   const rows = claims ?? [];
@@ -52,7 +52,7 @@ export async function getPayoutGroups(companyId: string, tab: "waiting" | "paid"
       payback: 0,
     };
     const s = sums.get(c.id) ?? { payout: 0, payback: 0 };
-    g.claims.push({ id: c.id, title: c.title, approved_at: c.approved_at, paid_at: c.paid_at, ...s });
+    g.claims.push({ id: c.id, title: c.title, approved_at: c.approved_at, paid_at: c.paid_at, proof_name: c.payout_proof_name, ...s });
     g.payout += s.payout;
     g.payback += s.payback;
     groups.set(c.member_id, g);

@@ -96,6 +96,7 @@ const MESSAGES: Record<string, string> = {
   INVALID_REVIEWER: "검토자는 우리 회사의 활성 멤버만 고를 수 있어요. 화면을 새로고침해 주세요.",
   TAX_OFFICE_MANAGES_ACCOUNTS: "우리 회사 계정과목은 세무사무소가 관리해요. 바꿔야 하면 [세무사 확인 요청]을 남겨 주세요.",
   ITEM_CLOSED: "세무 마감된 항목이라 바꿀 수 없어요. 최고 관리자가 마감을 해제한 뒤 바꿔 주세요.",
+  INVALID_PAYOUT_PROOF: "확인증 파일을 저장하지 못했어요. 다시 올려 주세요.",
   NO_DEFAULT_TITLES: "사무소 기본 계정과목이 아직 없어요. 고객사 계정과목 화면에서 [이 회사 설정을 사무소 기본값으로 저장]을 먼저 눌러 주세요.",
   INCOMPLETE_BANK_ACCOUNT: "정산 계좌는 은행·계좌번호·예금주를 모두 입력하거나 모두 비워 주세요.",
 };
