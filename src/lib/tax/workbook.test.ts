@@ -72,17 +72,18 @@ describe("세무 마감 엑셀", () => {
       row({ item_id: "d", payment_method: "personal_card", expense_date: "2026-10-05", amount: 7000, company_supported_amount: null, account_title_code: "812", account_title_name: "여비교통비", merchant_name: "택시", member_name: "김직원", claim_description: "거래처 방문", purpose: null }),
     ];
     expect(wehagoJournalLines(rows)).toEqual([
-      [2026, 10, 5, 1, 3, "811", "복리후생비", "", "", "[일반 식대] 김밥천국 · 팀 점심", 12000, null],
-      [2026, 10, 5, 1, 4, "253", "미지급금", "", "최직원", "[일반 식대] 김밥천국 · 팀 점심", null, 12000],
-      [2026, 10, 5, 2, 3, "812", "여비교통비", "", "", "[일반 식대] 택시 · 거래처 방문", 7000, null],
-      [2026, 10, 5, 2, 4, "253", "미지급금", "", "김직원", "[일반 식대] 택시 · 거래처 방문", null, 7000],
+      [2026, 10, 5, 1, 3, "811", "복리후생비", "", "", "[일반 식대] 김밥천국 · 팀 점심", 12000, null, 12000],
+      [2026, 10, 5, 1, 4, "253", "미지급금", "", "최직원", "[일반 식대] 김밥천국 · 팀 점심", null, 12000, 12000],
+      [2026, 10, 5, 2, 3, "812", "여비교통비", "", "", "[일반 식대] 택시 · 거래처 방문", 7000, null, 7000],
+      [2026, 10, 5, 2, 4, "253", "미지급금", "", "김직원", "[일반 식대] 택시 · 거래처 방문", null, 7000, 7000],
     ]);
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(await buildTaxWorkbook({ month: "2026-10", companyName: "포켓", rows, preview: false }));
     const ws = wb.getWorksheet("위하고 일반전표(사비)")!;
-    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["연도", "월", "일", "전표번호", "구분", "계정과목코드", "계정과목", "거래처코드", "거래처", "적요", "차변", "대변"]);
+    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["연도", "월", "일", "전표번호", "구분", "계정과목코드", "계정과목", "거래처코드", "거래처", "적요", "차변", "대변", "금액"]);
     expect(ws.rowCount).toBe(1 + 4); // 합계 줄 없음(위하고가 전표로 읽음)
     expect(ws.getRow(3).getCell(12).value).toBe(12000);
+    expect(ws.getRow(3).getCell(13).value).toBe(12000); // 금액 한 칸(D-179)
   });
 
   it("위하고 일반전표 적요: 50바이트(한글 25자)에서 자르고, 분류가 없으면 [ ] 없이 (D-178)", () => {

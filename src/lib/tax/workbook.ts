@@ -121,6 +121,7 @@ function addTable(ws: ExcelJS.Worksheet, cols: Col[], rows: ExportRow[], ctx: Ct
 // 지출 1건 = 차변(비용 계정) + 대변(253 미지급금, 거래처 = 직원 — 사무소가 이름으로 거래처 코드를 찾는다). 금액 = 직원에게 줄 회사지원금(개인부담분은 회사 비용이 아님).
 // 두 줄은 같은 날짜·같은 전표번호(날짜마다 1부터). 차변 거래처는 비우고(가맹점이 위하고 거래처로 쌓이지 않게) 가맹점은 적요 앞에 둔다(D-177)
 // 부가세 공제 판단은 하지 않는다(합계 그대로 일반전표, 매입매출 전환은 사무소). 구분 3 = 차변, 4 = 대변.
+// 끝의 금액 칸 = 두 줄 모두 같은 금액(차변·대변 대신 금액 한 칸 + 구분을 쓰는 프로그램용, 예: 세무사랑, D-179)
 // 위하고는 정해진 양식 없이 [엑셀제목설정]으로 칸을 지정하므로 머리글 한 줄 + 전표 줄만 둔다(합계 줄 없음)
 const PAYABLE = { code: "253", name: "미지급금" };
 // 위하고 적요는 한글 30자(60바이트)까지 — 여유를 두고 50바이트(한글 25자)에서 자른다. 한글 등 2바이트, 영문·숫자 1바이트로 센다(D-178)
@@ -135,7 +136,7 @@ export function cutMemo(s: string, max = JOURNAL_MEMO_BYTES): string {
   }
   return out.trimEnd();
 }
-const JOURNAL_HEAD: [string, number][] = [["연도", 6], ["월", 5], ["일", 5], ["전표번호", 8], ["구분", 5], ["계정과목코드", 12], ["계정과목", 14], ["거래처코드", 10], ["거래처", 20], ["적요", 40], ["차변", 12], ["대변", 12]];
+const JOURNAL_HEAD: [string, number][] = [["연도", 6], ["월", 5], ["일", 5], ["전표번호", 8], ["구분", 5], ["계정과목코드", 12], ["계정과목", 14], ["거래처코드", 10], ["거래처", 20], ["적요", 40], ["차변", 12], ["대변", 12], ["금액", 12]];
 
 export function wehagoJournalLines(rows: ExportRow[]): (string | number | null)[][] {
   const out: (string | number | null)[][] = [];
@@ -151,8 +152,8 @@ export function wehagoJournalLines(rows: ExportRow[]): (string | number | null)[
     const merchant = isOwnCar(r) ? "" : (r.merchant_name ?? "");
     const tag = r.category ? `[${CATEGORY_LABEL[r.category]}]` : "";
     const memo = cutMemo([tag, [merchant, upload적요(r)].filter((x) => x && x.trim()).join(" · ")].filter(Boolean).join(" "));
-    out.push([y, m, day, no, 3, r.account_title_code ?? "", r.account_title_name ?? "", "", "", memo, amount, null]);
-    out.push([y, m, day, no, 4, PAYABLE.code, PAYABLE.name, "", r.member_name, memo, null, amount]);
+    out.push([y, m, day, no, 3, r.account_title_code ?? "", r.account_title_name ?? "", "", "", memo, amount, null, amount]);
+    out.push([y, m, day, no, 4, PAYABLE.code, PAYABLE.name, "", r.member_name, memo, null, amount, amount]);
   }
   return out;
 }
@@ -162,6 +163,7 @@ function addWehagoJournal(ws: ExcelJS.Worksheet, rows: ExportRow[]) {
   for (const line of wehagoJournalLines(rows)) ws.addRow(line);
   ws.getColumn(11).numFmt = WON;
   ws.getColumn(12).numFmt = WON;
+  ws.getColumn(13).numFmt = WON;
   const head = ws.getRow(1);
   head.font = { bold: true };
   head.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEF2FF" } };
