@@ -32,7 +32,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
   const membership = await requireWorkspace(id, { admin: true });
   const supabase = await createClient();
   const weekAgo = daysAgoIso(7);
-  const [{ company }, credit, dashboard, notices, { count: titleChanges }, { count: openRequests }] = await Promise.all([
+  const [{ company }, credit, dashboard, notices, { count: titleChanges }, { count: openRequests }, { data: office }] = await Promise.all([
     getCompanySummary(membership.company_id),
     getCreditStatus(membership.company_id),
     getDashboard(currentMonthKst()),
@@ -41,7 +41,9 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
     supabase.from("account_title_changes").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
     // 세무사무소가 남긴 답변 기다리는 자료 요청(D-169)
     supabase.from("tax_office_requests").select("id", { count: "exact", head: true }).eq("status", "open"),
+    supabase.rpc("my_company_tax_office"),
   ]);
+  const officeInfo = office as { registered?: boolean; registered_name?: string | null } | null;
   if (!company || !dashboard) return null;
   return (
     <>
@@ -74,6 +76,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
       creditsGranted={company.receipt_credits_granted}
       policyToConfirm={company.policy_confirmed_at ? null : describePolicy(company)}
       basePath={`/workspace/${membership.company_id}/admin`}
+      titlesManagedBy={officeInfo?.registered ? (officeInfo.registered_name ?? "세무사무소") : null}
       notices={<NoticeStrip notices={notices} />}
       />
     </>

@@ -33,6 +33,7 @@ export function AdminHomeView({
   basePath,
   dashboard,
   policyToConfirm = null,
+  titlesManagedBy = null,
   preview = false,
   notices,
 }: {
@@ -44,6 +45,7 @@ export function AdminHomeView({
   basePath: string;
   dashboard: Dashboard;
   policyToConfirm?: string[] | null; // 정산 정책을 아직 한 번도 저장하지 않았으면 현재(기본) 정책 요약 (D-068)
+  titlesManagedBy?: string | null; // 계정과목을 관리하는 세무사무소(D-152) — 있으면 회사가 고칠 수 없으니 안내를 바꾼다
   preview?: boolean;
   notices?: React.ReactNode; // 공지(D-116)
 }) {
@@ -67,7 +69,15 @@ export function AdminHomeView({
       text: `정산 대기 결의서 ${todo.settle_claims}건 · 지급 ${formatWon(kpi.unpaid_payout)}${kpi.unpaid_payback ? ` · 납부 ${formatWon(kpi.unpaid_payback)}` : ""}`,
     },
     { show: (todo.overdue_claims ?? 0) > 0, href: `${basePath}/claims?tab=pending`, icon: <AlertTriangle className="size-5" />, text: `청구 마감 뒤 상신돼 다음 달 정산으로 넘어가는 승인 대기 결의서 ${todo.overdue_claims}건`, tone: "warn" },
-    { show: todo.unmapped_items > 0, href: `${basePath}/account-titles`, icon: <Tags className="size-5" />, text: `계정과목이 정해지지 않은 항목 ${todo.unmapped_items}건 — 계정과목 매핑을 확인해 주세요`, tone: "warn" },
+    {
+      show: todo.unmapped_items > 0,
+      href: titlesManagedBy ? `${basePath}/spending` : `${basePath}/account-titles`,
+      icon: <Tags className="size-5" />,
+      text: titlesManagedBy
+        ? `계정과목이 정해지지 않은 항목 ${todo.unmapped_items}건 — ${titlesManagedBy}가 정해요. 급하면 결재 화면에서 [세무사 확인 요청]을 남겨 주세요`
+        : `계정과목이 정해지지 않은 항목 ${todo.unmapped_items}건 — 계정과목 매핑을 확인해 주세요`,
+      tone: "warn",
+    },
     { show: creditsLeft <= 20, href: `${basePath}/billing`, icon: <ReceiptText className="size-5" />, text: `무료 영수증이 ${creditsLeft}장 남았어요`, tone: "warn" },
   ];
   const visibleTodos = todos.filter((t) => t.show);

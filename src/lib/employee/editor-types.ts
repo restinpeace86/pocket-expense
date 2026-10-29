@@ -79,6 +79,7 @@ export type EditorItem = {
   aiCategory: ExpenseCategory | null; // AI가 본 4대 카테고리(결의서와 다르면 확인, D-104)
   category_mismatch_ack: boolean; // 직원이 "이 결의서가 맞아요"를 고름
   evidence_kind: EvidenceKind | null; // 증빙 자료 종류(D-108), 비어 있고 사진이 있으면 영수증
+  evidence_substitute?: { date?: string; merchant?: string; amount?: number; last4?: string | null } | null; // 카드 내역으로 증빙 대체(D-170·D-171)
   no_evidence_reason: string | null;
   aiEvidence: EvidenceAi | null; // 증빙 구분 AI 판별 근거(D-100). AI가 읽지 않은 항목(직접 입력·자차)은 null
   // 참고 정보(D-079, AI가 읽음·보여 주기만)

@@ -392,7 +392,20 @@ export function ItemInlineForm({
           <p className="font-medium text-zinc-800">
             증빙 자료<span className="ml-0.5 text-red-600">*</span>
           </p>
-          {input.evidenceKind !== "none" ? (
+          {item.evidence_substitute ? (
+            // 카드 내역으로 증빙 대체됨(D-170·D-171) — 관리자가 카드 대조에서 연결한 결제
+            <>
+              <p className="break-keep rounded-lg bg-blue-50 px-3 py-2 text-blue-900">
+                <b>카드 결제 내역으로 증빙이 붙어 있어요.</b> {item.evidence_substitute.date ?? ""} {item.evidence_substitute.merchant ?? ""}
+                {item.evidence_substitute.amount != null && ` ${Number(item.evidence_substitute.amount).toLocaleString("ko-KR")}원`}
+                {item.evidence_substitute.last4 && ` (카드 끝 ${item.evidence_substitute.last4})`}. 따로 올리지 않아도 상신할 수 있어요.
+              </p>
+              <button type="button" disabled={attaching} onClick={() => fileRef.current?.click()} className="inline-flex min-h-11 items-center gap-1.5 self-start text-zinc-600 underline underline-offset-2 disabled:opacity-60">
+                {attaching ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                영수증·인보이스가 있으면 올리기(선택)
+              </button>
+            </>
+          ) : input.evidenceKind !== "none" ? (
             <>
               <p className="text-zinc-600">영수증이 없으면 대신할 자료를 올려 주세요. 인보이스·결제 메일, 앱 이용 내역, 카드 결제 내역, 청첩장·부고 안내(문자·모바일 초대장) 캡처도 돼요.</p>
               <button

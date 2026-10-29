@@ -79,6 +79,25 @@ end;
 $$;
 select public._t_raises59($q$select public.create_recurring_claim_from_card('c5950000-0000-0000-0000-000000000001', '2026-09-28', 'AUTODESK', 55000, '1234')$q$, 'RECURRING_ALREADY', 'same month twice');
 reset role;
+-- 096: 카드 내역으로 증빙이 붙은 항목은 영수증 파일 없이도 상신 검사 통과
+do $$
+declare v uuid := (select id from public.expense_claims where recurring_payment_id = 'c5950000-0000-0000-0000-000000000001' limit 1);
+begin
+  if private.claim_problems(v)::text like '%"receipt"%' then raise exception 'FAIL [substitute needs no receipt] %', private.claim_problems(v); end if;
+end;
+$$;
+-- 097: 카드를 안 고른 정기 결제도 카드 내역 끝 4자리로 법인카드가 채워짐
+update public.recurring_payments set corporate_card_id = null where id = 'c5950000-0000-0000-0000-000000000001';
+select public._t_as59('a5900000-0000-0000-0000-000000000001');
+set local role authenticated;
+do $$
+declare v uuid := public.create_recurring_claim_from_card('c5950000-0000-0000-0000-000000000001', '2027-01-10', 'AUTODESK', 55000, '1234');
+begin
+  if (select corporate_card_id from public.expense_items where claim_id = v) is distinct from 'c5940000-0000-0000-0000-000000000001' then raise exception 'FAIL [card from row]'; end if;
+end;
+$$;
+reset role;
+update public.recurring_payments set corporate_card_id = 'c5940000-0000-0000-0000-000000000001' where id = 'c5950000-0000-0000-0000-000000000001';
 -- 예전 방식으로 만든 10월 결의서(결제일 날짜)가 있으면 10월도 막힘
 insert into public.expense_claims (company_id, member_id, title, status, category, recurring_payment_id, recurring_period) values
   ('c5900000-0000-0000-0000-00000000000a', 'a5910000-0000-0000-0000-000000000002', '예전 10월', 'draft', 'saas', 'c5950000-0000-0000-0000-000000000001', '2026-10-10');

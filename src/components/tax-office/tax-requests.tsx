@@ -36,8 +36,10 @@ export function TaxRequests({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [pending, start] = useTransition();
-  const run = (fn: () => Promise<{ ok: true } | { ok: false; error: string }>, ok: string, after?: () => void) =>
+  const [busy, setBusy] = useState<string | null>(null); // 어느 버튼이 진행 중인지(보내기·답변·해결)
+  const run = (fn: () => Promise<{ ok: true } | { ok: false; error: string }>, ok: string, after?: () => void, key = "other") =>
     start(async () => {
+      setBusy(key);
       setMsg(null);
       try {
         const r = await fn();
@@ -46,6 +48,8 @@ export function TaxRequests({
         setMsg({ kind: "ok", text: ok });
       } catch {
         setMsg({ kind: "error", text: thrownActionMessage() });
+      } finally {
+        setBusy(null);
       }
     });
   const openCount = requests.filter((r) => r.status === "open").length;
@@ -68,10 +72,15 @@ export function TaxRequests({
           className="mt-3 flex flex-col gap-2 rounded-lg bg-zinc-50 p-3"
           onSubmit={(e) => {
             e.preventDefault();
-            run(() => createTaxRequestAction(companyId, month, itemId || null, body), "요청을 보냈어요. 회사 관리자에게 알림이 갔어요.", () => {
-              setBody("");
-              setItemId("");
-            });
+            run(
+              () => createTaxRequestAction(companyId, month, itemId || null, body),
+              "요청을 보냈어요. 회사 관리자에게 알림이 갔어요.",
+              () => {
+                setBody("");
+                setItemId("");
+              },
+              "send",
+            );
           }}
         >
           <label className="flex min-w-0 flex-col gap-1 text-sm">
@@ -90,7 +99,7 @@ export function TaxRequests({
             <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={500} rows={3} required className={inputClass} placeholder="예: 9월 ○○상사 세금계산서(330,000원)에 맞는 결의서가 없어요. 확인 부탁드려요." />
           </label>
           <button type="submit" disabled={pending || !body.trim()} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 sm:self-end">
-            {pending ? "보내는 중..." : "요청 보내기"}
+            {pending && busy === "send" ? "보내는 중..." : "요청 보내기"}
           </button>
         </form>
       )}

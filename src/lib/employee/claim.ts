@@ -15,7 +15,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: string) => UUID.test(v);
 
 const ITEM_COLUMNS =
-  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items, start_location, start_lat, start_lng, end_location, end_lat, end_lng, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, category_mismatch_ack, evidence_kind, no_evidence_reason, applied_fuel_mode, applied_fuel_price, applied_fuel_type, odometer_start_path, odometer_end_path";
+  "id, sort_order, category, trip_type, purchase_type, payment_method, corporate_card_id, evidence_type, expense_date, merchant_name, merchant_business_number, amount, supply_amount, vat_amount, headcount, purpose, attendees, client_name, trip_start_date, trip_end_date, parse_status, receipt_path, receipt_thumb_path, company_supported_amount, personal_burden_amount, ai_parsed_payload, paid_time, approval_number, merchant_address, line_items, start_location, start_lat, start_lng, end_location, end_lat, end_lng, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, category_mismatch_ack, evidence_kind, no_evidence_reason, applied_fuel_mode, applied_fuel_price, applied_fuel_type, odometer_start_path, odometer_end_path, evidence_substitute";
 
 const EVIDENCE_TYPES = ["card_slip", "cash_receipt", "tax_invoice", "simple_receipt", "other"] as const;
 
@@ -87,6 +87,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string,
   const items: EditorItem[] = rows.map(({ ai_parsed_payload, receipt_thumb_path, line_items, paid_time, ...r }) => ({
     ...r,
     paid_time: paid_time?.slice(0, 5) ?? null,
+    evidence_substitute: (r.evidence_substitute ?? null) as EditorItem["evidence_substitute"],
     line_items: Array.isArray(line_items) ? (line_items as EditorItem["line_items"]) : [],
     duplicate: dups[r.id] ?? null,
     thumbUrl: receipt_thumb_path ? (urls.get(receipt_thumb_path) ?? null) : null,

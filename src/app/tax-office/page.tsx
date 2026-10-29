@@ -35,7 +35,7 @@ async function Clients() {
         <h1 className="text-2xl font-bold tracking-tight">{isAdmin ? "고객사" : "맡은 고객사"}</h1>
         <p className="mt-1 break-keep text-sm text-zinc-600">
           {isAdmin
-            ? "고객사가 [설정 › 세무사무소]에 우리 사무소 이메일을 넣으면 자동으로 늘어나요. 담당 세무사를 배정하면 그 세무사도 볼 수 있어요. 계약하지 않은 회사라면 [고객사 해제]로 빼 주세요."
+            ? "고객사가 보낸 연결 링크로 들어오거나, 고객사가 [설정 › 세무사무소]에 우리 사무소 이메일을 넣으면 자동으로 늘어나요. 담당 세무사를 배정하면 그 세무사도 볼 수 있어요. 계약하지 않은 회사라면 [고객사 해제]로 빼 주세요."
             : "사무소 관리자가 배정한 고객사예요. 회사를 고르면 승인된 지출과 세무용 엑셀을 볼 수 있어요."}
         </p>
       </div>
@@ -44,7 +44,7 @@ async function Clients() {
       )}
       {clients.length === 0 ? (
         <p className="break-keep rounded-xl border border-zinc-200 bg-white px-4 py-10 text-center text-sm text-zinc-500">
-          {isAdmin ? "아직 연결된 고객사가 없어요. 고객사에 우리 사무소 이메일로 지정해 달라고 알려 주세요." : "아직 맡은 고객사가 없어요. 사무소 관리자에게 배정을 요청해 주세요."}
+          {isAdmin ? "아직 연결된 고객사가 없어요. 고객사가 [설정 › 세무사무소]에서 우리 사무소를 지정하면 연결 링크가 생겨요. 그 링크로 들어오거나, 고객사에 우리 사무소 이메일로 지정해 달라고 알려 주세요." : "아직 맡은 고객사가 없어요. 사무소 관리자에게 배정을 요청해 주세요."}
         </p>
       ) : (
         <ul className="grid grid-cols-1 gap-3 xl:grid-cols-2">

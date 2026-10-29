@@ -62,7 +62,8 @@ export function itemNeedsCheck(item: EditorItem): boolean {
   if (item.category === "purchase" && !item.purchase_type) return true;
   if (item.odometerMissing) return true; // 회사가 계기판 사진을 받는데 2장이 아님 (D-144)
   // 증빙 자료가 없으면(자차 제외) 확인 필요 — 증빙 없음은 사유 5자 이상일 때만 통과 (D-108)
-  if (!item.receipt_path && !(item.category === "trip" && item.trip_type === "own_car") && !(item.evidence_kind === "none" && (item.no_evidence_reason ?? "").trim().length >= 5)) return true;
+  // 카드 내역으로 증빙을 대체한 항목은 파일이 없어도 된다(D-170·D-171)
+  if (!item.receipt_path && !item.evidence_substitute && !(item.category === "trip" && item.trip_type === "own_car") && !(item.evidence_kind === "none" && (item.no_evidence_reason ?? "").trim().length >= 5)) return true;
   return false;
 }
 
@@ -694,7 +695,11 @@ export function ClaimEditor({
 
       {claim.recurring_payment_id && claim.status === "draft" && (
         <p className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-          🔁 정기 결제로 자동으로 만든 결의서예요. 금액이 달라졌으면 고치고, 아래 영수증에 <b>결제 내역(인보이스·카드 결제 내역) 1장</b>만 붙여 상신해 주세요.
+          {data.items.some((i) => i.evidence_substitute) ? (
+            <>🔁 카드 결제가 확인돼 만든 정기 결제 결의서예요. <b>카드 결제 내역이 증빙으로 붙어 있어요</b>. 금액·지출 사유를 확인하고 상신해 주세요.</>
+          ) : (
+            <>🔁 정기 결제 결의서예요. 금액이 달라졌으면 고치고, 아래 영수증에 <b>결제 내역(인보이스·카드 결제 내역) 1장</b>만 붙여 상신해 주세요.</>
+          )}
         </p>
       )}
 

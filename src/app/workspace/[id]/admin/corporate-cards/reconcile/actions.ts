@@ -84,10 +84,23 @@ export async function reconcileCardStatementAction(rows: StatementRow[]): Promis
 
 // ── 대조 결과 저장·건별 처리 (D-154) ──
 // 달별로 저장(같은 달은 덮어쓰고 이미 고른 처리는 유지). 카드 내역 파일은 저장하지 않고 맞지 않는 건만 남긴다
-export async function saveReconcileAction(month: string, fileName: string, result: ReconcileResult, period: { from: string | null; to: string | null }): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function saveReconcileAction(month: string, fileName: string, input: ReconcileResult, period: { from: string | null; to: string | null }): Promise<{ ok: true } | { ok: false; error: string }> {
   const m = await getMembership();
   if (!m || m.status !== "approved" || !isAdminRole(m.role)) return { ok: false, error: messageForDbError({ message: "NOT_ALLOWED" }) };
   const supabase = await createClient();
+  // [정기 결제로 처리]로 결의서를 만든 결제는 처리된 것 — 저장할 때 "결의서 없음"에서 뺀다(시나리오 점검 2026-10-29)
+  let result = input;
+  const rec = input.recurring?.matches ?? [];
+  if (rec.length) {
+    const { data: claims } = await supabase
+      .from("expense_claims")
+      .select("recurring_payment_id, recurring_period")
+      .eq("company_id", m.company_id)
+      .in("recurring_payment_id", [...new Set(rec.map((r) => r.recurringId))]);
+    const has = (rid: string, date: string) =>
+      (claims ?? []).some((c) => c.recurring_payment_id === rid && !!c.recurring_period && (c.recurring_period.slice(0, 7) === date.slice(0, 7) || (c.recurring_period.slice(5) === "01-01" && c.recurring_period.slice(0, 4) === date.slice(0, 4))));
+    result = { ...input, missing: input.missing.filter((row) => !rec.some((r) => r.line === row.line && has(r.recurringId, row.date))) };
+  }
   const { error } = await supabase.rpc("save_card_reconciliation", {
     p_month: month,
     p_file_name: fileName.slice(0, 200),
