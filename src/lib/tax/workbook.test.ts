@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { describe, expect, it, vi } from "vitest";
 import type { ExportRow } from "./export-rows";
-import { buildTaxWorkbook, wehagoJournalLines } from "./workbook";
+import { buildTaxWorkbook, cutMemo, wehagoJournalLines } from "./workbook";
 
 vi.mock("server-only", () => ({}));
 
@@ -72,10 +72,10 @@ describe("세무 마감 엑셀", () => {
       row({ item_id: "d", payment_method: "personal_card", expense_date: "2026-10-05", amount: 7000, company_supported_amount: null, account_title_code: "812", account_title_name: "여비교통비", merchant_name: "택시", member_name: "김직원", claim_description: "거래처 방문", purpose: null }),
     ];
     expect(wehagoJournalLines(rows)).toEqual([
-      [2026, 10, 5, 1, 3, "811", "복리후생비", "", "", "김밥천국 · 팀 점심", 12000, null],
-      [2026, 10, 5, 1, 4, "253", "미지급금", "", "최직원", "김밥천국 · 팀 점심", null, 12000],
-      [2026, 10, 5, 2, 3, "812", "여비교통비", "", "", "택시 · 거래처 방문", 7000, null],
-      [2026, 10, 5, 2, 4, "253", "미지급금", "", "김직원", "택시 · 거래처 방문", null, 7000],
+      [2026, 10, 5, 1, 3, "811", "복리후생비", "", "", "[일반 식대] 김밥천국 · 팀 점심", 12000, null],
+      [2026, 10, 5, 1, 4, "253", "미지급금", "", "최직원", "[일반 식대] 김밥천국 · 팀 점심", null, 12000],
+      [2026, 10, 5, 2, 3, "812", "여비교통비", "", "", "[일반 식대] 택시 · 거래처 방문", 7000, null],
+      [2026, 10, 5, 2, 4, "253", "미지급금", "", "김직원", "[일반 식대] 택시 · 거래처 방문", null, 7000],
     ]);
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(await buildTaxWorkbook({ month: "2026-10", companyName: "포켓", rows, preview: false }));
@@ -83,5 +83,17 @@ describe("세무 마감 엑셀", () => {
     expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["연도", "월", "일", "전표번호", "구분", "계정과목코드", "계정과목", "거래처코드", "거래처", "적요", "차변", "대변"]);
     expect(ws.rowCount).toBe(1 + 4); // 합계 줄 없음(위하고가 전표로 읽음)
     expect(ws.getRow(3).getCell(12).value).toBe(12000);
+  });
+
+  it("위하고 일반전표 적요: 50바이트(한글 25자)에서 자르고, 분류가 없으면 [ ] 없이 (D-178)", () => {
+    expect(cutMemo("가".repeat(30))).toBe("가".repeat(25));
+    expect(cutMemo("a".repeat(60))).toBe("a".repeat(50));
+    expect(cutMemo("가".repeat(24) + "ab")).toBe("가".repeat(24) + "ab");
+    expect(cutMemo("가".repeat(24) + "a가")).toBe("가".repeat(24) + "a");
+    const long = row({ payment_method: "personal_card", company_supported_amount: 9000, category: "seminar", merchant_name: "코엑스 컨퍼런스센터", claim_description: "AI 개발자 컨퍼런스 참가비 및 현장 등록", purpose: null });
+    const memo = wehagoJournalLines([long])[0][9] as string;
+    expect(memo.startsWith("[세미나·컨퍼런스 참가] 코엑스")).toBe(true);
+    expect([...memo].reduce((n, ch) => n + (ch.charCodeAt(0) < 0x80 ? 1 : 2), 0)).toBeLessThanOrEqual(50);
+    expect(wehagoJournalLines([row({ payment_method: "personal_card", company_supported_amount: 9000, category: null, merchant_name: "문구점", claim_description: "볼펜", purpose: null })])[0][9]).toBe("문구점 · 볼펜");
   });
 });

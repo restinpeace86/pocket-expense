@@ -1,6 +1,7 @@
 import "server-only";
 import { EVIDENCE_KIND_LABEL, type EvidenceKind } from "@/lib/receipts/evidence-kind";
 import ExcelJS from "exceljs";
+import { CATEGORY_LABEL } from "@/lib/expense/categories";
 import { KIND_LABEL as CARD_KIND_LABEL, STATUS_LABEL as CARD_STATUS_LABEL, type SavedReconcile } from "@/lib/cards/saved";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, evidenceFile, evidenceNo, isOwnCar, settlement, statusLabel, supplyVat, upload적요, type ExportRow } from "./export-rows";
 
@@ -122,6 +123,18 @@ function addTable(ws: ExcelJS.Worksheet, cols: Col[], rows: ExportRow[], ctx: Ct
 // 부가세 공제 판단은 하지 않는다(합계 그대로 일반전표, 매입매출 전환은 사무소). 구분 3 = 차변, 4 = 대변.
 // 위하고는 정해진 양식 없이 [엑셀제목설정]으로 칸을 지정하므로 머리글 한 줄 + 전표 줄만 둔다(합계 줄 없음)
 const PAYABLE = { code: "253", name: "미지급금" };
+// 위하고 적요는 한글 30자(60바이트)까지 — 여유를 두고 50바이트(한글 25자)에서 자른다. 한글 등 2바이트, 영문·숫자 1바이트로 센다(D-178)
+export const JOURNAL_MEMO_BYTES = 50;
+export function cutMemo(s: string, max = JOURNAL_MEMO_BYTES): string {
+  let bytes = 0;
+  let out = "";
+  for (const ch of s) {
+    bytes += ch.charCodeAt(0) < 0x80 ? 1 : 2;
+    if (bytes > max) break;
+    out += ch;
+  }
+  return out.trimEnd();
+}
 const JOURNAL_HEAD: [string, number][] = [["연도", 6], ["월", 5], ["일", 5], ["전표번호", 8], ["구분", 5], ["계정과목코드", 12], ["계정과목", 14], ["거래처코드", 10], ["거래처", 20], ["적요", 40], ["차변", 12], ["대변", 12]];
 
 export function wehagoJournalLines(rows: ExportRow[]): (string | number | null)[][] {
@@ -134,9 +147,10 @@ export function wehagoJournalLines(rows: ExportRow[]): (string | number | null)[
     const [y, m, day] = r.expense_date.slice(0, 10).split("-").map(Number);
     const no = (perDay.get(r.expense_date.slice(0, 10)) ?? 0) + 1;
     perDay.set(r.expense_date.slice(0, 10), no);
-    // 자차는 적요에 이미 경로가 있다
+    // 적요 = [분류] 가맹점 · 용도(세무사가 알아보기 쉽게, D-178). 자차는 적요에 이미 경로가 있다
     const merchant = isOwnCar(r) ? "" : (r.merchant_name ?? "");
-    const memo = [merchant, upload적요(r)].filter((x) => x && x.trim()).join(" · ");
+    const tag = r.category ? `[${CATEGORY_LABEL[r.category]}]` : "";
+    const memo = cutMemo([tag, [merchant, upload적요(r)].filter((x) => x && x.trim()).join(" · ")].filter(Boolean).join(" "));
     out.push([y, m, day, no, 3, r.account_title_code ?? "", r.account_title_name ?? "", "", "", memo, amount, null]);
     out.push([y, m, day, no, 4, PAYABLE.code, PAYABLE.name, "", r.member_name, memo, null, amount]);
   }
