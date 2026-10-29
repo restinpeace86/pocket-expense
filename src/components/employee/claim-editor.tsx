@@ -165,7 +165,7 @@ function ItemRow({
             {item.duplicate && <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900">중복 의심</span>}
             {mismatch && <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900">카테고리 확인</span>}
             {perDiemMeal && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-800">일비에 포함돼요 — 빼 주세요</span>}
-            {item.overdueDeadline && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">기한 초과</span>}
+            {item.overdueDeadline && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">다음 달 정산</span>}
             {parsing ? (
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-600">분석 중</span>
             ) : check ? (

@@ -3,6 +3,7 @@ import type { FuelType } from "@/lib/expense/route";
 import { inputFieldsOf, normalizeLayout } from "@/lib/forms/layout";
 import { aiCategoryOf } from "@/lib/expense/category-check";
 import { deadlineDate, isOverdue, type DeadlinePolicy } from "@/lib/expense/deadline";
+import { getHolidays } from "@/lib/expense/holidays";
 import { todayKst } from "@/lib/dates";
 import { maskCardNumber } from "@/lib/cards/match";
 import type { Membership } from "@/lib/auth/paths";
@@ -82,7 +83,7 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string,
   const rows = itemsRes.data ?? [];
   const urls = await signReceiptUrls(supabase, rows.flatMap((r) => [r.receipt_thumb_path, r.odometer_start_path, r.odometer_end_path]));
   const odometerRequired = !!companyRes.data?.odometer_photo_required;
-  const deadline: DeadlinePolicy = { type: companyRes.data?.claim_deadline_type ?? "none", days: companyRes.data?.claim_deadline_days ?? null };
+  const deadline: DeadlinePolicy = { holidays: await getHolidays() };
   const items: EditorItem[] = rows.map(({ ai_parsed_payload, receipt_thumb_path, line_items, paid_time, ...r }) => ({
     ...r,
     paid_time: paid_time?.slice(0, 5) ?? null,

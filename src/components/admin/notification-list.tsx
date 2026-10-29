@@ -12,6 +12,7 @@ const TEMPLATE_LABEL: Record<string, string> = {
   INVITE: "초대",
   REMINDER: "독촉",
   RECURRING_READY: "정기 결제 준비",
+  CLOSING: "월말 마감",
 };
 
 export type NotificationRow = {

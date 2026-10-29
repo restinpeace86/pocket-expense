@@ -147,8 +147,8 @@ begin
     raise exception 'FAIL [NEXT_MONTH] not stored';
   end if;
   if (select row(claim_deadline_type, claim_deadline_days)::text from public.companies where id = 'c7000000-0000-0000-0000-00000000000c')
-     <> row('next_month_day'::public.claim_deadline_type, 5)::text then
-    raise exception 'FAIL [DEFAULT] new company default is not next month 5th';
+     <> row('next_month_day'::public.claim_deadline_type, 2)::text then
+    raise exception 'FAIL [DEFAULT] new company default is not next month 2nd (D-161 고정 규칙)';
   end if;
 end $$;
 

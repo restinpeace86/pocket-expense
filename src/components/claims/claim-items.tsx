@@ -62,7 +62,7 @@ function ItemBadges({ i, flagged }: { i: DetailItem; flagged: boolean }) {
   if (i.evidence_kind === "none") badges.push(["증빙 없음", "bg-red-100 text-red-700"]);
   else if (i.evidence_kind && i.evidence_kind !== "receipt") badges.push([EVIDENCE_KIND_LABEL[i.evidence_kind], "bg-sky-100 text-sky-800"]);
   if (i.duplicate) badges.push(["중복 의심", "bg-amber-200 text-amber-900"]);
-  if (i.overdueDeadline) badges.push([`기한 초과(${Number(i.overdueDeadline.slice(5, 7))}/${Number(i.overdueDeadline.slice(8))}까지)`, "bg-amber-100 text-amber-800"]);
+  if (i.overdueDeadline) badges.push([`늦은 청구 · 다음 달 정산(마감 ${Number(i.overdueDeadline.slice(5, 7))}/${Number(i.overdueDeadline.slice(8))})`, "bg-amber-100 text-amber-800"]);
   const edited = editedFields(i);
   if (edited.length) badges.push([`직원 수정: ${edited.join("·")}`, "bg-violet-100 text-violet-800"]);
   if (i.amount !== null && i.supply_amount !== null && i.vat_amount !== null && i.supply_amount + i.vat_amount !== i.amount) badges.push(["합계≠공급가+부가세", "bg-amber-100 text-amber-800"]);

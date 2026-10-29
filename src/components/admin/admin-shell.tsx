@@ -2,12 +2,10 @@
 
 import {
   Banknote,
-  Bell,
-  BookOpen,
   Building2,
+  ChartBar,
   ChevronDown,
   Car,
-  Megaphone,
   Repeat,
   CreditCard,
   FileDown,
@@ -42,6 +40,7 @@ const NAV: NavItem[] = [
   { href: "/claims", label: "지출 승인 관리", icon: ReceiptText, ready: true },
   { href: "/payouts", label: "정산 지급 관리", icon: Banknote, ready: true },
   { href: "/members", label: "멤버 관리", icon: Users, ready: true },
+  { href: "/spending", label: "월별 지출 현황", icon: ChartBar, ready: true }, // 계정과목별 보기 전용(D-160)
   { href: "/export", label: "세무 마감", icon: FileDown, ready: true },
 ];
 const SETTINGS_NAV: NavItem[] = [
@@ -52,11 +51,9 @@ const SETTINGS_NAV: NavItem[] = [
   { href: "/form-template", label: "지출결의서 양식", icon: FileText, ready: true },
   { href: "/departments", label: "부서", icon: Building2, ready: true },
   { href: "/approval-lines", label: "사전 검토 결재라인", icon: Route, ready: true },
-  { href: "/account-titles", label: "계정과목", icon: BookOpen, ready: true },
   { href: "/tax-office", label: "세무사무소", icon: Landmark, ready: true },
   { href: "/billing", label: "요금제", icon: Wallet, ready: true },
-  { href: "/announcements", label: "사내 공지", icon: Megaphone, ready: true },
-  { href: "/notifications", label: "알림 이력", icon: Bell, ready: true },
+  // 사내 공지·알림 이력은 메뉴에서 숨김(D-159, 개선사항 2) — 화면·데이터는 그대로, 알림 이력은 앱 운영자 화면으로
 ];
 
 function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: string; pathname: string; onNavigate?: () => void }) {

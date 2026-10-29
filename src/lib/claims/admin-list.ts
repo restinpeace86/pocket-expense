@@ -1,5 +1,6 @@
 import "server-only";
 import { isOverdue, kstDate, type DeadlinePolicy } from "@/lib/expense/deadline";
+import { getHolidays } from "@/lib/expense/holidays";
 import { todayKst } from "@/lib/dates";
 import { monthRange } from "@/lib/dates";
 import type { ClaimStatus } from "@/lib/expense/status";
@@ -79,15 +80,15 @@ export async function getAdminClaimList(companyId: string, tab: ApprovalTab, fil
   ]);
   const rows = claims ?? [];
   const memberIds = [...new Set(rows.map((c) => c.member_id))];
-  const [{ data: members }, { data: steps }, { data: company }, { data: itemDates }] = await Promise.all([
+  const [{ data: members }, { data: steps }, holidays, { data: itemDates }] = await Promise.all([
     memberIds.length ? supabase.from("members").select("id, name").in("id", memberIds) : Promise.resolve({ data: [] as { id: string; name: string }[] }),
     tab === "pending" && rows.length
       ? supabase.from("claim_approvals").select("claim_id, approver_member_id").in("claim_id", rows.map((c) => c.id)).eq("status", "pending").eq("step_kind", "review")
       : Promise.resolve({ data: [] as { claim_id: string; approver_member_id: string | null }[] }),
-    supabase.from("companies").select("claim_deadline_type, claim_deadline_days").eq("id", companyId).single(),
+    getHolidays(),
     rows.length ? supabase.from("expense_items").select("claim_id, expense_date").eq("company_id", companyId).in("claim_id", rows.map((c) => c.id)) : Promise.resolve({ data: [] as { claim_id: string; expense_date: string | null }[] }),
   ]);
-  const policy: DeadlinePolicy = { type: company?.claim_deadline_type ?? "none", days: company?.claim_deadline_days ?? null };
+  const policy: DeadlinePolicy = { holidays };
   const submitted = new Map(rows.map((c) => [c.id, c.submitted_at ? kstDate(c.submitted_at) : todayKst()]));
   const overdue = new Set((itemDates ?? []).filter((i) => isOverdue(i.expense_date, policy, submitted.get(i.claim_id) ?? todayKst())).map((i) => i.claim_id));
   const names = new Map((members ?? []).map((m) => [m.id, m.name]));

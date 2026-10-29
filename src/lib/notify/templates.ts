@@ -1,5 +1,5 @@
 // 알림톡 템플릿 6종 문구 (spec/screens/notification-rule.md §2 — 문구의 단일 기준). 링크에는 토큰을 넣지 않는다(D-013).
-export type TemplateCode = "APPROVAL_REQUEST" | "APPROVAL_COMPLETED" | "APPROVAL_REJECTED" | "PAYOUT_COMPLETED" | "INVITE" | "REMINDER" | "RECURRING_READY";
+export type TemplateCode = "APPROVAL_REQUEST" | "APPROVAL_COMPLETED" | "APPROVAL_REJECTED" | "PAYOUT_COMPLETED" | "INVITE" | "REMINDER" | "RECURRING_READY" | "CLOSING";
 
 // vars: 템플릿 변수(#{이름} 등). 실제 발송대행사는 보통 "템플릿 ID + 변수"로 보내므로 드라이버가 그대로 쓴다(O-01). 로그 드라이버는 콘솔에 함께 찍는다.
 export type BuiltMessage = { template: TemplateCode; text: string; buttonLabel: string; buttonPath: string; vars?: Record<string, string> };
@@ -12,6 +12,7 @@ export const TEMPLATE_LABEL: Record<TemplateCode, string> = {
   INVITE: "개별 초대",
   REMINDER: "미제출 독촉",
   RECURRING_READY: "정기 결제 결의서 준비",
+  CLOSING: "월말 마감 알림 (관리자)",
 };
 
 const won = (n: number) => n.toLocaleString("ko-KR");
@@ -119,6 +120,20 @@ export function recurringReady(p: { companyId: string; claimId: string; serviceN
     buttonLabel: "결의서 열기",
     buttonPath: `/workspace/${p.companyId}/employee/claims/${p.claimId}/edit`,
   };
+}
+
+// 월말 마감 알림 (D-161, 개선사항 1): 1일 마감 주간 시작 / 3일 홈택스 자료 미업로드 / 5일 세무 마감 당일. 날짜는 영업일로 당긴 날
+export type ClosingKind = "week_start" | "hometax_missing" | "close_due";
+export function closingNotice(p: { companyId: string; companyName: string; kind: ClosingKind; month: string; cutoff: string; due: string }): BuiltMessage {
+  const m = `${Number(p.month.slice(5, 7))}월`;
+  const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
+  const text =
+    p.kind === "week_start"
+      ? `[${p.companyName}] 지출 마감 주간이 시작됐어요. 직원 청구 마감은 ${md(p.cutoff)}, ${m}분 세무 마감은 ${md(p.due)}까지예요. 홈택스에서 ${m} 세금계산서·카드 매입 자료를 내려받아 올려 주세요.`
+      : p.kind === "hometax_missing"
+        ? `[${p.companyName}] ${m} 홈택스 자료가 아직 올라오지 않았어요. ${md(p.due)}까지 올리고 마감을 완료해 주세요.`
+        : `[${p.companyName}] 오늘(${md(p.due)})이 ${m} 지출 세무 마감일이에요. 누락 내역을 확인하고 마감을 완료해 주세요.`;
+  return { template: "CLOSING", text, buttonLabel: "세무 마감 열기", buttonPath: `/workspace/${p.companyId}/admin/export?month=${p.month}`, vars: { kind: p.kind, month: p.month } };
 }
 
 // 수신 번호: 휴대폰 번호만 (members.phone은 숫자만 저장)

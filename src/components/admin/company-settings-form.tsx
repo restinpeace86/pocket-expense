@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { saveCompanySettingsAction } from "@/app/workspace/[id]/admin/settings/actions";
-import { ClaimDeadlineSection, DEADLINE_DAYS, type DeadlineType } from "./claim-deadline-section";
+import { FixedClosingSection, type ClosingDates } from "./fixed-closing-section";
 import { Field, FormError } from "@/components/onboarding/field";
 import { AmountInput } from "@/components/ui/amount-input";
 import { ChoiceCards } from "@/components/ui/choice-cards";
@@ -23,7 +23,7 @@ const toInt = (v: string) => {
 const won2 = (n: number | string | null) => (n == null ? "-" : `${Number(n).toLocaleString("ko-KR", { maximumFractionDigits: 2 })}원`);
 
 // 회사 정보 · 정산 정책 (spec/screens/admin-settings.md §1·§2). 설명 구성은 ui-rules.md §6.
-export function CompanySettingsForm({ settings: s, preview = false }: { settings: CompanySettings; preview?: boolean }) {
+export function CompanySettingsForm({ settings: s, preview = false, closing = null }: { settings: CompanySettings; preview?: boolean; closing?: ClosingDates | null }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -37,8 +37,9 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
   const [fuelMode, setFuelMode] = useState<"fixed" | "opinet">(s.fuel_rate_mode);
   const [perDiemOn, setPerDiemOn] = useState(s.per_diem_enabled);
   const [perDiem, setPerDiem] = useState(String(s.per_diem_amount || 30000));
-  const [deadline, setDeadline] = useState<DeadlineType>(s.claim_deadline_type);
-  const [deadlineDays, setDeadlineDays] = useState(String(s.claim_deadline_days ?? DEADLINE_DAYS.next_month_day.initial));
+  // 청구 기한은 고정 규칙(D-161) — 저장된 값을 그대로 돌려 보낸다(화면에서 고르지 않음)
+  const deadline = s.claim_deadline_type;
+  const deadlineDays = String(s.claim_deadline_days ?? 2);
 
   // 예시 계산 (③ 선택한 항목에만): 1인 한도 × 2명보다 5,000원 더 나온 식사
   const limit = Math.max(0, toInt(mealLimit));
@@ -331,19 +332,7 @@ export function CompanySettingsForm({ settings: s, preview = false }: { settings
         </div>
       </section>
 
-      <ClaimDeadlineSection
-        type={deadline}
-        days={deadlineDays}
-        onTypeChange={(t) => {
-          setDeadline(t);
-          // 선택지마다 N의 뜻(다음 달 며칠 / 결제 후 며칠)이 달라서, 저장된 선택지면 저장값, 아니면 그 선택지의 기본값을 보여 준다
-          if (t === "next_month_day" || t === "days_after") {
-            const savedDays = t === s.claim_deadline_type ? s.claim_deadline_days : null;
-            setDeadlineDays(String(savedDays ?? DEADLINE_DAYS[t].initial));
-          }
-        }}
-        onDaysChange={setDeadlineDays}
-      />
+      {closing && <FixedClosingSection dates={closing} />}
 
       <FormError message={error} />
       {saved && <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">저장했어요. 변경 내용은 이후 상신되는 경비부터 적용됩니다.</p>}

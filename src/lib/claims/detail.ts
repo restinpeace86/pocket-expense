@@ -1,5 +1,6 @@
 import "server-only";
 import { deadlineDate, isOverdue, kstDate, type DeadlinePolicy } from "@/lib/expense/deadline";
+import { getHolidays } from "@/lib/expense/holidays";
 import { todayKst } from "@/lib/dates";
 import { routeCardFrom } from "@/lib/expense/route";
 import { signReceiptUrls } from "@/lib/storage/signed-urls";
@@ -47,8 +48,7 @@ export async function getClaimDetail(companyId: string, claimId: string, opts: {
   const rows = itemsRes.data ?? [];
   const urls = await signReceiptUrls(supabase, rows.flatMap((r) => [r.receipt_thumb_path, r.route_card_path, r.odometer_start_path, r.odometer_end_path]));
   const dups = (dupRes.data ?? {}) as Record<string, { mine: unknown[]; others: number }>;
-  const { data: co } = await supabase.from("companies").select("claim_deadline_type, claim_deadline_days").eq("id", companyId).single();
-  const policy: DeadlinePolicy = { type: co?.claim_deadline_type ?? "none", days: co?.claim_deadline_days ?? null };
+  const policy: DeadlinePolicy = { holidays: await getHolidays() };
   const refDate = claimRes.data?.submitted_at ? kstDate(claimRes.data.submitted_at) : todayKst();
   const items: DetailItem[] = rows.map(({ receipt_thumb_path, ai_parsed_payload, line_items, paid_time, start_location, end_location, is_round_trip, route_one_way_km, distance_km, distance_source, route_evidence, applied_fuel_rate_per_km, route_card_path, odometer_start_path, odometer_end_path, ...r }) => ({
     ...r,

@@ -42,7 +42,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
       {credit?.showEventBanner && <EventBonusBanner amount={credit.eventAmount} count={credit.eventCount} total={credit.eventTotal} />}
       {!!titleChanges && (
         <Link
-          href={`/workspace/${membership.company_id}/admin/account-titles`}
+          href={`/workspace/${membership.company_id}/admin/spending`}
           className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900 hover:bg-brand-100"
         >
           <span className="break-keep">세무사무소가 최근 7일 동안 계정과목을 {titleChanges}건 바꿨어요.</span>

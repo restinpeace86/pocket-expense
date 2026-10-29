@@ -1,4 +1,4 @@
-import { AlertTriangle, BellOff, Check, ChevronRight, Circle, ClipboardCheck, Hourglass, ReceiptText, SlidersHorizontal, Tags, UserPlus, Wallet } from "lucide-react";
+import { AlertTriangle, Check, ChevronRight, Circle, ClipboardCheck, Hourglass, ReceiptText, SlidersHorizontal, Tags, UserPlus, Wallet } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { categoryBars, changePct, checklist, type Dashboard } from "@/lib/admin/dashboard";
@@ -66,9 +66,8 @@ export function AdminHomeView({
       icon: <Wallet className="size-5" />,
       text: `정산 대기 결의서 ${todo.settle_claims}건 · 지급 ${formatWon(kpi.unpaid_payout)}${kpi.unpaid_payback ? ` · 납부 ${formatWon(kpi.unpaid_payback)}` : ""}`,
     },
-    { show: (todo.overdue_claims ?? 0) > 0, href: `${basePath}/claims?tab=pending`, icon: <AlertTriangle className="size-5" />, text: `청구 기한이 지난 항목이 든 승인 대기 결의서 ${todo.overdue_claims}건`, tone: "warn" },
+    { show: (todo.overdue_claims ?? 0) > 0, href: `${basePath}/claims?tab=pending`, icon: <AlertTriangle className="size-5" />, text: `청구 마감 뒤 상신돼 다음 달 정산으로 넘어가는 승인 대기 결의서 ${todo.overdue_claims}건`, tone: "warn" },
     { show: todo.unmapped_items > 0, href: `${basePath}/account-titles`, icon: <Tags className="size-5" />, text: `계정과목이 정해지지 않은 항목 ${todo.unmapped_items}건 — 계정과목 매핑을 확인해 주세요`, tone: "warn" },
-    { show: todo.failed_notifications > 0, href: `${basePath}/notifications?status=failed`, icon: <BellOff className="size-5" />, text: `최근 30일 알림톡 발송 실패 ${todo.failed_notifications}건`, tone: "warn" },
     { show: creditsLeft <= 20, href: `${basePath}/billing`, icon: <ReceiptText className="size-5" />, text: `무료 영수증이 ${creditsLeft}장 남았어요`, tone: "warn" },
   ];
   const visibleTodos = todos.filter((t) => t.show);

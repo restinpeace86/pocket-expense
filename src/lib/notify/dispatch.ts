@@ -2,7 +2,7 @@ import "server-only";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSender, siteUrl } from "./sender";
-import { approvalCompleted, approvalRejected, approvalRequest, invite, merchantSummary, normalizePhone, payoutCompleted, recurringReady, reminder, type BuiltMessage } from "./templates";
+import { approvalCompleted, approvalRejected, approvalRequest, closingNotice, invite, merchantSummary, normalizePhone, payoutCompleted, recurringReady, reminder, type BuiltMessage, type ClosingKind } from "./templates";
 
 // 결재 알림 보내기 (kakao-alimtalk.md §2, notification-rule.md §2).
 // - 결재 처리(DB 트랜잭션)가 끝난 뒤에 부른다. 실패해도 결재는 되돌리지 않는다.
@@ -242,4 +242,13 @@ export async function sendRecurringReady(rows: { claim_id: string; company_id: s
     n++;
   }
   return n;
+}
+
+// 월말 마감 알림톡 (D-161). cron이 closing_admin_targets() 결과로 부른다(하루 한 번 거르기는 부르는 쪽 push_logs)
+export async function sendClosingNotice(t: { companyId: string; companyName: string; memberId: string; kind: ClosingKind; month: string; cutoff: string; due: string }): Promise<boolean> {
+  const admin = createAdminClient();
+  if (!admin) return false;
+  const { data: m } = await admin.from("members").select("id, phone").eq("id", t.memberId).eq("company_id", t.companyId).maybeSingle();
+  if (!m) return false;
+  return deliver(admin, { companyId: t.companyId, memberId: m.id, phone: m.phone, message: closingNotice(t) });
 }

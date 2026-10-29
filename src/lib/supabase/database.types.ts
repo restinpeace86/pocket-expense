@@ -1642,6 +1642,24 @@ export type Database = {
           },
         ]
       }
+      kr_holidays: {
+        Row: {
+          created_at: string
+          day: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          name?: string
+        }
+        Relationships: []
+      }
       member_bank_accounts: {
         Row: {
           account_holder: string
@@ -2535,6 +2553,10 @@ export type Database = {
           business_status: string
           contact_email: string
           created_at: string
+          default_mappings: Json | null
+          default_saved_at: string | null
+          default_source_name: string | null
+          default_titles: Json | null
           id: string
           invite_code: string
           name: string
@@ -2544,6 +2566,10 @@ export type Database = {
           business_status?: string
           contact_email: string
           created_at?: string
+          default_mappings?: Json | null
+          default_saved_at?: string | null
+          default_source_name?: string | null
+          default_titles?: Json | null
           id?: string
           invite_code: string
           name: string
@@ -2553,6 +2579,10 @@ export type Database = {
           business_status?: string
           contact_email?: string
           created_at?: string
+          default_mappings?: Json | null
+          default_saved_at?: string | null
+          default_source_name?: string | null
+          default_titles?: Json | null
           id?: string
           invite_code?: string
           name?: string
@@ -2635,6 +2665,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      apply_tax_office_default_titles: {
+        Args: { p_company_ids: string[] }
+        Returns: Json
+      }
       approve_claim: {
         Args: { p_claim_id: string; p_comment?: string }
         Returns: Database["public"]["Enums"]["claim_status"]
@@ -2659,6 +2693,8 @@ export type Database = {
       clear_form_template: { Args: never; Returns: undefined }
       close_tax_month: { Args: { p_month: string }; Returns: Json }
       close_tax_office: { Args: { p_confirm_name: string }; Returns: string[] }
+      closing_admin_targets: { Args: { p_today?: string }; Returns: Json }
+      closing_calendar: { Args: { p_month: string }; Returns: Json }
       consume_receipt_credit: {
         Args: {
           p_event_amount: number
@@ -2855,6 +2891,10 @@ export type Database = {
         }
         Returns: string
       }
+      save_tax_office_default_titles: {
+        Args: { p_company_id: string }
+        Returns: undefined
+      }
       save_tax_office_template: {
         Args: {
           p_columns: Json
@@ -2972,6 +3012,7 @@ export type Database = {
           linked_at: string
         }[]
       }
+      tax_office_default_titles: { Args: never; Returns: Json }
       tax_office_member_list: {
         Args: never
         Returns: {

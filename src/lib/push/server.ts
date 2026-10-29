@@ -54,7 +54,7 @@ export async function pushToMembers(
   companyId: string,
   memberIds: string[],
   payload: PushPayload,
-  dedupe?: { kind: "deadline" | "approval_pending"; ref: string },
+  dedupe?: { kind: "deadline" | "approval_pending" | "closing"; ref: string },
 ): Promise<{ members: number; sent: number; failed: number }> {
   const admin = createAdminClient();
   if (!admin || !pushConfigured() || !memberIds.length) return { members: 0, sent: 0, failed: 0 };

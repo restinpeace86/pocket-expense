@@ -13,6 +13,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { TemplateTarget } from "@/lib/tax-office/template-fields";
 import { HometaxFiles } from "@/components/tax-office/hometax-files";
 import { listHometax } from "@/lib/hometax/server";
+import { claimCutoff, mdLabel, monthLabel, taxCloseDue } from "@/lib/expense/deadline";
+import { getHolidays } from "@/lib/expense/holidays";
 
 export const metadata = { title: "세무 마감 · PocketExpense" };
 
@@ -49,16 +51,23 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   // 기본은 지난달(보통 지난달을 마감한다)
   const month = typeof sp.month === "string" && MONTH.test(sp.month) && sp.month <= now ? sp.month : months[1];
   const supabase = await createClient();
-  const [res, { data: templates }, { data: downloads }, cardRec, hometax] = await Promise.all([
+  const [res, { data: templates }, { data: downloads }, cardRec, hometax, holidays] = await Promise.all([
     getTaxMonth(month),
     supabase.rpc("my_company_tax_templates"),
     supabase.from("tax_export_downloads").select("id, actor_kind, actor_name, office_name, month, kind, template_name, row_count, closed, created_at").order("created_at", { ascending: false }).limit(20),
     getSavedReconcile(membership.company_id, month),
     listHometax(membership.company_id, month),
+    getHolidays(),
   ]);
+  const cutoff = claimCutoff(month, holidays);
+  const due = taxCloseDue(month, holidays);
   if (!res.ok) notFound();
   return (
     <div className="flex flex-col gap-4">
+      {/* 고정 마감 일정(D-161): 청구 마감 2일 · 세무 마감 5일(영업일로 당김), 늦은 청구는 다음 달 정산 */}
+      <p className="break-keep rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
+        {monthLabel(month)}분 <b>세무 마감일은 {mdLabel(due)}</b>이에요(직원 청구 마감 {mdLabel(cutoff)}). 홈택스 자료를 올리고 마감해 세무사무소에 넘겨 주세요. 청구 마감 뒤에 상신된 {monthLabel(month)} 영수증은 다음 달 세무 마감의 &ldquo;전월 추가분&rdquo;으로 들어가요.
+      </p>
       {/* 이번 달 카드 내역 대조 상태(D-111, D-154): 막지 않고 보여 주며, 결과는 세무 엑셀 카드 대조 결과 시트로 함께 넘어간다 */}
       <CardReconcileStatus saved={cardRec} month={month} href={`/workspace/${id}/admin/corporate-cards/reconcile?month=${month}`} />
       {/* 우리 세무사무소가 올린 결산 양식으로 받기 (D-150) */}

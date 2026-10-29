@@ -4,6 +4,9 @@ import { Suspense } from "react";
 import { CompanySettingsForm } from "@/components/admin/company-settings-form";
 import { getCompanySettings } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
+import { currentMonthKst } from "@/lib/dates";
+import { claimCutoff, taxCloseDue } from "@/lib/expense/deadline";
+import { getHolidays } from "@/lib/expense/holidays";
 
 export const metadata = { title: "지출 한도·정책 · PocketExpense" };
 
@@ -22,12 +25,13 @@ export default function SettingsPage({ params }: PageProps<"/workspace/[id]/admi
 async function Settings({ params }: { params: PageProps<"/workspace/[id]/admin/settings">["params"] }) {
   const { id } = await params;
   const membership = await requireWorkspace(id, { admin: true });
-  const settings = await getCompanySettings(membership.company_id);
+  const [settings, holidays] = await Promise.all([getCompanySettings(membership.company_id), getHolidays()]);
+  const month = currentMonthKst();
   if (!settings) notFound();
   return (
     <>
       <PushToggle />
-      <CompanySettingsForm settings={settings} />
+      <CompanySettingsForm settings={settings} closing={{ month, claimCutoff: claimCutoff(month, holidays), taxDue: taxCloseDue(month, holidays) }} />
     </>
   );
 }

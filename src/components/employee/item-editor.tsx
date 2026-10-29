@@ -1,6 +1,6 @@
 "use client";
 
-import { deadlineDate, isOverdue, type DeadlinePolicy } from "@/lib/expense/deadline";
+import { deadlineDate, isOverdue, mdLabel, monthLabel, type DeadlinePolicy } from "@/lib/expense/deadline";
 import { todayKst } from "@/lib/dates";
 import { formatMaskedCard, matchCard } from "@/lib/cards/match";
 import { AlertTriangle, FileText, ImageOff, Loader2, Minus, Plus, RefreshCw, Sparkles, Upload, X } from "lucide-react";
@@ -214,7 +214,7 @@ export function ItemInlineForm({
   mealPolicy,
   mealOverride,
   base,
-  deadline = { type: "none", days: null },
+  deadline = { holidays: [] },
   claimCategory,
   tripTransport = null,
   perDiem = false,
@@ -510,7 +510,11 @@ export function ItemInlineForm({
         </Field>
       </div>
       {outsideTrip && <Warn>출장 기간 밖의 날짜예요. 날짜를 확인해 주세요(그대로 상신할 수도 있어요).</Warn>}
-      {overdueAt && <Warn>청구 기한({overdueAt.replaceAll("-", ".")}까지)이 지났어요. 상신은 할 수 있지만 관리자 화면에 &ldquo;기한 초과&rdquo;로 표시돼요.</Warn>}
+      {overdueAt && (
+        <Warn>
+          {monthLabel(input.expenseDate.slice(0, 7))} 사용분 청구 마감({mdLabel(overdueAt)})이 지났어요. 상신은 할 수 있고, 이 영수증은 {monthLabel(todayKst().slice(0, 7))} 정산(다음 세무 마감)으로 넘어가요.
+        </Warn>
+      )}
       <details className="group rounded-xl bg-zinc-50 px-3 py-2" open={!!(input.merchantBusinessNumber || input.supplyAmount || input.vatAmount) || undefined}>
         <summary className="flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-zinc-700 [&::-webkit-details-marker]:hidden">
           사업자등록번호·공급가액·부가세 <span className="ml-1 text-xs font-normal text-zinc-500">(세무사 전달용 · AI가 채워요)</span>

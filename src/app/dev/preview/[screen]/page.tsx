@@ -123,7 +123,7 @@ const SAMPLE_EDITOR: EditorData = {
   mealOverride: null,
   fuel: { mode: "fixed", fuelType: "gasoline", enabled: true, ratePerKm: 200, blocked: null, vehicleNumber: "12가3456", odometerRequired: false },
   vehicles: [{ id: "v1", nickname: "영업 1호차", plate_number: "12가3456", is_active: true }],
-  deadline: { type: "next_month_day", days: 5 },
+  deadline: { holidays: [] },
   perDiem: { enabled: false, amount: 0 },
   companyFields: [],
   lastCustom: {},

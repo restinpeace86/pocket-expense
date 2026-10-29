@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CloseOfficeSection, LeaveOfficeSection } from "@/components/tax-office/office-actions";
 import { OfficeInvite, OfficeMembers } from "@/components/tax-office/office-manage";
+import { DefaultTitlesApply, type DefaultTitles } from "@/components/tax-office/default-titles";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTaxOffice, getTaxOfficeClients, isActiveMember } from "@/lib/tax-office/queries";
 
@@ -33,7 +34,7 @@ async function Content() {
     );
   }
   const supabase = await createClient();
-  const [{ data }, clients] = await Promise.all([supabase.rpc("tax_office_member_list"), getTaxOfficeClients()]);
+  const [{ data }, clients, { data: defaults }] = await Promise.all([supabase.rpc("tax_office_member_list"), getTaxOfficeClients(), supabase.rpc("tax_office_default_titles")]);
   const members = (data ?? []).map((m) => ({ ...m, assigned_count: Number(m.assigned_count) }));
   return (
     <>
@@ -43,6 +44,7 @@ async function Content() {
       </div>
       <OfficeInvite code={state.invite_code} officeName={state.office_name} />
       <OfficeMembers members={members} myId={state.member_id} />
+      <DefaultTitlesApply value={(defaults ?? null) as unknown as DefaultTitles} clients={clients.map((c) => ({ id: c.company_id, name: c.company_name }))} />
       <CloseOfficeSection officeName={state.office_name} memberCount={members.length} clientCount={clients.length} />
     </>
   );

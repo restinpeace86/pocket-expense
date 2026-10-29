@@ -10,17 +10,15 @@ export type PolicySnapshot = {
   claim_deadline_days: number | null;
 };
 
-export function describeDeadline(type: PolicySnapshot["claim_deadline_type"], days: number | null): string {
-  if (type === "next_month_day") return `결제한 다음 달 ${days ?? 5}일까지`;
-  if (type === "days_after") return `결제일로부터 ${days ?? 30}일 이내`;
-  if (type === "end_of_month") return "결제한 달 말일까지";
-  return "청구 기한 없음";
+// 청구 마감은 모든 회사 같은 규칙(D-161) — 회사 설정 값은 쓰지 않는다
+export function describeDeadline(): string {
+  return "사용한 다음 달 2일까지(쉬는 날이면 앞 영업일)";
 }
 
 export function describePolicy(p: PolicySnapshot): string[] {
   return [
     p.meal_limit_enabled ? `식대 1인 ${formatWon(p.meal_limit_per_person)}` : "식대 한도 없이 전액 지원",
     p.fuel_enabled ? `자차 km당 ${formatWon(p.fuel_rate_per_km)}` : "자차 유류비 사용 안 함",
-    p.claim_deadline_type === "none" ? "청구 기한 없음" : `청구 기한 ${describeDeadline(p.claim_deadline_type, p.claim_deadline_days)}`,
+    `청구 마감 ${describeDeadline()}`,
   ];
 }

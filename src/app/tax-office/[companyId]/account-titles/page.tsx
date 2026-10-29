@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AccountTitlesView } from "@/components/admin/account-titles-view";
 import { getAccountTitles } from "@/lib/admin/queries";
-import { getTaxOfficeClients } from "@/lib/tax-office/queries";
+import { getMyTaxOffice, getTaxOfficeClients, isActiveMember } from "@/lib/tax-office/queries";
+import { DefaultTitlesForCompany, type DefaultTitles } from "@/components/tax-office/default-titles";
 import { createClient } from "@/lib/supabase/server";
 import { AccountTitleHistory, type AccountTitleChange } from "@/components/tax-office/account-title-history";
 import { taxAgentAddTitleAction, taxAgentSetMappingAction, taxAgentUpdateTitleAction } from "./actions";
@@ -24,10 +25,13 @@ async function Content({ params }: Pick<PageProps<"/tax-office/[companyId]/accou
   const company = (await getTaxOfficeClients()).find((c) => c.company_id === companyId);
   if (!company) notFound();
   const supabase = await createClient();
-  const [{ titles, mappings }, { data: changes }] = await Promise.all([
+  const [{ titles, mappings }, { data: changes }, me, { data: defaults }] = await Promise.all([
     getAccountTitles(companyId),
     supabase.from("account_title_changes").select("id, entity, action, detail, actor_name, office_name, created_at").eq("company_id", companyId).order("created_at", { ascending: false }).limit(30),
+    getMyTaxOffice(),
+    supabase.rpc("tax_office_default_titles"),
   ]);
+  const isAdmin = isActiveMember(me) && me.role === "admin";
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -53,6 +57,8 @@ async function Content({ params }: Pick<PageProps<"/tax-office/[companyId]/accou
           setMapping: taxAgentSetMappingAction.bind(null, companyId),
         }}
       />
+      {/* 사무소 기본값으로 저장·이 회사에 적용(D-160) — 사무소 관리자만 */}
+      {isAdmin && <DefaultTitlesForCompany companyId={companyId} companyName={company.company_name} value={(defaults ?? null) as unknown as DefaultTitles} />}
       <AccountTitleHistory changes={(changes ?? []) as AccountTitleChange[]} />
     </>
   );

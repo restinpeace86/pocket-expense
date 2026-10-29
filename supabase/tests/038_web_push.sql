@@ -46,17 +46,15 @@ insert into public.claim_approvals (claim_id, company_id, round, step_order, ste
 do $$
 declare v jsonb;
 begin
-  -- A: 10/31 말일 마감 → 10/28(D-3)·10/31(D-day)만, 작성 중 결의서 있는 A직원1만
-  v := public.push_deadline_targets('2026-10-28');
+  -- D-161 고정 규칙: 10월분 청구 마감 11/2(월) → 10/30(D-3)·11/2(D-day). 회사 설정과 관계없이, 작성 중 결의서 있는 직원만
+  v := public.push_deadline_targets('2026-10-30');
   if not exists (select 1 from jsonb_array_elements(v) e where e->>'member_id' = 'a3810000-0000-0000-0000-000000000002' and (e->>'days_left')::int = 3) then raise exception 'FAIL [A D-3] %', v; end if;
+  if not exists (select 1 from jsonb_array_elements(v) e where e->>'member_id' = 'b3810000-0000-0000-0000-000000000002' and e->>'deadline' = '2026-11-02') then raise exception 'FAIL [B D-3] %', v; end if;
   if exists (select 1 from jsonb_array_elements(v) e where e->>'member_id' = 'a3810000-0000-0000-0000-000000000003') then raise exception 'FAIL [no open claims]'; end if;
-  v := public.push_deadline_targets('2026-10-29');
-  if exists (select 1 from jsonb_array_elements(v) e where e->>'company_id' = 'c3800000-0000-0000-0000-00000000000a') then raise exception 'FAIL [A D-2 none] %', v; end if;
   v := public.push_deadline_targets('2026-10-31');
-  if not exists (select 1 from jsonb_array_elements(v) e where e->>'company_id' = 'c3800000-0000-0000-0000-00000000000a' and (e->>'days_left')::int = 0) then raise exception 'FAIL [A D-day] %', v; end if;
-  -- B: 다음 달 5일 마감 → 11/2(D-3)·11/5
+  if exists (select 1 from jsonb_array_elements(v) e where e->>'company_id' = 'c3800000-0000-0000-0000-00000000000a') then raise exception 'FAIL [A D-2 none] %', v; end if;
   v := public.push_deadline_targets('2026-11-02');
-  if not exists (select 1 from jsonb_array_elements(v) e where e->>'member_id' = 'b3810000-0000-0000-0000-000000000002' and e->>'deadline' = '2026-11-05') then raise exception 'FAIL [B D-3] %', v; end if;
+  if not exists (select 1 from jsonb_array_elements(v) e where e->>'company_id' = 'c3800000-0000-0000-0000-00000000000a' and (e->>'days_left')::int = 0) then raise exception 'FAIL [A D-day] %', v; end if;
 
   -- 결재 대기 24시간 넘은 건만, 관리자(청구자 제외)에게
   v := public.push_approval_targets(now(), 24);

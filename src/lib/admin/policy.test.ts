@@ -12,10 +12,10 @@ describe("describePolicy", () => {
         claim_deadline_type: "next_month_day",
         claim_deadline_days: 5,
       }),
-    ).toEqual(["식대 1인 10,000원", "자차 km당 200원", "청구 기한 결제한 다음 달 5일까지"]);
+    ).toEqual(["식대 1인 10,000원", "자차 km당 200원", "청구 마감 사용한 다음 달 2일까지(쉬는 날이면 앞 영업일)"]);
   });
 
-  it("사용 안 함과 기한 없음", () => {
+  it("사용 안 함 — 청구 마감은 회사 설정과 관계없이 고정(D-161)", () => {
     expect(
       describePolicy({
         meal_limit_enabled: false,
@@ -25,11 +25,10 @@ describe("describePolicy", () => {
         claim_deadline_type: "none",
         claim_deadline_days: null,
       }),
-    ).toEqual(["식대 한도 없이 전액 지원", "자차 유류비 사용 안 함", "청구 기한 없음"]);
+    ).toEqual(["식대 한도 없이 전액 지원", "자차 유류비 사용 안 함", "청구 마감 사용한 다음 달 2일까지(쉬는 날이면 앞 영업일)"]);
   });
 
-  it("기한 방식별 문구", () => {
-    expect(describeDeadline("days_after", 30)).toBe("결제일로부터 30일 이내");
-    expect(describeDeadline("end_of_month", null)).toBe("결제한 달 말일까지");
+  it("청구 마감 문구", () => {
+    expect(describeDeadline()).toBe("사용한 다음 달 2일까지(쉬는 날이면 앞 영업일)");
   });
 });
