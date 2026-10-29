@@ -15,6 +15,9 @@ import type { TemplateTarget } from "@/lib/tax-office/template-fields";
 import { HometaxFiles } from "@/components/tax-office/hometax-files";
 import { listHometax } from "@/lib/hometax/server";
 import { deleteHometaxAction, uploadHometaxAction } from "./hometax-actions";
+import { addFormatRequestAction } from "./format-actions";
+import { AccountingFormatRequest } from "@/components/admin/accounting-format-request";
+import { listFormatRequests } from "@/lib/accounting-format/server";
 import { listTaxRequests } from "@/lib/tax-office/requests";
 import { TaxRequests } from "@/components/tax-office/tax-requests";
 import { claimCutoff, mdLabel, monthLabel, taxCloseDue } from "@/lib/expense/deadline";
@@ -57,7 +60,7 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   const supabase = await createClient();
   const [y0, m0] = month.split("-").map(Number);
   const nextFirst = new Date(Date.UTC(y0, m0, 1)).toISOString().slice(0, 10);
-  const [res, { data: templates }, { data: downloads }, cardRec, hometax, holidays, { data: pendingItems }, requests] = await Promise.all([
+  const [res, { data: templates }, { data: downloads }, cardRec, hometax, holidays, { data: pendingItems }, requests, formatRequests] = await Promise.all([
     getTaxMonth(month),
     supabase.rpc("my_company_tax_templates"),
     supabase.from("tax_export_downloads").select("id, actor_kind, actor_name, office_name, month, kind, template_name, row_count, closed, created_at").order("created_at", { ascending: false }).limit(20),
@@ -67,6 +70,7 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
     // 이 달까지 쓴 영수증이 든 승인 대기 결의서(D-166) — 마감 전에 승인·반려하라고 보여 준다
     supabase.from("expense_items").select("claim_id, expense_claims!inner(status)").eq("company_id", membership.company_id).eq("expense_claims.status", "submitted").lt("expense_date", nextFirst).limit(1000),
     listTaxRequests(membership.company_id, month),
+    listFormatRequests(membership.company_id),
   ]);
   const pendingClaims = new Set((pendingItems ?? []).map((i) => i.claim_id)).size;
   const cutoff = claimCutoff(month, holidays);
@@ -106,6 +110,8 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
       companyName={membership.company_name}
       isSuper={membership.role === "super_admin"}
     />
+      {/* 이카운트·세무사랑 등 다른 회계 프로그램 양식 접수(D-180) */}
+      <AccountingFormatRequest requests={formatRequests} addAction={addFormatRequestAction} />
       {/* 홈택스에서 내려받은 자료 올리기 — 세무사무소도 보고 받음(D-158) */}
       <HometaxFiles key={`ht-${month}`} uploads={hometax} month={month} downloadBase={`/workspace/${id}/admin/export/hometax?id=`} viewer="company" uploadAction={uploadHometaxAction} deleteAction={deleteHometaxAction} />
       {/* 세무사무소 자료 요청(D-169) — 요청이 있을 때만 */}

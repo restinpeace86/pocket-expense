@@ -66,6 +66,8 @@ const MESSAGES: Record<string, string> = {
   INVALID_CLAIM_TEXT: "제목은 100자, 지출 사유는 1,000자, 예외 소명 사유는 500자, 출장지·출장 목적은 100자 이내로 입력해 주세요.",
   INVALID_TRIP_PERIOD: "출장 기간을 확인해 주세요. 끝나는 날이 시작일보다 빠를 수 없어요.",
   INVALID_MONTH: "마감할 달을 다시 골라 주세요. (이번 달까지만 마감할 수 있어요)",
+  INVALID_FORMAT_REQUEST: "양식 파일을 등록하지 못했어요. 파일을 다시 골라 주세요.",
+  FORMAT_REQUEST_LIMIT: "양식 파일은 회사당 20개까지 등록할 수 있어요. 운영팀에 문의해 주세요.",
   NOTHING_TO_CLOSE: "이 달에 마감할 승인된 지출이 없어요.",
   NOT_CLOSED: "마감 완료된 달이 아니에요. 화면을 새로고침해 주세요.",
   INVALID_REOPEN_REASON: "마감 해제 사유를 1~200자로 적어 주세요.",

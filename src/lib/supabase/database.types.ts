@@ -144,6 +144,56 @@ export type Database = {
           },
         ]
       }
+      accounting_format_requests: {
+        Row: {
+          company_id: string
+          created_at: string
+          done_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          memo: string | null
+          program: string
+          requested_by_name: string | null
+          status: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          done_at?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          memo?: string | null
+          program: string
+          requested_by_name?: string | null
+          status?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          done_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          memo?: string | null
+          program?: string
+          requested_by_name?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_format_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           body: string
@@ -2753,6 +2803,16 @@ export type Database = {
       ack_item_category: {
         Args: { p_ack?: boolean; p_item_id: string }
         Returns: undefined
+      }
+      add_accounting_format_request: {
+        Args: {
+          p_file_name: string
+          p_file_path: string
+          p_file_size: number
+          p_memo: string
+          p_program: string
+        }
+        Returns: string
       }
       add_hometax_upload: {
         Args: {
