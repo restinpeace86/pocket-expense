@@ -1,6 +1,9 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { after } from "next/server";
+import { getMembership } from "@/lib/auth/session";
+import { sendTaxOfficeInvite } from "@/lib/notify/dispatch";
 import { messageForDbError } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "../actions";
@@ -18,6 +21,9 @@ export async function saveCompanyTaxOfficeAction(input: CompanyTaxOfficeInput): 
     p_agent_phone: input.agentPhone,
   });
   if (error) return { error: messageForDbError(error) };
+  // 담당 세무사 연락처가 있고 아직 연결 전이면 초대 알림톡(D-173, 발송 대행사 연결 전에는 기록만)
+  const companyId = (await getMembership())?.company_id;
+  if (companyId && input.agentPhone.trim()) after(() => sendTaxOfficeInvite(companyId));
   refresh();
   return { error: null };
 }

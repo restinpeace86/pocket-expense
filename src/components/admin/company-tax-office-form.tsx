@@ -32,7 +32,7 @@ const secondary =
   "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-4 font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-50";
 
 // 우리 회사 세무사무소 지정·연결 상태·안내 복사 (D-149)
-export function CompanyTaxOfficeForm({ current, companyName }: { current: CompanyTaxOffice | null; companyName: string }) {
+export function CompanyTaxOfficeForm({ current, companyName, connectCode = null }: { current: CompanyTaxOffice | null; companyName: string; connectCode?: string | null }) {
   const [editing, setEditing] = useState(!current);
   const [officeName, setOfficeName] = useState(current?.office_name ?? "");
   const [officeEmail, setOfficeEmail] = useState(current?.office_email ?? "");
@@ -77,10 +77,11 @@ export function CompanyTaxOfficeForm({ current, companyName }: { current: Compan
 
   async function copyGuide() {
     if (!current) return;
-    const link = `${window.location.origin}/login?next=/tax-office`;
+    // 연결 코드 링크(D-173): 어떤 계정으로 로그인해도 이 고객사와 연결된다
+    const link = connectCode && !current.registered ? `${window.location.origin}/for-tax-office/${connectCode}` : `${window.location.origin}/login?next=/tax-office`;
     const text = current.registered
-      ? `[PocketExpense] ${companyName}의 세무 자료가 ${current.registered_name ?? current.office_name} 고객사 목록에 연결됐어요. 로그인하면 승인된 지출 내역과 세무용 엑셀을 볼 수 있어요.\n${link}`
-      : `[PocketExpense] ${companyName}에서 세무 정산 자료 연동을 요청했어요.\n${current.office_email} 계정(구글 또는 카카오)으로 로그인해 세무사무소를 등록하면, 고객사 목록에 ${companyName}이(가) 바로 보여요.\n${link}`;
+      ? `[PocketExpense] ${companyName}의 세무 자료가 ${current.registered_name ?? current.office_name} 고객사 목록에 연결됐어요. 로그인하면 승인된 지출 장부·영수증·지출결의서·홈택스 자료를 받을 수 있어요.\n${link}`
+      : `[PocketExpense] 고객사 ${companyName}이(가) 지출·증빙 관리에 PocketExpense를 쓰고 있고, ${current.office_name}을(를) 세무대행 사무소로 지정했어요. 무료 세무사무소 워크스페이스에서 승인된 지출 장부·영수증·지출결의서·홈택스 자료를 한 번에 받을 수 있어요. 아래 링크로 시작하세요.\n${link}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -138,7 +139,10 @@ export function CompanyTaxOfficeForm({ current, companyName }: { current: Compan
           )}
           {!current.registered && !current.released_at && (
             <p className="mt-3 break-keep text-sm text-zinc-600">
-              세무사무소가 아직 PocketExpense에 없어요. 아래 안내를 보내 주세요. {current.office_email}(으)로 로그인해 사무소를 등록하면 바로 연결돼요.
+              세무사무소가 아직 연결 전이에요.{" "}
+              {current.agent_phone ? "담당 세무사 휴대폰으로 연결 링크를 카카오 알림톡으로 보냈어요(발송 서비스 연결 전에는 기록만 남아요). " : ""}
+              [세무사무소 안내 복사]로 연결 링크를 직접 보낼 수도 있어요. 사무소가 링크로 들어와 로그인하면 어떤 계정이든 바로 연결돼요.
+              {connectCode && <span className="mt-1 block break-all rounded-md bg-zinc-50 px-2 py-1 font-mono text-xs text-zinc-700">/for-tax-office/{connectCode}</span>}
             </p>
           )}
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -163,7 +167,7 @@ export function CompanyTaxOfficeForm({ current, companyName }: { current: Compan
             <Field label="세무사무소명" required>
               <input value={officeName} onChange={(e) => setOfficeName(e.target.value)} maxLength={100} className={inputClass} placeholder="예: OO세무사무소" />
             </Field>
-            <Field label="세무사무소 이메일" required hint="사무소 대표·관리자가 PocketExpense에 로그인할 이메일(구글·카카오 계정)이에요">
+            <Field label="세무사무소 이메일" required hint="세무사무소 대표 메일. 이 이메일 계정으로 로그인하거나, 저장 뒤 생기는 연결 링크로 들어오면 연결돼요">
               <input
                 value={officeEmail}
                 onChange={(e) => setOfficeEmail(e.target.value)}

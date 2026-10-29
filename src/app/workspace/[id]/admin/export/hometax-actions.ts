@@ -4,12 +4,10 @@ import { refresh } from "next/cache";
 import { getMembership } from "@/lib/auth/session";
 import { isAdminRole } from "@/lib/auth/paths";
 import { messageForDbError } from "@/lib/errors";
-import { HOMETAX_BUCKET, HOMETAX_EXT, HOMETAX_KINDS, HOMETAX_MAX_BYTES, type HometaxKind } from "@/lib/hometax/kinds";
-import { readHometaxTable } from "@/lib/hometax/parse";
+import { prepareHometaxUpload, removeHometaxFile } from "@/lib/hometax/upload";
 import { hometaxZipFiles } from "@/lib/hometax/server";
 import { payoutProofZipFiles } from "@/lib/claims/payout-proof-server";
 import { getTaxMonth, MONTH } from "@/lib/tax/closing";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 // 회사 관리자: 홈택스에서 내려받은 파일을 그 달 세무 자료에 올리기·지우기 (D-158). 권한·회사 격리는 DB 함수가 다시 확인한다
@@ -24,51 +22,35 @@ async function admin() {
 export async function uploadHometaxAction(formData: FormData): Promise<Result<{ rowCount: number }>> {
   const m = await admin();
   if (!m) return fail(messageForDbError({ message: "NOT_ALLOWED" }));
-  const month = String(formData.get("month") ?? "");
-  const kind = String(formData.get("kind") ?? "") as HometaxKind;
-  const memo = String(formData.get("memo") ?? "").slice(0, 200);
-  const file = formData.get("file");
-  if (!MONTH.test(month)) return fail(messageForDbError({ message: "INVALID_MONTH" }));
-  if (!HOMETAX_KINDS.includes(kind)) return fail("자료 종류를 골라 주세요.");
-  if (!(file instanceof File) || file.size === 0) return fail("파일을 골라 주세요.");
-  if (file.size > HOMETAX_MAX_BYTES) return fail("10MB 이하 파일만 올릴 수 있어요.");
-  const ext = HOMETAX_EXT.exec(file.name)?.[1]?.toLowerCase();
-  if (!ext) return fail("홈택스에서 내려받은 엑셀(.xlsx·.xls)이나 .csv 파일만 올릴 수 있어요.");
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const table = readHometaxTable(bytes, file.name);
-  if (!table) return fail("파일을 읽지 못했어요. 홈택스에서 내려받은 그대로인지, 암호가 걸려 있지 않은지 확인해 주세요.");
-  const storage = createAdminClient();
-  if (!storage) return fail("지금은 파일을 저장할 수 없어요. 잠시 뒤 다시 시도해 주세요.");
-  const path = `${m.company_id}/${crypto.randomUUID()}.${ext}`;
-  const { error: upError } = await storage.storage.from(HOMETAX_BUCKET).upload(path, bytes, { contentType: file.type || "application/octet-stream" });
-  if (upError) return fail("파일을 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+  const up = await prepareHometaxUpload(m.company_id, formData);
+  if ("error" in up) return fail(up.error);
   const supabase = await createClient();
   const { error } = await supabase.rpc("add_hometax_upload", {
-    p_month: month,
-    p_kind: kind,
-    p_file_path: path,
-    p_file_name: file.name.slice(0, 200),
-    p_file_size: file.size,
-    p_header: table.header,
-    p_preview: table.preview,
-    p_row_count: table.rowCount,
-    p_memo: memo,
+    p_month: up.month,
+    p_kind: up.kind,
+    p_file_path: up.path,
+    p_file_name: up.fileName,
+    p_file_size: up.fileSize,
+    p_header: up.table.header,
+    p_preview: up.table.preview,
+    p_row_count: up.table.rowCount,
+    p_memo: up.memo,
   });
   if (error) {
-    await storage.storage.from(HOMETAX_BUCKET).remove([path]);
+    await up.cleanup();
     return fail(messageForDbError(error));
   }
   refresh();
-  return { ok: true, rowCount: table.rowCount };
+  return { ok: true, rowCount: up.table.rowCount };
 }
 
+// 회사가 올린 것만 지운다(사무소가 올린 것은 사무소가, D-172)
 export async function deleteHometaxAction(id: string): Promise<Result> {
   if (!(await admin())) return fail(messageForDbError({ message: "NOT_ALLOWED" }));
   const supabase = await createClient();
   const { data: path, error } = await supabase.rpc("delete_hometax_upload", { p_id: id });
   if (error) return fail(messageForDbError(error));
-  const storage = createAdminClient();
-  if (path && storage) await storage.storage.from(HOMETAX_BUCKET).remove([path]);
+  await removeHometaxFile(path);
   refresh();
   return { ok: true };
 }

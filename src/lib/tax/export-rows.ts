@@ -36,6 +36,7 @@ export type ExportRow = {
   account_title_overridden?: boolean; // 세무사·관리자가 영수증별로 바꾼 계정과목(D-156)
   tax_review_request?: string | null; // 회사가 남긴 세무사 확인 요청
   tax_review_resolved_at?: string | null;
+  evidence_substitute?: { source: string; date: string; merchant: string; amount: number; last4: string | null; by?: string; recurring?: string } | null; // 카드 내역으로 증빙 대체(D-170·D-171)
   supply_amount: number | null;
   vat_amount: number | null;
   amount: number | null;
@@ -133,6 +134,7 @@ export function checks(r: ExportRow, hasFile: boolean): string[] {
   if (r.tax_review_request && !r.tax_review_resolved_at) out.unshift(`세무사 확인 요청: ${r.tax_review_request}`);
   const noEv = noEvidenceCheck(r.evidence_kind, r.amount);
   if (noEv) out.push(noEv);
+  else if (r.evidence_substitute && !hasFile) out.push("카드 내역으로 증빙 대체(영수증 원본 대조 없음)");
   else if (!hasFile) out.push("영수증 파일 없음");
   return out;
 }

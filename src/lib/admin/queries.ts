@@ -217,6 +217,7 @@ export type RecurringRow = {
   corporate_card_id: string | null;
   assignee_member_id: string;
   memo: string | null;
+  merchant_keyword?: string | null; // 카드 내역 가맹점 이름 키워드(D-171)
   starts_on: string;
   is_active: boolean;
   last: { claim_id: string; period: string; status: ClaimStatus } | null;
@@ -226,7 +227,7 @@ export async function getRecurringPayments(companyId: string) {
   const [{ data: rows }, { data: members }, { data: cards }, { data: claims }] = await Promise.all([
     supabase
       .from("recurring_payments")
-      .select("id, service_name, amount, cycle, billing_day, billing_month, payment_method, corporate_card_id, assignee_member_id, memo, starts_on, is_active")
+      .select("id, service_name, amount, cycle, billing_day, billing_month, payment_method, corporate_card_id, assignee_member_id, memo, merchant_keyword, starts_on, is_active")
       .eq("company_id", companyId)
       .order("is_active", { ascending: false })
       .order("created_at"),

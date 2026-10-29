@@ -10,6 +10,9 @@ import type { SavedReconcile } from "@/lib/cards/saved";
 import { OfficeZipButton } from "./office-zip-button";
 import { TemplateDownloads, type TemplateLink } from "./template-downloads";
 import { HometaxFiles } from "./hometax-files";
+import { deleteOfficeHometaxAction, uploadOfficeHometaxAction } from "@/app/tax-office/[companyId]/hometax-actions";
+import { TaxRequests } from "./tax-requests";
+import type { TaxRequest } from "@/lib/tax-office/requests";
 import { BulkAccountProvider, BulkCheck } from "./office-bulk-account";
 import type { HometaxUpload } from "@/lib/hometax/kinds";
 
@@ -32,6 +35,7 @@ export function TaxOfficeMonthView({
   cardReconcile = null,
   accountTitles = [],
   hometax = [],
+  requests = [],
 }: {
   companyId: string;
   companyName: string;
@@ -43,6 +47,7 @@ export function TaxOfficeMonthView({
   cardReconcile?: SavedReconcile | null;
   accountTitles?: { id: string; name: string; code: string | null }[]; // 영수증별 계정과목 조정(D-156)
   hometax?: HometaxUpload[]; // 회사가 올린 홈택스 자료(D-158)
+  requests?: TaxRequest[]; // 회사에 남긴 자료 요청(D-169)
 }) {
   const locked = data.status === "closed"; // 회사가 마감한 달은 바꿀 수 없음(D-045)
   const bulk = accountTitles.length > 0 && !locked;
@@ -129,7 +134,14 @@ export function TaxOfficeMonthView({
       <CardReconcileStatus saved={cardReconcile} month={data.month} />
       {cardReconcile && cardReconcile.issues.length > 0 && <SavedReconcilePanel saved={cardReconcile} editable={false} />}
       <TemplateDownloads templates={templates} hrefFor={(id) => `${base}/template?id=${id}&month=${data.month}`} disabled={rows.length === 0} />
-      <HometaxFiles uploads={hometax} month={data.month} downloadBase={`${base}/hometax?id=`} />
+      <HometaxFiles key={`ht-${data.month}`} uploads={hometax} month={data.month} downloadBase={`${base}/hometax?id=`} viewer="tax_office" uploadAction={uploadOfficeHometaxAction.bind(null, companyId)} deleteAction={deleteOfficeHometaxAction} />
+      <TaxRequests
+        mode="office"
+        requests={requests}
+        month={data.month}
+        companyId={companyId}
+        items={rows.map((r) => ({ id: r.item_id, label: `${r.expense_date} · ${r.merchant_name ?? classLabels(r).category} · ${won(r.amount ?? 0)}` }))}
+      />
 
       {pendingReviews > 0 && (
         <p className="break-keep rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">

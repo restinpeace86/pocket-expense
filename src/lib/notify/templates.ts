@@ -1,5 +1,5 @@
 // 알림톡 템플릿 6종 문구 (spec/screens/notification-rule.md §2 — 문구의 단일 기준). 링크에는 토큰을 넣지 않는다(D-013).
-export type TemplateCode = "APPROVAL_REQUEST" | "APPROVAL_COMPLETED" | "APPROVAL_REJECTED" | "PAYOUT_COMPLETED" | "INVITE" | "REMINDER" | "RECURRING_READY" | "CLOSING";
+export type TemplateCode = "APPROVAL_REQUEST" | "APPROVAL_COMPLETED" | "APPROVAL_REJECTED" | "PAYOUT_COMPLETED" | "INVITE" | "REMINDER" | "RECURRING_READY" | "CLOSING" | "TAX_CLOSED" | "TAX_REQUEST" | "TAX_OFFICE_INVITE";
 
 // vars: 템플릿 변수(#{이름} 등). 실제 발송대행사는 보통 "템플릿 ID + 변수"로 보내므로 드라이버가 그대로 쓴다(O-01). 로그 드라이버는 콘솔에 함께 찍는다.
 export type BuiltMessage = { template: TemplateCode; text: string; buttonLabel: string; buttonPath: string; vars?: Record<string, string> };
@@ -13,6 +13,9 @@ export const TEMPLATE_LABEL: Record<TemplateCode, string> = {
   REMINDER: "미제출 독촉",
   RECURRING_READY: "정기 결제 결의서 준비",
   CLOSING: "월말 마감 알림 (관리자)",
+  TAX_CLOSED: "고객사 세무 마감 완료 (→ 세무사무소)",
+  TAX_REQUEST: "세무사무소 자료 요청 (→ 회사 관리자)",
+  TAX_OFFICE_INVITE: "세무사무소 초대 (→ 담당 세무사)",
 };
 
 const won = (n: number) => n.toLocaleString("ko-KR");
@@ -113,10 +116,20 @@ export function reminder(p: { companyId: string; companyName: string; pending: n
 }
 
 // 정기 결제 결의서 준비 (D-110): 담당자에게 "증빙 1장만 붙여 상신"
-export function recurringReady(p: { companyId: string; claimId: string; serviceName: string; periodLabel: string; amount: number }): BuiltMessage {
+// D-171: 법인카드 정기 결제는 카드 내역으로 결제가 확인됐을 때만 결의서(증빙 = 카드 결제) / 개인카드 정기 결제는 결제일에 올려 달라는 알림만(claimId 없음)
+export function recurringReady(p: { companyId: string; claimId: string | null; serviceName: string; periodLabel: string; amount: number }): BuiltMessage {
+  const won = p.amount.toLocaleString("ko-KR");
+  if (!p.claimId) {
+    return {
+      template: "RECURRING_READY",
+      text: `${p.serviceName} ${p.periodLabel} 구독료(약 ${won}원) 결제일이에요. 개인카드로 결제했다면 결제 내역(영수증·카드 결제 알림)을 찍어 지출결의서를 상신해 주세요.`,
+      buttonLabel: "결의서 올리기",
+      buttonPath: `/workspace/${p.companyId}/employee`,
+    };
+  }
   return {
     template: "RECURRING_READY",
-    text: `${p.serviceName} ${p.periodLabel} 구독료(${p.amount.toLocaleString("ko-KR")}원) 결의서가 준비됐어요. 결제 내역(인보이스·카드 결제 내역) 1장만 붙여 상신해 주세요.`,
+    text: `${p.serviceName} ${p.periodLabel} 구독료(${won}원) 카드 결제가 확인돼 결의서를 준비했어요. 카드 결제 내역이 증빙으로 붙어 있으니 확인 후 상신해 주세요.`,
     buttonLabel: "결의서 열기",
     buttonPath: `/workspace/${p.companyId}/employee/claims/${p.claimId}/edit`,
   };
@@ -157,6 +170,42 @@ export function closingNotice(p: ClosingNoticeInput): BuiltMessage {
     buttonLabel: nag ? "승인 대기 보기" : "세무 마감 열기",
     buttonPath: nag ? `/workspace/${p.companyId}/admin/claims?tab=pending` : `/workspace/${p.companyId}/admin/export?month=${p.month}`,
     vars: { kind: p.kind, month: p.month, pending: String(pending) },
+  };
+}
+
+// 회사가 세무 마감 → 담당 세무사(없으면 사무소 관리자) (D-168)
+export function taxClosed(p: { companyId: string; companyName: string; month: string; count: number }): BuiltMessage {
+  const m = `${Number(p.month.slice(5, 7))}월`;
+  return {
+    template: "TAX_CLOSED",
+    text: `[PocketExpense] 고객사 ${p.companyName}이(가) ${p.month.slice(0, 4)}년 ${m} 지출을 세무 마감했어요(${p.count.toLocaleString("ko-KR")}건). 장부·영수증·지출결의서·홈택스 자료를 세무사무소 화면에서 받을 수 있어요.`,
+    buttonLabel: "세무 자료 보기",
+    buttonPath: `/tax-office/${p.companyId}?month=${p.month}`,
+    vars: { company: p.companyName, month: p.month, count: String(p.count) },
+  };
+}
+
+// 세무사무소 → 회사 관리자 자료 요청 (D-169)
+export function taxRequest(p: { companyId: string; officeName: string; month: string; body: string; itemLabel?: string | null }): BuiltMessage {
+  const m = `${Number(p.month.slice(5, 7))}월`;
+  const body = p.body.length > 80 ? `${p.body.slice(0, 80)}…` : p.body;
+  return {
+    template: "TAX_REQUEST",
+    text: `[PocketExpense] ${p.officeName}에서 ${m} 세무 자료를 요청했어요${p.itemLabel ? `(영수증 ${p.itemLabel})` : ""}: "${body}" 세무 마감 화면에서 답변해 주세요.`,
+    buttonLabel: "요청 확인하기",
+    buttonPath: `/workspace/${p.companyId}/admin/export?month=${p.month}#tax-requests`,
+    vars: { office: p.officeName, month: p.month },
+  };
+}
+
+// 회사가 세무사무소를 지정 → 담당 세무사 휴대폰으로 초대 (D-173). 연결 코드 링크 — 어떤 계정으로 로그인해도 이 고객사와 연결
+export function taxOfficeInvite(p: { companyName: string; officeName: string; agentName: string | null; code: string }): BuiltMessage {
+  return {
+    template: "TAX_OFFICE_INVITE",
+    text: `[PocketExpense] ${p.agentName ? `${p.agentName}님, ` : ""}고객사 ${p.companyName}이(가) 지출·증빙 관리에 PocketExpense를 쓰고 있고, ${p.officeName}을(를) 세무대행 사무소로 지정했어요. 무료 세무사무소 워크스페이스에서 승인된 지출 장부·영수증·지출결의서·홈택스 자료를 한 번에 받을 수 있어요.`,
+    buttonLabel: "세무사무소로 시작하기",
+    buttonPath: `/for-tax-office/${p.code}`,
+    vars: { company: p.companyName, office: p.officeName },
   };
 }
 

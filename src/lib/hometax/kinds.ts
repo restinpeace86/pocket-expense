@@ -24,6 +24,7 @@ export type HometaxUpload = {
   row_count: number;
   memo: string | null;
   uploaded_by_name: string | null;
+  uploaded_by_kind?: "company" | "tax_office"; // 누가 올렸는지(D-172)
   created_at: string;
 };
 

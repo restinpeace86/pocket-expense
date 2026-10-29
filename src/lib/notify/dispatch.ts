@@ -2,7 +2,8 @@ import "server-only";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSender, siteUrl } from "./sender";
-import { approvalCompleted, approvalRejected, approvalRequest, closingNotice, invite, merchantSummary, normalizePhone, payoutCompleted, recurringReady, reminder, type BuiltMessage, type ClosingNoticeInput } from "./templates";
+import { approvalCompleted, approvalRejected, approvalRequest, closingNotice, invite, merchantSummary, normalizePhone, payoutCompleted, recurringReady, reminder, taxClosed, taxOfficeInvite, taxRequest, type BuiltMessage, type ClosingNoticeInput } from "./templates";
+import { pushToMembers, pushToOfficeMembers } from "@/lib/push/server";
 
 // 결재 알림 보내기 (kakao-alimtalk.md §2, notification-rule.md §2).
 // - 결재 처리(DB 트랜잭션)가 끝난 뒤에 부른다. 실패해도 결재는 되돌리지 않는다.
@@ -223,7 +224,7 @@ export async function resendLog(companyId: string, logId: string): Promise<"sent
 }
 
 // 정기 결제 결의서가 만들어졌다고 담당자에게 (D-110). cron이 generate_recurring_claims() 결과로 부른다
-export async function sendRecurringReady(rows: { claim_id: string; company_id: string; member_id: string; service_name: string; period_label: string; amount: number }[]): Promise<number> {
+export async function sendRecurringReady(rows: { claim_id: string | null; company_id: string; member_id: string; service_name: string; period_label: string; amount: number; confirmed?: boolean }[]): Promise<number> {
   const admin = createAdminClient();
   if (!admin || !rows.length) return 0;
   const { data: members } = await admin.from("members").select("id, company_id, phone").in("id", [...new Set(rows.map((r) => r.member_id))]);
@@ -234,7 +235,7 @@ export async function sendRecurringReady(rows: { claim_id: string; company_id: s
     if (!m || m.company_id !== r.company_id) continue; // 같은 회사 담당자만
     await deliver(admin, {
       companyId: r.company_id,
-      claimId: r.claim_id,
+      claimId: r.claim_id ?? undefined,
       memberId: r.member_id,
       phone: m.phone,
       message: recurringReady({ companyId: r.company_id, claimId: r.claim_id, serviceName: r.service_name, periodLabel: r.period_label, amount: r.amount }),
@@ -251,4 +252,60 @@ export async function sendClosingNotice(t: ClosingNoticeInput & { memberId: stri
   const { data: m } = await admin.from("members").select("id, phone").eq("id", t.memberId).eq("company_id", t.companyId).maybeSingle();
   if (!m) return false;
   return deliver(admin, { companyId: t.companyId, memberId: m.id, phone: m.phone, message: closingNotice(t) });
+}
+
+type OfficeTarget = { member_id: string; name: string; phone: string | null; office_name: string };
+async function officeTargets(admin: Admin, companyId: string): Promise<OfficeTarget[]> {
+  const { data } = await admin.rpc("tax_office_notice_targets", { p_company_id: companyId });
+  return (data ?? []) as OfficeTarget[];
+}
+
+// 회사가 세무 마감 → 담당 세무사(없으면 사무소 관리자)에게 알림톡 + 웹푸시 (D-168). 마감 직후 한 번
+export async function notifyOfficeClosed(companyId: string, month: string, count: number): Promise<number> {
+  const admin = createAdminClient();
+  if (!admin) return 0;
+  const targets = await officeTargets(admin, companyId);
+  if (!targets.length) return 0;
+  const { data: company } = await admin.from("companies").select("name").eq("id", companyId).maybeSingle();
+  const message = taxClosed({ companyId, companyName: company?.name ?? "", month, count });
+  for (const t of targets) await deliver(admin, { companyId, phone: t.phone, message });
+  await pushToOfficeMembers(
+    targets.map((t) => t.member_id),
+    { title: `${company?.name ?? "고객사"} ${Number(month.slice(5, 7))}월 마감 완료`, body: message.text.replace("[PocketExpense] ", ""), url: message.buttonPath, tag: `tax-closed-${companyId}-${month}` },
+  );
+  return targets.length;
+}
+
+// 세무사무소 자료 요청 → 회사 관리자들에게 알림톡 + 웹푸시 (D-169)
+export async function notifyCompanyRequest(companyId: string, p: { officeName: string; month: string; body: string; itemLabel?: string | null }): Promise<void> {
+  const admin = createAdminClient();
+  if (!admin) return;
+  const { data: admins } = await admin.from("members").select("id, phone").eq("company_id", companyId).eq("status", "approved").in("role", ["super_admin", "admin"]);
+  const message = taxRequest({ companyId, ...p });
+  for (const a of admins ?? []) await deliver(admin, { companyId, memberId: a.id, phone: a.phone, message });
+  await pushToMembers(companyId, (admins ?? []).map((a) => a.id), { title: `${p.officeName} 자료 요청`, body: p.body.slice(0, 120), url: message.buttonPath, tag: "tax-request" });
+}
+
+// 회사가 자료 요청에 답변 → 세무사무소(담당 세무사·없으면 관리자)에게 웹푸시 (D-169)
+export async function notifyOfficeAnswered(companyId: string, month: string, answer: string): Promise<void> {
+  const admin = createAdminClient();
+  if (!admin) return;
+  const targets = await officeTargets(admin, companyId);
+  const { data: company } = await admin.from("companies").select("name").eq("id", companyId).maybeSingle();
+  await pushToOfficeMembers(
+    targets.map((t) => t.member_id),
+    { title: `${company?.name ?? "고객사"}이(가) 자료 요청에 답했어요`, body: answer.slice(0, 120), url: `/tax-office/${companyId}?month=${month}#tax-requests`, tag: "tax-request-answer" },
+  );
+}
+
+// 회사가 세무사무소를 지정 → 담당 세무사 휴대폰으로 초대 알림톡 (D-173). 아직 연결 안 된 경우만
+export async function sendTaxOfficeInvite(companyId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  if (!admin) return false;
+  const [{ data: c }, { data: company }] = await Promise.all([
+    admin.from("company_tax_offices").select("office_name, agent_name, agent_phone, connect_code, office_id, released_at").eq("company_id", companyId).maybeSingle(),
+    admin.from("companies").select("name").eq("id", companyId).maybeSingle(),
+  ]);
+  if (!c || c.office_id || c.released_at || !c.agent_phone || !c.connect_code) return false;
+  return deliver(admin, { companyId, phone: c.agent_phone, message: taxOfficeInvite({ companyName: company?.name ?? "", officeName: c.office_name, agentName: c.agent_name, code: c.connect_code }) });
 }

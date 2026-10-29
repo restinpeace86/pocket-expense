@@ -13,7 +13,8 @@ type Request = { company_name: string; office_name: string };
 const initial: OfficeFormState = { error: null };
 
 // 세무사무소 구성원이 아닌 계정: 연결 요청 확인 → 세무사무소 등록(관리자) 또는 초대 코드로 합류(소속 세무사) (D-149)
-export function TaxOfficeOnboarding({ email, requests }: { email: string | null; requests: Request[] }) {
+// connect: 고객사 연결 링크로 들어온 경우(D-173) — 등록하면 그 고객사와 바로 연결
+export function TaxOfficeOnboarding({ email, requests, connect = null }: { email: string | null; requests: Request[]; connect?: { code: string; companyName: string } | null }) {
   const [state, formAction, pending] = useActionState(registerTaxOfficeAction, initial);
   const [code, setCode] = useState("");
   const router = useRouter();
@@ -30,6 +31,11 @@ export function TaxOfficeOnboarding({ email, requests }: { email: string | null;
         <p className="mt-1 break-keep text-sm text-zinc-600">고객사의 승인된 지출과 세무용 엑셀을 한곳에서 확인해요. 고객사 회사 계정과는 따로예요.</p>
       </div>
 
+      {connect && (
+        <p className="break-keep rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
+          <b>{connect.companyName}</b> 고객사 연결 링크로 들어왔어요. 아래에서 세무사무소를 등록하면 바로 고객사 목록에 들어가요.
+        </p>
+      )}
       {requests.length > 0 ? (
         <Card>
           <h2 className="text-lg font-semibold">연결을 요청한 고객사 {requests.length}곳</h2>
@@ -52,6 +58,7 @@ export function TaxOfficeOnboarding({ email, requests }: { email: string | null;
       <Card>
         <form action={formAction} className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold">세무사무소 등록 (대표·관리자)</h2>
+          {connect && <input type="hidden" name="connectCode" value={connect.code} />}
           <Field label="세무사무소명" required>
             <input name="officeName" defaultValue={state.values?.officeName ?? suggested} required maxLength={100} className={inputClass} placeholder="예: OO세무사무소" />
           </Field>

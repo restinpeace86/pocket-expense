@@ -3,6 +3,7 @@
 import { Bell, BellOff, Loader2 } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { deletePushSubscriptionAction, savePushSubscriptionAction, sendTestPushAction } from "@/app/push/actions";
+import { deleteOfficePushAction, saveOfficePushAction, testOfficePushAction } from "@/app/tax-office/push-actions";
 
 // 이 기기에서 알림 받기 (D-116): 마감 리마인더 · 결재 대기 · 공지. 무료 웹푸시.
 // 아이폰(iOS 16.4+)은 Safari [공유 › 홈 화면에 추가]로 연 앱에서만 켤 수 있다.
@@ -24,7 +25,11 @@ function detect(): Exclude<State, "loading" | "on" | "off"> | null {
   return null;
 }
 
-export function PushToggle() {
+// office: 세무사무소 계정용(고객사 마감 완료·자료 요청 답변, D-168) — 구독 표가 따로다
+export function PushToggle({ office = false }: { office?: boolean } = {}) {
+  const save = office ? saveOfficePushAction : savePushSubscriptionAction;
+  const remove = office ? deleteOfficePushAction : deletePushSubscriptionAction;
+  const sendTest = office ? testOfficePushAction : sendTestPushAction;
   const [state, setState] = useState<State>("loading");
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -58,7 +63,7 @@ export function PushToggle() {
         await navigator.serviceWorker.ready;
         const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) }));
         const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
-        const r = await savePushSubscriptionAction(json, navigator.userAgent);
+        const r = await save(json, navigator.userAgent);
         if (!r.ok) return setMsg(r.error);
         setState("on");
         setMsg("알림을 켰어요. 시험 알림으로 확인해 보세요.");
@@ -73,7 +78,7 @@ export function PushToggle() {
       const reg = await navigator.serviceWorker.getRegistration("/sw.js");
       const sub = await reg?.pushManager.getSubscription();
       if (sub) {
-        await deletePushSubscriptionAction(sub.endpoint);
+        await remove(sub.endpoint);
         await sub.unsubscribe().catch(() => undefined);
       }
       setState("off");
@@ -83,7 +88,7 @@ export function PushToggle() {
   const test = () =>
     start(async () => {
       setMsg(null);
-      const r = await sendTestPushAction();
+      const r = await sendTest();
       setMsg(r.ok ? "시험 알림을 보냈어요. 몇 초 안에 와요." : r.error);
     });
 
@@ -95,7 +100,7 @@ export function PushToggle() {
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-semibold">이 기기에서 알림 받기</p>
-          <p className="text-sm text-zinc-600">정산 마감 리마인더, 결재 대기 알림, 공지를 이 휴대폰·PC로 받아요. 무료예요.</p>
+          <p className="text-sm text-zinc-600">{office ? "고객사가 세무 마감을 하거나 자료 요청에 답하면 이 휴대폰·PC로 알려 드려요. 무료예요." : "정산 마감 리마인더, 결재 대기 알림, 공지를 이 휴대폰·PC로 받아요. 무료예요."}</p>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">

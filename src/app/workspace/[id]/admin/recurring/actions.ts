@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import type { ActionResult } from "../actions";
 
-// 정기 결제 (D-110). 관리자만(RLS). 담당자·법인카드는 같은 회사만(복합 FK)
+// 정기 결제 (D-110, D-171). 관리자만(RLS). 담당자·법인카드는 같은 회사만(복합 FK)
 export type RecurringInput = {
   serviceName: string;
   amount: string;
@@ -18,6 +18,7 @@ export type RecurringInput = {
   corporateCardId: string | null;
   assigneeMemberId: string;
   memo: string;
+  merchantKeyword: string; // 카드 내역 가맹점 이름 키워드(D-171), 비우면 서비스명으로 찾음
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -45,6 +46,7 @@ function toRow(input: RecurringInput): { error: string } | { row: Row } {
       corporate_card_id: corporate && input.corporateCardId && UUID.test(input.corporateCardId) ? input.corporateCardId : null,
       assignee_member_id: input.assigneeMemberId,
       memo: input.memo.trim().slice(0, 200) || null,
+      merchant_keyword: (input.merchantKeyword ?? "").trim().slice(0, 60) || null,
     },
   };
 }

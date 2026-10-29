@@ -36,7 +36,7 @@ const isArea = (next: string, area: string) => next === area || next.startsWith(
 export function destinationAfterLogin(membership: Membership | null, nextRaw: string | null | undefined, opts: { taxAgent?: boolean } = {}): string {
   const next = safeNextPath(nextRaw);
   // 운영자 화면(D-080)·세무사무소 화면·합류 링크(D-149): 로그인 뒤 그대로 돌려보낸다. 볼 수 있는지는 그 화면(서버·DB)이 확인한다
-  if (next && (isArea(next, "/app-admin") || isArea(next, "/tax-office") || next.startsWith("/tax-join/"))) return next;
+  if (next && (isArea(next, "/app-admin") || isArea(next, "/tax-office") || next.startsWith("/tax-join/") || next.startsWith("/tax-connect/"))) return next;
 
   if (!membership) {
     // 아직 회사가 없으면 가입·회사 생성 경로만 허용

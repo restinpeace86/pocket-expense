@@ -7,7 +7,7 @@ import { HOMETAX_BUCKET, hometaxZipNames, type HometaxKind, type HometaxUpload }
 
 // 홈택스 자료 조회·받기 (D-158). 볼 수 있는지는 RLS(회사 관리자 / 그 회사를 볼 수 있는 세무사무소 구성원)가 정하고,
 // 그 행의 파일만 운영 키로 읽는다(보관함은 비공개)
-const COLS = "id, month, kind, file_name, file_size, header, preview, row_count, memo, uploaded_by_name, created_at";
+const COLS = "id, month, kind, file_name, file_size, header, preview, row_count, memo, uploaded_by_name, uploaded_by_kind, created_at";
 
 export async function listHometax(companyId: string, month: string): Promise<HometaxUpload[]> {
   const supabase = await createClient();

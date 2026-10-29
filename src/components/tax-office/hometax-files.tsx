@@ -2,7 +2,6 @@
 
 import { Download, FileSpreadsheet, Table2, Trash2, Upload } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
-import { deleteHometaxAction, uploadHometaxAction } from "@/app/workspace/[id]/admin/export/hometax-actions";
 import { thrownActionMessage } from "@/lib/action-guard";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { HOMETAX_KIND_LABEL, HOMETAX_KINDS, type HometaxKind, type HometaxUpload } from "@/lib/hometax/kinds";
@@ -11,8 +10,26 @@ import { inputClass } from "@/components/ui/page-shell";
 const size = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)}MB` : `${Math.max(1, Math.round(n / 1024))}KB`);
 
 // 홈택스 자료 (D-158): 회사가 홈택스에서 내려받은 파일을 그 달 세무 자료에 올리면, 세무사무소가 앱에서 표로 보고 원본을 받는다.
-// 회사 세무 마감 화면(editable: 올리기·지우기)과 세무사무소 세무 자료 화면(보기·받기) 공용
-export function HometaxFiles({ uploads, month, downloadBase, editable = false }: { uploads: HometaxUpload[]; month: string; downloadBase: string; editable?: boolean }) {
+// 회사 세무 마감 화면과 세무사무소 세무 자료 화면 공용 — 둘 다 올리고 보고 받으며, 지우기는 올린 쪽만(D-172)
+type Upload = (fd: FormData) => Promise<{ ok: true; rowCount: number } | { ok: false; error: string }>;
+type Remove = (id: string) => Promise<{ ok: true } | { ok: false; error: string }>;
+
+// viewer: 보는 쪽(회사 관리자 / 세무사무소). 둘 다 올릴 수 있고(D-172) 지우기는 올린 쪽만
+export function HometaxFiles({
+  uploads,
+  month,
+  downloadBase,
+  viewer,
+  uploadAction,
+  deleteAction,
+}: {
+  uploads: HometaxUpload[];
+  month: string;
+  downloadBase: string;
+  viewer: "company" | "tax_office";
+  uploadAction: Upload;
+  deleteAction: Remove;
+}) {
   const [open, setOpen] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [pending, start] = useTransition();
@@ -23,10 +40,10 @@ export function HometaxFiles({ uploads, month, downloadBase, editable = false }:
     setMessage(null);
     start(async () => {
       try {
-        const r = await uploadHometaxAction(fd);
+        const r = await uploadAction(fd);
         if (!r.ok) return setMessage({ kind: "error", text: r.error });
         form.current?.reset();
-        setMessage({ kind: "ok", text: `올렸어요 (${r.rowCount.toLocaleString("ko-KR")}줄). 세무사무소도 바로 볼 수 있어요.` });
+        setMessage({ kind: "ok", text: `올렸어요 (${r.rowCount.toLocaleString("ko-KR")}줄). ${viewer === "company" ? "세무사무소" : "회사"}도 바로 볼 수 있어요.` });
       } catch {
         setMessage({ kind: "error", text: thrownActionMessage() });
       }
@@ -34,11 +51,11 @@ export function HometaxFiles({ uploads, month, downloadBase, editable = false }:
   }
 
   function remove(u: HometaxUpload) {
-    if (!confirm(`‘${u.file_name}’을(를) 지울까요? 세무사무소 화면에서도 사라져요.`)) return;
+    if (!confirm(`‘${u.file_name}’을(를) 지울까요? ${viewer === "company" ? "세무사무소" : "회사"} 화면에서도 사라져요.`)) return;
     setMessage(null);
     start(async () => {
       try {
-        const r = await deleteHometaxAction(u.id);
+        const r = await deleteAction(u.id);
         setMessage(r.ok ? { kind: "ok", text: "지웠어요." } : { kind: "error", text: r.error });
       } catch {
         setMessage({ kind: "error", text: thrownActionMessage() });
@@ -53,12 +70,11 @@ export function HometaxFiles({ uploads, month, downloadBase, editable = false }:
         홈택스 자료 · {y}년 {m}월
       </h2>
       <p className="mt-0.5 break-keep text-sm text-zinc-600">
-        {editable
+        {viewer === "company"
           ? "홈택스에서 이 달을 조회해 내려받은 엑셀·CSV(전자세금계산서·현금영수증·사업용 신용카드 매입 등)를 그대로 올려 두면, 세무사무소가 홈택스에 다시 들어가지 않고 여기서 보고 받아요. 세무 마감 ZIP에도 함께 들어가요."
-          : "고객사가 홈택스에서 내려받아 올린 원본이에요. 표로 바로 보거나 원본을 받을 수 있고, 증빙 묶음(ZIP)에도 함께 들어가요."}
+          : "고객사가 홈택스에서 내려받아 올린 원본이에요. 표로 바로 보거나 원본을 받을 수 있고, 증빙 묶음(ZIP)에도 함께 들어가요. 세무대리로 직접 받은 자료가 있으면 여기 올려 회사와 함께 볼 수 있어요."}
       </p>
 
-      {editable && (
         <form ref={form} action={upload} className="mt-3 flex min-w-0 flex-col gap-2 rounded-lg bg-zinc-50 p-3 sm:flex-row sm:flex-wrap sm:items-end">
           <input type="hidden" name="month" value={month} />
           <label className="flex min-w-0 flex-col gap-1 text-sm sm:w-52">
@@ -88,7 +104,6 @@ export function HometaxFiles({ uploads, month, downloadBase, editable = false }:
             {pending ? "올리는 중..." : "올리기"}
           </button>
         </form>
-      )}
       {message && (
         <p role={message.kind === "error" ? "alert" : "status"} className={`mt-2 break-keep text-sm ${message.kind === "error" ? "text-red-700" : "text-emerald-700"}`}>
           {message.text}
@@ -97,7 +112,7 @@ export function HometaxFiles({ uploads, month, downloadBase, editable = false }:
 
       {uploads.length === 0 ? (
         <p className="mt-3 break-keep text-sm text-zinc-500">
-          {editable ? "아직 올린 홈택스 자료가 없어요." : "고객사가 이 달 홈택스 자료를 아직 올리지 않았어요."}
+          {viewer === "company" ? "아직 올린 홈택스 자료가 없어요." : "고객사가 이 달 홈택스 자료를 아직 올리지 않았어요."}
         </p>
       ) : (
         <ul className="mt-3 flex flex-col divide-y divide-zinc-100">
@@ -110,7 +125,7 @@ export function HometaxFiles({ uploads, month, downloadBase, editable = false }:
                     <span className="min-w-0 break-all text-sm font-medium text-zinc-900">{u.file_name}</span>
                   </p>
                   <p className="mt-0.5 text-xs text-zinc-500">
-                    {u.row_count.toLocaleString("ko-KR")}줄 · {size(u.file_size)} · {u.uploaded_by_name ?? "관리자"} · {formatDateTimeKst(u.created_at)}
+                    {u.row_count.toLocaleString("ko-KR")}줄 · {size(u.file_size)} · {u.uploaded_by_kind === "tax_office" ? "세무사무소 " : ""}{u.uploaded_by_name ?? "관리자"} · {formatDateTimeKst(u.created_at)}
                   </p>
                   {u.memo && <p className="mt-1 break-keep text-sm text-zinc-700">{u.memo}</p>}
                 </div>
@@ -128,7 +143,7 @@ export function HometaxFiles({ uploads, month, downloadBase, editable = false }:
                     <Download className="size-4" aria-hidden />
                     원본 받기
                   </a>
-                  {editable && (
+                  {(u.uploaded_by_kind ?? "company") === viewer && (
                     <button
                       type="button"
                       disabled={pending}

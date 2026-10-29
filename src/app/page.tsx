@@ -146,7 +146,7 @@ export default function LandingPage() {
         <nav className="flex flex-wrap justify-center gap-x-4">
           <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-zinc-300">이용약관</Link>
           <Link href="/privacy" className="inline-flex min-h-11 items-center font-semibold hover:text-zinc-300">개인정보 처리방침</Link>
-          <Link href="/login?next=%2Ftax-office" className="inline-flex min-h-11 items-center hover:text-zinc-300">세무사무소 로그인</Link>
+          <Link href="/for-tax-office" className="inline-flex min-h-11 items-center hover:text-zinc-300">세무사무소</Link>
         </nav>
         <BusinessInfo />
         <p>© PocketExpense</p>

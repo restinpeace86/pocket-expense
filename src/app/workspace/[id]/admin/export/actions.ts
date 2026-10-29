@@ -1,6 +1,8 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { after } from "next/server";
+import { notifyOfficeAnswered, notifyOfficeClosed } from "@/lib/notify/dispatch";
 import { getMembership } from "@/lib/auth/session";
 import { isAdminRole } from "@/lib/auth/paths";
 import { messageForDbError } from "@/lib/errors";
@@ -28,6 +30,9 @@ export async function closeTaxMonthAction(month: string): Promise<Result<{ count
   const { data, error } = await supabase.rpc("close_tax_month", { p_month: month });
   if (error) return { ok: false, error: messageForDbError(error) };
   const j = data as { count: number; already: boolean };
+  // 처음 마감했을 때만 세무사무소에 알림(D-168)
+  const companyId = (await getMembership())?.company_id;
+  if (!j.already && companyId) after(() => notifyOfficeClosed(companyId, month, Number(j.count)));
   refresh();
   return { ok: true, count: Number(j.count), already: !!j.already };
 }
@@ -71,4 +76,17 @@ export async function taxClaimDocsAction(month: string): Promise<Result<{ docs: 
   if (res.data.status !== "closed") return fail("NOT_CLOSED");
   const [docs, form] = await Promise.all([getClaimDocs(m.company_id, res.data.rows), getActiveForm(m.company_id)]);
   return { ok: true, docs, rows: res.data.rows, layout: form?.layout ?? null }; // 회사 양식(D-118)
+}
+
+// 세무사무소 자료 요청에 답변 (D-169). 회사·권한은 DB 함수가 다시 확인
+export async function answerTaxRequestAction(id: string, answer: string): Promise<Result> {
+  const m = await admin();
+  if (!m) return fail("NOT_ALLOWED");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("answer_tax_office_request", { p_id: id, p_answer: answer });
+  if (error) return { ok: false, error: messageForDbError(error) };
+  const { data: r } = await supabase.from("tax_office_requests").select("month").eq("id", id).maybeSingle();
+  if (r) after(() => notifyOfficeAnswered(m.company_id, r.month, answer.trim()));
+  refresh();
+  return { ok: true };
 }

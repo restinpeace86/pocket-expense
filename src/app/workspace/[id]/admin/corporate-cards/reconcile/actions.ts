@@ -2,7 +2,9 @@
 
 import { getMembership } from "@/lib/auth/session";
 import { isAdminRole } from "@/lib/auth/paths";
-import { reconcile, type LedgerItem, type ReconcileResult } from "@/lib/cards/reconcile";
+import { reconcile, recurringPeriodKey, recurringReport, type LedgerItem, type ReconcileResult, type RecurringRef } from "@/lib/cards/reconcile";
+import { after } from "next/server";
+import { sendRecurringReady } from "@/lib/notify/dispatch";
 import type { StatementRow } from "@/lib/cards/statement";
 import { messageForDbError } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
@@ -25,16 +27,18 @@ export async function reconcileCardStatementAction(rows: StatementRow[]): Promis
   const dates = clean.map((r) => r.date).sort();
   const shift = (d: string, n: number) => new Date(Date.parse(d) + n * 86400_000).toISOString().slice(0, 10);
   const supabase = await createClient();
-  const [{ data: items, error }, { data: cards }] = await Promise.all([
+  const [{ data: items, error }, { data: cards }, { data: recurring }, { data: recurringClaims }] = await Promise.all([
     supabase
       .from("expense_items")
-      .select("id, claim_id, expense_date, amount, merchant_name, merchant_business_number, payment_method, corporate_card_id, card_last4, claim:expense_claims!inner(title, status, member_id)")
+      .select("id, claim_id, expense_date, amount, merchant_name, merchant_business_number, payment_method, corporate_card_id, card_last4, evidence_kind, receipt_path, claim:expense_claims!inner(title, status, member_id)")
       .eq("company_id", m.company_id)
       .gte("expense_date", shift(dates[0], -1))
       .lte("expense_date", shift(dates[dates.length - 1], 1))
       .not("amount", "is", null)
       .limit(5000),
     supabase.from("corporate_cards").select("id, last4").eq("company_id", m.company_id),
+    supabase.from("recurring_payments").select("id, service_name, merchant_keyword, amount, cycle, billing_day, billing_month, assignee_member_id").eq("company_id", m.company_id).eq("is_active", true).eq("payment_method", "corporate_card"),
+    supabase.from("expense_claims").select("recurring_payment_id, recurring_period").eq("company_id", m.company_id).not("recurring_payment_id", "is", null),
   ]);
   if (error) return { ok: false, error: messageForDbError(error) };
   const cardLast4 = new Map((cards ?? []).map((c) => [c.id, c.last4]));
@@ -56,9 +60,26 @@ export async function reconcileCardStatementAction(rows: StatementRow[]): Promis
       paymentMethod: i.payment_method,
       last4: (i.corporate_card_id ? cardLast4.get(i.corporate_card_id) : null) ?? i.card_last4 ?? null,
       bizNo: (i.merchant_business_number ?? "").replace(/\D/g, "") || null,
+      noEvidence: i.evidence_kind === "none" && !i.receipt_path,
     };
   });
-  return { ok: true, result: reconcile(clean, ledger) };
+  const result = reconcile(clean, ledger);
+  // 정기 결제(D-171): 결의서 없는 결제 중 등록된 정기 결제와 맞는 것, 결제일인데 내역에 없는 것
+  const assigneeIds = [...new Set((recurring ?? []).map((r) => r.assignee_member_id))];
+  const { data: assignees } = assigneeIds.length ? await supabase.from("members").select("id, name").eq("company_id", m.company_id).in("id", assigneeIds) : { data: [] };
+  const refs: RecurringRef[] = (recurring ?? []).map((r) => ({
+    id: r.id,
+    serviceName: r.service_name,
+    keyword: r.merchant_keyword,
+    amount: r.amount,
+    cycle: r.cycle,
+    billingDay: r.billing_day,
+    billingMonth: r.billing_month,
+    assignee: (assignees ?? []).find((a) => a.id === r.assignee_member_id)?.name ?? "",
+    claimedPeriods: (recurringClaims ?? []).filter((c) => c.recurring_payment_id === r.id && c.recurring_period).map((c) => recurringPeriodKey(r.cycle, c.recurring_period as string)),
+  }));
+  if (refs.length) result.recurring = recurringReport(clean, result.missing, refs);
+  return { ok: true, result };
 }
 
 // ── 대조 결과 저장·건별 처리 (D-154) ──
@@ -103,4 +124,38 @@ export async function setCardIssueStatusAction(issueId: string, status: IssueSta
   }
   refresh();
   return { ok: true, notified };
+}
+
+type CardRow = { date: string; merchant: string; amount: number; last4: string | null };
+const cleanRow = (r: CardRow) => ({ date: DATE.test(r?.date) ? r.date : "", merchant: String(r?.merchant ?? "").slice(0, 100), amount: Math.round(Number(r?.amount) || 0), last4: r?.last4 && /^\d{4}$/.test(r.last4) ? r.last4 : null });
+
+// 증빙 없음 영수증 → 이 카드 결제로 증빙 대체 (D-170). 법인카드·같은 금액·마감 전만(DB 함수가 확인)
+export async function substituteCardEvidenceAction(itemId: string, row: CardRow): Promise<{ ok: true } | { ok: false; error: string }> {
+  const m = await getMembership();
+  if (!m || m.status !== "approved" || !isAdminRole(m.role)) return { ok: false, error: messageForDbError({ message: "NOT_ALLOWED" }) };
+  const r = cleanRow(row);
+  if (!r.date || r.amount < 1) return { ok: false, error: messageForDbError({ message: "CARD_ROW_MISMATCH" }) };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("substitute_card_evidence", { p_item_id: itemId, p_date: r.date, p_merchant: r.merchant, p_amount: r.amount, p_last4: r.last4 as string });
+  if (error) return { ok: false, error: messageForDbError(error) };
+  refresh();
+  return { ok: true };
+}
+
+// 결의서 없는 카드 결제가 정기 결제와 맞음 → 담당자 앞으로 결의서(작성 중), 카드 결제가 증빙 (D-171)
+export async function createRecurringFromCardAction(recurringId: string, row: CardRow): Promise<{ ok: true } | { ok: false; error: string }> {
+  const m = await getMembership();
+  if (!m || m.status !== "approved" || !isAdminRole(m.role)) return { ok: false, error: messageForDbError({ message: "NOT_ALLOWED" }) };
+  const r = cleanRow(row);
+  if (!r.date || r.amount < 1) return { ok: false, error: messageForDbError({ message: "CARD_ROW_MISMATCH" }) };
+  const supabase = await createClient();
+  const { data: claimId, error } = await supabase.rpc("create_recurring_claim_from_card", { p_recurring_id: recurringId, p_date: r.date, p_merchant: r.merchant, p_amount: r.amount, p_last4: r.last4 as string });
+  if (error) return { ok: false, error: messageForDbError(error) };
+  const { data: rec } = await supabase.from("recurring_payments").select("service_name, cycle, assignee_member_id").eq("id", recurringId).maybeSingle();
+  if (rec && claimId) {
+    const label = rec.cycle === "monthly" ? `${r.date.slice(0, 4)}년 ${Number(r.date.slice(5, 7))}월` : `${r.date.slice(0, 4)}년`;
+    after(() => sendRecurringReady([{ claim_id: claimId as string, company_id: m.company_id, member_id: rec.assignee_member_id, service_name: rec.service_name, period_label: label, amount: r.amount, confirmed: true }]));
+  }
+  refresh();
+  return { ok: true };
 }

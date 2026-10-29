@@ -13,7 +13,7 @@ import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
 import { nextBillingDate, scheduleLabel } from "@/lib/recurring/schedule";
 
-// 정기 결제 설정 (D-110): 한 번 등록 → 결제일마다 담당자 앞으로 내용이 채워진 결의서가 만들어진다
+// 정기 결제 설정 (D-110, D-171): 매달 나가는 것 목록 — 법인카드 정기 결제는 카드 내역 대조에서 실제 결제와 맞으면 결의서, 개인카드는 결제일 알림
 type Result = { error: string | null };
 type Option = { id: string; name: string };
 type Card = { id: string; nickname: string; last4: string };
@@ -26,18 +26,21 @@ export function RecurringHeading() {
     <SectionHeading
       as="h1"
       title="정기 결제"
-      summary="노션·구글 같은 구독료를 한 번 등록해 두면, 결제일마다 담당자 앞으로 결의서가 미리 만들어져요."
+      summary="노션·구글 같은 구독료를 등록해 두면, 법인카드 내역 대조에서 실제 결제와 맞춰 결의서를 만들어요."
       helpId="admin.recurring"
       help={
         <>
           <p>
-            <b>어떻게 되나요?</b> 결제일 아침에 담당자 앞으로 &ldquo;[온라인 SaaS 구독료] 서비스명 ○월&rdquo; 결의서가 금액까지 채워져 만들어지고, 담당자에게 알림이 가요. 담당자는 결제 내역(인보이스·카드 결제 내역) 1장만 붙여 상신하면 돼요.
+            <b>법인카드 정기 결제</b> 결제일에 결의서를 미리 만들지 않아요. 월말에 [법인카드 › 카드 내역 대조]로 카드사 내역을 올리면, 가맹점 이름(아래 &lsquo;카드 내역 가맹점 이름&rsquo;)과 금액(±10%)이 맞는 결제에 &ldquo;정기 결제&rdquo; 표시가 붙어요. [정기 결제로 처리]를 누르면 담당자 앞으로 결의서가 만들어지고, 그 카드 결제가 증빙으로 붙어요. 담당자는 확인 후 상신만 하면 돼요.
           </p>
           <p>
-            <b>왜 자동으로 상신까지 안 하나요?</b> 카드사와 연결돼 있지 않아 실제로 결제가 됐는지 알 수 없어요. 그래서 준비까지만 자동으로 하고, 결제 증빙은 담당자가 붙여요. 금액이 달라졌으면 그때 고치면 돼요.
+            <b>개인카드 정기 결제</b> 카드 내역이 없으니 결제일 아침에 담당자에게 &ldquo;결제 내역을 찍어 상신해 주세요&rdquo; 알림만 가요.
           </p>
           <p>
-            <b>해지했어요</b> [사용 안 함]으로 바꾸면 다음 결제일부터 만들지 않아요. 지난 결의서는 그대로 남아요.
+            <b>결제가 안 보여요</b> 결제일이 카드 내역 기간 안인데 맞는 결제가 없으면 대조 화면에 따로 알려 줘요(해지·금액 변경 확인용).
+          </p>
+          <p>
+            <b>해지했어요</b> [사용 안 함]으로 바꾸면 더 이상 찾지 않아요. 지난 결의서는 그대로 남아요.
           </p>
         </>
       }
@@ -55,6 +58,7 @@ const empty = (members: Option[]): RecurringInput => ({
   corporateCardId: null,
   assigneeMemberId: members[0]?.id ?? "",
   memo: "",
+  merchantKeyword: "",
 });
 const fromRow = (r: RecurringRow): RecurringInput => ({
   serviceName: r.service_name,
@@ -66,6 +70,7 @@ const fromRow = (r: RecurringRow): RecurringInput => ({
   corporateCardId: r.corporate_card_id,
   assigneeMemberId: r.assignee_member_id,
   memo: r.memo ?? "",
+  merchantKeyword: r.merchant_keyword ?? "",
 });
 
 export function RecurringView({ rows, members, cards, today, preview = false }: { rows: RecurringRow[]; members: Option[]; cards: Card[]; today: string; preview?: boolean }) {
@@ -118,7 +123,7 @@ export function RecurringView({ rows, members, cards, today, preview = false }: 
               cardName={r.corporate_card_id ? (cardNames.get(r.corporate_card_id) ?? "법인카드") : null}
               onSave={(v, done) => run("update", () => updateRecurringAction(r.id, v), done)}
               onToggle={() => {
-                if (r.is_active && !confirm(`'${r.service_name}' 정기 결제를 사용 안 함으로 바꿀까요? 다음 결제일부터 결의서를 만들지 않아요.`)) return;
+                if (r.is_active && !confirm(`'${r.service_name}' 정기 결제를 사용 안 함으로 바꿀까요? 더 이상 카드 내역에서 찾거나 알리지 않아요.`)) return;
                 run(r.is_active ? "deactivate" : "activate", () => setRecurringActiveAction(r.id, !r.is_active));
               }}
             />
@@ -176,7 +181,7 @@ function RecurringItem({
                 {scheduleLabel({ cycle: r.cycle, billingDay: r.billing_day, billingMonth: r.billing_month })} · {r.payment_method === "corporate_card" ? `💳 ${cardName ?? "법인카드"}` : "🧾 담당자 개인카드"} · 담당 {assignee}
               </p>
               <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
-                {r.is_active && <span>다음 결의서 {next.slice(5).replace("-", "/")}</span>}
+                {r.is_active && <span>다음 결제일 {next.slice(5).replace("-", "/")}</span>}
                 {r.last && lastBadge && (
                   <span className="inline-flex items-center gap-1">
                     최근 {r.last.period.slice(5).replace("-", "/")}분 <span className={`rounded-full px-2 py-0.5 ${lastBadge.className}`}>{lastBadge.label}</span>
@@ -300,6 +305,13 @@ function RecurringForm({
           ))}
         </select>
       </Field>
+      {v.paymentMethod === "corporate_card" && (
+        <div className="sm:col-span-2">
+          <Field label="카드 내역 가맹점 이름 (선택)" hint="카드사 내역에 찍히는 가맹점 이름의 일부(예: AUTODESK, NOTION). 비우면 서비스명으로 찾아요.">
+            <input className={inputClass} value={v.merchantKeyword} onChange={(e) => set("merchantKeyword", e.target.value)} placeholder="예: AUTODESK" maxLength={60} />
+          </Field>
+        </div>
+      )}
       <div className="sm:col-span-2">
         <Field label="메모 (선택)">
           <input className={inputClass} value={v.memo} onChange={(e) => set("memo", e.target.value)} placeholder="예: 팀 10명 좌석, 연 결제 전환 검토" maxLength={200} />

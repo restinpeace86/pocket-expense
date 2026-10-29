@@ -13,6 +13,9 @@ const TEMPLATE_LABEL: Record<string, string> = {
   REMINDER: "독촉",
   RECURRING_READY: "정기 결제 준비",
   CLOSING: "월말 마감",
+  TAX_CLOSED: "세무사무소 마감 알림",
+  TAX_REQUEST: "세무사무소 자료 요청",
+  TAX_OFFICE_INVITE: "세무사무소 초대",
 };
 
 export type NotificationRow = {

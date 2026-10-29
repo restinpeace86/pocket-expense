@@ -785,7 +785,9 @@ export type Database = {
           agent_phone: string | null
           assigned_member_id: string | null
           company_id: string
+          connect_code: string | null
           created_at: string
+          custom_titles: boolean
           office_email: string
           office_id: string | null
           office_name: string
@@ -800,7 +802,9 @@ export type Database = {
           agent_phone?: string | null
           assigned_member_id?: string | null
           company_id: string
+          connect_code?: string | null
           created_at?: string
+          custom_titles?: boolean
           office_email: string
           office_id?: string | null
           office_name: string
@@ -815,7 +819,9 @@ export type Database = {
           agent_phone?: string | null
           assigned_member_id?: string | null
           company_id?: string
+          connect_code?: string | null
           created_at?: string
+          custom_titles?: boolean
           office_email?: string
           office_id?: string | null
           office_name?: string
@@ -1256,6 +1262,7 @@ export type Database = {
           end_lng: number | null
           end_location: string | null
           evidence_kind: Database["public"]["Enums"]["evidence_kind"] | null
+          evidence_substitute: Json | null
           evidence_type: Database["public"]["Enums"]["evidence_type"] | null
           expense_date: string | null
           headcount: number | null
@@ -1334,6 +1341,7 @@ export type Database = {
           end_lng?: number | null
           end_location?: string | null
           evidence_kind?: Database["public"]["Enums"]["evidence_kind"] | null
+          evidence_substitute?: Json | null
           evidence_type?: Database["public"]["Enums"]["evidence_type"] | null
           expense_date?: string | null
           headcount?: number | null
@@ -1412,6 +1420,7 @@ export type Database = {
           end_lng?: number | null
           end_location?: string | null
           evidence_kind?: Database["public"]["Enums"]["evidence_kind"] | null
+          evidence_substitute?: Json | null
           evidence_type?: Database["public"]["Enums"]["evidence_type"] | null
           expense_date?: string | null
           headcount?: number | null
@@ -1606,6 +1615,7 @@ export type Database = {
           month: string
           preview: Json
           row_count: number
+          uploaded_by_kind: string
           uploaded_by_name: string | null
         }
         Insert: {
@@ -1621,6 +1631,7 @@ export type Database = {
           month: string
           preview?: Json
           row_count?: number
+          uploaded_by_kind?: string
           uploaded_by_name?: string | null
         }
         Update: {
@@ -1636,6 +1647,7 @@ export type Database = {
           month?: string
           preview?: Json
           row_count?: number
+          uploaded_by_kind?: string
           uploaded_by_name?: string | null
         }
         Relationships: [
@@ -2324,6 +2336,7 @@ export type Database = {
           id: string
           is_active: boolean
           memo: string | null
+          merchant_keyword: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           service_name: string
           starts_on: string
@@ -2341,6 +2354,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           memo?: string | null
+          merchant_keyword?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           service_name: string
           starts_on?: string
@@ -2358,6 +2372,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           memo?: string | null
+          merchant_keyword?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           service_name?: string
           starts_on?: string
@@ -2486,6 +2501,123 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tax_office_members_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "tax_offices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_office_push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_sent_at: string | null
+          office_member_id: string
+          p256dh: string
+          user_agent: string | null
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_sent_at?: string | null
+          office_member_id: string
+          p256dh: string
+          user_agent?: string | null
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_sent_at?: string | null
+          office_member_id?: string
+          p256dh?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_office_push_subscriptions_office_member_id_fkey"
+            columns: ["office_member_id"]
+            isOneToOne: false
+            referencedRelation: "tax_office_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_office_requests: {
+        Row: {
+          answer: string | null
+          answered_at: string | null
+          answered_by_name: string | null
+          body: string
+          company_id: string
+          created_at: string
+          id: string
+          item_id: string | null
+          item_label: string | null
+          month: string
+          office_id: string | null
+          office_name: string | null
+          requested_by_name: string | null
+          resolved_at: string | null
+          status: string
+        }
+        Insert: {
+          answer?: string | null
+          answered_at?: string | null
+          answered_by_name?: string | null
+          body: string
+          company_id: string
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_label?: string | null
+          month: string
+          office_id?: string | null
+          office_name?: string | null
+          requested_by_name?: string | null
+          resolved_at?: string | null
+          status?: string
+        }
+        Update: {
+          answer?: string | null
+          answered_at?: string | null
+          answered_by_name?: string | null
+          body?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_label?: string | null
+          month?: string
+          office_id?: string | null
+          office_name?: string | null
+          requested_by_name?: string | null
+          resolved_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_office_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_office_requests_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "expense_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_office_requests_office_id_fkey"
             columns: ["office_id"]
             isOneToOne: false
             referencedRelation: "tax_offices"
@@ -2636,7 +2768,26 @@ export type Database = {
         }
         Returns: string
       }
+      add_hometax_upload_office: {
+        Args: {
+          p_company_id: string
+          p_file_name: string
+          p_file_path: string
+          p_file_size: number
+          p_header: Json
+          p_kind: string
+          p_memo: string
+          p_month: string
+          p_preview: Json
+          p_row_count: number
+        }
+        Returns: string
+      }
       admin_dashboard: { Args: { p_month: string }; Returns: Json }
+      answer_tax_office_request: {
+        Args: { p_answer: string; p_id: string }
+        Returns: undefined
+      }
       app_admin_company_overview: {
         Args: { p_month: string }
         Returns: {
@@ -2701,6 +2852,7 @@ export type Database = {
       close_tax_office: { Args: { p_confirm_name: string }; Returns: string[] }
       closing_admin_targets: { Args: { p_today?: string }; Returns: Json }
       closing_calendar: { Args: { p_month: string }; Returns: Json }
+      connect_tax_office_by_code: { Args: { p_code: string }; Returns: string }
       consume_receipt_credit: {
         Args: {
           p_event_amount: number
@@ -2729,8 +2881,28 @@ export type Database = {
         Args: { p_claim_id: string; p_is_pdf?: boolean; p_thumb_ext?: string }
         Returns: Json
       }
+      create_recurring_claim_from_card: {
+        Args: {
+          p_amount: number
+          p_date: string
+          p_last4: string
+          p_merchant: string
+          p_recurring_id: string
+        }
+        Returns: string
+      }
+      create_tax_office_request: {
+        Args: {
+          p_body: string
+          p_company_id: string
+          p_item_id: string
+          p_month: string
+        }
+        Returns: string
+      }
       deactivate_member: { Args: { p_member_id: string }; Returns: undefined }
       delete_hometax_upload: { Args: { p_id: string }; Returns: string }
+      delete_hometax_upload_office: { Args: { p_id: string }; Returns: string }
       delete_tax_office_template: { Args: { p_id: string }; Returns: string }
       detach_item_evidence: { Args: { p_item_id: string }; Returns: Json }
       detach_odometer_photo: {
@@ -2796,6 +2968,7 @@ export type Database = {
       }
       move_item_to_new_claim: { Args: { p_item_id: string }; Returns: Json }
       my_company_tax_office: { Args: never; Returns: Json }
+      my_company_tax_office_code: { Args: never; Returns: string }
       my_company_tax_templates: {
         Args: never
         Returns: {
@@ -2819,6 +2992,7 @@ export type Database = {
       push_deadline_targets: { Args: { p_today?: string }; Returns: Json }
       reactivate_member: { Args: { p_member_id: string }; Returns: undefined }
       record_perf_events: { Args: { p_events: Json }; Returns: number }
+      recurring_personal_due: { Args: { p_today?: string }; Returns: Json }
       refresh_claim_totals: { Args: { p_claim_id: string }; Returns: Json }
       regenerate_invite_code: { Args: never; Returns: string }
       regenerate_tax_office_code: { Args: never; Returns: string }
@@ -2899,7 +3073,7 @@ export type Database = {
       }
       save_tax_office_default_titles: {
         Args: { p_company_id: string }
-        Returns: undefined
+        Returns: Json
       }
       save_tax_office_template: {
         Args: {
@@ -2983,6 +3157,10 @@ export type Database = {
         Args: { p_member_id: string; p_status: string }
         Returns: undefined
       }
+      set_tax_office_request_status: {
+        Args: { p_id: string; p_resolved: boolean }
+        Returns: undefined
+      }
       submit_claim: {
         Args: { p_claim_id: string }
         Returns: Database["public"]["Enums"]["claim_status"]
@@ -2998,6 +3176,16 @@ export type Database = {
           p_useful_feature: string
         }
         Returns: number
+      }
+      substitute_card_evidence: {
+        Args: {
+          p_amount: number
+          p_date: string
+          p_item_id: string
+          p_last4: string
+          p_merchant: string
+        }
+        Returns: undefined
       }
       tax_month_export: { Args: { p_month: string }; Returns: Json }
       tax_month_items: {
@@ -3022,6 +3210,7 @@ export type Database = {
           linked_at: string
         }[]
       }
+      tax_office_connect_info: { Args: { p_code: string }; Returns: Json }
       tax_office_default_titles: { Args: never; Returns: Json }
       tax_office_member_list: {
         Args: never
@@ -3038,6 +3227,10 @@ export type Database = {
       }
       tax_office_month_export: {
         Args: { p_company_id: string; p_month: string }
+        Returns: Json
+      }
+      tax_office_notice_targets: {
+        Args: { p_company_id: string }
         Returns: Json
       }
       tax_office_override_item_account_title: {

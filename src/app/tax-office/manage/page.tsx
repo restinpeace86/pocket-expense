@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CloseOfficeSection, LeaveOfficeSection } from "@/components/tax-office/office-actions";
 import { OfficeInvite, OfficeMembers } from "@/components/tax-office/office-manage";
+import { PushToggle } from "@/components/push/push-toggle";
 import { DefaultTitlesApply, type DefaultTitles } from "@/components/tax-office/default-titles";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTaxOffice, getTaxOfficeClients, isActiveMember } from "@/lib/tax-office/queries";
@@ -29,6 +30,7 @@ async function Content() {
             {state.office_name}의 소속 세무사예요. 고객사 배정·초대·양식 관리는 사무소 관리자가 해요.
           </p>
         </div>
+        <PushToggle office />
         <LeaveOfficeSection officeName={state.office_name} />
       </>
     );
@@ -42,6 +44,7 @@ async function Content() {
         <h1 className="text-2xl font-bold tracking-tight">사무소 관리</h1>
         <p className="mt-1 break-keep text-sm text-zinc-600">소속 세무사·직원을 초대하고, 고객사 목록에서 담당을 배정해요. 세무사는 배정된 고객사만 볼 수 있어요.</p>
       </div>
+      <PushToggle office />
       <OfficeInvite code={state.invite_code} officeName={state.office_name} />
       <OfficeMembers members={members} myId={state.member_id} />
       <DefaultTitlesApply value={(defaults ?? null) as unknown as DefaultTitles} clients={clients.map((c) => ({ id: c.company_id, name: c.company_name }))} />

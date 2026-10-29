@@ -3,7 +3,7 @@
 import { AlertTriangle, CheckCircle2, FileSpreadsheet, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
-import { reconcileCardStatementAction, saveReconcileAction } from "@/app/workspace/[id]/admin/corporate-cards/reconcile/actions";
+import { createRecurringFromCardAction, reconcileCardStatementAction, saveReconcileAction, substituteCardEvidenceAction } from "@/app/workspace/[id]/admin/corporate-cards/reconcile/actions";
 import { useRouter } from "next/navigation";
 import { majorityMonth } from "@/lib/cards/saved";
 import { guardAction } from "@/lib/action-guard";
@@ -12,6 +12,7 @@ import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import { readStatementFile } from "@/lib/cards/read-statement";
 import type { ReconcileResult } from "@/lib/cards/reconcile";
+import type { StatementRow } from "@/lib/cards/statement";
 import { detectColumns, toRows, type Cell, type ColumnMap } from "@/lib/cards/statement";
 import { claimStatusBadge } from "@/lib/expense/status";
 import type { ClaimStatus } from "@/lib/expense/status";
@@ -217,14 +218,19 @@ function Results({ result: r, base, holders }: { result: ReconcileResult; base: 
           <p className="mt-2 text-sm text-zinc-500">없어요. 모든 결제에 영수증이 올라와 있어요.</p>
         ) : (
           <ul className="mt-3 divide-y divide-zinc-100 text-sm">
-            {r.missing.map((m, i) => (
-              <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-                <span className="tabular-nums text-zinc-500">{date(m.date)}</span>
-                <span className="min-w-0 flex-1 break-words font-medium">{m.merchant || "(가맹점 없음)"}</span>
-                <span className="font-semibold tabular-nums">{formatWon(m.amount)}</span>
-                <span className="w-full text-xs text-zinc-500 sm:w-auto">{cardOf(m.last4)}</span>
-              </li>
-            ))}
+            {r.missing.map((m, i) => {
+              const rec = r.recurring?.matches.find((x) => x.line === m.line);
+              return (
+                <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+                  <span className="tabular-nums text-zinc-500">{date(m.date)}</span>
+                  <span className="min-w-0 flex-1 break-words font-medium">{m.merchant || "(가맹점 없음)"}</span>
+                  <span className="font-semibold tabular-nums">{formatWon(m.amount)}</span>
+                  <span className="w-full text-xs text-zinc-500 sm:w-auto">{cardOf(m.last4)}</span>
+                  {/* 등록된 정기 결제와 맞으면 그 결제로 결의서(D-171) */}
+                  {rec && <RecurringRowAction rec={rec} row={m} />}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -258,6 +264,48 @@ function Results({ result: r, base, holders }: { result: ReconcileResult; base: 
         </section>
       )}
 
+      {r.matched.some((x) => x.item.noEvidence) && (
+        <section className={card}>
+          <h2 className="flex items-center gap-1.5 font-semibold text-blue-800">
+            <CheckCircle2 className="size-4" /> 증빙 없는 영수증이 카드 결제와 맞아요 ({r.matched.filter((x) => x.item.noEvidence).length})
+          </h2>
+          <p className="mt-1 break-keep text-sm text-zinc-600">
+            영수증을 잃어버려 &ldquo;자료가 정말 없어요&rdquo;로 올린 법인카드 영수증이에요. 이 카드 결제 내역으로 증빙을 대체할 수 있어요. 영수증 원본과 맞춰 본 것은 아니어서 세무 자료에 &ldquo;영수증 원본 대조 없음&rdquo;으로 표시돼요.
+          </p>
+          <ul className="mt-3 divide-y divide-zinc-100 text-sm">
+            {r.matched
+              .filter((x) => x.item.noEvidence)
+              .map(({ row, item }) => (
+                <li key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+                  <span className="tabular-nums text-zinc-500">{date(row.date)}</span>
+                  <span className="min-w-0 flex-1 break-words font-medium">{row.merchant || item.merchant}</span>
+                  <span className="font-semibold tabular-nums">{formatWon(row.amount)}</span>
+                  <ClaimLink base={base} id={item.claimId} title={item.claimTitle} status={item.claimStatus} member={item.memberName} />
+                  <SubstituteButton itemId={item.id} row={row} />
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
+
+      {!!r.recurring?.notFound.length && (
+        <section className={card}>
+          <h2 className="flex items-center gap-1.5 font-semibold text-amber-700">
+            <AlertTriangle className="size-4" /> 결제일인데 카드 내역에서 못 찾은 정기 결제 ({r.recurring.notFound.length})
+          </h2>
+          <p className="mt-1 break-keep text-sm text-zinc-600">해지했거나 금액·가맹점 이름이 바뀌었을 수 있어요. [설정 › 정기 결제]에서 금액·카드 내역 가맹점 이름을 확인해 주세요.</p>
+          <ul className="mt-3 divide-y divide-zinc-100 text-sm">
+            {r.recurring.notFound.map((n) => (
+              <li key={`${n.recurringId}-${n.due}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+                <span className="tabular-nums text-zinc-500">{date(n.due)}</span>
+                <span className="min-w-0 flex-1 break-words font-medium">{n.serviceName}</span>
+                <span className="font-semibold tabular-nums">약 {formatWon(n.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <details className={card}>
         <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1.5 font-semibold text-green-700 [&::-webkit-details-marker]:hidden">
           <CheckCircle2 className="size-4" /> 짝이 맞은 결제 ({r.matched.length}) {r.cancelled > 0 && <span className="text-sm font-normal text-zinc-500">· 취소 {r.cancelled}건 제외</span>}
@@ -265,6 +313,68 @@ function Results({ result: r, base, holders }: { result: ReconcileResult; base: 
         <MatchList list={r.matched} base={base} date={date} cardOf={cardOf} />
       </details>
     </div>
+  );
+}
+
+// 증빙 없음 → 카드 결제로 증빙 대체 (D-170)
+function SubstituteButton({ itemId, row }: { itemId: string; row: StatementRow }) {
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  if (done) return <span className="w-full text-xs font-medium text-emerald-700 sm:w-auto">✓ 카드 내역으로 증빙 대체됨</span>;
+  return (
+    <span className="flex w-full flex-col gap-1 sm:w-auto">
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          start(async () => {
+            setError(null);
+            const res = await guardAction(() => substituteCardEvidenceAction(itemId, { date: row.date, merchant: row.merchant, amount: row.amount, last4: row.last4 }));
+            if (!res.ok) return setError(res.error);
+            setDone(true);
+          })
+        }
+        className="inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+      >
+        {pending ? "처리 중..." : "카드 내역으로 증빙 대체"}
+      </button>
+      {error && <span role="alert" className="text-xs text-red-700">{error}</span>}
+    </span>
+  );
+}
+
+// 결의서 없는 카드 결제 = 등록된 정기 결제 → 담당자 앞으로 결의서 (D-171)
+function RecurringRowAction({ rec, row }: { rec: NonNullable<ReconcileResult["recurring"]>["matches"][number]; row: StatementRow }) {
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  return (
+    <span className="flex w-full flex-wrap items-center gap-2 text-xs">
+      <span className="rounded-full bg-violet-50 px-2 py-0.5 font-medium text-violet-800">
+        정기 결제: {rec.serviceName} · 담당 {rec.assignee}
+      </span>
+      {rec.claimed || done ? (
+        <span className="font-medium text-emerald-700">{done ? `✓ 결의서를 만들고 ${rec.assignee}님께 알렸어요` : "이번 기간 결의서가 이미 있어요"}</span>
+      ) : (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            start(async () => {
+              setError(null);
+              const res = await guardAction(() => createRecurringFromCardAction(rec.recurringId, { date: row.date, merchant: row.merchant, amount: row.amount, last4: row.last4 }));
+              if (!res.ok) return setError(res.error);
+              setDone(true);
+            })
+          }
+          className="inline-flex min-h-10 items-center rounded-lg bg-violet-600 px-3 font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+        >
+          {pending ? "만드는 중..." : "정기 결제로 처리"}
+        </button>
+      )}
+      {error && <span role="alert" className="text-red-700">{error}</span>}
+    </span>
   );
 }
 

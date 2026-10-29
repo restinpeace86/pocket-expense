@@ -17,6 +17,7 @@ export type DetailItem = {
   card_last4: string | null;
   evidence_type: EvidenceType | null;
   evidence_kind: EvidenceKind | null; // 증빙 자료 종류(D-108)
+  evidence_substitute?: unknown; // 카드 내역으로 증빙 대체(D-170·D-171)
   no_evidence_reason: string | null;
   expense_date: string | null;
   merchant_name: string | null;

@@ -27,9 +27,16 @@ export async function registerTaxOfficeAction(_prev: OfficeFormState, formData: 
     p_privacy_agreed: formData.get("privacy") === "on",
   });
   if (error) return { error: messageForDbError(error), values: { officeName: text(formData, "officeName"), businessNumber: text(formData, "businessNumber"), name: text(formData, "name"), phone: text(formData, "phone") } };
+  // 고객사 연결 링크로 들어왔으면 등록과 함께 연결(D-173). 실패해도 등록은 됐으니 사무소 화면으로
+  const code = text(formData, "connectCode");
+  let target = "/tax-office";
+  if (code) {
+    const { data: cid } = await supabase.rpc("connect_tax_office_by_code", { p_code: code });
+    if (cid) target = `/tax-office/${cid}`;
+  }
   // 같은 주소(/tax-office)로 돌아가므로 레이아웃(등록 화면 → 워크스페이스)을 새로 그리게 한다
   revalidatePath("/tax-office", "layout");
-  redirect("/tax-office");
+  redirect(target);
 }
 
 // 소속 세무사 합류(초대 코드)

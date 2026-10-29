@@ -77,22 +77,20 @@ select public._t_as55('a5500000-0000-0000-0000-000000000004');
 set local role authenticated;
 select public._t_raises55($q$select public.apply_tax_office_default_titles(array['c5500000-0000-0000-0000-00000000000b']::uuid[])$q$, 'NO_DEFAULT_TITLES', 'apply before save');
 select public._t_raises55($q$select public.save_tax_office_default_titles('c5500000-0000-0000-0000-00000000000c')$q$, 'NOT_FOUND', 'save from unlinked company');
-select public.save_tax_office_default_titles('c5500000-0000-0000-0000-00000000000a');
+-- 저장 = 개별 설정이 아닌 고객사(B)에 바로 적용(D-167)
+do $$
+declare r jsonb;
+begin
+  r := public.save_tax_office_default_titles('c5500000-0000-0000-0000-00000000000a');
+  if (r->>'companies')::int <> 1 or (r->>'changes')::int < 3 then raise exception 'FAIL [auto applied on save] %', r; end if;
+end;
+$$;
 do $$
 declare d jsonb := public.tax_office_default_titles();
 begin
   if d->>'source_name' <> '기본A' then raise exception 'FAIL [source] %', d; end if;
   if not exists (select 1 from jsonb_array_elements(d->'titles') e where e->>'name' = '회의비' and e->>'code' = '8299') then raise exception 'FAIL [titles saved]'; end if;
-end;
-$$;
-do $$
-declare r jsonb;
-begin
-  r := public.apply_tax_office_default_titles(array['c5500000-0000-0000-0000-00000000000b', 'c5500000-0000-0000-0000-00000000000c']::uuid[]);
-  if (r->>'companies')::int <> 1 then raise exception 'FAIL [unlinked skipped] %', r; end if;
-  if (r->>'changes')::int < 3 then raise exception 'FAIL [changes] %', r; end if;
-  r := public.apply_tax_office_default_titles(array['c5500000-0000-0000-0000-00000000000b']::uuid[]);
-  if (r->>'changes')::int <> 0 then raise exception 'FAIL [idempotent] %', r; end if;
+  if jsonb_array_length(d->'custom_company_ids') <> 0 then raise exception 'FAIL [no custom yet]'; end if;
 end;
 $$;
 reset role;
@@ -106,6 +104,59 @@ begin
        where m.company_id = 'c5500000-0000-0000-0000-00000000000b' and m.category = 'meeting') <> '회의비' then raise exception 'FAIL [mapping applied]'; end if;
   if (select count(*) from public.account_title_changes where company_id = 'c5500000-0000-0000-0000-00000000000b' and office_name = '기본세무' and actor_name = '기대표') < 3 then raise exception 'FAIL [history]'; end if;
   if exists (select 1 from public.account_titles where company_id = 'c5500000-0000-0000-0000-00000000000c' and name = '회의비') then raise exception 'FAIL [C untouched]'; end if;
+  if (select custom_titles from public.company_tax_offices where company_id = 'c5500000-0000-0000-0000-00000000000b') then raise exception 'FAIL [apply is not custom]'; end if;
+end;
+$$;
+
+-- 사무소가 B만 직접 고치면 B는 개별 설정 → 기본값을 다시 저장해도 B는 그대로
+select public._t_as55('a5500000-0000-0000-0000-000000000004');
+set local role authenticated;
+update public.account_titles set code = 'B999' where company_id = 'c5500000-0000-0000-0000-00000000000b' and name = '복리후생비';
+reset role;
+do $$ begin if not (select custom_titles from public.company_tax_offices where company_id = 'c5500000-0000-0000-0000-00000000000b') then raise exception 'FAIL [direct edit → custom]'; end if; end; $$;
+update public.account_titles set code = '8112' where company_id = 'c5500000-0000-0000-0000-00000000000a' and name = '복리후생비';
+select public._t_as55('a5500000-0000-0000-0000-000000000004');
+set local role authenticated;
+do $$
+declare r jsonb;
+begin
+  r := public.save_tax_office_default_titles('c5500000-0000-0000-0000-00000000000a');
+  if (r->>'companies')::int <> 0 then raise exception 'FAIL [custom skipped] %', r; end if;
+  if jsonb_array_length(public.tax_office_default_titles()->'custom_company_ids') <> 1 then raise exception 'FAIL [custom listed]'; end if;
+end;
+$$;
+reset role;
+do $$ begin if (select code from public.account_titles where company_id = 'c5500000-0000-0000-0000-00000000000b' and name = '복리후생비') <> 'B999' then raise exception 'FAIL [custom kept]'; end if; end; $$;
+
+-- [기본값으로 되돌리기]
+select public._t_as55('a5500000-0000-0000-0000-000000000004');
+set local role authenticated;
+do $$
+declare r jsonb;
+begin
+  r := public.apply_tax_office_default_titles(array['c5500000-0000-0000-0000-00000000000b', 'c5500000-0000-0000-0000-00000000000c']::uuid[]);
+  if (r->>'companies')::int <> 1 then raise exception 'FAIL [unlinked skipped] %', r; end if;
+  r := public.apply_tax_office_default_titles(array['c5500000-0000-0000-0000-00000000000b']::uuid[]);
+  if (r->>'changes')::int <> 0 then raise exception 'FAIL [idempotent] %', r; end if;
+end;
+$$;
+reset role;
+do $$
+begin
+  if (select code from public.account_titles where company_id = 'c5500000-0000-0000-0000-00000000000b' and name = '복리후생비') <> '8112' then raise exception 'FAIL [reverted to default]'; end if;
+  if (select custom_titles from public.company_tax_offices where company_id = 'c5500000-0000-0000-0000-00000000000b') then raise exception 'FAIL [custom cleared]'; end if;
+end;
+$$;
+
+-- 새로 연결되는 회사(C)는 연결되는 순간 기본값 + 요약 이력 1줄
+select public._t_as55('a5500000-0000-0000-0000-000000000003');
+set local role authenticated;
+select public.set_company_tax_office('기본세무', 'office55@test.local', null, null, null);
+reset role;
+do $$
+begin
+  if (select code from public.account_titles where company_id = 'c5500000-0000-0000-0000-00000000000c' and name = '복리후생비') <> '8112' then raise exception 'FAIL [new client gets default]'; end if;
+  if not exists (select 1 from public.account_title_changes where company_id = 'c5500000-0000-0000-0000-00000000000c' and detail->>'summary' = '세무사무소 기본 계정과목 적용') then raise exception 'FAIL [summary history]'; end if;
 end;
 $$;
 

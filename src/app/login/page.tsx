@@ -53,7 +53,7 @@ async function LoginContent({ searchParams }: { searchParams: PageProps<"/login"
           {ERRORS[errorKey]}
         </p>
       )}
-      {next?.startsWith("/tax-office") && (
+      {(next?.startsWith("/tax-office") || next?.startsWith("/tax-connect/")) && (
         <p className="break-keep rounded-xl bg-brand-50 px-3 py-2 text-sm text-brand-900">
           <b>세무사무소 계정</b>으로 로그인해요. 고객사(회사) 계정과는 따로이고, 사무소 이용은 무료예요.
         </p>
@@ -61,7 +61,7 @@ async function LoginContent({ searchParams }: { searchParams: PageProps<"/login"
       <OAuthButtons next={next} />
       {/* 세무사무소 입구(D-163): 세무사·회계사 사무소는 여기서 사무소 화면으로 */}
       <p className="text-center text-sm text-zinc-500">
-        {next?.startsWith("/tax-office") ? (
+        {next?.startsWith("/tax-office") || next?.startsWith("/tax-connect/") ? (
           <Link href="/login" className="inline-flex min-h-11 items-center underline underline-offset-2">
             회사(경비 관리)로 시작하기
           </Link>

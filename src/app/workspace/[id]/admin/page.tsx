@@ -32,19 +32,30 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
   const membership = await requireWorkspace(id, { admin: true });
   const supabase = await createClient();
   const weekAgo = daysAgoIso(7);
-  const [{ company }, credit, dashboard, notices, { count: titleChanges }] = await Promise.all([
+  const [{ company }, credit, dashboard, notices, { count: titleChanges }, { count: openRequests }] = await Promise.all([
     getCompanySummary(membership.company_id),
     getCreditStatus(membership.company_id),
     getDashboard(currentMonthKst()),
     getRecentNotices(),
     // 세무사무소가 최근 7일 안에 계정과목을 바꿨으면 알림(D-152)
     supabase.from("account_title_changes").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
+    // 세무사무소가 남긴 답변 기다리는 자료 요청(D-169)
+    supabase.from("tax_office_requests").select("id", { count: "exact", head: true }).eq("status", "open"),
   ]);
   if (!company || !dashboard) return null;
   return (
     <>
       {/* 이벤트 추가 지급 뒤 처음 접속하면 상단 배너 (pricing-policy.md §5) */}
       {credit?.showEventBanner && <EventBonusBanner amount={credit.eventAmount} count={credit.eventCount} total={credit.eventTotal} />}
+      {!!openRequests && (
+        <Link
+          href={`/workspace/${membership.company_id}/admin/export#tax-requests`}
+          className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 hover:bg-amber-100"
+        >
+          <span className="break-keep">세무사무소가 자료를 요청했어요({openRequests}건). 답변을 기다리고 있어요.</span>
+          <span className="shrink-0 font-semibold">답변하기 →</span>
+        </Link>
+      )}
       {!!titleChanges && (
         <Link
           href={`/workspace/${membership.company_id}/admin/spending`}

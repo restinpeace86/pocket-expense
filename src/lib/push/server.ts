@@ -21,7 +21,9 @@ export function pushConfigured(): boolean {
   return (configured = true);
 }
 
-async function sendAll(admin: Admin, subs: Sub[], payload: PushPayload): Promise<{ sent: number; failed: number; byMember: Map<string, number> }> {
+// table: 회사 멤버 구독(push_subscriptions) / 세무사무소 구성원 구독(tax_office_push_subscriptions, D-168)
+type SubTable = "push_subscriptions" | "tax_office_push_subscriptions";
+async function sendAll(admin: Admin, subs: Sub[], payload: PushPayload, table: SubTable = "push_subscriptions"): Promise<{ sent: number; failed: number; byMember: Map<string, number> }> {
   const byMember = new Map<string, number>();
   let sent = 0;
   let failed = 0;
@@ -43,9 +45,9 @@ async function sendAll(admin: Admin, subs: Sub[], payload: PushPayload): Promise
       }),
     );
   }
-  if (gone.length) await admin.from("push_subscriptions").delete().in("id", gone);
+  if (gone.length) await admin.from(table).delete().in("id", gone);
   const ok = subs.filter((s) => !gone.includes(s.id)).map((s) => s.id);
-  if (ok.length && sent) await admin.from("push_subscriptions").update({ last_sent_at: new Date().toISOString() }).in("id", ok);
+  if (ok.length && sent) await admin.from(table).update({ last_sent_at: new Date().toISOString() }).in("id", ok);
   return { sent, failed, byMember };
 }
 
@@ -101,4 +103,14 @@ export async function pushToAll(payload: Omit<PushPayload, "url">, urlFor: (comp
     if (data.length < 1000) break;
   }
   return { sent, failed };
+}
+
+// 세무사무소 구성원에게 (D-168). 부르는 쪽이 대상(담당 세무사·사무소 관리자)을 먼저 정한다
+export async function pushToOfficeMembers(officeMemberIds: string[], payload: PushPayload): Promise<{ sent: number; failed: number }> {
+  const admin = createAdminClient();
+  if (!admin || !pushConfigured() || !officeMemberIds.length) return { sent: 0, failed: 0 };
+  const { data } = await admin.from("tax_office_push_subscriptions").select("id, office_member_id, endpoint, p256dh, auth").in("office_member_id", [...new Set(officeMemberIds)]);
+  const subs = (data ?? []).map((s) => ({ id: s.id, member_id: s.office_member_id, endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth }));
+  const r = await sendAll(admin, subs, payload, "tax_office_push_subscriptions");
+  return { sent: r.sent, failed: r.failed };
 }

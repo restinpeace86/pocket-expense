@@ -16,6 +16,7 @@ const code = (c: string | null | undefined) => (c ? `코드 ${c}` : "코드 없�
 
 export function describeChange(c: AccountTitleChange): string {
   const d = c.detail;
+  if (d.summary) return `${d.summary}${d.count ? ` (${d.count}군데)` : ""}`; // 연결될 때 기본값 적용 요약(D-167)
   if (c.entity === "item") {
     const amt = d.amount ? ` ${Number(d.amount).toLocaleString("ko-KR")}원` : "";
     return `영수증 ${d.expense_date ?? ""} ${d.merchant ?? ""}${amt}: ${d.old_title ?? "(없음)"} → ${d.new_title ?? "(없음)"}${d.reverted ? " (분류 기준으로 되돌림)" : ""}`;

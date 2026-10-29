@@ -59,6 +59,7 @@ describe("destinationAfterLogin", () => {
   });
   it("세무사무소(D-149): 소속이 없으면 세무사무소 화면, 회사 멤버이면 원래대로, /tax-office·/tax-join next는 그대로", () => {
     expect(destinationAfterLogin(null, null, { taxAgent: true })).toBe("/tax-office");
+    expect(destinationAfterLogin(null, "/tax-connect/ABCDEFGH23")).toBe("/tax-connect/ABCDEFGH23"); // 고객사 연결 링크(D-173)
     expect(destinationAfterLogin(null, null, { taxAgent: false })).toBe("/onboarding");
     expect(destinationAfterLogin(null, "/onboarding/create-company", { taxAgent: true })).toBe("/onboarding/create-company");
     expect(destinationAfterLogin(member(), null, { taxAgent: true })).toBe(`/workspace/${A}/employee`);

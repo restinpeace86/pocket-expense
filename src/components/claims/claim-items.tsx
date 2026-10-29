@@ -63,6 +63,7 @@ function ItemBadges({ i, flagged }: { i: DetailItem; flagged: boolean }) {
   else if (i.evidence_kind && i.evidence_kind !== "receipt") badges.push([EVIDENCE_KIND_LABEL[i.evidence_kind], "bg-sky-100 text-sky-800"]);
   if (i.duplicate) badges.push(["중복 의심", "bg-amber-200 text-amber-900"]);
   if (i.overdueDeadline) badges.push([`늦은 청구 · 다음 달 정산(마감 ${Number(i.overdueDeadline.slice(5, 7))}/${Number(i.overdueDeadline.slice(8))})`, "bg-amber-100 text-amber-800"]);
+  if (i.evidence_substitute) badges.push(["카드 내역으로 증빙 대체 · 영수증 원본 대조 없음", "bg-blue-100 text-blue-800"]);
   for (const a of i.anomalies ?? []) badges.push([a, "bg-orange-100 text-orange-800"]);
   const edited = editedFields(i);
   if (edited.length) badges.push([`직원 수정: ${edited.join("·")}`, "bg-violet-100 text-violet-800"]);

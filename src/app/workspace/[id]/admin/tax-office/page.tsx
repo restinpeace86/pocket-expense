@@ -22,8 +22,8 @@ export default function CompanyTaxOfficePage({ params }: PageProps<"/workspace/[
               내용), 영수증, 세무용 엑셀이에요. 계정과목·계정코드와 분류 연결은 세무사무소도 고칠 수 있어요.
             </p>
             <p>
-              <b>어떻게 연결되나요?</b> 세무사무소 이메일을 넣고 저장하면, 그 사무소가 PocketExpense에 이미 있으면 바로 사무소의 고객사 목록에 우리 회사가 보여요.
-              아직 없으면 그 이메일(구글·카카오 계정)로 로그인해 세무사무소를 등록하는 순간 함께 보여요.
+              <b>어떻게 연결되나요?</b> 저장하면 우리 회사 전용 <b>연결 링크</b>가 생겨요. 담당 세무사 휴대폰 번호를 적어 두면 그 링크가 카카오 알림톡으로 가고(발송 서비스 연결 뒤),
+              [안내 복사]로 직접 보낼 수도 있어요. 세무사무소가 그 링크로 들어와 로그인하면 어떤 계정이든 바로 연결돼요. 세무사무소 이메일과 같은 계정으로 로그인해도 연결돼요.
             </p>
             <p>
               <b>담당 세무사는?</b> 사무소가 소속 세무사 중에서 배정해요. 담당 세무사 이메일을 알고 있으면 적어 두세요 — 그 세무사가 사무소에 합류하면 자동으로
@@ -50,6 +50,6 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/ta
   const { id } = await params;
   const membership = await requireWorkspace(id, { admin: true });
   const supabase = await createClient();
-  const { data } = await supabase.rpc("my_company_tax_office");
-  return <CompanyTaxOfficeForm current={(data ?? null) as CompanyTaxOffice | null} companyName={membership.company_name} />;
+  const [{ data }, { data: code }] = await Promise.all([supabase.rpc("my_company_tax_office"), supabase.rpc("my_company_tax_office_code")]);
+  return <CompanyTaxOfficeForm current={(data ?? null) as CompanyTaxOffice | null} companyName={membership.company_name} connectCode={(code as string | null) ?? null} />;
 }
