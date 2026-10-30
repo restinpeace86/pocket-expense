@@ -1,4 +1,4 @@
-import { Building2, FileSpreadsheet, MessageCircle, ScanLine } from "lucide-react";
+import { Building2, CreditCard, FileSpreadsheet, MessageCircle, ScanLine } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AiSimulator } from "@/components/landing/ai-simulator";
@@ -36,8 +36,14 @@ const FEATURES = [
   },
   {
     icon: FileSpreadsheet,
-    title: "월말 마감 원클릭",
-    body: "세무사무소에 넘길 지출내역 엑셀 + 영수증 원본 + 지출결의서 PDF를 한 번에 내려받습니다.",
+    title: "월말 마감, 세무사무소에 바로",
+    body: "지출내역 엑셀 + 영수증 원본 + 지출결의서 PDF를 한 번에. 압축해서 이메일로 보낼 필요 없이, 세무사무소는 무료 전용 화면에서 바로 보고 내려받습니다.",
+  },
+  // 법인카드 내역 대조(D-111·D-154). 홈택스 파일 대조는 아직 아니라(8-12 보류) '카드사 사용 내역'이라고만 쓴다(D-181)
+  {
+    icon: CreditCard,
+    title: "법인카드 내역 자동 대조",
+    body: "월말에 카드사 사용 내역 파일(엑셀·CSV)만 올리세요. 직원이 올린 영수증과 날짜·금액·카드 끝 4자리로 맞춰, 결의서 없는 카드 결제와 사비로 잘못 올린 법인카드 결제를 찾아냅니다.",
   },
 ];
 
@@ -95,12 +101,12 @@ export default function LandingPage() {
       </header>
 
       <section className="mx-auto max-w-5xl px-4 py-16">
-        <ul className="grid gap-4 md:grid-cols-3">
+        <ul className="grid gap-4 md:grid-cols-2">
           {FEATURES.map(({ icon: Icon, title, body }) => (
             <li key={title} className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
               <Icon className="size-7 text-blue-300" />
               <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-300">{body}</p>
+              <p className="mt-2 break-keep text-sm leading-relaxed text-zinc-300">{body}</p>
             </li>
           ))}
         </ul>
