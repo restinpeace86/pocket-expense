@@ -3,6 +3,7 @@
 import { Bell, Check, FileSpreadsheet, FileText, RotateCcw, ScanLine, Send, Sparkles, Upload } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useSeen } from "./use-seen";
 
 // 랜딩 "AI 영수증 처리 미리보기" (7차 개선사항 10, D-131 → D-140 → D-141)
 // 단계마다 "행동 → 결과" 두 장면: ① 사진 올리기 → AI LLM이 읽은 것 ② 결의서 칸 자동 채움 → [결재 올리기], 결재 요청 알림 보냄
@@ -155,25 +156,17 @@ export function AiSimulator({ startHref }: { startHref: string }) {
 
   useEffect(() => {
     reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const el = box.current;
-    if (!el) return;
-    // 시연 카드가 화면 가운데(위아래 30%를 뺀 띠)에 들어오면 = 지금 보고 있을 때 시작. 긴 카드(휴대폰)도 같은 기준
-    const io = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.some((e) => e.isIntersecting);
-        if (visible && !playing.current && !seen.current) play();
-        else if (!visible && playing.current) stopUnseen();
-      },
-      { rootMargin: "-30% 0px -30% 0px", threshold: 0 },
-    );
-    io.observe(el);
-    return () => {
-      io.disconnect();
-      clear();
-    };
-    // 처음 한 번만 연결
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return clear;
   }, []);
+
+  // 사람이 시연 카드를 보고 있을 때(useSeen, D-182) 시작 — 끝나기 전에 거의 벗어나거나 다른 탭으로 가면 처음 모습으로 돌린다
+  const active = useSeen(box);
+  useEffect(() => {
+    if (active && !playing.current && !seen.current) play();
+    else if (!active && playing.current) stopUnseen();
+    // play·stopUnseen은 ref·setter만 쓴다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
 
   const stepDone = (i: number) => step > i || (i === 2 && phase === 2);
   const reading = step === 0 && uploaded && reads < READS.length;
