@@ -21,7 +21,7 @@ async function Content() {
   const state = await getMyTaxOffice();
   if (!isActiveMember(state)) return null;
   const supabase = await createClient();
-  const [{ data }, preview] = await Promise.all([supabase.rpc("tax_office_template_list"), taxWorkbookPreview(SAMPLE_EXPORT_ROWS)]);
+  const [{ data }, preview] = await Promise.all([supabase.rpc("tax_office_template_list"), taxWorkbookPreview({ month: "2026-10", companyName: "예시회사", rows: SAMPLE_EXPORT_ROWS, preview: false, cardReconcile: null })]);
   const notes = new Map(taxWorkbookLayout().map((s) => [s.sheet, s.note]));
   return (
     <>

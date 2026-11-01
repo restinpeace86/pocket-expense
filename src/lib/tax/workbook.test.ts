@@ -24,7 +24,7 @@ const row = (o: Partial<ExportRow>): ExportRow =>
 
 describe("세무 마감 엑셀", () => {
   it("결산 양식 미리보기(D-186): 예시 지출로 만든 시트 그대로 — 위하고 사비 1건 = 차변·대변 두 줄, 연도는 쉼표 없이", async () => {
-    const p = await taxWorkbookPreview(SAMPLE_EXPORT_ROWS);
+    const p = await taxWorkbookPreview({ month: "2026-10", companyName: "예시회사", rows: SAMPLE_EXPORT_ROWS, preview: false, cardReconcile: null });
     expect(p.map((s) => s.sheet)).toEqual(taxWorkbookLayout().map((s) => s.sheet));
     const j = p.find((s) => s.sheet === "위하고 일반전표(사비)")!;
     expect(j.rows[0].slice(0, 3)).toEqual(["연도", "월", "일"]);

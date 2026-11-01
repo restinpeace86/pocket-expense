@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { OfficeWorkbookPreview } from "@/components/tax-office/office-workbook-preview";
 import { TaxOfficeMonthView } from "@/components/tax-office/tax-office-month-view";
 import { currentMonthKst } from "@/lib/dates";
 import { MONTH } from "@/lib/tax/closing";
@@ -62,6 +63,13 @@ async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[co
       hometax={hometax}
       requests={requests}
       templates={(templates ?? []).map((t) => ({ id: t.id, name: t.name, target: t.target as TemplateTarget }))}
+      workbookPreview={
+        data.rows.length > 0 ? (
+          <Suspense key={`wb-${month}`} fallback={<div className="h-12 animate-pulse rounded-xl bg-zinc-100" />}>
+            <OfficeWorkbookPreview month={month} companyName={company.company_name} rows={data.rows} preview={data.status !== "closed"} cardReconcile={cardReconcile} />
+          </Suspense>
+        ) : null
+      }
     />
   );
 }

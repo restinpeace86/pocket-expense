@@ -17,3 +17,8 @@
 - `taxWorkbookPreview(rows)`: `buildTaxWorkbook`으로 실제 파일을 만든 뒤 ExcelJS로 다시 읽어 시트마다 위쪽 12줄을 글자로. 금액 서식(#,##0) 칸만 쉼표, 날짜는 YYYY-MM-DD.
 - 화면: 시트 탭 + 열 문자(A·B·C) + 줄 번호 + 첫 줄 머리글 강조, 표 안에서만 가로·세로 스크롤.
 - 단위 테스트: 위하고 일반전표(사비) 미리보기 = 여비교통비 차변 / 미지급금 대변 / 소모품비 차변 / 미지급금 대변, 연도 "2026".
+
+## D-187 세무 자료 화면 미리보기 (같은 날)
+- `taxWorkbookPreview(opts, maxRows)`가 `buildTaxWorkbook`과 같은 옵션을 받게 바꿈(예시·실제 자료 공용).
+- `WorkbookViewer`(엑셀 모양 표)를 `default-workbook-info.tsx`에서 분리해 두 화면이 같이 씀.
+- `src/components/tax-office/office-workbook-preview.tsx`: 그 회사·그 달 자료(다운로드와 같은 회사명·마감 여부·카드 대조)로 위쪽 20줄, 접힌 상태로 시작. 페이지에서 Suspense로 감싸 나머지 화면을 늦추지 않음. 승인된 지출이 없으면 안 보임.

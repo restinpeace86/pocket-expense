@@ -10,9 +10,6 @@ const colName = (i: number): string => (i < 26 ? String.fromCharCode(65 + i) : c
 
 // 결산 양식 화면 맨 위: 지금 고객사에 나가는 양식(D-185 → D-186). 기본 세무용 엑셀을 예시 지출로 실제로 만들어 시트 그대로 보여 준다
 export function DefaultWorkbookInfo({ sheets, officeTemplates }: { sheets: PreviewSheet[]; officeTemplates: string[] }) {
-  const [tab, setTab] = useState(0);
-  const s = sheets[tab];
-  const width = Math.max(0, ...s.rows.map((r) => r.length));
   return (
     <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm" aria-label="지금 고객사에 나가는 양식">
       <h2 className="font-semibold">지금 고객사에 나가는 양식</h2>
@@ -28,7 +25,18 @@ export function DefaultWorkbookInfo({ sheets, officeTemplates }: { sheets: Previ
         </p>
         <p className="break-keep text-xs text-zinc-500">예시 지출 3건(법인카드 1건 · 사비 2건)으로 실제 파일을 만들어 그대로 보여 드려요. 고객사 [세무 자료] › [세무용 엑셀 다운로드]로 받는 파일과 같은 모양이에요.</p>
       </div>
+      <WorkbookViewer sheets={sheets} />
+    </section>
+  );
+}
 
+// 엑셀 모양 보기: 시트 탭 · 열 문자 · 줄 번호 · 첫 줄 머리글(D-186). 세무 자료 화면에서도 씀(D-187)
+export function WorkbookViewer({ sheets, moreHint = "" }: { sheets: PreviewSheet[]; moreHint?: string }) {
+  const [tab, setTab] = useState(0);
+  const s = sheets[tab];
+  const width = Math.max(0, ...s.rows.map((r) => r.length));
+  return (
+    <>
       <div className="mt-3 flex gap-1 overflow-x-auto border-b border-zinc-200" role="tablist" aria-label="시트">
         {sheets.map((x, i) => (
           <button
@@ -45,7 +53,7 @@ export function DefaultWorkbookInfo({ sheets, officeTemplates }: { sheets: Previ
           </button>
         ))}
       </div>
-      <p className="mt-2 break-keep text-xs text-zinc-600">{s.note}</p>
+      {s.note && <p className="mt-2 break-keep text-xs text-zinc-600">{s.note}</p>}
 
       <div className="mt-2 max-h-[28rem] overflow-auto rounded-lg border border-zinc-300" role="tabpanel" aria-label={`${s.sheet} 시트`}>
         <table className="border-collapse text-xs">
@@ -81,7 +89,11 @@ export function DefaultWorkbookInfo({ sheets, officeTemplates }: { sheets: Previ
           </tbody>
         </table>
       </div>
-      {s.totalRows > s.rows.length && <p className="mt-1 text-xs text-zinc-500">위쪽 {s.rows.length}줄만 보여요(이 예시 파일은 {s.totalRows}줄).</p>}
-    </section>
+      {s.totalRows > s.rows.length && (
+        <p className="mt-1 break-keep text-xs text-zinc-500">
+          위쪽 {s.rows.length}줄만 보여요(이 파일은 {s.totalRows}줄).{moreHint && ` ${moreHint}`}
+        </p>
+      )}
+    </>
   );
 }

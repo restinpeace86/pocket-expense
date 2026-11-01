@@ -35,6 +35,7 @@ export function TaxOfficeMonthView({
   accountTitles = [],
   hometax = [],
   requests = [],
+  workbookPreview = null,
 }: {
   companyId: string;
   companyName: string;
@@ -43,6 +44,7 @@ export function TaxOfficeMonthView({
   months: string[];
   receiptUrls: Record<string, string>;
   templates?: TemplateLink[];
+  workbookPreview?: React.ReactNode; // 세무용 엑셀 미리보기(D-187) — 페이지가 Suspense로 감싸 넘긴다
   cardReconcile?: SavedReconcile | null;
   accountTitles?: { id: string; name: string; code: string | null }[]; // 영수증별 계정과목 조정(D-156)
   hometax?: HometaxUpload[]; // 회사가 올린 홈택스 자료(D-158)
@@ -123,6 +125,7 @@ export function TaxOfficeMonthView({
       </section>
       {/* 위하고 일반전표(사비) 시트 안내 (D-176) */}
       <p className="-mt-2 break-keep text-xs text-zinc-500">세무용 엑셀의 [위하고 일반전표(사비)] 시트는 사비 지출을 두 줄 전표(차변 비용 / 대변 253 미지급금·직원)로 만든 거예요. 위하고 일반전표 [엑셀올리기]에 올리세요. 법인카드는 넣지 않았어요(위하고 카드 자동수집과 겹치지 않게).</p>
+      {workbookPreview}
       {/* 회사가 한 법인카드 대조 결과와 처리(D-154) — 보기만 */}
       <CardReconcileStatus saved={cardReconcile} month={data.month} />
       {cardReconcile && cardReconcile.issues.length > 0 && <SavedReconcilePanel saved={cardReconcile} editable={false} />}

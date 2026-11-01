@@ -287,11 +287,12 @@ export function taxWorkbookLayout(): WorkbookSheetInfo[] {
   ];
 }
 
-// 결산 양식 화면 미리보기(D-186): 예시 지출로 실제 엑셀을 만들고 시트마다 위쪽 줄을 글자 그대로 읽는다 — 화면과 파일이 같은 모양
+// 엑셀 미리보기(D-186·D-187): 실제 엑셀을 만들고 시트마다 위쪽 줄을 글자 그대로 읽는다 — 화면과 파일이 같은 모양.
+// 결산 양식 화면은 예시 지출, 세무 자료 화면은 그 회사·그 달 실제 자료(다운로드와 같은 조건)
 export type WorkbookPreviewSheet = { sheet: string; rows: string[][]; totalRows: number };
-export async function taxWorkbookPreview(rows: ExportRow[], maxRows = 12): Promise<WorkbookPreviewSheet[]> {
+export async function taxWorkbookPreview(opts: Parameters<typeof buildTaxWorkbook>[0], maxRows = 12): Promise<WorkbookPreviewSheet[]> {
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(await buildTaxWorkbook({ month: "2026-10", companyName: "예시회사", rows, preview: false, cardReconcile: null }));
+  await wb.xlsx.load(await buildTaxWorkbook(opts));
   // 금액 서식(#,##0)이 붙은 칸만 천 단위 쉼표 — 연도·월·코드는 그대로
   const text = (v: ExcelJS.CellValue, fmt = ""): string => {
     if (v == null) return "";
