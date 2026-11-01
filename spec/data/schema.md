@@ -113,6 +113,7 @@
 | assigned_member_id | uuid | (assigned_member_id, office_id) FK tax_office_members (set null) | 사무소가 배정한 담당 세무사 |
 | updated_by_member_id | uuid | (member_id, company_id) FK, null | 마지막으로 저장한 회사 관리자 |
 - 세 테이블 모두 RLS 강제. 고객 읽기는 `company_tax_offices`만, 자기 회사 관리자만. 나머지는 모두 함수로(`spec/screens/tax-office.md` §4). 계정과목·분류 연결에는 사무소 정책(열람 가능한 회사만 조회·추가·수정).
+- D-189(migration 099): `company_tax_offices.card_via_hometax` boolean 기본 true(고객사 법인카드 내역을 홈택스로 받아 위하고에 넣는지 — 끄면 위하고 일반전표에 법인카드도), `tax_offices.main_template_id` → tax_office_templates(set null, null = 더존 위하고 일반전표). 바꾸기: `set_company_card_via_hometax`(그 고객사를 볼 수 있는 사무소 구성원), `set_tax_office_main_template`(사무소 관리자). 읽기: `tax_export_options(company)`(회사 관리자·볼 수 있는 사무소 구성원, 연결 없으면 기본값).
 
 ### 2.1a6 `tax_office_templates` — 세무사무소 월말 결산 양식 (D-150, migration 077)
 | 컬럼 | 타입 | 제약 | 설명 |

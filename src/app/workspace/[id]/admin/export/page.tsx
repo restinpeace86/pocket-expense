@@ -22,6 +22,7 @@ import { listTaxRequests } from "@/lib/tax-office/requests";
 import { TaxRequests } from "@/components/tax-office/tax-requests";
 import { claimCutoff, mdLabel, monthLabel, taxCloseDue } from "@/lib/expense/deadline";
 import { getHolidays } from "@/lib/expense/holidays";
+import { getExportOptions } from "@/lib/tax/export-options";
 
 export const metadata = { title: "세무 마감 · PocketExpense" };
 
@@ -60,7 +61,7 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   const supabase = await createClient();
   const [y0, m0] = month.split("-").map(Number);
   const nextFirst = new Date(Date.UTC(y0, m0, 1)).toISOString().slice(0, 10);
-  const [res, { data: templates }, { data: downloads }, cardRec, hometax, holidays, { data: pendingItems }, requests, formatRequests] = await Promise.all([
+  const [res, { data: templates }, { data: downloads }, cardRec, hometax, holidays, { data: pendingItems }, requests, formatRequests, exportOptions] = await Promise.all([
     getTaxMonth(month),
     supabase.rpc("my_company_tax_templates"),
     supabase.from("tax_export_downloads").select("id, actor_kind, actor_name, office_name, month, kind, template_name, row_count, closed, created_at").order("created_at", { ascending: false }).limit(20),
@@ -71,6 +72,7 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
     supabase.from("expense_items").select("claim_id, expense_claims!inner(status)").eq("company_id", membership.company_id).eq("expense_claims.status", "submitted").lt("expense_date", nextFirst).limit(1000),
     listTaxRequests(membership.company_id, month),
     listFormatRequests(membership.company_id),
+    getExportOptions(membership.company_id),
   ]);
   const pendingClaims = new Set((pendingItems ?? []).map((i) => i.claim_id)).size;
   const cutoff = claimCutoff(month, holidays);
@@ -102,6 +104,13 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
         disabled={res.data.rows.length === 0}
       />
       <TaxClosingView
+      mainSheetText={
+        exportOptions.main.kind === "template"
+          ? `세무사무소${exportOptions.officeName ? `(${exportOptions.officeName})` : ""}가 정한 [${exportOptions.main.name}] 양식대로 채운 시트도 함께 있어요.`
+          : exportOptions.main.includeCorporate
+            ? "법인카드·사비 지출을 더존 위하고 일반전표에 바로 올릴 수 있는 두 줄 전표(차변 비용 / 대변 미지급금) 시트도 함께 있어요."
+            : "사비 지출은 더존 위하고 일반전표에 바로 올릴 수 있는 두 줄 전표(차변 비용 / 대변 미지급금·직원) 시트도 함께 있어요."
+      }
       key={month}
       data={res.data}
       months={months.includes(month) ? months : [month, ...months]}
@@ -111,7 +120,7 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
       isSuper={membership.role === "super_admin"}
     />
       {/* 이카운트·세무사랑 등 다른 회계 프로그램 양식 접수(D-180) */}
-      <AccountingFormatRequest requests={formatRequests} addAction={addFormatRequestAction} />
+      <AccountingFormatRequest requests={formatRequests} addAction={addFormatRequestAction} mainLabel={exportOptions.main.kind === "template" ? `세무사무소가 정한 [${exportOptions.main.name}] 양식` : "더존 위하고 일반전표"} />
       {/* 홈택스에서 내려받은 자료 올리기 — 세무사무소도 보고 받음(D-158) */}
       <HometaxFiles key={`ht-${month}`} uploads={hometax} month={month} downloadBase={`/workspace/${id}/admin/export/hometax?id=`} viewer="company" uploadAction={uploadHometaxAction} deleteAction={deleteHometaxAction} />
       {/* 세무사무소 자료 요청(D-169) — 요청이 있을 때만 */}

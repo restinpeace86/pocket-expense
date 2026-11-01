@@ -1,11 +1,12 @@
 import { ChevronDown, FileSpreadsheet } from "lucide-react";
 import { taxWorkbookLayout, taxWorkbookPreview } from "@/lib/tax/workbook";
+import { MAIN_TAB } from "@/lib/tax/main-sheet";
 import { WorkbookViewer } from "./default-workbook-info";
 
 // 세무 자료 화면: [세무용 엑셀 다운로드] 전에 그 회사·그 달 실제 자료로 같은 파일을 만들어 엑셀 모양으로 미리보기(D-187)
 export async function OfficeWorkbookPreview(props: Parameters<typeof taxWorkbookPreview>[0]) {
   const sheets = await taxWorkbookPreview(props, 20);
-  const notes = new Map(taxWorkbookLayout().map((s) => [s.sheet, s.note]));
+  const notes = new Map(taxWorkbookLayout(props.main).map((s) => [s.sheet, s.note]));
   const [y, m] = props.month.split("-");
   return (
     // 접혀 있을 때도 눈에 띄게(D-188): 초록 테두리·배경 + 이 달·건수·시트 수 + [펼쳐 보기] 버튼 모양
@@ -32,7 +33,7 @@ export async function OfficeWorkbookPreview(props: Parameters<typeof taxWorkbook
         <p className="mt-3 break-keep text-xs text-zinc-500">
           [세무용 엑셀 다운로드]로 받을 파일을 이 달 자료로 똑같이 만들어 보여 드려요{props.preview ? "(회사 마감 전이라 파일 이름에 '_마감전'이 붙어요)" : ""}.
         </p>
-        <WorkbookViewer sheets={sheets.map((s) => ({ ...s, note: notes.get(s.sheet) ?? "" }))} moreHint="전체는 [세무용 엑셀 다운로드]로 받아 주세요." />
+        <WorkbookViewer sheets={sheets.map((s) => ({ ...s, note: notes.get(s.sheet) ?? "" }))} moreHint="전체는 [세무용 엑셀 다운로드]로 받아 주세요." initialTab={MAIN_TAB} />
       </div>
     </details>
   );

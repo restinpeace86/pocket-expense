@@ -564,6 +564,7 @@ async function Preview({
       return (
         <AdminShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/export">
           <TaxClosingView
+            mainSheetText="사비 지출은 더존 위하고 일반전표에 바로 올릴 수 있는 두 줄 전표(차변 비용 / 대변 미지급금·직원) 시트도 함께 있어요."
             data={{
               month: "2026-09",
               status: screen === "admin-export-closed" ? "closed" : "pending",

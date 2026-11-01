@@ -10,7 +10,7 @@ import { inputClass } from "@/components/ui/page-shell";
 type Add = (fd: FormData) => Promise<{ ok: true } | { ok: false; error: string }>;
 
 // 다른 회계 프로그램 양식 등록 (D-180): 이카운트 ERP·뉴젠 세무사랑을 쓰는 회사가 실제 엑셀 업로드 서식을 등록하면 운영자가 맞는 파일을 준비한다(지금은 접수만)
-export function AccountingFormatRequest({ requests, addAction }: { requests: FormatRequest[]; addAction: Add }) {
+export function AccountingFormatRequest({ requests, addAction, mainLabel }: { requests: FormatRequest[]; addAction: Add; mainLabel: string }) {
   const [program, setProgram] = useState<FormatProgram | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
@@ -18,7 +18,7 @@ export function AccountingFormatRequest({ requests, addAction }: { requests: For
     <section className="min-w-0 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5" aria-label="다른 회계 프로그램 양식">
       <h2 className="font-semibold">다른 회계 프로그램을 쓰시나요?</h2>
       <p className="mt-0.5 break-keep text-sm text-zinc-600">
-        세무 자료 엑셀에는 더존 위하고 일반전표 시트가 들어 있어요. 다른 프로그램을 쓰시면 실제 쓰는 엑셀 업로드 서식을 등록해 주세요.
+        세무 자료 엑셀에는 {mainLabel} 시트가 들어 있어요. 다른 프로그램을 쓰시면 실제 쓰는 엑셀 업로드 서식을 등록해 주세요.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {FORMAT_PROGRAMS.map((p) => (

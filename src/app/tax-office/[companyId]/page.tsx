@@ -10,6 +10,7 @@ import { getTaxOfficeClients, getTaxOfficeMonth, signTaxOfficeReceipts } from "@
 import type { TemplateTarget } from "@/lib/tax-office/template-fields";
 import { listHometax } from "@/lib/hometax/server";
 import { listTaxRequests } from "@/lib/tax-office/requests";
+import { getExportOptions } from "@/lib/tax/export-options";
 
 export const metadata = { title: "세무 자료 · PocketExpense 세무사무소" };
 
@@ -42,13 +43,14 @@ async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[co
   const data = await getTaxOfficeMonth(companyId, month);
   if (!data) notFound();
   const supabase = await createClient();
-  const [urls, { data: templates }, cardReconcile, { data: titles }, hometax, requests] = await Promise.all([
+  const [urls, { data: templates }, cardReconcile, { data: titles }, hometax, requests, exportOptions] = await Promise.all([
     signTaxOfficeReceipts(companyId, data.rows),
     supabase.rpc("tax_office_template_list"),
     getSavedReconcile(companyId, month),
     supabase.from("account_titles").select("id, name, code").eq("company_id", companyId).order("sort_order"),
     listHometax(companyId, month),
     listTaxRequests(companyId, month),
+    getExportOptions(companyId),
   ]);
   return (
     <TaxOfficeMonthView
@@ -63,10 +65,11 @@ async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[co
       hometax={hometax}
       requests={requests}
       templates={(templates ?? []).map((t) => ({ id: t.id, name: t.name, target: t.target as TemplateTarget }))}
+      exportOptions={exportOptions}
       workbookPreview={
         data.rows.length > 0 ? (
           <Suspense key={`wb-${month}`} fallback={<div className="h-12 animate-pulse rounded-xl bg-zinc-100" />}>
-            <OfficeWorkbookPreview month={month} companyName={company.company_name} rows={data.rows} preview={data.status !== "closed"} cardReconcile={cardReconcile} />
+            <OfficeWorkbookPreview month={month} companyName={company.company_name} rows={data.rows} preview={data.status !== "closed"} cardReconcile={cardReconcile} main={exportOptions.main} />
           </Suspense>
         ) : null
       }

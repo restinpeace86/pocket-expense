@@ -3,6 +3,7 @@ import { getMembership } from "@/lib/auth/session";
 import { isAdminRole } from "@/lib/auth/paths";
 import { getTaxMonth, MONTH } from "@/lib/tax/closing";
 import { buildTaxWorkbook } from "@/lib/tax/workbook";
+import { getExportOptions } from "@/lib/tax/export-options";
 import { logTaxExport } from "@/lib/tax/download-log";
 import { getSavedReconcile } from "@/lib/cards/saved-server";
 
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/workspace/[i
   if (!res.ok) return new NextResponse("Not Found", { status: 404 });
   if (!preview && res.data.status !== "closed") return new NextResponse("Not closed", { status: 409 });
   const cardReconcile = await getSavedReconcile(id, month); // 카드 대조 결과 시트(D-154)
-  const buf = await buildTaxWorkbook({ month, companyName: m.company_name, rows: res.data.rows, preview, cardReconcile });
+  const buf = await buildTaxWorkbook({ month, companyName: m.company_name, rows: res.data.rows, preview, cardReconcile, main: (await getExportOptions(id)).main });
   // 내려받기 기록(D-153): 패키지 장부 = 세무 마감 ZIP을 받을 때
   await logTaxExport(id, month, preview ? "preview" : "package", res.data.rows.length, res.data.status === "closed");
   const [y, mm] = month.split("-");

@@ -834,6 +834,7 @@ export type Database = {
           agent_name: string | null
           agent_phone: string | null
           assigned_member_id: string | null
+          card_via_hometax: boolean
           company_id: string
           connect_code: string | null
           created_at: string
@@ -851,6 +852,7 @@ export type Database = {
           agent_name?: string | null
           agent_phone?: string | null
           assigned_member_id?: string | null
+          card_via_hometax?: boolean
           company_id: string
           connect_code?: string | null
           created_at?: string
@@ -868,6 +870,7 @@ export type Database = {
           agent_name?: string | null
           agent_phone?: string | null
           assigned_member_id?: string | null
+          card_via_hometax?: boolean
           company_id?: string
           connect_code?: string | null
           created_at?: string
@@ -2747,6 +2750,7 @@ export type Database = {
           default_titles: Json | null
           id: string
           invite_code: string
+          main_template_id: string | null
           name: string
         }
         Insert: {
@@ -2760,6 +2764,7 @@ export type Database = {
           default_titles?: Json | null
           id?: string
           invite_code: string
+          main_template_id?: string | null
           name: string
         }
         Update: {
@@ -2773,9 +2778,18 @@ export type Database = {
           default_titles?: Json | null
           id?: string
           invite_code?: string
+          main_template_id?: string | null
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tax_offices_main_template_id_fkey"
+            columns: ["main_template_id"]
+            isOneToOne: false
+            referencedRelation: "tax_office_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -3176,6 +3190,10 @@ export type Database = {
         }
         Returns: Json
       }
+      set_company_card_via_hometax: {
+        Args: { p_company_id: string; p_value: boolean }
+        Returns: undefined
+      }
       set_company_fuel_mode: { Args: { p_mode: string }; Returns: undefined }
       set_company_per_diem: {
         Args: { p_amount: number; p_enabled: boolean }
@@ -3213,6 +3231,10 @@ export type Database = {
         Args: { p_claim_ids: string[]; p_name: string; p_path: string }
         Returns: number
       }
+      set_tax_office_main_template: {
+        Args: { p_template_id: string }
+        Returns: undefined
+      }
       set_tax_office_member_status: {
         Args: { p_member_id: string; p_status: string }
         Returns: undefined
@@ -3247,6 +3269,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      tax_export_options: { Args: { p_company_id: string }; Returns: Json }
       tax_month_export: { Args: { p_month: string }; Returns: Json }
       tax_month_items: {
         Args: { p_month: string }
@@ -3272,6 +3295,7 @@ export type Database = {
       }
       tax_office_connect_info: { Args: { p_code: string }; Returns: Json }
       tax_office_default_titles: { Args: never; Returns: Json }
+      tax_office_main_template_id: { Args: never; Returns: string }
       tax_office_member_list: {
         Args: never
         Returns: {

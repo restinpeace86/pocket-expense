@@ -124,4 +124,30 @@ describe("세무 마감 엑셀", () => {
     expect([...memo].reduce((n, ch) => n + (ch.charCodeAt(0) < 0x80 ? 1 : 2), 0)).toBeLessThanOrEqual(50);
     expect(wehagoJournalLines([row({ payment_method: "personal_card", company_supported_amount: 9000, category: null, merchant_name: "문구점", claim_description: "볼펜", purpose: null })])[0][9]).toBe("문구점 · 볼펜");
   });
+  it("법인카드 홈택스 수집을 끈 고객사(D-189): 법인카드도 두 줄 — 대변 거래처 = 카드, 개인부담은 적요에 별도 표시", () => {
+    const lines = wehagoJournalLines(
+      [
+        row({ payment_method: "corporate_card", card_nickname: "영업팀 카드", card_last4: "1234", company_supported_amount: 30000, personal_burden_amount: 3000, amount: 33000, account_title_code: "811" }),
+        row({ item_id: "p", payment_method: "personal_card", company_supported_amount: 9000 }),
+      ],
+      true,
+    );
+    expect(lines).toHaveLength(4);
+    expect([lines[0][4], lines[0][10], lines[1][4], lines[1][5], lines[1][8], lines[1][11]]).toEqual([3, 30000, 4, "253", "영업팀 카드 1234", 30000]);
+    expect(String(lines[0][9]).endsWith("(개인부담 3,000원 별도)")).toBe(true);
+    expect(lines[3][8]).toBe("김직원");
+    expect(wehagoJournalLines([row({ payment_method: "corporate_card" })], false)).toHaveLength(0);
+  });
+
+  it("사무소 결산 양식을 회계 프로그램 시트로(D-189): 위하고 시트 자리에 양식 이름 시트, 칸 순서·넣을 지출 그대로", async () => {
+    const main = { kind: "template" as const, name: "세무사랑 일반전표", target: "personal" as const, columns: [{ index: 2, header: "금액", field: "amount" as const }, { index: 1, header: "일자", field: "date" as const }] };
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await buildTaxWorkbook({ month: "2026-10", companyName: "포켓", rows: SAMPLE_EXPORT_ROWS, preview: false, cardReconcile: null, main }));
+    expect(wb.worksheets.map((w) => w.name)).toEqual(taxWorkbookLayout(main).map((s) => s.sheet));
+    const ws = wb.getWorksheet("세무사랑 일반전표")!;
+    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["일자", "금액"]);
+    expect(ws.rowCount).toBe(3); // 머리글 + 사비 2건(법인카드 제외)
+    expect(ws.getRow(2).getCell(2).value).toBe(12500);
+    expect(wb.getWorksheet("위하고 일반전표(사비)")).toBeUndefined();
+  });
 });

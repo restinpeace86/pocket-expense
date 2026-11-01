@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { MONTH } from "@/lib/tax/closing";
 import { buildTaxWorkbook } from "@/lib/tax/workbook";
+import { getExportOptions } from "@/lib/tax/export-options";
 import { getTaxOfficeClients, getTaxOfficeMonth } from "@/lib/tax-office/queries";
 import { logTaxExport } from "@/lib/tax/download-log";
 import { getSavedReconcile } from "@/lib/cards/saved-server";
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/tax-office/[
   if (!data) return new NextResponse("Not Found", { status: 404 });
   const preview = data.status !== "closed";
   const cardReconcile = await getSavedReconcile(companyId, month); // 카드 대조 결과 시트(D-154)
-  const buf = await buildTaxWorkbook({ month, companyName: company.company_name, rows: data.rows, preview, cardReconcile });
+  const buf = await buildTaxWorkbook({ month, companyName: company.company_name, rows: data.rows, preview, cardReconcile, main: (await getExportOptions(companyId)).main });
   // 내려받기 기록(D-153): ?zip=1이면 증빙 묶음(ZIP)을 받는 중
   await logTaxExport(companyId, month, request.nextUrl.searchParams.get("zip") === "1" ? "office_zip" : "office_xlsx", data.rows.length, !preview);
   const [y, mm] = month.split("-");
