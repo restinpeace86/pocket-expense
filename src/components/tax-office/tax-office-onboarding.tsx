@@ -1,23 +1,20 @@
 "use client";
 
 import { Building2, Landmark } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { registerTaxOfficeAction, type OfficeFormState } from "@/app/tax-office/actions";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ConsentSection } from "@/components/legal/consent-section";
 import { Field, FormError } from "@/components/onboarding/field";
-import { buttonPrimary, buttonSecondary, Card, inputClass, PageShell } from "@/components/ui/page-shell";
+import { buttonPrimary, Card, inputClass, PageShell } from "@/components/ui/page-shell";
 
 type Request = { company_name: string; office_name: string };
 const initial: OfficeFormState = { error: null };
 
-// 세무사무소 구성원이 아닌 계정: 연결 요청 확인 → 세무사무소 등록(관리자) 또는 초대 코드로 합류(소속 세무사) (D-149)
+// 세무사무소 구성원이 아닌 계정: 연결 요청 확인 → 세무사무소 등록(관리자). 소속 세무사는 초대 링크로만 합류 (D-149, D-183)
 // connect: 고객사 연결 링크로 들어온 경우(D-173) — 등록하면 그 고객사와 바로 연결
 export function TaxOfficeOnboarding({ email, requests, connect = null }: { email: string | null; requests: Request[]; connect?: { code: string; companyName: string } | null }) {
   const [state, formAction, pending] = useActionState(registerTaxOfficeAction, initial);
-  const [code, setCode] = useState("");
-  const router = useRouter();
   const suggested = requests[0]?.office_name ?? "";
 
   return (
@@ -80,23 +77,7 @@ export function TaxOfficeOnboarding({ email, requests, connect = null }: { email
         </form>
       </Card>
 
-      <Card>
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const c = code.trim().toUpperCase();
-            if (c) router.push(`/tax-join/${encodeURIComponent(c)}`);
-          }}
-        >
-          <h2 className="text-lg font-semibold">초대 코드로 합류 (소속 세무사·직원)</h2>
-          <p className="break-keep text-sm text-zinc-600">사무소 관리자에게 받은 초대 링크가 없다면 코드를 입력하세요.</p>
-          <input value={code} onChange={(e) => setCode(e.target.value)} maxLength={8} className={`${inputClass} uppercase tracking-widest`} placeholder="초대 코드 8자리" aria-label="사무소 초대 코드" />
-          <button type="submit" disabled={!code.trim()} className={buttonSecondary}>
-            합류하기
-          </button>
-        </form>
-      </Card>
+      <p className="break-keep text-center text-sm text-zinc-500">이미 있는 사무소에 들어가는 세무사·직원이라면 새로 등록하지 말고, 사무소 관리자에게 받은 초대 링크를 눌러 주세요.</p>
       <div className="text-center">
         <SignOutButton />
       </div>

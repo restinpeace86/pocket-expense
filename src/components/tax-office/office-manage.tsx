@@ -36,11 +36,8 @@ export function OfficeInvite({ code, officeName }: { code: string; officeName: s
     <section className={card} aria-label="소속 세무사 초대">
       <h2 className="font-semibold">소속 세무사·직원 초대</h2>
       <p className="mt-1 break-keep text-sm text-zinc-600">링크를 받은 사람이 로그인하면 바로 소속 세무사로 합류해요. 고객사는 배정해야 보여요.</p>
-      <div className="mt-3 flex flex-col gap-2 rounded-lg bg-zinc-50 p-3">
+      <div className="mt-3 rounded-lg bg-zinc-50 p-3">
         <p className="break-all font-mono text-sm text-zinc-800">{link}</p>
-        <p className="text-sm text-zinc-600">
-          초대 코드 <b className="font-mono tracking-widest text-zinc-900">{code}</b>
-        </p>
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <button type="button" onClick={copy} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-4 font-semibold text-white hover:bg-brand-700">
@@ -51,7 +48,7 @@ export function OfficeInvite({ code, officeName }: { code: string; officeName: s
           type="button"
           disabled={pending}
           onClick={() => {
-            if (!confirm("초대 링크를 새로 만들까요? 이전 링크와 코드는 바로 쓸 수 없게 돼요(이미 합류한 사람은 그대로).")) return;
+            if (!confirm("초대 링크를 새로 만들까요? 이전 링크는 바로 쓸 수 없게 돼요(이미 합류한 사람은 그대로).")) return;
             setError(null);
             startTransition(async () => {
               const r = await guardAction(() => regenerateTaxOfficeCodeAction());
