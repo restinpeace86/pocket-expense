@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { getMembership } from "@/lib/auth/session";
 import { messageForDbError } from "@/lib/errors";
 import { signReceiptUrls } from "@/lib/storage/signed-urls";
-import { notifyClaimEvent, notifyPayouts } from "@/lib/notify/dispatch";
+import { notifyClaimEvent, notifyOfficeRequest, notifyPayouts } from "@/lib/notify/dispatch";
 import { attachRouteCards } from "./route-card-file";
 import { createClient } from "@/lib/supabase/server";
 import type { ClaimProblems } from "./problems";
@@ -103,6 +103,11 @@ export async function requestTaxReviewAction(itemId: string, memo: string): Prom
   const supabase = await createClient();
   const { error } = await supabase.rpc("request_item_tax_review", { p_item_id: itemId, p_memo: memo.slice(0, 200) });
   if (error) return { ok: false, error: messageForDbError(error) };
+  // 확인 요청 표로 합쳐짐(D-196) — 새 요청이면 세무사무소에 웹푸시
+  if (memo.trim()) {
+    const { data: r } = await supabase.from("tax_office_requests").select("company_id, month, item_label, office_id").eq("item_id", itemId).eq("origin", "company").neq("status", "resolved").maybeSingle();
+    if (r?.office_id) after(() => notifyOfficeRequest(r.company_id, { month: r.month, body: memo.trim(), itemLabel: r.item_label }));
+  }
   return { ok: true };
 }
 

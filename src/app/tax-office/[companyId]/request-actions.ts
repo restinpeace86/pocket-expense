@@ -3,7 +3,7 @@
 import { refresh } from "next/cache";
 import { after } from "next/server";
 import { messageForDbError } from "@/lib/errors";
-import { notifyCompanyRequest } from "@/lib/notify/dispatch";
+import { notifyCompanyAnswered, notifyCompanyRequest } from "@/lib/notify/dispatch";
 import { createClient } from "@/lib/supabase/server";
 
 // 세무사무소 → 회사 자료 요청 (D-169). 볼 수 있는 고객사인지·영수증이 그 회사 것인지는 DB 함수가 확인
@@ -15,6 +15,17 @@ export async function createTaxRequestAction(companyId: string, month: string, i
   if (error) return { ok: false, error: messageForDbError(error) };
   const { data: r } = await supabase.from("tax_office_requests").select("office_name, item_label, body").eq("id", id as string).maybeSingle();
   if (r) after(() => notifyCompanyRequest(companyId, { officeName: r.office_name ?? "세무사무소", month, body: r.body, itemLabel: r.item_label }));
+  refresh();
+  return { ok: true };
+}
+
+// 회사가 시작한 확인 요청에 세무사무소가 답함 → 회사 관리자에게 웹푸시 (D-196)
+export async function officeAnswerTaxRequestAction(companyId: string, id: string, answer: string): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("office_answer_tax_request", { p_id: id, p_answer: answer });
+  if (error) return { ok: false, error: messageForDbError(error) };
+  const { data: r } = await supabase.from("tax_office_requests").select("month, office_name").eq("id", id).maybeSingle();
+  if (r) after(() => notifyCompanyAnswered(companyId, { officeName: r.office_name ?? "세무사무소", month: r.month, answer: answer.trim() }));
   refresh();
   return { ok: true };
 }

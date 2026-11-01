@@ -39,8 +39,8 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
     getRecentNotices(),
     // 세무사무소가 최근 7일 안에 계정과목을 바꿨으면 알림(D-152)
     supabase.from("account_title_changes").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
-    // 세무사무소가 남긴 답변 기다리는 자료 요청(D-169)
-    supabase.from("tax_office_requests").select("id", { count: "exact", head: true }).eq("status", "open"),
+    // 세무사무소 확인 요청: 안 읽은 것 또는 답할 차례(D-169 → D-196)
+    supabase.from("tax_office_requests").select("id", { count: "exact", head: true }).or("unread_for.eq.company,and(origin.eq.office,status.eq.open)"),
     supabase.rpc("my_company_tax_office"),
   ]);
   const officeInfo = office as { registered?: boolean; registered_name?: string | null } | null;
@@ -54,8 +54,8 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
           href={`/workspace/${membership.company_id}/admin/export#tax-requests`}
           className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 hover:bg-amber-100"
         >
-          <span className="break-keep">세무사무소가 자료를 요청했어요({openRequests}건). 답변을 기다리고 있어요.</span>
-          <span className="shrink-0 font-semibold">답변하기 →</span>
+          <span className="break-keep">세무사무소 확인 요청 {openRequests}건 — 새 답변이 왔거나 답할 차례예요.</span>
+          <span className="shrink-0 font-semibold">보러 가기 →</span>
         </Link>
       )}
       {!!titleChanges && (

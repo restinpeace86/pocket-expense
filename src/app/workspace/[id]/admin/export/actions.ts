@@ -2,7 +2,7 @@
 
 import { refresh } from "next/cache";
 import { after } from "next/server";
-import { notifyOfficeAnswered, notifyOfficeClosed } from "@/lib/notify/dispatch";
+import { notifyOfficeAnswered, notifyOfficeClosed, notifyOfficeRequest } from "@/lib/notify/dispatch";
 import { getMembership } from "@/lib/auth/session";
 import { isAdminRole } from "@/lib/auth/paths";
 import { messageForDbError } from "@/lib/errors";
@@ -79,6 +79,30 @@ export async function taxClaimDocsAction(month: string): Promise<Result<{ docs: 
 }
 
 // 세무사무소 자료 요청에 답변 (D-169). 회사·권한은 DB 함수가 다시 확인
+// 회사가 확인 요청을 시작(달 전체 또는 영수증, D-196) → 세무사무소에 웹푸시
+export async function createCompanyTaxRequestAction(month: string, itemId: string | null, body: string): Promise<Result> {
+  const m = await admin();
+  if (!m) return fail("NOT_ALLOWED");
+  const supabase = await createClient();
+  const { data: id, error } = await supabase.rpc("create_company_tax_request", { p_month: month, p_item_id: itemId as string, p_body: body });
+  if (error) return { ok: false, error: messageForDbError(error) };
+  const { data: r } = await supabase.from("tax_office_requests").select("item_label").eq("id", id as string).maybeSingle();
+  after(() => notifyOfficeRequest(m.company_id, { month, body: body.trim(), itemLabel: r?.item_label ?? null }));
+  refresh();
+  return { ok: true };
+}
+
+// 회사 관리자: [확인함] / 다시 열기 (D-196)
+export async function companySetTaxRequestStatusAction(id: string, resolved: boolean): Promise<Result> {
+  const m = await admin();
+  if (!m) return fail("NOT_ALLOWED");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("company_set_tax_request_status", { p_id: id, p_resolved: resolved });
+  if (error) return { ok: false, error: messageForDbError(error) };
+  refresh();
+  return { ok: true };
+}
+
 export async function answerTaxRequestAction(id: string, answer: string): Promise<Result> {
   const m = await admin();
   if (!m) return fail("NOT_ALLOWED");

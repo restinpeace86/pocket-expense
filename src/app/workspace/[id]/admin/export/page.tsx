@@ -18,7 +18,7 @@ import { deleteHometaxAction, uploadHometaxAction } from "./hometax-actions";
 import { addFormatRequestAction } from "./format-actions";
 import { AccountingFormatRequest } from "@/components/admin/accounting-format-request";
 import { listFormatRequests } from "@/lib/accounting-format/server";
-import { listTaxRequests } from "@/lib/tax-office/requests";
+import { listTaxRequests, markTaxRequestsSeen } from "@/lib/tax-office/requests";
 import { TaxRequests } from "@/components/tax-office/tax-requests";
 import { claimCutoff, mdLabel, monthLabel, taxCloseDue } from "@/lib/expense/deadline";
 import { getHolidays } from "@/lib/expense/holidays";
@@ -77,6 +77,9 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
     supabase.from("corporate_cards").select("id", { count: "exact", head: true }).eq("company_id", membership.company_id).eq("is_active", true),
   ]);
   const hasCards = (cardCount.count ?? 0) > 0;
+  // 확인 요청을 열어 봤음(D-196)
+  if (requests.some((r) => r.unread_for === "company")) await markTaxRequestsSeen(membership.company_id);
+  const requestItemIds = requests.filter((r) => r.item_id && r.status !== "resolved").map((r) => r.item_id!);
   const pendingClaims = new Set((pendingItems ?? []).map((i) => i.claim_id)).size;
   const cutoff = claimCutoff(month, holidays);
   const due = taxCloseDue(month, holidays);
@@ -107,6 +110,7 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
         disabled={res.data.rows.length === 0}
       />
       <TaxClosingView
+      requestItemIds={requestItemIds}
       mainSheetText={
         exportOptions.main.kind === "template"
           ? `세무사무소${exportOptions.officeName ? `(${exportOptions.officeName})` : ""}가 정한 [${exportOptions.main.name}] 양식대로 채운 시트도 함께 있어요.`
@@ -133,6 +137,7 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
             cardReconcile={cardRec}
             main={exportOptions.main}
             audience="company"
+            requestItemIds={requestItemIds}
             footer={
               hasCards && !cardRec ? (
                 <p className="mt-3 break-keep rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -151,7 +156,15 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
       {/* 홈택스에서 내려받은 자료 올리기 — 세무사무소도 보고 받음(D-158) */}
       <HometaxFiles key={`ht-${month}`} uploads={hometax} month={month} downloadBase={`/workspace/${id}/admin/export/hometax?id=`} viewer="company" uploadAction={uploadHometaxAction} deleteAction={deleteHometaxAction} />
       {/* 세무사무소 자료 요청(D-169) — 요청이 있을 때만 */}
-      {requests.length > 0 && <TaxRequests mode="company" requests={requests} month={month} />}
+      {/* 세무사무소와 확인 요청(D-196) — 사무소와 연결돼 있으면 늘 보여 회사가 먼저 물어볼 수 있게 */}
+      {(exportOptions.officeName || requests.length > 0) && (
+        <TaxRequests
+          mode="company"
+          requests={requests}
+          month={month}
+          items={res.data.rows.map((r) => ({ id: r.item_id, label: `${r.expense_date} · ${r.merchant_name ?? ""} · ${(r.amount ?? 0).toLocaleString("ko-KR")}원` }))}
+        />
+      )}
       {/* 세무 자료 내려받은 기록(D-153) */}
       <TaxDownloadLog rows={(downloads ?? []) as TaxDownloadRow[]} />
     </div>

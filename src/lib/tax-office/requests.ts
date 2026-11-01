@@ -11,6 +11,8 @@ export type TaxRequest = {
   requested_by_name: string | null;
   office_name: string | null;
   status: "open" | "answered" | "resolved";
+  origin: "office" | "company"; // 누가 시작했나(D-196)
+  unread_for: "office" | "company" | null; // 아직 안 본 쪽
   answer: string | null;
   answered_by_name: string | null;
   answered_at: string | null;
@@ -23,10 +25,16 @@ export async function listTaxRequests(companyId: string, month: string): Promise
   const supabase = await createClient();
   const { data } = await supabase
     .from("tax_office_requests")
-    .select("id, month, item_id, item_label, body, requested_by_name, office_name, status, answer, answered_by_name, answered_at, resolved_at, created_at")
+    .select("id, month, item_id, item_label, body, requested_by_name, office_name, status, origin, unread_for, answer, answered_by_name, answered_at, resolved_at, created_at")
     .eq("company_id", companyId)
     .or(`status.neq.resolved,month.eq.${month}`)
     .order("created_at", { ascending: false })
     .limit(100);
   return (data ?? []) as TaxRequest[];
+}
+
+// 열어 봤음 — 내 쪽 안 읽음 표시를 지운다(D-196). 목록을 받은 뒤 부른다(이번 화면은 "새" 표시를 그대로 보여 줌)
+export async function markTaxRequestsSeen(companyId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.rpc("mark_tax_requests_seen", { p_company_id: companyId });
 }

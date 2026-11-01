@@ -143,7 +143,7 @@ export function checks(r: ExportRow, hasFile: boolean): string[] {
 export type IssueKind = "review" | "no_evidence" | "no_file" | "no_biz" | "no_vat" | "condolence" | "own_car";
 export const ISSUE_KINDS: IssueKind[] = ["review", "no_evidence", "no_file", "no_biz", "no_vat", "condolence", "own_car"];
 export const ISSUE_LABEL: Record<IssueKind, string> = {
-  review: "회사 확인 요청",
+  review: "확인 요청 중",
   no_evidence: "증빙 없음",
   no_file: "영수증 파일 없음",
   no_biz: "사업자번호 없음",
@@ -151,10 +151,11 @@ export const ISSUE_LABEL: Record<IssueKind, string> = {
   condolence: "경조사비 20만원 초과",
   own_car: "자차(적격증빙 없음)",
 };
-export function issueKinds(r: ExportRow, hasFile: boolean): IssueKind[] {
-  if (isOwnCar(r)) return ["own_car"];
+// openRequest: 이 영수증에 아직 확인함이 아닌 확인 요청(회사·세무사무소 어느 쪽이 시작했든, D-196)
+export function issueKinds(r: ExportRow, hasFile: boolean, openRequest = false): IssueKind[] {
   const out: IssueKind[] = [];
-  if (r.tax_review_request && !r.tax_review_resolved_at) out.push("review");
+  if (openRequest || (r.tax_review_request && !r.tax_review_resolved_at)) out.push("review");
+  if (isOwnCar(r)) return [...out, "own_car"];
   if (r.category === "condolence" && (r.amount ?? 0) > CONDOLENCE_LIMIT) out.push("condolence");
   if (!r.merchant_business_number && r.category !== "condolence") out.push("no_biz");
   if (r.supply_amount == null || r.vat_amount == null) out.push("no_vat");

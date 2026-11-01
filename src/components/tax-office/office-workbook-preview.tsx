@@ -13,8 +13,9 @@ export async function OfficeWorkbookPreview({
   footer,
   audience = "office",
   receiptUrls = {},
+  requestItemIds = [],
   ...props
-}: Parameters<typeof taxWorkbookPreview>[0] & { footer?: React.ReactNode; audience?: "office" | "company"; receiptUrls?: Record<string, string> }) {
+}: Parameters<typeof taxWorkbookPreview>[0] & { footer?: React.ReactNode; audience?: "office" | "company"; receiptUrls?: Record<string, string>; requestItemIds?: string[] }) {
   const sheets = await taxWorkbookPreview(props, 20);
   const notes = new Map(taxWorkbookLayout(props.main, !!props.cardReconcile).map((s) => [s.sheet, s.note]));
   // 회사 화면: 미리보기에 보이는 줄의 영수증만 회사 권한으로 서명(페이지 나머지를 늦추지 않게 이 안에서)
@@ -24,7 +25,7 @@ export async function OfficeWorkbookPreview({
   }
   const urlByItem = new Map(props.rows.map((r) => [r.item_id, r.receipt_path ? (receiptUrls[r.receipt_path] ?? null) : null]));
   // 문제 있는 영수증의 줄은 ⚠·주황(D-195)
-  const issueByItem = new Map(props.rows.map((r) => [r.item_id, issueKinds(r, rowHasFile(r)).map((k) => ISSUE_LABEL[k]).join(", ")]));
+  const issueByItem = new Map(props.rows.map((r) => [r.item_id, issueKinds(r, rowHasFile(r), requestItemIds.includes(r.item_id)).map((k) => ISSUE_LABEL[k]).join(", ")]));
   const withLinks = sheets.map((s) => ({
     ...s,
     note: notes.get(s.sheet) ?? "",

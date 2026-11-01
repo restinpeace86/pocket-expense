@@ -2616,9 +2616,11 @@ export type Database = {
           month: string
           office_id: string | null
           office_name: string | null
+          origin: string
           requested_by_name: string | null
           resolved_at: string | null
           status: string
+          unread_for: string | null
         }
         Insert: {
           answer?: string | null
@@ -2633,9 +2635,11 @@ export type Database = {
           month: string
           office_id?: string | null
           office_name?: string | null
+          origin?: string
           requested_by_name?: string | null
           resolved_at?: string | null
           status?: string
+          unread_for?: string | null
         }
         Update: {
           answer?: string | null
@@ -2650,9 +2654,11 @@ export type Database = {
           month?: string
           office_id?: string | null
           office_name?: string | null
+          origin?: string
           requested_by_name?: string | null
           resolved_at?: string | null
           status?: string
+          unread_for?: string | null
         }
         Relationships: [
           {
@@ -2926,6 +2932,10 @@ export type Database = {
       close_tax_office: { Args: { p_confirm_name: string }; Returns: string[] }
       closing_admin_targets: { Args: { p_today?: string }; Returns: Json }
       closing_calendar: { Args: { p_month: string }; Returns: Json }
+      company_set_tax_request_status: {
+        Args: { p_id: string; p_resolved: boolean }
+        Returns: undefined
+      }
       connect_tax_office_by_code: { Args: { p_code: string }; Returns: string }
       consume_receipt_credit: {
         Args: {
@@ -2948,6 +2958,10 @@ export type Database = {
           p_privacy_agreed: boolean
           p_terms_agreed: boolean
         }
+        Returns: string
+      }
+      create_company_tax_request: {
+        Args: { p_body: string; p_item_id: string; p_month: string }
         Returns: string
       }
       create_own_car_item: { Args: { p_claim_id: string }; Returns: string }
@@ -3036,6 +3050,10 @@ export type Database = {
         Returns: undefined
       }
       mark_claims_paid: { Args: { p_claim_ids: string[] }; Returns: number }
+      mark_tax_requests_seen: {
+        Args: { p_company_id: string }
+        Returns: number
+      }
       member_deactivation_check: {
         Args: { p_member_id: string }
         Returns: Json
@@ -3055,6 +3073,10 @@ export type Database = {
       my_employee_summary: { Args: never; Returns: Json }
       my_membership: { Args: never; Returns: Json }
       my_tax_office: { Args: never; Returns: Json }
+      office_answer_tax_request: {
+        Args: { p_answer: string; p_id: string }
+        Returns: undefined
+      }
       override_item_account_title: {
         Args: { p_account_title_id: string; p_item_id: string }
         Returns: undefined

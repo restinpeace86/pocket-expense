@@ -100,7 +100,8 @@ export function TaxOfficeMonthView({
   const excluded = data.excluded.draft + data.excluded.submitted + data.excluded.rejected;
   const base = `/tax-office/${companyId}`;
   // 영수증 문제 한눈에(D-195): 종류별 건수 칩 + 고르면 그 영수증만, 문제 있는 줄은 주황
-  const kinds = new Map(rows.map((r) => [r.item_id, issueKinds(r, rowHasFile(r))]));
+  const requested = new Set(requests.filter((q) => q.item_id && q.status !== "resolved").map((q) => q.item_id!));
+  const kinds = new Map(rows.map((r) => [r.item_id, issueKinds(r, rowHasFile(r), requested.has(r.item_id))]));
   const { counts, flagged } = countIssues([...kinds.values()]);
   const shown = issue ? rows.filter((r) => kinds.get(r.item_id)?.includes(issue)) : rows;
   const chipHref = (k: IssueKind | null) => `${base}?month=${data.month}${k ? `&issue=${k}` : ""}#expenses`;

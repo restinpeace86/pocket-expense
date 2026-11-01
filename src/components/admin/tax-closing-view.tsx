@@ -25,6 +25,7 @@ export function TaxClosingView({
   companyName,
   isSuper,
   mainSheetText,
+  requestItemIds = [],
 }: {
   data: TaxMonth;
   months: string[];
@@ -33,6 +34,7 @@ export function TaxClosingView({
   companyName: string;
   isSuper: boolean;
   mainSheetText: string; // 회계 프로그램 시트 안내(세무사무소 설정을 따름, D-189)
+  requestItemIds?: string[]; // 확인 요청이 열린 영수증(D-196)
 }) {
   const router = useRouter();
   const { month, rows, status } = data;
@@ -55,7 +57,7 @@ export function TaxClosingView({
   const [missing, setMissing] = useState<string[]>([]);
   // 영수증 문제 한눈에(D-195): 칩을 누르면 아래 지출 내역을 그 영수증만
   const [issue, setIssue] = useState<IssueKind | null>(null);
-  const kinds = new Map(rows.map((r) => [r.item_id, issueKinds(r, rowHasFile(r))]));
+  const kinds = new Map(rows.map((r) => [r.item_id, issueKinds(r, rowHasFile(r), requestItemIds.includes(r.item_id))]));
   const issueStats = countIssues([...kinds.values()]);
   const shownRows = issue ? rows.filter((r) => kinds.get(r.item_id)?.includes(issue)) : rows;
   const [busy, start] = useTransition();

@@ -298,6 +298,31 @@ export async function notifyOfficeAnswered(companyId: string, month: string, ans
   );
 }
 
+// 회사가 확인 요청을 시작 → 세무사무소(담당 세무사·없으면 관리자)에게 웹푸시 (D-196)
+export async function notifyOfficeRequest(companyId: string, p: { month: string; body: string; itemLabel?: string | null }): Promise<void> {
+  const admin = createAdminClient();
+  if (!admin) return;
+  const targets = await officeTargets(admin, companyId);
+  const { data: company } = await admin.from("companies").select("name").eq("id", companyId).maybeSingle();
+  await pushToOfficeMembers(
+    targets.map((t) => t.member_id),
+    { title: `${company?.name ?? "고객사"} 확인 요청${p.itemLabel ? ` · ${p.itemLabel}` : ""}`, body: p.body.slice(0, 120), url: `/tax-office/${companyId}?month=${p.month}#tax-requests`, tag: "tax-request-company" },
+  );
+}
+
+// 세무사무소가 회사의 확인 요청에 답 → 회사 관리자들에게 웹푸시 (D-196)
+export async function notifyCompanyAnswered(companyId: string, p: { officeName: string; month: string; answer: string }): Promise<void> {
+  const admin = createAdminClient();
+  if (!admin) return;
+  const { data: admins } = await admin.from("members").select("id").eq("company_id", companyId).eq("status", "approved").in("role", ["super_admin", "admin"]);
+  await pushToMembers(companyId, (admins ?? []).map((a) => a.id), {
+    title: `${p.officeName}이(가) 확인 요청에 답했어요`,
+    body: p.answer.slice(0, 120),
+    url: `/workspace/${companyId}/admin/export?month=${p.month}#tax-requests`,
+    tag: "tax-request-answer-company",
+  });
+}
+
 // 회사가 세무사무소를 지정 → 담당 세무사 휴대폰으로 초대 알림톡 (D-173). 아직 연결 안 된 경우만
 export async function sendTaxOfficeInvite(companyId: string): Promise<boolean> {
   const admin = createAdminClient();

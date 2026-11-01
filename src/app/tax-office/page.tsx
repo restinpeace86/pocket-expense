@@ -19,7 +19,7 @@ export default function TaxOfficeHome() {
 
 const bizNo = (v: string) => (/^\d{10}$/.test(v) ? `${v.slice(0, 3)}-${v.slice(3, 5)}-${v.slice(5)}` : v);
 
-type ClientStatus = { company_id: string; closed: boolean; closed_at: string | null; requests_open: number; requests_answered: number };
+type ClientStatus = { company_id: string; closed: boolean; closed_at: string | null; requests_open: number; requests_answered: number; unread: number };
 
 function prevMonth(now: string): string {
   const [y, m] = now.split("-").map(Number);
@@ -120,16 +120,22 @@ function ClientBadges({ s, mLabel }: { s: ClientStatus | undefined; mLabel: stri
           {mLabel} 마감 전
         </span>
       )}
+      {(s?.unread ?? 0) > 0 && (
+        <span className={`${chip} bg-red-600 text-white`}>
+          <MessageSquare className="size-3.5" aria-hidden />
+          새 확인 요청 {s?.unread}
+        </span>
+      )}
       {(s?.requests_answered ?? 0) > 0 && (
         <span className={`${chip} bg-brand-50 text-brand-700`}>
           <MessageSquare className="size-3.5" aria-hidden />
-          회사 답변 옴 {s?.requests_answered}
+          답변 옴 {s?.requests_answered}
         </span>
       )}
       {(s?.requests_open ?? 0) > 0 && (
         <span className={`${chip} bg-zinc-100 text-zinc-600`}>
           <MessageSquare className="size-3.5" aria-hidden />
-          자료 요청 답변 대기 {s?.requests_open}
+          답변 대기 {s?.requests_open}
         </span>
       )}
     </div>
