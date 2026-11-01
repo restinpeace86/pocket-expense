@@ -287,6 +287,32 @@ export function taxWorkbookLayout(): WorkbookSheetInfo[] {
   ];
 }
 
+// 결산 양식 화면 미리보기(D-186): 예시 지출로 실제 엑셀을 만들고 시트마다 위쪽 줄을 글자 그대로 읽는다 — 화면과 파일이 같은 모양
+export type WorkbookPreviewSheet = { sheet: string; rows: string[][]; totalRows: number };
+export async function taxWorkbookPreview(rows: ExportRow[], maxRows = 12): Promise<WorkbookPreviewSheet[]> {
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(await buildTaxWorkbook({ month: "2026-10", companyName: "예시회사", rows, preview: false, cardReconcile: null }));
+  // 금액 서식(#,##0)이 붙은 칸만 천 단위 쉼표 — 연도·월·코드는 그대로
+  const text = (v: ExcelJS.CellValue, fmt = ""): string => {
+    if (v == null) return "";
+    if (v instanceof Date) return v.toISOString().slice(0, fmt.includes("h") ? 16 : 10).replace("T", " ");
+    if (typeof v === "number") return fmt.includes("#,##0") ? v.toLocaleString("ko-KR") : String(v);
+    if (typeof v === "object" && "richText" in v) return v.richText.map((t) => t.text).join("");
+    if (typeof v === "object" && "result" in v) return text(v.result as ExcelJS.CellValue);
+    if (typeof v === "object" && "text" in v) return String(v.text);
+    return String(v);
+  };
+  return wb.worksheets.map((ws) => {
+    const width = ws.actualColumnCount;
+    const out: string[][] = [];
+    for (let i = 1; i <= Math.min(ws.rowCount, maxRows); i++) {
+      const r = ws.getRow(i);
+      out.push(Array.from({ length: width }, (_, k) => text(r.getCell(k + 1).value, r.getCell(k + 1).numFmt ?? "")));
+    }
+    return { sheet: ws.name, rows: out, totalRows: ws.rowCount };
+  });
+}
+
 export async function buildTaxWorkbook(opts: { month: string; companyName: string; rows: ExportRow[]; preview: boolean; cardReconcile?: SavedReconcile | null }): Promise<ArrayBuffer> {
   const { month, rows } = opts;
   const total = rows.length;

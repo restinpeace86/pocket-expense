@@ -1,7 +1,8 @@
 import ExcelJS from "exceljs";
 import { describe, expect, it, vi } from "vitest";
 import type { ExportRow } from "./export-rows";
-import { buildTaxWorkbook, cutMemo, taxWorkbookLayout, wehagoJournalLines } from "./workbook";
+import { buildTaxWorkbook, cutMemo, taxWorkbookLayout, taxWorkbookPreview, wehagoJournalLines } from "./workbook";
+import { SAMPLE_EXPORT_ROWS } from "./sample-rows";
 
 vi.mock("server-only", () => ({}));
 
@@ -22,6 +23,20 @@ const row = (o: Partial<ExportRow>): ExportRow =>
   }) as ExportRow;
 
 describe("세무 마감 엑셀", () => {
+  it("결산 양식 미리보기(D-186): 예시 지출로 만든 시트 그대로 — 위하고 사비 1건 = 차변·대변 두 줄, 연도는 쉼표 없이", async () => {
+    const p = await taxWorkbookPreview(SAMPLE_EXPORT_ROWS);
+    expect(p.map((s) => s.sheet)).toEqual(taxWorkbookLayout().map((s) => s.sheet));
+    const j = p.find((s) => s.sheet === "위하고 일반전표(사비)")!;
+    expect(j.rows[0].slice(0, 3)).toEqual(["연도", "월", "일"]);
+    expect(j.rows.slice(1).map((r) => [r[0], r[6], r[10], r[11]])).toEqual([
+      ["2026", "여비교통비", "12,500", ""],
+      ["2026", "미지급금", "", "12,500"],
+      ["2026", "소모품비", "22,000", ""],
+      ["2026", "미지급금", "", "22,000"],
+    ]);
+    expect(p.find((s) => s.sheet === "세무 업로드(법인카드)")!.rows).toHaveLength(2);
+  });
+
   it("결산 양식 화면 안내(시트·칸)가 실제 파일과 같다(D-185)", async () => {
     const rows = [row({ seq: 1, item_id: "a" }), row({ seq: 2, item_id: "b", payment_method: "personal_card" })];
     const wb = new ExcelJS.Workbook();

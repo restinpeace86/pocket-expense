@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { DefaultWorkbookInfo } from "@/components/tax-office/default-workbook-info";
 import { TemplateManager, type OfficeTemplate } from "@/components/tax-office/template-manager";
-import { taxWorkbookLayout } from "@/lib/tax/workbook";
+import { SAMPLE_EXPORT_ROWS } from "@/lib/tax/sample-rows";
+import { taxWorkbookLayout, taxWorkbookPreview } from "@/lib/tax/workbook";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTaxOffice, isActiveMember } from "@/lib/tax-office/queries";
 
@@ -20,7 +21,8 @@ async function Content() {
   const state = await getMyTaxOffice();
   if (!isActiveMember(state)) return null;
   const supabase = await createClient();
-  const { data } = await supabase.rpc("tax_office_template_list");
+  const [{ data }, preview] = await Promise.all([supabase.rpc("tax_office_template_list"), taxWorkbookPreview(SAMPLE_EXPORT_ROWS)]);
+  const notes = new Map(taxWorkbookLayout().map((s) => [s.sheet, s.note]));
   return (
     <>
       <div>
@@ -30,7 +32,7 @@ async function Content() {
           마감 화면에서 이 양식으로 받아요.
         </p>
       </div>
-      <DefaultWorkbookInfo sheets={taxWorkbookLayout()} officeTemplates={((data ?? []) as OfficeTemplate[]).map((t) => t.name)} />
+      <DefaultWorkbookInfo sheets={preview.map((p) => ({ ...p, note: notes.get(p.sheet) ?? "" }))} officeTemplates={((data ?? []) as OfficeTemplate[]).map((t) => t.name)} />
       <TemplateManager templates={(data ?? []) as OfficeTemplate[]} canEdit={state.role === "admin"} />
     </>
   );
