@@ -22,3 +22,6 @@
 - `taxWorkbookPreview(opts, maxRows)`가 `buildTaxWorkbook`과 같은 옵션을 받게 바꿈(예시·실제 자료 공용).
 - `WorkbookViewer`(엑셀 모양 표)를 `default-workbook-info.tsx`에서 분리해 두 화면이 같이 씀.
 - `src/components/tax-office/office-workbook-preview.tsx`: 그 회사·그 달 자료(다운로드와 같은 회사명·마감 여부·카드 대조)로 위쪽 20줄, 접힌 상태로 시작. 페이지에서 Suspense로 감싸 나머지 화면을 늦추지 않음. 승인된 지출이 없으면 안 보임.
+
+## D-188 접힌 상태 눈에 띄게 (같은 날)
+- 접힌 [세무용 엑셀 미리보기]: 초록 테두리·배경, 초록 아이콘, "YYYY년 M월 세무용 엑셀 미리보기", "받기 전에 확인 · 지출 N건 · 시트 N개", 초록 [펼쳐 보기] 버튼. 펼치면 흰 배경 + [접기].

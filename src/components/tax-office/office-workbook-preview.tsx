@@ -1,4 +1,4 @@
-import { FileSpreadsheet } from "lucide-react";
+import { ChevronDown, FileSpreadsheet } from "lucide-react";
 import { taxWorkbookLayout, taxWorkbookPreview } from "@/lib/tax/workbook";
 import { WorkbookViewer } from "./default-workbook-info";
 
@@ -6,14 +6,27 @@ import { WorkbookViewer } from "./default-workbook-info";
 export async function OfficeWorkbookPreview(props: Parameters<typeof taxWorkbookPreview>[0]) {
   const sheets = await taxWorkbookPreview(props, 20);
   const notes = new Map(taxWorkbookLayout().map((s) => [s.sheet, s.note]));
+  const [y, m] = props.month.split("-");
   return (
-    <details className="group rounded-xl border border-zinc-200 bg-white shadow-sm" aria-label="세무용 엑셀 미리보기">
-      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
-        <FileSpreadsheet className="size-4 shrink-0 text-emerald-700" aria-hidden />
-        <span className="whitespace-nowrap font-semibold">세무용 엑셀 미리보기</span>
-        <span className="hidden break-keep text-xs text-zinc-500 sm:inline">받기 전에 시트별로 확인</span>
-        <span className="ml-auto whitespace-nowrap text-sm text-brand-700 group-open:hidden">펼치기</span>
-        <span className="ml-auto hidden whitespace-nowrap text-sm text-zinc-500 group-open:inline">접기</span>
+    // 접혀 있을 때도 눈에 띄게(D-188): 초록 테두리·배경 + 이 달·건수·시트 수 + [펼쳐 보기] 버튼 모양
+    <details className="group rounded-xl border-2 border-emerald-300 bg-emerald-50/60 shadow-sm open:border-zinc-200 open:bg-white" aria-label="세무용 엑셀 미리보기">
+      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+          <FileSpreadsheet className="size-5" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block break-keep font-semibold text-zinc-900">
+            {Number(y)}년 {Number(m)}월 세무용 엑셀 미리보기
+          </span>
+          <span className="block break-keep text-xs text-zinc-600">
+            받기 전에 확인 · 지출 {props.rows.length}건 · 시트 {sheets.length}개
+          </span>
+        </span>
+        <span className="inline-flex min-h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white group-open:bg-zinc-100 group-open:font-medium group-open:text-zinc-600">
+          <span className="group-open:hidden">펼쳐 보기</span>
+          <span className="hidden group-open:inline">접기</span>
+          <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden />
+        </span>
       </summary>
       <div className="border-t border-zinc-100 px-4 pb-4">
         <p className="mt-3 break-keep text-xs text-zinc-500">
