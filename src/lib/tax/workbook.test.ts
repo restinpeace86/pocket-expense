@@ -150,4 +150,13 @@ describe("세무 마감 엑셀", () => {
     expect(ws.getRow(2).getCell(2).value).toBe(12500);
     expect(wb.getWorksheet("위하고 일반전표(사비)")).toBeUndefined();
   });
+  it("미리보기 줄마다 항목(영수증) — 지출내역·업로드 시트·위하고 두 줄 모두 같은 영수증, 머리글·합계는 없음(D-193)", async () => {
+    const p = await taxWorkbookPreview({ month: "2026-10", companyName: "예시회사", rows: SAMPLE_EXPORT_ROWS, preview: false, cardReconcile: null });
+    const [a, b, c] = SAMPLE_EXPORT_ROWS.map((r) => r.item_id);
+    expect(p.find((s) => s.sheet === "지출내역")!.items).toEqual([null, a, b, c, null]);
+    expect(p.find((s) => s.sheet === "세무 업로드(법인카드)")!.items).toEqual([null, a]);
+    expect(p.find((s) => s.sheet === "세무 업로드(개인 사비)")!.items).toEqual([null, b, c]);
+    expect(p.find((s) => s.sheet === "위하고 일반전표(사비)")!.items).toEqual([null, b, b, c, c]);
+    expect(p.find((s) => s.sheet === "요약")!.items.every((x) => x === null)).toBe(true);
+  });
 });

@@ -1,10 +1,11 @@
 "use client";
 
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, Search } from "lucide-react";
 import { useState } from "react";
 import { MAIN_TAB } from "@/lib/tax/main-sheet";
 
-export type PreviewSheet = { sheet: string; note: string; rows: string[][]; totalRows: number };
+// links: 줄마다 영수증 사진 주소(있으면 줄 번호 옆 돋보기, D-193)
+export type PreviewSheet = { sheet: string; note: string; rows: string[][]; totalRows: number; links?: (string | null)[] };
 
 // 엑셀 열 이름 A, B, …, Z, AA, AB …
 const colName = (i: number): string => (i < 26 ? String.fromCharCode(65 + i) : colName(Math.floor(i / 26) - 1) + String.fromCharCode(65 + (i % 26)));
@@ -75,7 +76,23 @@ export function WorkbookViewer({ sheets, moreHint = "", initialTab = 0, tabBadge
           <tbody>
             {s.rows.map((r, i) => (
               <tr key={i}>
-                <th className="sticky left-0 z-10 border border-zinc-300 bg-zinc-100 px-2 py-1 text-right font-normal text-zinc-500">{i + 1}</th>
+                <th className="sticky left-0 z-10 border border-zinc-300 bg-zinc-100 px-1.5 py-1 text-right font-normal text-zinc-500">
+                  <span className="inline-flex items-center justify-end gap-1">
+                    {s.links?.[i] && (
+                      <a
+                        href={s.links[i]!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${i + 1}행 영수증 보기`}
+                        title="영수증 보기"
+                        className="inline-flex size-6 items-center justify-center rounded-md bg-white text-brand-700 ring-1 ring-brand-200 hover:bg-brand-50"
+                      >
+                        <Search className="size-3.5" aria-hidden />
+                      </a>
+                    )}
+                    {i + 1}
+                  </span>
+                </th>
                 {Array.from({ length: width }, (_, k) => {
                   const v = r[k] ?? "";
                   const num = /^-?[\d,]+$/.test(v) && v.length > 0;

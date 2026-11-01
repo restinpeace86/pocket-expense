@@ -1,12 +1,14 @@
-import { Building2, ChevronRight } from "lucide-react";
+import { Building2, CheckCircle2, ChevronRight, Clock, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AssignSelect } from "@/components/tax-office/assign-select";
 import { ReleaseClientButton } from "@/components/tax-office/office-actions";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTaxOffice, getTaxOfficeClients, isActiveMember } from "@/lib/tax-office/queries";
+import { currentMonthKst } from "@/lib/dates";
 
-// 세무사무소 첫 화면: 고객사 목록 (D-149). 관리자는 담당 세무사를 배정하고, 세무사는 맡은 고객사만 본다
+// 세무사무소 첫 화면: 고객사 목록 (D-149). 관리자는 담당 세무사를 배정하고, 세무사는 맡은 고객사만 본다.
+// D-193: 고객사마다 지난달(지금 마감하는 달) 회사 세무 마감 상태 + 자료 요청 답변 대기·답변 옴
 export default function TaxOfficeHome() {
   return (
     <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-zinc-100" />}>
@@ -17,8 +19,21 @@ export default function TaxOfficeHome() {
 
 const bizNo = (v: string) => (/^\d{10}$/.test(v) ? `${v.slice(0, 3)}-${v.slice(3, 5)}-${v.slice(5)}` : v);
 
+type ClientStatus = { company_id: string; closed: boolean; closed_at: string | null; requests_open: number; requests_answered: number };
+
+function prevMonth(now: string): string {
+  const [y, m] = now.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 2, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
 async function Clients() {
-  const [state, clients] = await Promise.all([getMyTaxOffice(), getTaxOfficeClients()]);
+  const supabase0 = await createClient(); // 쿠키를 먼저 읽어 이 화면을 요청 때 그리게(현재 달 계산이 미리 그리기에 걸리지 않게)
+  const month = prevMonth(currentMonthKst());
+  const [state, clients, { data: statusData }] = await Promise.all([getMyTaxOffice(), getTaxOfficeClients(), supabase0.rpc("tax_office_client_status", { p_month: month })]);
+  const status = new Map(((statusData ?? []) as unknown as ClientStatus[]).map((x) => [x.company_id, x]));
+  const mLabel = `${Number(month.slice(5))}월`;
+  const closedCount = clients.filter((c) => status.get(c.company_id)?.closed).length;
   if (!isActiveMember(state)) return null; // 레이아웃이 등록·중지 화면을 보여 준다
   const isAdmin = state.role === "admin";
   let staff: { id: string; name: string }[] = [];
@@ -42,6 +57,13 @@ async function Clients() {
       {isAdmin && unassigned > 0 && (
         <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">담당 세무사가 없는 고객사가 {unassigned}곳 있어요.</p>
       )}
+      {clients.length > 0 && (
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm">
+          <b className="font-semibold text-zinc-900">{mLabel}분 세무 마감</b>
+          <span className="text-emerald-700">완료 {closedCount}곳</span>
+          <span className="text-amber-800">아직 {clients.length - closedCount}곳</span>
+        </p>
+      )}
       {clients.length === 0 ? (
         <p className="break-keep rounded-xl border border-zinc-200 bg-white px-4 py-10 text-center text-sm text-zinc-500">
           {isAdmin ? "아직 연결된 고객사가 없어요. 고객사가 [설정 › 세무사무소]에서 우리 사무소를 지정하면 연결 링크가 생겨요. 그 링크로 들어오거나, 고객사에 우리 사무소 이메일로 지정해 달라고 알려 주세요." : "아직 맡은 고객사가 없어요. 사무소 관리자에게 배정을 요청해 주세요."}
@@ -50,7 +72,7 @@ async function Clients() {
         <ul className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {clients.map((c) => (
             <li key={c.company_id} className="flex min-w-0 flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-              <Link href={`/tax-office/${c.company_id}`} className="flex min-h-12 items-center gap-3">
+              <Link href={`/tax-office/${c.company_id}?month=${month}`} className="flex min-h-12 items-center gap-3">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
                   <Building2 className="size-5" aria-hidden />
                 </span>
@@ -60,6 +82,7 @@ async function Clients() {
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-zinc-400" aria-hidden />
               </Link>
+              <ClientBadges s={status.get(c.company_id)} mLabel={mLabel} />
               {isAdmin && (
                 <div className="flex flex-col gap-1 border-t border-zinc-100 pt-3">
                   <AssignSelect companyId={c.company_id} companyName={c.company_name} value={c.assigned_member_id} staff={staff} />
@@ -77,5 +100,38 @@ async function Clients() {
         </ul>
       )}
     </>
+  );
+}
+
+// 고객사 카드의 달별 상태(D-193): 마감 완료(날짜)/마감 전 + 자료 요청 회사 답변 대기·답변 옴
+function ClientBadges({ s, mLabel }: { s: ClientStatus | undefined; mLabel: string }) {
+  const chip = "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium";
+  const md = (iso: string) => new Date(iso).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", timeZone: "Asia/Seoul" });
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {s?.closed ? (
+        <span className={`${chip} bg-emerald-50 text-emerald-700`}>
+          <CheckCircle2 className="size-3.5" aria-hidden />
+          {mLabel} 마감 완료{s.closed_at ? ` · ${md(s.closed_at)}` : ""}
+        </span>
+      ) : (
+        <span className={`${chip} bg-amber-50 text-amber-800`}>
+          <Clock className="size-3.5" aria-hidden />
+          {mLabel} 마감 전
+        </span>
+      )}
+      {(s?.requests_answered ?? 0) > 0 && (
+        <span className={`${chip} bg-brand-50 text-brand-700`}>
+          <MessageSquare className="size-3.5" aria-hidden />
+          회사 답변 옴 {s?.requests_answered}
+        </span>
+      )}
+      {(s?.requests_open ?? 0) > 0 && (
+        <span className={`${chip} bg-zinc-100 text-zinc-600`}>
+          <MessageSquare className="size-3.5" aria-hidden />
+          자료 요청 답변 대기 {s?.requests_open}
+        </span>
+      )}
+    </div>
   );
 }

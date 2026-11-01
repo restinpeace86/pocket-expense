@@ -69,7 +69,7 @@ async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[co
       workbookPreview={
         data.rows.length > 0 ? (
           <Suspense key={`wb-${month}`} fallback={<div className="h-12 animate-pulse rounded-xl bg-zinc-100" />}>
-            <OfficeWorkbookPreview month={month} companyName={company.company_name} rows={data.rows} preview={data.status !== "closed"} cardReconcile={cardReconcile} main={exportOptions.main} />
+            <OfficeWorkbookPreview month={month} companyName={company.company_name} rows={data.rows} preview={data.status !== "closed"} cardReconcile={cardReconcile} main={exportOptions.main} receiptUrls={Object.fromEntries(urls)} />
           </Suspense>
         ) : null
       }

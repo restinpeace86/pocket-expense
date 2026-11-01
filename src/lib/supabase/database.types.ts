@@ -3280,6 +3280,7 @@ export type Database = {
           seq: number
         }[]
       }
+      tax_office_client_status: { Args: { p_month: string }; Returns: Json }
       tax_office_clients: {
         Args: never
         Returns: {

@@ -145,7 +145,11 @@ const JOURNAL_HEAD: [string, number][] = [["연도", 6], ["월", 5], ["일", 5],
 // includeCorporate(D-189): 고객사가 법인카드 내역을 홈택스로 받지 않으면 법인카드도 같은 두 줄 — 대변 253 미지급금, 거래처 = 카드(별칭·끝 4자리).
 // 금액은 사비와 같은 규칙(회사지원금). 개인부담이 있으면 적요 끝에 "개인부담 N원 별도"(직원에게 받을 돈은 사무소가 처리)
 export function wehagoJournalLines(rows: ExportRow[], includeCorporate = false): (string | number | null)[][] {
-  const out: (string | number | null)[][] = [];
+  return wehagoJournalEntries(rows, includeCorporate).map((e) => e.line);
+}
+// 줄마다 어느 영수증(항목)인지 함께 — 미리보기에서 줄별 영수증 보기(D-193)
+function wehagoJournalEntries(rows: ExportRow[], includeCorporate: boolean): { itemId: string; line: (string | number | null)[] }[] {
+  const out: { itemId: string; line: (string | number | null)[] }[] = [];
   const perDay = new Map<string, number>();
   for (const r of rows) {
     const corporate = r.payment_method === "corporate_card";
@@ -162,8 +166,8 @@ export function wehagoJournalLines(rows: ExportRow[], includeCorporate = false):
     const body = cutMemo([tag, [merchant, upload적요(r)].filter((x) => x && x.trim()).join(" · ")].filter(Boolean).join(" "), JOURNAL_MEMO_BYTES - byteLen(burden));
     const memo = `${body}${burden}`;
     const creditTo = corporate ? [r.card_nickname || "법인카드", r.card_last4].filter(Boolean).join(" ") : r.member_name;
-    out.push([y, m, day, no, 3, r.account_title_code ?? "", r.account_title_name ?? "", "", "", memo, amount, null, amount]);
-    out.push([y, m, day, no, 4, PAYABLE.code, PAYABLE.name, "", creditTo, memo, null, amount, amount]);
+    out.push({ itemId: r.item_id, line: [y, m, day, no, 3, r.account_title_code ?? "", r.account_title_name ?? "", "", "", memo, amount, null, amount] });
+    out.push({ itemId: r.item_id, line: [y, m, day, no, 4, PAYABLE.code, PAYABLE.name, "", creditTo, memo, null, amount, amount] });
   }
   return out;
 }
@@ -299,7 +303,7 @@ export function taxWorkbookLayout(main: MainSheet = WEHAGO_DEFAULT, withCard = t
 
 // 엑셀 미리보기(D-186·D-187): 실제 엑셀을 만들고 시트마다 위쪽 줄을 글자 그대로 읽는다 — 화면과 파일이 같은 모양.
 // 결산 양식 화면은 예시 지출, 세무 자료 화면은 그 회사·그 달 실제 자료(다운로드와 같은 조건)
-export type WorkbookPreviewSheet = { sheet: string; rows: string[][]; totalRows: number };
+export type WorkbookPreviewSheet = { sheet: string; rows: string[][]; totalRows: number; items: (string | null)[] }; // items: 줄마다 항목 id(D-193)
 export async function taxWorkbookPreview(opts: Parameters<typeof buildTaxWorkbook>[0], maxRows = 12): Promise<WorkbookPreviewSheet[]> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(await buildTaxWorkbook(opts));
@@ -313,14 +317,28 @@ export async function taxWorkbookPreview(opts: Parameters<typeof buildTaxWorkboo
     if (typeof v === "object" && "text" in v) return String(v.text);
     return String(v);
   };
+  // 시트 줄마다 어느 항목(영수증)인지(D-193): 엑셀을 만드는 순서와 같은 규칙으로. 머리글·합계·요약·카드 대조 줄은 null
+  const main = opts.main ?? WEHAGO_DEFAULT;
+  const ids = (list: ExportRow[]) => [null, ...list.map((r) => r.item_id)];
+  const order = new Map<string, (string | null)[]>([
+    ["지출내역", ids(opts.rows)],
+    ["세무 업로드(법인카드)", ids(opts.rows.filter((r) => r.payment_method === "corporate_card"))],
+    ["세무 업로드(개인 사비)", ids(opts.rows.filter((r) => r.payment_method !== "corporate_card"))],
+    [
+      mainSheetName(main),
+      main.kind === "wehago" ? [null, ...wehagoJournalEntries(opts.rows, main.includeCorporate).map((e) => e.itemId)] : ids(rowsForTarget(opts.rows, main.target)),
+    ],
+  ]);
   return wb.worksheets.map((ws) => {
     const width = ws.actualColumnCount;
     const out: string[][] = [];
+    const items: (string | null)[] = [];
     for (let i = 1; i <= Math.min(ws.rowCount, maxRows); i++) {
       const r = ws.getRow(i);
       out.push(Array.from({ length: width }, (_, k) => text(r.getCell(k + 1).value, r.getCell(k + 1).numFmt ?? "")));
+      items.push(order.get(ws.name)?.[i - 1] ?? null);
     }
-    return { sheet: ws.name, rows: out, totalRows: ws.rowCount };
+    return { sheet: ws.name, rows: out, totalRows: ws.rowCount, items };
   });
 }
 
