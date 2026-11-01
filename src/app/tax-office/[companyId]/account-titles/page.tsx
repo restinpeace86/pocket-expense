@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AccountTitlesView } from "@/components/admin/account-titles-view";
@@ -39,14 +38,6 @@ async function Content({ params }: Pick<PageProps<"/tax-office/[companyId]/accou
           <h1 className="truncate text-2xl font-bold tracking-tight">{company.company_name}</h1>
           <p className="break-keep text-sm text-zinc-500">세무사무소 회계 프로그램의 계정과목·코드에 맞춰 바꿔 주세요. 이후 상신되는 지출부터 적용돼요. 이 회사의 계정과목은 우리 사무소가 관리하고(회사는 보기만), 바꾼 내용은 회사 관리자에게 이력으로 보여요.</p>
         </div>
-        <nav aria-label="회사 메뉴" className="flex gap-1 text-sm">
-          <Link href={`/tax-office/${companyId}`} className="inline-flex min-h-10 items-center rounded-lg border border-zinc-300 bg-white px-3 hover:bg-zinc-50">
-            세무 자료
-          </Link>
-          <span aria-current="page" className="inline-flex min-h-10 items-center rounded-lg bg-zinc-900 px-3 font-semibold text-white">
-            계정과목
-          </span>
-        </nav>
       </div>
       <AccountTitlesView
         titles={titles}

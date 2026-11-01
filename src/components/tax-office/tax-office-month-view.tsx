@@ -1,5 +1,4 @@
 import { Download, FileImage } from "lucide-react";
-import Link from "next/link";
 import type { TaxMonth } from "@/lib/tax/closing";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, statusLabel, supplyVat, type ExportRow } from "@/lib/tax/export-rows";
 import { MonthPicker } from "./month-picker";
@@ -97,14 +96,6 @@ export function TaxOfficeMonthView({
           <h1 className="truncate text-2xl font-bold tracking-tight">{companyName}</h1>
           <p className="text-sm text-zinc-500">사업자등록번호 {bizNo(businessNumber)}</p>
         </div>
-        <nav aria-label="회사 메뉴" className="flex gap-1 text-sm">
-          <span aria-current="page" className="inline-flex min-h-10 items-center rounded-lg bg-zinc-900 px-3 font-semibold text-white">
-            세무 자료
-          </span>
-          <Link href={`${base}/account-titles`} className="inline-flex min-h-10 items-center rounded-lg border border-zinc-300 bg-white px-3 hover:bg-zinc-50">
-            계정과목
-          </Link>
-        </nav>
       </div>
 
       <section className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
