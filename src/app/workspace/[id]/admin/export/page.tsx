@@ -23,6 +23,7 @@ import { TaxRequests } from "@/components/tax-office/tax-requests";
 import { claimCutoff, mdLabel, monthLabel, taxCloseDue } from "@/lib/expense/deadline";
 import { getHolidays } from "@/lib/expense/holidays";
 import { getExportOptions } from "@/lib/tax/export-options";
+import { OfficeWorkbookPreview } from "@/components/tax-office/office-workbook-preview";
 
 export const metadata = { title: "세무 마감 · PocketExpense" };
 
@@ -61,7 +62,7 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   const supabase = await createClient();
   const [y0, m0] = month.split("-").map(Number);
   const nextFirst = new Date(Date.UTC(y0, m0, 1)).toISOString().slice(0, 10);
-  const [res, { data: templates }, { data: downloads }, cardRec, hometax, holidays, { data: pendingItems }, requests, formatRequests, exportOptions] = await Promise.all([
+  const [res, { data: templates }, { data: downloads }, cardRec, hometax, holidays, { data: pendingItems }, requests, formatRequests, exportOptions, cardCount] = await Promise.all([
     getTaxMonth(month),
     supabase.rpc("my_company_tax_templates"),
     supabase.from("tax_export_downloads").select("id, actor_kind, actor_name, office_name, month, kind, template_name, row_count, closed, created_at").order("created_at", { ascending: false }).limit(20),
@@ -73,7 +74,9 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
     listTaxRequests(membership.company_id, month),
     listFormatRequests(membership.company_id),
     getExportOptions(membership.company_id),
+    supabase.from("corporate_cards").select("id", { count: "exact", head: true }).eq("company_id", membership.company_id).eq("is_active", true),
   ]);
+  const hasCards = (cardCount.count ?? 0) > 0;
   const pendingClaims = new Set((pendingItems ?? []).map((i) => i.claim_id)).size;
   const cutoff = claimCutoff(month, holidays);
   const due = taxCloseDue(month, holidays);
@@ -95,7 +98,7 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
         </div>
       )}
       {/* 이번 달 카드 내역 대조 상태(D-111, D-154): 막지 않고 보여 주며, 결과는 세무 엑셀 카드 대조 결과 시트로 함께 넘어간다 */}
-      <CardReconcileStatus saved={cardRec} month={month} href={`/workspace/${id}/admin/corporate-cards/reconcile?month=${month}`} />
+      <CardReconcileStatus saved={cardRec} month={month} href={`/workspace/${id}/admin/corporate-cards/reconcile?month=${month}`} recommend={hasCards} />
       {/* 우리 세무사무소가 올린 결산 양식으로 받기 (D-150) */}
       <TemplateDownloads
         templates={(templates ?? []).map((t) => ({ id: t.id, name: t.name, target: t.target as TemplateTarget }))}
@@ -119,6 +122,30 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
       companyName={membership.company_name}
       isSuper={membership.role === "super_admin"}
     />
+      {/* 세무사무소와 같은 세무용 엑셀 미리보기(D-190) — 카드 대조를 안 했으면 시트가 빠진다는 걸 함께 알려 대조를 권한다 */}
+      {res.data.rows.length > 0 && (
+        <Suspense key={`wb-${month}`} fallback={<div className="h-14 animate-pulse rounded-xl bg-zinc-100" />}>
+          <OfficeWorkbookPreview
+            month={month}
+            companyName={membership.company_name}
+            rows={res.data.rows}
+            preview={res.data.status !== "closed"}
+            cardReconcile={cardRec}
+            main={exportOptions.main}
+            audience="company"
+            footer={
+              hasCards && !cardRec ? (
+                <p className="mt-3 break-keep rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                  {monthLabel(month)} 법인카드 내역 대조를 하면 <b>카드 대조 결과</b> 시트가 함께 들어가 세무사가 크로스체크할 수 있어요.{" "}
+                  <Link href={`/workspace/${id}/admin/corporate-cards/reconcile?month=${month}`} className="font-semibold underline underline-offset-2">
+                    대조하러 가기
+                  </Link>
+                </p>
+              ) : null
+            }
+          />
+        </Suspense>
+      )}
       {/* 이카운트·세무사랑 등 다른 회계 프로그램 양식 접수(D-180) */}
       <AccountingFormatRequest requests={formatRequests} addAction={addFormatRequestAction} mainLabel={exportOptions.main.kind === "template" ? `세무사무소가 정한 [${exportOptions.main.name}] 양식` : "더존 위하고 일반전표"} />
       {/* 홈택스에서 내려받은 자료 올리기 — 세무사무소도 보고 받음(D-158) */}

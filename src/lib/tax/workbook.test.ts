@@ -25,7 +25,7 @@ const row = (o: Partial<ExportRow>): ExportRow =>
 describe("세무 마감 엑셀", () => {
   it("결산 양식 미리보기(D-186): 예시 지출로 만든 시트 그대로 — 위하고 사비 1건 = 차변·대변 두 줄, 연도는 쉼표 없이", async () => {
     const p = await taxWorkbookPreview({ month: "2026-10", companyName: "예시회사", rows: SAMPLE_EXPORT_ROWS, preview: false, cardReconcile: null });
-    expect(p.map((s) => s.sheet)).toEqual(taxWorkbookLayout().map((s) => s.sheet));
+    expect(p.map((s) => s.sheet)).toEqual(taxWorkbookLayout(undefined, false).map((s) => s.sheet));
     const j = p.find((s) => s.sheet === "위하고 일반전표(사비)")!;
     expect(j.rows[0].slice(0, 3)).toEqual(["연도", "월", "일"]);
     expect(j.rows.slice(1).map((r) => [r[0], r[6], r[10], r[11]])).toEqual([
@@ -41,7 +41,7 @@ describe("세무 마감 엑셀", () => {
     const rows = [row({ seq: 1, item_id: "a" }), row({ seq: 2, item_id: "b", payment_method: "personal_card" })];
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(await buildTaxWorkbook({ month: "2026-10", companyName: "포켓", rows, preview: false, cardReconcile: null }));
-    const layout = taxWorkbookLayout();
+    const layout = taxWorkbookLayout(undefined, false);
     expect(wb.worksheets.map((w) => w.name)).toEqual(layout.map((s) => s.sheet));
     for (const s of layout.filter((x) => x.columns.length && x.sheet !== "카드 대조 결과")) {
       const head = (wb.getWorksheet(s.sheet)!.getRow(1).values as unknown[]).slice(1).map(String);
@@ -143,7 +143,7 @@ describe("세무 마감 엑셀", () => {
     const main = { kind: "template" as const, name: "세무사랑 일반전표", target: "personal" as const, columns: [{ index: 2, header: "금액", field: "amount" as const }, { index: 1, header: "일자", field: "date" as const }] };
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(await buildTaxWorkbook({ month: "2026-10", companyName: "포켓", rows: SAMPLE_EXPORT_ROWS, preview: false, cardReconcile: null, main }));
-    expect(wb.worksheets.map((w) => w.name)).toEqual(taxWorkbookLayout(main).map((s) => s.sheet));
+    expect(wb.worksheets.map((w) => w.name)).toEqual(taxWorkbookLayout(main, false).map((s) => s.sheet));
     const ws = wb.getWorksheet("세무사랑 일반전표")!;
     expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["일자", "금액"]);
     expect(ws.rowCount).toBe(3); // 머리글 + 사비 2건(법인카드 제외)

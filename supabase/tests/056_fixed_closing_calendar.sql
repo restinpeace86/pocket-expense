@@ -80,6 +80,24 @@ begin
 end;
 $$;
 
+-- D-190: 법인카드를 등록한 A는 홈택스 자료를 올렸어도 10월 카드 대조를 안 했으면 3일(11/3)에 알림, 대조를 저장하면 빠짐
+insert into public.corporate_cards (company_id, nickname, last4) values ('c5600000-0000-0000-0000-00000000000a', '대표카드', '4321');
+do $$
+declare j jsonb;
+begin
+  j := public.closing_admin_targets('2026-11-03');
+  if not exists (select 1 from jsonb_array_elements(j) e where e->>'member_id' = 'a5610000-0000-0000-0000-000000000001' and e->>'kind' = 'hometax_missing'
+                   and (e->>'card_missing')::boolean and (e->>'has_cards')::boolean and not (e->>'hometax_missing')::boolean) then raise exception 'FAIL [A card nag] %', j; end if;
+  if exists (select 1 from jsonb_array_elements(j) e where e->>'member_id' = 'a5610000-0000-0000-0000-000000000002' and (e->>'has_cards')::boolean) then raise exception 'FAIL [B no cards]'; end if;
+end;
+$$;
+insert into public.card_reconciliations (company_id, month) values ('c5600000-0000-0000-0000-00000000000a', '2026-10');
+do $$
+begin
+  if exists (select 1 from jsonb_array_elements(public.closing_admin_targets('2026-11-03')) e where e->>'member_id' = 'a5610000-0000-0000-0000-000000000001') then raise exception 'FAIL [A reconciled → no nag]'; end if;
+end;
+$$;
+
 -- 직원 마감 푸시: 다음 마감(11/2 월)의 3일 전 = 10/30
 insert into public.expense_claims (company_id, member_id, title, category, status, current_round) values
   ('c5600000-0000-0000-0000-00000000000a', 'a5610000-0000-0000-0000-000000000001', '작성중', 'meal', 'draft', 1) ;

@@ -285,7 +285,7 @@ function addCardSheet(ws: ExcelJS.Worksheet, rec: SavedReconcile | null | undefi
 
 // 기본 세무용 엑셀의 시트·칸 구성(결산 양식 화면 안내, D-185) — 위 정의에서 그대로 읽어 실제 파일과 어긋나지 않게
 export type WorkbookSheetInfo = { sheet: string; note: string; columns: string[] };
-export function taxWorkbookLayout(main: MainSheet = WEHAGO_DEFAULT): WorkbookSheetInfo[] {
+export function taxWorkbookLayout(main: MainSheet = WEHAGO_DEFAULT, withCard = true): WorkbookSheetInfo[] {
   const h = (cols: Col[]) => cols.map((c) => c.header);
   return [
     { sheet: "지출내역", note: "그 달 승인·지급된 지출 전체(법인카드·사비 모두)", columns: h(SHEET1) },
@@ -293,7 +293,7 @@ export function taxWorkbookLayout(main: MainSheet = WEHAGO_DEFAULT): WorkbookShe
     { sheet: "세무 업로드(법인카드)", note: "법인카드 지출만", columns: h(SHEET3) },
     { sheet: "세무 업로드(개인 사비)", note: "개인 카드·현금(사비) 지출만, 카드 끝 4자리 칸 없음", columns: h(SHEET3.filter((c) => c.header !== "카드 끝 4자리")) },
     { sheet: mainSheetName(main), note: mainSheetNote(main), columns: main.kind === "wehago" ? JOURNAL_HEAD.map(([header]) => header) : [...main.columns].sort((a, b) => a.index - b.index).map((c) => c.header) },
-    { sheet: "카드 대조 결과", note: "회사가 그 달 법인카드 내역 대조를 했을 때 결과", columns: CARD_HEAD },
+    ...(withCard ? [{ sheet: "카드 대조 결과", note: "회사가 그 달 법인카드 내역 대조를 한 결과와 처리(대조한 달만 들어가요)", columns: CARD_HEAD }] : []),
   ];
 }
 
@@ -361,6 +361,7 @@ export async function buildTaxWorkbook(opts: { month: string; companyName: strin
   const main = opts.main ?? WEHAGO_DEFAULT;
   if (main.kind === "wehago") addWehagoJournal(wb.addWorksheet(mainSheetName(main)), rows, main.includeCorporate);
   else addTemplateSheet(wb.addWorksheet(mainSheetName(main)), main, rows, month);
-  if (opts.cardReconcile !== undefined) addCardSheet(wb.addWorksheet("카드 대조 결과"), opts.cardReconcile, month);
+  // 카드 대조 결과 시트는 회사가 그 달 대조를 저장했을 때만(D-190 — 안 한 달의 빈 시트는 세무사에게 쓸모없음)
+  if (opts.cardReconcile) addCardSheet(wb.addWorksheet("카드 대조 결과"), opts.cardReconcile, month);
   return (await wb.xlsx.writeBuffer()) as ArrayBuffer;
 }

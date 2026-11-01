@@ -148,6 +148,8 @@ export type ClosingNoticeInput = {
   pending?: number;
   hometaxMissing?: boolean;
   closed?: boolean;
+  hasCards?: boolean; // 사용 중 법인카드가 있는 회사(D-190)
+  cardMissing?: boolean; // 그 달 법인카드 내역 대조를 저장하지 않음(D-190)
 };
 export function closingNotice(p: ClosingNoticeInput): BuiltMessage {
   const m = `${Number(p.month.slice(5, 7))}월`;
@@ -158,10 +160,12 @@ export function closingNotice(p: ClosingNoticeInput): BuiltMessage {
   if (p.kind === "week_start") {
     parts.push(`지출 마감 주간이 시작됐어요. 직원 청구 마감은 ${md(p.cutoff)}, ${m}분 세무 마감은 ${md(p.due)}까지예요. 홈택스에서 ${m} 세금계산서·카드 매입 자료를 내려받아 올려 주세요.`);
     if (pending > 0) parts.push(`승인 대기 결의서 ${pending}건도 마감 전에 승인 또는 반려해 주세요.`);
+    if (p.hasCards) parts.push(`법인카드는 카드사에서 ${m} 사용 내역 파일을 내려받아 [법인카드 내역 대조]에 올려 주세요. 세무사와 크로스체크가 돼요.`);
   } else {
     if (p.kind === "close_due") parts.push(`오늘(${md(p.due)})이 ${m} 지출 세무 마감일이에요.`);
     if (nag) parts.push(`${m}까지 쓴 결의서 ${pending}건이 아직 승인 대기 중이에요. ${p.kind === "close_due" ? "오늘" : `${md(p.due)}`}까지 승인 또는 반려해 주세요. 처리하지 않으면 ${m} 세무 자료에서 빠져요.`);
     if (p.kind === "hometax_missing" && (p.hometaxMissing ?? true)) parts.push(`${m} 홈택스 자료가 아직 올라오지 않았어요. ${md(p.due)}까지 올려 주세요.`);
+    if (p.cardMissing && !p.closed) parts.push(`${m} 법인카드 내역 대조를 아직 안 했어요. 카드사 사용 내역 파일을 올리면 결의서 없는 결제를 찾아 주고, 결과가 세무사에게 함께 넘어가요.`);
     if (p.kind === "close_due" && !p.closed) parts.push("누락 내역을 확인하고 마감을 완료해 주세요.");
   }
   return {

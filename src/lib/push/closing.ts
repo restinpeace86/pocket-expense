@@ -7,7 +7,7 @@ import { pushConfigured, pushToMembers } from "./server";
 // 관리자 월말 마감 알림 (D-161, 개선사항 1). 매일 아침 cron이 부른다(service role).
 // 1일 마감 주간 시작(전체 관리자) / 3일 홈택스 자료 0개·승인 대기 / 5일 세무 마감 안 함·승인 대기(D-166) — 쉬는 날이면 앞 영업일(DB가 계산).
 // 웹푸시 + 알림톡(대행사 연결 전에는 기록만, O-01). 같은 날 같은 알림은 한 번만(push_logs).
-type Target = { company_id: string; member_id: string; kind: ClosingKind; month: string; cutoff: string; due: string; pending: number; hometax_missing: boolean; closed: boolean };
+type Target = { company_id: string; member_id: string; kind: ClosingKind; month: string; cutoff: string; due: string; pending: number; hometax_missing: boolean; closed: boolean; has_cards?: boolean; card_missing?: boolean };
 
 export async function runClosingReminders(today?: string): Promise<{ targets: number; pushed: number; alimtalk: number }> {
   const admin = createAdminClient();
@@ -36,6 +36,8 @@ export async function runClosingReminders(today?: string): Promise<{ targets: nu
       pending: Number(t.pending ?? 0),
       hometaxMissing: !!t.hometax_missing,
       closed: !!t.closed,
+      hasCards: !!t.has_cards,
+      cardMissing: !!t.card_missing,
     };
     const msg = closingNotice(input);
     if (pushConfigured()) {
@@ -45,7 +47,9 @@ export async function runClosingReminders(today?: string): Promise<{ targets: nu
           : input.pending > 0
             ? `승인 대기 ${input.pending}건 — ${t.kind === "close_due" ? "오늘" : "마감 전"}까지 처리해 주세요`
             : t.kind === "hometax_missing"
-              ? "홈택스 자료를 올려 주세요"
+              ? input.hometaxMissing
+                ? "홈택스 자료를 올려 주세요"
+                : "법인카드 내역 대조를 해 주세요"
               : "오늘이 세무 마감일이에요";
       const r = await pushToMembers(t.company_id, [t.member_id], { title, body: msg.text, url: msg.buttonPath, tag: "closing" });
       pushed += r.sent;

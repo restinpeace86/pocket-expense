@@ -24,4 +24,12 @@ describe("월말 마감 알림 문구 (D-161·D-166)", () => {
     expect(m.buttonLabel).toBe("세무 마감 열기");
     expect(m.text).toBe("[한빛] 오늘(10/2)이 9월 지출 세무 마감일이에요. 누락 내역을 확인하고 마감을 완료해 주세요.");
   });
+  it("D-190: 법인카드를 쓰는 회사 — 1일 안내에 카드 내역 올리기, 3일·5일 대조 안 했으면 권유(마감했으면 빼기)", () => {
+    expect(closingNotice({ ...base, kind: "week_start", hasCards: true }).text).toContain("카드사에서 9월 사용 내역 파일을 내려받아 [법인카드 내역 대조]에 올려 주세요");
+    expect(closingNotice({ ...base, kind: "week_start" }).text).not.toContain("법인카드");
+    const d3 = closingNotice({ ...base, kind: "hometax_missing", hometaxMissing: false, cardMissing: true });
+    expect(d3.text).toBe("[한빛] 9월 법인카드 내역 대조를 아직 안 했어요. 카드사 사용 내역 파일을 올리면 결의서 없는 결제를 찾아 주고, 결과가 세무사에게 함께 넘어가요.");
+    expect(closingNotice({ ...base, kind: "close_due", closed: false, cardMissing: true }).text).toContain("법인카드 내역 대조를 아직 안 했어요");
+    expect(closingNotice({ ...base, kind: "close_due", closed: true, pending: 1, cardMissing: true }).text).not.toContain("법인카드");
+  });
 });
