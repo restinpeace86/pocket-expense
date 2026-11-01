@@ -1,6 +1,6 @@
 import { ChevronDown, FileSpreadsheet } from "lucide-react";
 import { taxWorkbookLayout, taxWorkbookPreview } from "@/lib/tax/workbook";
-import { MAIN_TAB } from "@/lib/tax/main-sheet";
+import { MAIN_TAB, mainSheetName, WEHAGO_DEFAULT } from "@/lib/tax/main-sheet";
 import { WorkbookViewer } from "./default-workbook-info";
 
 // 세무 자료 화면: [세무용 엑셀 다운로드] 전에 그 회사·그 달 실제 자료로 같은 파일을 만들어 엑셀 모양으로 미리보기(D-187).
@@ -39,7 +39,9 @@ export async function OfficeWorkbookPreview({ footer, audience = "office", ...pr
         <WorkbookViewer
           sheets={sheets.map((s) => ({ ...s, note: notes.get(s.sheet) ?? "" }))}
           moreHint={audience === "company" ? "전체는 [엑셀만 미리 받기]로 받아 보세요." : "전체는 [세무용 엑셀 다운로드]로 받아 주세요."}
-          initialTab={MAIN_TAB}
+          // 회사 화면은 지출내역부터, 회계 프로그램 시트에는 "세무사무소용" 표시(D-192). 세무사무소는 회계 프로그램 시트부터
+          initialTab={audience === "company" ? 0 : MAIN_TAB}
+          tabBadges={audience === "company" ? { [mainSheetName(props.main ?? WEHAGO_DEFAULT)]: "세무사무소용" } : {}}
         />
         {footer}
       </div>

@@ -33,8 +33,9 @@ export function DefaultWorkbookInfo({ sheets, mainName, picker }: { sheets: Prev
   );
 }
 
-// 엑셀 모양 보기: 시트 탭 · 열 문자 · 줄 번호 · 첫 줄 머리글(D-186). 세무 자료 화면에서도 씀(D-187)
-export function WorkbookViewer({ sheets, moreHint = "", initialTab = 0 }: { sheets: PreviewSheet[]; moreHint?: string; initialTab?: number }) {
+// 엑셀 모양 보기: 시트 탭 · 열 문자 · 줄 번호 · 첫 줄 머리글(D-186). 세무 자료 화면에서도 씀(D-187).
+// tabBadges: 시트 이름 → 탭 옆 작은 표시(회사 화면의 "세무사무소용", D-192)
+export function WorkbookViewer({ sheets, moreHint = "", initialTab = 0, tabBadges = {} }: { sheets: PreviewSheet[]; moreHint?: string; initialTab?: number; tabBadges?: Record<string, string> }) {
   const [tab, setTab] = useState(initialTab < sheets.length ? initialTab : 0);
   const s = sheets[tab];
   const width = Math.max(0, ...s.rows.map((r) => r.length));
@@ -53,6 +54,7 @@ export function WorkbookViewer({ sheets, moreHint = "", initialTab = 0 }: { shee
             }`}
           >
             {x.sheet}
+            {tabBadges[x.sheet] && <span className="ml-1.5 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[11px] font-medium text-zinc-500">{tabBadges[x.sheet]}</span>}
           </button>
         ))}
       </div>
