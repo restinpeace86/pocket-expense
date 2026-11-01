@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { describe, expect, it, vi } from "vitest";
 import type { ExportRow } from "./export-rows";
-import { buildTaxWorkbook, cutMemo, wehagoJournalLines } from "./workbook";
+import { buildTaxWorkbook, cutMemo, taxWorkbookLayout, wehagoJournalLines } from "./workbook";
 
 vi.mock("server-only", () => ({}));
 
@@ -22,6 +22,18 @@ const row = (o: Partial<ExportRow>): ExportRow =>
   }) as ExportRow;
 
 describe("세무 마감 엑셀", () => {
+  it("결산 양식 화면 안내(시트·칸)가 실제 파일과 같다(D-185)", async () => {
+    const rows = [row({ seq: 1, item_id: "a" }), row({ seq: 2, item_id: "b", payment_method: "personal_card" })];
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await buildTaxWorkbook({ month: "2026-10", companyName: "포켓", rows, preview: false, cardReconcile: null }));
+    const layout = taxWorkbookLayout();
+    expect(wb.worksheets.map((w) => w.name)).toEqual(layout.map((s) => s.sheet));
+    for (const s of layout.filter((x) => x.columns.length && x.sheet !== "카드 대조 결과")) {
+      const head = (wb.getWorksheet(s.sheet)!.getRow(1).values as unknown[]).slice(1).map(String);
+      expect(head, s.sheet).toEqual(s.columns);
+    }
+  });
+
   it("지출내역 맨 아래 합계 줄과 요약의 부서별 합계", async () => {
     const rows = [
       row({ seq: 1, item_id: "a", expense_date: "2026-10-01", amount: 12000 }),

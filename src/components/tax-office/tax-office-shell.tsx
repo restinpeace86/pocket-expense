@@ -70,7 +70,7 @@ export function TaxOfficeShell({ officeName, isAdmin, companies, children }: { o
       ) : (
         <p className="px-3 py-2 text-sm text-sidebar-muted">고객사가 연결되면 보여요</p>
       )}
-      <p className="mt-3 border-t border-sidebar-border px-3 pb-1 pt-3 text-xs text-sidebar-muted">사무소</p>
+      <p className="mt-3 border-t border-sidebar-border px-3 pb-1 pt-3 text-xs text-sidebar-muted">사무소 설정</p>
       {officeItems.map((item) => (
         <NavItem key={item.label} item={item} onNavigate={onNavigate} />
       ))}

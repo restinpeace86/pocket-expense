@@ -1,5 +1,7 @@
 import { Suspense } from "react";
+import { DefaultWorkbookInfo } from "@/components/tax-office/default-workbook-info";
 import { TemplateManager, type OfficeTemplate } from "@/components/tax-office/template-manager";
+import { taxWorkbookLayout } from "@/lib/tax/workbook";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTaxOffice, isActiveMember } from "@/lib/tax-office/queries";
 
@@ -28,6 +30,7 @@ async function Content() {
           마감 화면에서 이 양식으로 받아요.
         </p>
       </div>
+      <DefaultWorkbookInfo sheets={taxWorkbookLayout()} officeTemplates={((data ?? []) as OfficeTemplate[]).map((t) => t.name)} />
       <TemplateManager templates={(data ?? []) as OfficeTemplate[]} canEdit={state.role === "admin"} />
     </>
   );

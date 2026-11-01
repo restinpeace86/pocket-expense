@@ -237,6 +237,8 @@ function addSummary(ws: ExcelJS.Worksheet, rows: ExportRow[], title: string) {
 }
 
 // 카드 대조 결과 시트(D-154): 대조를 했으면 맞지 않는 건과 회사가 고른 처리·메모, 안 했으면 안 했다고 적는다
+const CARD_HEAD = ["구분", "사용일", "가맹점", "금액", "카드 끝 4자리", "결의서(직원)", "회사 처리", "메모", "처리한 사람"];
+
 function addCardSheet(ws: ExcelJS.Worksheet, rec: SavedReconcile | null | undefined, month: string) {
   const [y, m] = month.split("-");
   ws.addRow([`${y}년 ${Number(m)}월 법인카드 사용 내역 대조 결과`]).font = { bold: true, size: 13 };
@@ -249,7 +251,7 @@ function addCardSheet(ws: ExcelJS.Worksheet, rec: SavedReconcile | null | undefi
   ws.addRow([`카드 내역 파일: ${rec.file_name ?? "-"} · 기간 ${rec.period_from ?? "?"} ~ ${rec.period_to ?? "?"} · 저장 ${rec.created_by_name ?? ""}`]);
   ws.addRow([`짝 맞음 ${rec.matched}건 · 맞지 않는 건 ${rec.issues.length}건(처리 전 ${open}건) · 카드 취소 ${rec.cancelled}건 제외`]);
   ws.addRow([]);
-  const head = ws.addRow(["구분", "사용일", "가맹점", "금액", "카드 끝 4자리", "결의서(직원)", "회사 처리", "메모", "처리한 사람"]);
+  const head = ws.addRow(CARD_HEAD);
   head.font = { bold: true };
   head.eachCell((c) => {
     c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF4F4F5" } };
@@ -269,6 +271,20 @@ function addCardSheet(ws: ExcelJS.Worksheet, rec: SavedReconcile | null | undefi
     row.getCell(4).numFmt = WON;
   }
   [28, 11, 22, 12, 12, 28, 26, 36, 12].forEach((w, k) => (ws.getColumn(k + 1).width = w));
+}
+
+// 기본 세무용 엑셀의 시트·칸 구성(결산 양식 화면 안내, D-185) — 위 정의에서 그대로 읽어 실제 파일과 어긋나지 않게
+export type WorkbookSheetInfo = { sheet: string; note: string; columns: string[] };
+export function taxWorkbookLayout(): WorkbookSheetInfo[] {
+  const h = (cols: Col[]) => cols.map((c) => c.header);
+  return [
+    { sheet: "지출내역", note: "그 달 승인·지급된 지출 전체(법인카드·사비 모두)", columns: h(SHEET1) },
+    { sheet: "요약", note: "세무 증빙 총액·항목 수·직원 지급액·직원 납부액 등 합계", columns: [] },
+    { sheet: "세무 업로드(법인카드)", note: "법인카드 지출만", columns: h(SHEET3) },
+    { sheet: "세무 업로드(개인 사비)", note: "개인 카드·현금(사비) 지출만, 카드 끝 4자리 칸 없음", columns: h(SHEET3.filter((c) => c.header !== "카드 끝 4자리")) },
+    { sheet: "위하고 일반전표(사비)", note: "사비 지출 1건 = 차변(비용) + 대변(253 미지급금·직원) 두 줄", columns: JOURNAL_HEAD.map(([header]) => header) },
+    { sheet: "카드 대조 결과", note: "회사가 그 달 법인카드 내역 대조를 했을 때 결과", columns: CARD_HEAD },
+  ];
 }
 
 export async function buildTaxWorkbook(opts: { month: string; companyName: string; rows: ExportRow[]; preview: boolean; cardReconcile?: SavedReconcile | null }): Promise<ArrayBuffer> {
