@@ -1,11 +1,11 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ExternalLink, FileSpreadsheet, Search, X } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, ExternalLink, FileSpreadsheet, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MAIN_TAB } from "@/lib/tax/main-sheet";
 
 // links: 줄마다 영수증 사진 주소(있으면 줄 번호 옆 돋보기, D-193)
-export type PreviewSheet = { sheet: string; note: string; rows: string[][]; totalRows: number; links?: (string | null)[] };
+export type PreviewSheet = { sheet: string; note: string; rows: string[][]; totalRows: number; links?: (string | null)[]; flags?: (string | null)[] }; // flags: 줄마다 문제 설명(D-195)
 
 // 엑셀 열 이름 A, B, …, Z, AA, AB …
 const colName = (i: number): string => (i < 26 ? String.fromCharCode(65 + i) : colName(Math.floor(i / 26) - 1) + String.fromCharCode(65 + (i % 26)));
@@ -80,9 +80,14 @@ export function WorkbookViewer({ sheets, moreHint = "", initialTab = 0, tabBadge
           </thead>
           <tbody>
             {s.rows.map((r, i) => (
-              <tr key={i}>
+              <tr key={i} className={s.flags?.[i] ? "bg-amber-50" : ""}>
                 <th className="sticky left-0 z-10 border border-zinc-300 bg-zinc-100 px-1.5 py-1 text-right font-normal text-zinc-500">
                   <span className="inline-flex items-center justify-end gap-1">
+                    {s.flags?.[i] && (
+                      <span title={s.flags[i]!} aria-label={`확인 필요: ${s.flags[i]}`} className="text-amber-600">
+                        <AlertTriangle className="size-3.5" aria-hidden />
+                      </span>
+                    )}
                     {s.links?.[i] && (
                       <button
                         type="button"

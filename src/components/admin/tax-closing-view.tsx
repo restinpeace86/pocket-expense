@@ -10,7 +10,8 @@ import { formatDateTimeKst } from "@/lib/claims/format";
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
 import type { TaxMonth } from "@/lib/tax/closing";
-import { evidenceFile, evidenceNo, isOwnCar, settlement } from "@/lib/tax/export-rows";
+import { evidenceFile, evidenceNo, isOwnCar, issueKinds, rowHasFile, settlement, type IssueKind } from "@/lib/tax/export-rows";
+import { countIssues, IssueChips } from "@/components/tax/issue-chips";
 import { buildTaxZip, saveBlob, type ZipProgress } from "@/lib/tax/zip-client";
 
 // 화면: 세무 마감 및 증빙 다운로드 (tax-closing.md, tax-export.md, D-045)
@@ -52,6 +53,11 @@ export function TaxClosingView({
   const [progress, setProgress] = useState<(ZipProgress & { step: string }) | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [missing, setMissing] = useState<string[]>([]);
+  // 영수증 문제 한눈에(D-195): 칩을 누르면 아래 지출 내역을 그 영수증만
+  const [issue, setIssue] = useState<IssueKind | null>(null);
+  const kinds = new Map(rows.map((r) => [r.item_id, issueKinds(r, rowHasFile(r))]));
+  const issueStats = countIssues([...kinds.values()]);
+  const shownRows = issue ? rows.filter((r) => kinds.get(r.item_id)?.includes(issue)) : rows;
   const [busy, start] = useTransition();
   const zipBase = `PocketExpense_${companyName.replace(/[\\/:*?"<>|\s]/g, "")}_${month}`;
 
@@ -209,6 +215,7 @@ export function TaxClosingView({
         엑셀의 업로드 시트는 법인카드와 개인(사비)이 따로예요. {mainSheetText} 영수증은 사진(전자)으로 함께 넘어가요. 종이 원본을 따로 모아 두는지는 회사·세무사무소마다 달라요 — 정한 방식대로 보관해 주세요. 계정코드는 더존 기본 계정코드라 회계 프로그램과 다를 수 있어요(설정 › 계정과목에서 확인·변경).
       </p>
 
+      {total > 0 && <IssueChips counts={issueStats.counts} flagged={issueStats.flagged} active={issue} onPick={setIssue} />}
       <section className="@container rounded-xl border border-zinc-200 bg-white">
         <h2 className="border-b border-zinc-100 px-4 py-3 font-semibold">
           {label} {status === "closed" ? "마감된" : "승인 완료된"} 지출 내역 <span className="text-sm font-normal text-zinc-500">(세무사무소 전달용 낱개 보기)</span>
@@ -230,10 +237,10 @@ export function TaxClosingView({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
-                  {rows.slice(0, PREVIEW_ROWS).map((r) => {
+                  {shownRows.slice(0, PREVIEW_ROWS).map((r) => {
                     const f = evidenceFile(r, month, total);
                     return (
-                      <tr key={r.item_id} className={r.kind === "carryover" ? "bg-sky-50/50" : ""}>
+                      <tr key={r.item_id} className={kinds.get(r.item_id)?.length ? "bg-amber-50/70" : r.kind === "carryover" ? "bg-sky-50/50" : ""}>
                         <td className="whitespace-nowrap px-3 py-2 tabular-nums">{evidenceNo(month, r.seq, total)}</td>
                         <td className="whitespace-nowrap px-3 py-2 tabular-nums">
                           {r.expense_date.slice(5).replace("-", "/")}
@@ -254,8 +261,8 @@ export function TaxClosingView({
               </table>
             </div>
             <ul className="divide-y divide-zinc-100 @3xl:hidden">
-              {rows.slice(0, PREVIEW_ROWS).map((r) => (
-                <li key={r.item_id} className="flex flex-col gap-0.5 px-4 py-3 text-sm">
+              {shownRows.slice(0, PREVIEW_ROWS).map((r) => (
+                <li key={r.item_id} className={`flex flex-col gap-0.5 px-4 py-3 text-sm ${kinds.get(r.item_id)?.length ? "bg-amber-50/70" : ""}`}>
                   <span className="flex justify-between gap-2">
                     <span className="min-w-0 truncate font-medium">{isOwnCar(r) ? `🚗 ${r.start_location ?? ""} → ${r.end_location ?? ""}` : (r.merchant_name ?? "-")}</span>
                     <span className="shrink-0 font-semibold tabular-nums">{formatWon(r.amount ?? 0)}</span>

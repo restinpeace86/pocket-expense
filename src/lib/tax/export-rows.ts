@@ -139,6 +139,31 @@ export function checks(r: ExportRow, hasFile: boolean): string[] {
   return out;
 }
 
+// 영수증 문제 종류(D-195) — checks()와 같은 규칙을 칩·걸러 보기용 키로. 순서 = 화면 칩 순서(급한 것부터)
+export type IssueKind = "review" | "no_evidence" | "no_file" | "no_biz" | "no_vat" | "condolence" | "own_car";
+export const ISSUE_KINDS: IssueKind[] = ["review", "no_evidence", "no_file", "no_biz", "no_vat", "condolence", "own_car"];
+export const ISSUE_LABEL: Record<IssueKind, string> = {
+  review: "회사 확인 요청",
+  no_evidence: "증빙 없음",
+  no_file: "영수증 파일 없음",
+  no_biz: "사업자번호 없음",
+  no_vat: "부가세 미구분",
+  condolence: "경조사비 20만원 초과",
+  own_car: "자차(적격증빙 없음)",
+};
+export function issueKinds(r: ExportRow, hasFile: boolean): IssueKind[] {
+  if (isOwnCar(r)) return ["own_car"];
+  const out: IssueKind[] = [];
+  if (r.tax_review_request && !r.tax_review_resolved_at) out.push("review");
+  if (r.category === "condolence" && (r.amount ?? 0) > CONDOLENCE_LIMIT) out.push("condolence");
+  if (!r.merchant_business_number && r.category !== "condolence") out.push("no_biz");
+  if (r.supply_amount == null || r.vat_amount == null) out.push("no_vat");
+  if (noEvidenceCheck(r.evidence_kind, r.amount)) out.push("no_evidence");
+  else if (!r.evidence_substitute && !hasFile) out.push("no_file");
+  return out;
+}
+export const rowHasFile = (r: ExportRow) => !!r.receipt_path || !!r.route_card_path;
+
 export const bizNo = (v: string | null) => (v && /^\d{10}$/.test(v) ? `${v.slice(0, 3)}-${v.slice(3, 5)}-${v.slice(5)}` : v ?? "");
 
 // 세무 업로드 초안(시트3)의 적요: 결의서 지출 사유 + 항목 적요, 자차는 계산식

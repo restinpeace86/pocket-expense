@@ -11,6 +11,7 @@ import type { TemplateTarget } from "@/lib/tax-office/template-fields";
 import { listHometax } from "@/lib/hometax/server";
 import { listTaxRequests } from "@/lib/tax-office/requests";
 import { getExportOptions } from "@/lib/tax/export-options";
+import { ISSUE_KINDS, type IssueKind } from "@/lib/tax/export-rows";
 
 export const metadata = { title: "세무 자료 · PocketExpense 세무사무소" };
 
@@ -66,6 +67,7 @@ async function Content({ params, searchParams }: Pick<PageProps<"/tax-office/[co
       requests={requests}
       templates={(templates ?? []).map((t) => ({ id: t.id, name: t.name, target: t.target as TemplateTarget }))}
       exportOptions={exportOptions}
+      issue={typeof sp.issue === "string" && (ISSUE_KINDS as string[]).includes(sp.issue) ? (sp.issue as IssueKind) : null}
       workbookPreview={
         data.rows.length > 0 ? (
           <Suspense key={`wb-${month}`} fallback={<div className="h-12 animate-pulse rounded-xl bg-zinc-100" />}>

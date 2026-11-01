@@ -1,6 +1,7 @@
 import { Download, FileImage } from "lucide-react";
 import type { TaxMonth } from "@/lib/tax/closing";
-import { bizNo, checks, classLabels, EVIDENCE_LABEL, statusLabel, supplyVat, type ExportRow } from "@/lib/tax/export-rows";
+import { bizNo, checks, classLabels, EVIDENCE_LABEL, issueKinds, rowHasFile, statusLabel, supplyVat, type ExportRow, type IssueKind } from "@/lib/tax/export-rows";
+import { countIssues, IssueChips } from "@/components/tax/issue-chips";
 import { MonthPicker } from "./month-picker";
 import { OfficeItemAccount } from "./office-item-account";
 import { CardReconcileStatus } from "@/components/admin/card-reconcile-status";
@@ -41,6 +42,7 @@ export function TaxOfficeMonthView({
   requests = [],
   workbookPreview = null,
   exportOptions,
+  issue = null,
 }: {
   companyId: string;
   companyName: string;
@@ -49,6 +51,7 @@ export function TaxOfficeMonthView({
   months: string[];
   receiptUrls: Record<string, string>;
   templates?: TemplateLink[];
+  issue?: IssueKind | null; // 칩으로 고른 문제 종류(D-195) — 지출 표를 그 영수증만
   exportOptions: ExportOptions; // 회계 프로그램 시트·법인카드 수집 방식(D-189)
   workbookPreview?: React.ReactNode; // 세무용 엑셀 미리보기(D-187) — 페이지가 Suspense로 감싸 넘긴다
   cardReconcile?: SavedReconcile | null;
@@ -96,6 +99,12 @@ export function TaxOfficeMonthView({
   const [y, m] = data.month.split("-").map(Number);
   const excluded = data.excluded.draft + data.excluded.submitted + data.excluded.rejected;
   const base = `/tax-office/${companyId}`;
+  // 영수증 문제 한눈에(D-195): 종류별 건수 칩 + 고르면 그 영수증만, 문제 있는 줄은 주황
+  const kinds = new Map(rows.map((r) => [r.item_id, issueKinds(r, rowHasFile(r))]));
+  const { counts, flagged } = countIssues([...kinds.values()]);
+  const shown = issue ? rows.filter((r) => kinds.get(r.item_id)?.includes(issue)) : rows;
+  const chipHref = (k: IssueKind | null) => `${base}?month=${data.month}${k ? `&issue=${k}` : ""}#expenses`;
+  const hrefs = Object.fromEntries([["all", chipHref(null)], ...Object.keys(counts).map((k) => [k, chipHref(k as IssueKind)])]);
 
   return (
     <>
@@ -142,6 +151,7 @@ export function TaxOfficeMonthView({
           세무용 엑셀의 [{mainSheetName(exportOptions.main)}] 시트는 우리 사무소 결산 양식 [{exportOptions.main.name}]대로 채운 거예요(넣은 지출: {TARGET_LABEL[exportOptions.main.target]}). 양식 파일의 서식까지 그대로 필요하면 아래 양식 받기 버튼을 쓰세요.
         </p>
       )}
+      {rows.length > 0 && <IssueChips counts={counts} flagged={flagged} active={issue} hrefs={hrefs} />}
       {workbookPreview}
       {/* 회사가 한 법인카드 대조 결과와 처리(D-154) — 보기만 */}
       <CardReconcileStatus saved={cardReconcile} month={data.month} />
@@ -195,17 +205,20 @@ export function TaxOfficeMonthView({
             </ul>
           </section>
 
-          <section className="rounded-xl border border-zinc-200 bg-white">
-            <h2 className="border-b border-zinc-100 px-4 py-3 font-semibold">지출 내역 · 증빙</h2>
+          <section id="expenses" className="scroll-mt-4 rounded-xl border border-zinc-200 bg-white">
+            <h2 className="border-b border-zinc-100 px-4 py-3 font-semibold">
+              지출 내역 · 증빙
+              {issue && <span className="ml-2 text-sm font-normal text-amber-800">— 고른 문제만 {shown.length}건</span>}
+            </h2>
             {/* 여러 건 계정과목 한 번에(D-165) — 계정과목을 고를 수 있고 마감 전인 달만 */}
-            <BulkWrap on={bulk} itemIds={rows.map((r) => r.item_id)} titles={accountTitles}>
+            <BulkWrap on={bulk} itemIds={shown.map((r) => r.item_id)} titles={accountTitles}>
             {/* 휴대폰: 카드 */}
             <ul className="divide-y divide-zinc-100 md:hidden">
-              {rows.map((r) => {
+              {shown.map((r) => {
                 const url = r.receipt_path ? receiptUrls[r.receipt_path] : undefined;
                 const warn = checks(r, !!r.receipt_path || !!r.route_card_path).filter((w) => !w.startsWith("세무사 확인 요청"));
                 return (
-                  <li key={r.item_id} className="flex flex-col gap-1 px-4 py-3 text-sm">
+                  <li key={r.item_id} className={`flex flex-col gap-1 px-4 py-3 text-sm ${kinds.get(r.item_id)?.length ? "bg-amber-50/70" : ""}`}>
                     <div className="flex items-start justify-between gap-3">
                       {bulk && <BulkCheck itemId={r.item_id} label={r.merchant_name ?? classLabels(r).category} />}
                       <span className="min-w-0 flex-1 break-keep font-medium text-zinc-900">{r.merchant_name ?? classLabels(r).category}</span>
@@ -253,12 +266,12 @@ export function TaxOfficeMonthView({
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => {
+                  {shown.map((r) => {
                     const url = r.receipt_path ? receiptUrls[r.receipt_path] : undefined;
                     const { supply, vat } = supplyVat(r);
                     const warn = checks(r, !!r.receipt_path || !!r.route_card_path).filter((w) => !w.startsWith("세무사 확인 요청"));
                     return (
-                      <tr key={r.item_id}>
+                      <tr key={r.item_id} className={kinds.get(r.item_id)?.length ? "bg-amber-50/70" : ""}>
                         {bulk && (
                           <td className={td}>
                             <BulkCheck itemId={r.item_id} label={`${r.seq}번 ${r.merchant_name ?? ""}`} />
