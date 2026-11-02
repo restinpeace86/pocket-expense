@@ -10,6 +10,7 @@ export type BillingPlan = {
   monthly_receipts: number;
   recommended_size: string | null;
   is_featured: boolean;
+  max_members: number | null; // null = 제한 없음(D-198)
 };
 
 export type CreditStatus = {
@@ -64,7 +65,7 @@ export async function getBillingPlans(): Promise<BillingPlan[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("billing_plans")
-    .select("code, name, monthly_price, monthly_receipts, recommended_size, is_featured")
+    .select("code, name, monthly_price, monthly_receipts, recommended_size, is_featured, max_members")
     .order("sort_order");
   return data ?? [];
 }

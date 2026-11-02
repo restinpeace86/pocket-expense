@@ -58,7 +58,8 @@
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | code | text | not null, unique | `starter` / `standard` / `pro` (D-081) |
-| name | text | not null | 스타터 / 스탠다드 / 프로 (D-081) |
+| name | text | not null | 스타터 / 프로 / 비즈니스 (D-198, 코드 starter / standard / pro) |
+| max_members | int | null = 제한 없음 | 직원 수(D-198, migration 103) — 10 / 20 / null. 막는 것은 결제 연동 때 |
 | monthly_price | integer | not null | 29000 / 49000 / 89000 (공급가액, 부가세 별도, D-133) |
 | annual_price | integer | null | 연간 선결제 총액. **지금은 비움**(월간 결제로 먼저 — D-133). 다시 도입하면 채움 |
 | monthly_receipts | integer | not null | 150 / 400 / 800 |

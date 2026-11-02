@@ -399,6 +399,7 @@ export type Database = {
           is_featured: boolean
           is_purchasable: boolean
           is_unlimited: boolean
+          max_members: number | null
           monthly_price: number
           monthly_receipts: number
           name: string
@@ -414,6 +415,7 @@ export type Database = {
           is_featured?: boolean
           is_purchasable?: boolean
           is_unlimited?: boolean
+          max_members?: number | null
           monthly_price: number
           monthly_receipts: number
           name: string
@@ -429,6 +431,7 @@ export type Database = {
           is_featured?: boolean
           is_purchasable?: boolean
           is_unlimited?: boolean
+          max_members?: number | null
           monthly_price?: number
           monthly_receipts?: number
           name?: string

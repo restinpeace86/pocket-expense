@@ -1,7 +1,8 @@
-import { Lock } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { SectionHeading } from "@/components/ui/help";
 import type { BillingAddon, BillingPlan, CreditStatus } from "@/lib/admin/billing";
 import { checkoutPrice } from "@/lib/billing/checkout";
+import { COMMON_FEATURES, planBenefits } from "@/lib/billing/plan-benefits";
 import { formatWon } from "@/lib/format";
 import { EventBonusBanner } from "./event-bonus-banner";
 import { SurveyButton } from "./survey-dialog";
@@ -81,9 +82,19 @@ function PlanCard({ plan, firstPurchase }: { plan: BillingPlan; firstPurchase: b
           <span className="ml-1 text-xs font-normal text-zinc-400">(VAT 별도)</span>
         </p>
       )}
-      <p className="mt-1 text-sm text-zinc-700">
-        영수증 월 {plan.monthly_receipts.toLocaleString("ko-KR")}장 <span className="text-zinc-500">· 장당 약 {formatWon(Math.round(plan.monthly_price / plan.monthly_receipts))}</span>
-      </p>
+      {/* 이 가격에 포함(D-198): 직원 수·AI 영수증 읽기·모든 기능 */}
+      <p className="mt-4 text-xs font-medium text-zinc-500">이 가격에 포함</p>
+      <ul className="mt-1.5 flex flex-col gap-2">
+        {planBenefits(plan).map((b) => (
+          <li key={b.label} className="flex gap-2 text-sm">
+            <Check className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+            <span className="min-w-0">
+              <span className="block break-keep text-zinc-900">{b.label}</span>
+              {b.sub && <span className="block break-keep text-xs text-zinc-500">{b.sub}</span>}
+            </span>
+          </li>
+        ))}
+      </ul>
       <span className="mt-auto pt-4" title={DISABLED_TIP}>
         <button type="button" disabled className="min-h-11 w-full cursor-not-allowed rounded-xl bg-zinc-200 px-4 text-sm font-semibold text-zinc-500">
           이 플랜으로 결제하기
@@ -166,12 +177,12 @@ export function BillingView({ status, plans, addons = [], preview = false }: { s
       <SectionHeading
         as="h1"
         title="요금제"
-        summary="영수증 장수 기준 월 구독입니다. 지금은 무료 제공 기간이라 결제하지 않고 쓰실 수 있어요."
+        summary="모든 기능이 포함된 월 구독이에요. 직원 수와 AI 영수증 읽기 장수로 플랜을 골라요. 지금은 무료 제공 기간이라 결제하지 않고 쓰실 수 있어요."
         helpId="billing"
         help={
           <>
             <p>영수증 사진·파일 1장을 올릴 때마다 1장이 빠집니다. 같은 항목의 사진 교체·영수증 없는 항목은 빠지지 않고, 지워도 돌려받지 않습니다.</p>
-            <p>가격은 공급가액이며 결제 시 부가세 10%가 더해지고 세금계산서가 발행됩니다. 예: 스탠다드 49,000원 + 부가세 4,900원 = 53,900원.</p>
+            <p>가격은 공급가액이며 결제 시 부가세 10%가 더해지고 세금계산서가 발행됩니다. 예: 프로 49,000원 + 부가세 4,900원 = 53,900원.</p>
             <p>매월 제공되는 기본 장수 중 남은 장수는 다음 달로 넘어가지 않아요. 다 쓰면 그때만 추가 크레딧(50장 8,000원)을 살 수 있어요.</p>
           </>
         }
@@ -180,11 +191,23 @@ export function BillingView({ status, plans, addons = [], preview = false }: { s
       {exhausted && <AddonCard addons={addons} />}
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">정식 플랜</h2>
+        <p className="-mt-1 break-keep text-sm text-zinc-600">모든 기능은 모든 플랜에 같아요. 직원 수와 AI 영수증 읽기 장수로 팀 규모에 맞춰 고르세요.</p>
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {plans.map((p) => (
             <PlanCard key={p.code} plan={p} firstPurchase={status.firstPurchase} />
           ))}
         </ul>
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+          <p className="text-sm font-semibold">모든 플랜에 똑같이 포함</p>
+          <ul className="mt-2 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+            {COMMON_FEATURES.map((f) => (
+              <li key={f} className="flex gap-2 text-sm text-zinc-700">
+                <Check className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
+                <span className="break-keep">{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
         <p className="text-sm text-zinc-500">※ 매월 제공되는 기본 크레딧 중 사용하지 않은 잔여 장수는 다음 달로 이월되지 않습니다.</p>
       </section>
       <PaymentForm />
