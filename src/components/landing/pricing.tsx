@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 import { formatWon } from "@/lib/format";
-import { COMMON_FEATURES, planBenefits } from "@/lib/billing/plan-benefits";
+import { COMMON_FEATURES, planBenefits, PRICING_RULES } from "@/lib/billing/plan-benefits";
 import { createPublicClient } from "@/lib/supabase/public";
 
 type Plan = {
@@ -37,7 +37,7 @@ export async function Pricing() {
           지금 가입하면 영수증 100장 무료
         </span>
         <h2 className="mt-4 text-balance break-keep text-3xl font-bold tracking-tight text-white">모든 기능은 같고, 팀 규모에 맞춰 고르세요</h2>
-        <p className="mt-2 text-balance break-keep text-zinc-400">영수증부터 결재·정산·세무 마감까지 전부 포함된 고정 월 구독. 도입비 0원.</p>
+        <p className="mt-2 text-balance break-keep text-zinc-400">플랜 안에서는 인원이 늘어도 같은 가격. 영수증부터 결재·정산·세무 마감까지 전부 포함, 도입비 0원.</p>
       </div>
       <ul className="mx-auto mt-10 grid max-w-md gap-4 md:max-w-none md:grid-cols-3">
         {plans.map((plan) => (
@@ -81,8 +81,17 @@ export async function Pricing() {
           ))}
         </ul>
       </div>
-      {/* 연간 선결제는 월간 결제로 먼저 선보인 뒤 다시 정한다(D-133) */}
-      <p className="mx-auto mt-6 max-w-3xl text-balance break-keep text-center text-sm text-zinc-400">※ 매월 제공되는 기본 크레딧 중 사용하지 않은 잔여 장수는 다음 달로 이월되지 않습니다.</p>
+      {/* 요금 기준(D-199) — 문의·분쟁을 줄이려고 한 줄씩. 연간 선결제는 월간 결제로 먼저 선보인 뒤 다시 정한다(D-133) */}
+      <div className="mx-auto mt-4 max-w-4xl px-1">
+        <p className="text-sm font-semibold text-zinc-300">요금 기준</p>
+        <ul className="mt-2 flex flex-col gap-1.5">
+          {PRICING_RULES.map((r) => (
+            <li key={r} className="break-keep text-sm text-zinc-400">
+              · {r}
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

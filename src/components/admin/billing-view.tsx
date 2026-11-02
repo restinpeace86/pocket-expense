@@ -2,7 +2,7 @@ import { Check, Lock } from "lucide-react";
 import { SectionHeading } from "@/components/ui/help";
 import type { BillingAddon, BillingPlan, CreditStatus } from "@/lib/admin/billing";
 import { checkoutPrice } from "@/lib/billing/checkout";
-import { COMMON_FEATURES, planBenefits } from "@/lib/billing/plan-benefits";
+import { COMMON_FEATURES, planBenefits, PRICING_RULES } from "@/lib/billing/plan-benefits";
 import { formatWon } from "@/lib/format";
 import { EventBonusBanner } from "./event-bonus-banner";
 import { SurveyButton } from "./survey-dialog";
@@ -208,7 +208,17 @@ export function BillingView({ status, plans, addons = [], preview = false }: { s
             ))}
           </ul>
         </div>
-        <p className="text-sm text-zinc-500">※ 매월 제공되는 기본 크레딧 중 사용하지 않은 잔여 장수는 다음 달로 이월되지 않습니다.</p>
+        {/* 요금 기준(D-199) */}
+        <div>
+          <p className="text-sm font-semibold">요금 기준</p>
+          <ul className="mt-1.5 flex flex-col gap-1">
+            {PRICING_RULES.map((r) => (
+              <li key={r} className="break-keep text-sm text-zinc-600">
+                · {r}
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
       <PaymentForm />
     </>
