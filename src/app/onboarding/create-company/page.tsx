@@ -12,7 +12,7 @@ export default function CreateCompanyPage() {
       <div className="pt-6">
         <p className="text-sm font-medium text-blue-600">회사 등록</p>
         <h1 className="text-2xl font-bold tracking-tight">우리 회사 정보를 입력해 주세요</h1>
-        <p className="mt-1 text-sm text-zinc-600">등록하면 바로 무료로 영수증 100장을 쓸 수 있어요. 결제는 필요 없습니다.</p>
+        <p className="mt-1 text-sm text-zinc-600">등록하면 첫 월말 마감까지 무료로 모든 기능을 쓸 수 있어요. 결제는 필요 없습니다.</p>
       </div>
       <Card>
         <Suspense fallback={<div className="h-96 animate-pulse rounded-xl bg-zinc-100" />}>

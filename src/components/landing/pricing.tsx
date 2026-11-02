@@ -34,7 +34,7 @@ export async function Pricing() {
     <section id="pricing" className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 py-20">
       <div className="text-center">
         <span className="inline-block text-balance rounded-full bg-emerald-400/15 px-3 py-1 text-sm font-medium text-emerald-300">
-          지금 가입하면 영수증 100장 무료
+          지금 가입하면 첫 월말 마감까지 무료
         </span>
         <h2 className="mt-4 text-balance break-keep text-3xl font-bold tracking-tight text-white">모든 기능은 같고, 팀 규모에 맞춰 고르세요</h2>
         <p className="mt-2 text-balance break-keep text-zinc-400">플랜 안에서는 인원이 늘어도 같은 가격. 영수증부터 결재·정산·세무 마감까지 전부 포함, 도입비 0원.</p>

@@ -94,7 +94,7 @@ begin
   if not v_ok then raise exception 'FAIL [CREDIT] B member consumed A item credit'; end if;
 
   r := public.consume_receipt_credit('5a000000-0000-0000-0000-000000000001', '2a000000-0000-0000-0000-000000000002', true, 100);
-  if (r->>'charged')::boolean is not true or (r->>'remaining')::int <> 99 then raise exception 'FAIL [CREDIT] first charge %', r; end if;
+  if (r->>'charged')::boolean is not true or (r->>'remaining')::int <> 799 then raise exception 'FAIL [CREDIT] first charge %', r; end if;
   r := public.consume_receipt_credit('5a000000-0000-0000-0000-000000000001', '2a000000-0000-0000-0000-000000000002', true, 100);
   if (r->>'charged')::boolean is not false then raise exception 'FAIL [CREDIT] double charge %', r; end if;
 end $$;

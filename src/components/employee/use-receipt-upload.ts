@@ -18,7 +18,7 @@ export const MAX_PER_CLAIM = 30;
 // phase: 차례 기다림 → 사진 최적화 → 업로드 → AI 읽기 (화면에 단계로 보여 줘 멈춘 게 아님을 알린다). since: 지금 단계를 시작한 시각
 export type UploadRow = { key: string; name: string; phase: "waiting" | "preparing" | "uploading" | "reading" | "done" | "failed"; error?: string; itemId?: string; isPdf?: boolean; since?: number };
 
-export const BONUS_TOAST = "회사 무료 영수증 100장을 모두 사용했습니다. 현재 이벤트 기간이라 추가 100장을 무료로 더 드립니다.";
+export const BONUS_TOAST = "무료 기간 영수증 안전 상한을 모두 사용했습니다. 현재 이벤트 기간이라 추가 100장을 무료로 더 드립니다.";
 const NETWORK_ERROR = "올리지 못했어요. 인터넷 연결을 확인하고 다시 골라 주세요.";
 
 class StepError extends Error {}

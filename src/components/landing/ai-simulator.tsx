@@ -393,7 +393,7 @@ export function AiSimulator({ startHref }: { startHref: string }) {
 
       <div className="mt-8 text-center">
         <Link href={startHref} className="inline-flex min-h-14 max-w-full items-center justify-center rounded-xl bg-blue-500 px-6 text-center text-base font-semibold text-balance break-keep hover:bg-blue-400 sm:text-lg">
-          내 현장 영수증으로 무료 체험하기 (100 크레딧 즉시 지급)
+          내 현장 영수증으로 무료 체험하기 (첫 월말 마감까지 무료)
         </Link>
       </div>
     </section>

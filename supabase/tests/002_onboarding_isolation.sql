@@ -38,7 +38,7 @@ begin
     ('물품 사무용품→소모품비', (select count(*) from public.account_title_mappings m join public.account_titles t on t.id = m.account_title_id where m.category = 'purchase' and m.purchase_type = 'office_supplies' and t.name = '소모품비'), 1),
     ('물품 비품→비품(D-136)', (select count(*) from public.account_title_mappings m join public.account_titles t on t.id = m.account_title_id where m.category = 'purchase' and m.purchase_type = 'small_equipment' and t.name = '비품'), 1),
     ('ledger', (select count(*) from public.credit_ledger), 1),
-    ('credits', (select receipt_credits_granted - receipt_credits_used from public.companies), 100)
+    ('credits', (select receipt_credits_granted - receipt_credits_used from public.companies), 800) -- D-201 무료 기간 안전 상한
   ) v(label, actual, expected) loop
     if r.actual <> r.expected then raise exception 'FAIL [U_A] %: expected %, got %', r.label, r.expected, r.actual; end if;
   end loop;

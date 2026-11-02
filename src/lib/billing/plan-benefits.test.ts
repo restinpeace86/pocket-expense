@@ -16,9 +16,9 @@ describe("플랜 혜택", () => {
     expect(pro[1].sub).toBe("장당 약 123원");
     expect(planBenefits({ monthly_price: 89000, monthly_receipts: 800, max_members: null })[0]).toEqual({ label: "직원 수 제한 없음", sub: "인원이 늘어도 같은 가격" });
   });
-  it("공통 기능은 지금 있는 기능만(7개), 요금 기준 6줄(D-199)", () => {
+  it("공통 기능은 지금 있는 기능만(7개), 요금 기준 7줄(D-199·D-201)", () => {
     expect(COMMON_FEATURES).toHaveLength(7);
-    expect(PRICING_RULES).toHaveLength(6);
+    expect(PRICING_RULES).toHaveLength(7);
     expect(PRICING_RULES.join(" ")).toContain("영수증을 1장 이상 올린 사람만");
   });
 });

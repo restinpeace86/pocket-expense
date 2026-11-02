@@ -716,6 +716,8 @@ export type Database = {
           policy_confirmed_at: string | null
           receipt_credits_granted: number
           receipt_credits_used: number
+          review_coupon_at: string | null
+          trial_ends_on: string | null
           updated_at: string
         }
         Insert: {
@@ -744,6 +746,8 @@ export type Database = {
           policy_confirmed_at?: string | null
           receipt_credits_granted?: number
           receipt_credits_used?: number
+          review_coupon_at?: string | null
+          trial_ends_on?: string | null
           updated_at?: string
         }
         Update: {
@@ -772,6 +776,8 @@ export type Database = {
           policy_confirmed_at?: string | null
           receipt_credits_granted?: number
           receipt_credits_used?: number
+          review_coupon_at?: string | null
+          trial_ends_on?: string | null
           updated_at?: string
         }
         Relationships: []

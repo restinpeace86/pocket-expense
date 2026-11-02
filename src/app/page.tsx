@@ -111,7 +111,7 @@ export default function LandingPage() {
               요금제 보기
             </a>
           </div>
-          <p className="mt-3 text-sm text-zinc-400">가입 즉시 영수증 100장 무료 · 결제 정보 필요 없음</p>
+          <p className="mt-3 text-sm text-zinc-400">첫 월말 마감까지 무료 · 결제 정보 필요 없음</p>
         </div>
         <HeroMockup />
       </header>

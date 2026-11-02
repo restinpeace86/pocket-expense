@@ -1,5 +1,6 @@
-// 후기·설문(+100 크레딧, D-130) 선택지와 표시 이름. DB 체크 제약(migration 066)과 같은 값만 쓴다.
-export const SURVEY_BONUS = 100;
+// 후기·설문(D-130) 선택지와 표시 이름. DB 체크 제약(migration 066)과 같은 값만 쓴다.
+// 보상은 +100장 대신 첫 결제 50% 할인 쿠폰(D-201)
+export const SURVEY_REWARD = "첫 결제 50% 할인 쿠폰";
 export const REVIEW_MAX = 100;
 // 랜딩에 보일 최소 길이: 공백을 뺀 10자 이상(D-135). 짧은 후기도 설문 기록으로는 남는다
 export const REVIEW_DISPLAY_MIN = 10;
@@ -56,7 +57,7 @@ type Pairs = readonly (readonly [string, string])[];
 const labelOf = (pairs: Pairs, key: string) => pairs.find(([k]) => k === key)?.[1] ?? "";
 const keysOf = (pairs: Pairs) => pairs.map(([k]) => k);
 
-// 100장 조건(D-137): 후기 공백 빼고 10자 이상 + 홈페이지 소개 동의 — DB 함수도 같은 규칙으로 막는다
+// 쿠폰 조건(D-137 → D-201): 후기 공백 빼고 10자 이상 + 홈페이지 소개 동의 — DB 함수도 같은 규칙으로 막는다
 export const isValidSurvey = (v: { rating: number; usefulFeature: string; industry: string; companySize: string; jobRole: string; review: string; displayConsent?: boolean }) =>
   Number.isInteger(v.rating) &&
   v.rating >= 1 &&

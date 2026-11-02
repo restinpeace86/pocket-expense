@@ -1,5 +1,6 @@
 -- =============================================================================
--- 044_feedback_survey.sql — 설문 +100 크레딧(회사당 1회, 후기 10자·소개 동의 필수)·권한·회사 격리 (D-130, D-137, migration 066·071)
+-- 044_feedback_survey.sql — 설문(회사당 1회, 후기 10자·소개 동의 필수)·권한·회사 격리 (D-130, D-137, migration 066·071)
+-- D-201(migration 104): 보상은 +100장 대신 첫 결제 50% 쿠폰(companies.review_coupon_at) — 크레딧은 그대로
 -- =============================================================================
 begin;
 
@@ -35,7 +36,7 @@ set local role authenticated;
 select public._t_raises($q$select public.submit_feedback_survey(5, 'receipt_ai', 'construction', '5-10', 'site_manager', '현장 영수증 정리가 편해졌어요', true)$q$, '42501', 'E submit');
 reset role;
 
--- 대표: 잘못된 값은 거절, 정상 제출 → 남은 크레딧 3 + 100 = 103
+-- 대표: 잘못된 값은 거절, 정상 제출 → 남은 크레딧 그대로 3(D-201), 쿠폰 받음
 select set_config('request.jwt.claims', '{"sub":"a4400000-0000-0000-0000-000000000001","role":"authenticated"}', true);
 set local role authenticated;
 select public._t_raises($q$select public.submit_feedback_survey(6, 'receipt_ai', 'construction', '5-10', 'site_manager', '현장 영수증 정리가 편해졌어요', true)$q$, 'INVALID_SURVEY', 'A rating');
@@ -48,7 +49,7 @@ do $$
 declare v integer;
 begin
   v := public.submit_feedback_survey(5, 'receipt_ai', 'construction', '5-10', 'site_manager', '  현장 영수증 정리가 편해졌어요  ', true);
-  if v <> 103 then raise exception 'FAIL [A credits left] %', v; end if;
+  if v <> 3 then raise exception 'FAIL [A credits left] %', v; end if;
   if (select count(*) from public.feedback_surveys) <> 1 then raise exception 'FAIL [A sees own survey]'; end if;
   if (select review from public.feedback_surveys) <> '현장 영수증 정리가 편해졌어요' then raise exception 'FAIL [A review trimmed]'; end if;
 end;
@@ -75,7 +76,7 @@ set local role authenticated;
 do $$
 begin
   if (select count(*) from public.feedback_surveys) <> 0 then raise exception 'FAIL [B sees A survey]'; end if;
-  if public.submit_feedback_survey(3, 'other', 'it', '1-4', 'ceo', '다른 회사도 잘 쓰고 있어요', true) <> 200 then raise exception 'FAIL [B credits]'; end if;
+  if public.submit_feedback_survey(3, 'other', 'it', '1-4', 'ceo', '다른 회사도 잘 쓰고 있어요', true) <> 100 then raise exception 'FAIL [B credits]'; end if;
   if (select count(*) from public.feedback_surveys) <> 1 then raise exception 'FAIL [B own]'; end if;
 end;
 $$;
@@ -90,8 +91,10 @@ reset role;
 
 do $$
 begin
-  if (select count(*) from public.credit_ledger where company_id = 'c4400000-0000-0000-0000-00000000000a' and reason = 'survey_bonus' and delta = 100) <> 1 then raise exception 'FAIL [ledger A]'; end if;
-  if (select receipt_credits_granted from public.companies where id = 'c4400000-0000-0000-0000-00000000000a') <> 200 then raise exception 'FAIL [granted A]'; end if;
+  if (select count(*) from public.credit_ledger where company_id = 'c4400000-0000-0000-0000-00000000000a' and reason = 'survey_bonus') <> 0 then raise exception 'FAIL [no survey credits A]'; end if;
+  if (select receipt_credits_granted from public.companies where id = 'c4400000-0000-0000-0000-00000000000a') <> 100 then raise exception 'FAIL [granted A unchanged]'; end if;
+  if (select review_coupon_at from public.companies where id = 'c4400000-0000-0000-0000-00000000000a') is null then raise exception 'FAIL [coupon A]'; end if;
+  if (select count(*) from public.companies where id in ('c4400000-0000-0000-0000-00000000000a', 'c4400000-0000-0000-0000-00000000000b') and review_coupon_at is not null) <> 2 then raise exception 'FAIL [coupon B]'; end if;
 end;
 $$;
 

@@ -22,14 +22,15 @@ export type CreditStatus = {
   eventEnabled: boolean;
   eventAmount: number;
   showEventBanner: boolean; // 이벤트 지급 뒤 아직 [확인]하지 않음
-  surveyDone: boolean; // 후기·설문 +100장을 이미 받음(회사당 1회, D-130)
-  firstPurchase: boolean; // 아직 유료 결제한 적 없음 → 첫 결제 50% 할인 대상(D-134)
+  surveyDone: boolean; // 후기·설문을 이미 남김(회사당 1회, D-130)
+  coupon: boolean; // 후기 쿠폰이 있고 아직 결제한 적 없음 → 첫 결제 50% 할인(D-201)
+  trialEndsOn: string | null; // 무료 이용 종료일 = 가입한 달 + 다음 달 세무 마감일(D-201)
 };
 
 export async function getCreditStatus(companyId: string): Promise<CreditStatus | null> {
   const supabase = await createClient();
   const [{ data: company }, { data: ledger }, { data: survey }] = await Promise.all([
-    supabase.from("companies").select("receipt_credits_granted, receipt_credits_used, last_event_bonus_at, event_bonus_acknowledged_at, first_purchase_at").eq("id", companyId).maybeSingle(),
+    supabase.from("companies").select("receipt_credits_granted, receipt_credits_used, last_event_bonus_at, event_bonus_acknowledged_at, first_purchase_at, review_coupon_at, trial_ends_on").eq("id", companyId).maybeSingle(),
     supabase.from("credit_ledger").select("reason, delta").eq("company_id", companyId).in("reason", ["free_trial_grant", "event_bonus", "survey_bonus"]),
     supabase.from("feedback_surveys").select("id").eq("company_id", companyId).maybeSingle(),
   ]);
@@ -48,7 +49,8 @@ export async function getCreditStatus(companyId: string): Promise<CreditStatus |
     eventAmount: creditEventAmount(),
     showEventBanner: !!last && (!ack || ack < last),
     surveyDone: !!survey || rows.some((r) => r.reason === "survey_bonus"),
-    firstPurchase: !company.first_purchase_at,
+    coupon: !!company.review_coupon_at && !company.first_purchase_at,
+    trialEndsOn: company.trial_ends_on,
   };
 }
 

@@ -26,7 +26,7 @@ export async function acknowledgeEventBonusAction(): Promise<ActionResult> {
 
 export type SurveyInput = { rating: number; usefulFeature: string; industry: string; companySize: string; jobRole: string; review: string; displayConsent: boolean };
 
-// 후기·설문 제출 → +100 크레딧(회사당 1회, D-130). 권한·1회·지급은 DB 함수 submit_feedback_survey가 한 트랜잭션에서 확인한다.
+// 후기·설문 제출 → 첫 결제 50% 할인 쿠폰(회사당 1회, D-130 → D-201). 권한·1회·지급은 DB 함수 submit_feedback_survey가 한 트랜잭션에서 확인한다.
 export async function submitFeedbackSurveyAction(input: SurveyInput): Promise<{ error: string | null; left?: number }> {
   if (!isValidSurvey(input)) return { error: messageForDbError({ message: "INVALID_SURVEY" }) };
   const supabase = await createClient();

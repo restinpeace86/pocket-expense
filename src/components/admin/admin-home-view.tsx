@@ -30,6 +30,7 @@ export function AdminHomeView({
   inviteCode,
   creditsLeft,
   creditsGranted,
+  trialEndsOn = null,
   basePath,
   dashboard,
   policyToConfirm = null,
@@ -42,6 +43,7 @@ export function AdminHomeView({
   inviteCode: string;
   creditsLeft: number;
   creditsGranted: number;
+  trialEndsOn?: string | null; // 무료 이용 종료일(D-201)
   basePath: string;
   dashboard: Dashboard;
   policyToConfirm?: string[] | null; // 정산 정책을 아직 한 번도 저장하지 않았으면 현재(기본) 정책 요약 (D-068)
@@ -78,15 +80,19 @@ export function AdminHomeView({
         : `계정과목이 정해지지 않은 항목 ${todo.unmapped_items}건 — 계정과목 매핑을 확인해 주세요`,
       tone: "warn",
     },
-    { show: creditsLeft <= 20, href: `${basePath}/billing`, icon: <ReceiptText className="size-5" />, text: `무료 영수증이 ${creditsLeft}장 남았어요`, tone: "warn" },
+    { show: creditsLeft <= 20, href: `${basePath}/billing`, icon: <ReceiptText className="size-5" />, text: `무료 기간 안전 상한까지 ${creditsLeft}장 남았어요`, tone: "warn" },
   ];
   const visibleTodos = todos.filter((t) => t.show);
 
   const credits = (
     <section className={card}>
-      <h2 className="font-semibold">무료 영수증</h2>
-      <p className="mt-1 text-sm text-zinc-600">
-        {creditsLeft.toLocaleString("ko-KR")}장 남음 (총 {creditsGranted.toLocaleString("ko-KR")}장 · 이벤트 기간 동안 다 쓰면 100장 추가)
+      <h2 className="font-semibold">무료 이용</h2>
+      {/* 장수가 아니라 기간(D-201): 가입한 달 + 다음 달 세무 마감일까지 */}
+      <p className="mt-1 break-keep text-sm text-zinc-600">
+        {trialEndsOn ? `${Number(trialEndsOn.slice(5, 7))}월 ${Number(trialEndsOn.slice(8, 10))}일까지 무료 · 첫 월말 마감까지 써 보세요` : "무료 이용 중"}
+        <span className="block text-xs text-zinc-500">
+          올린 영수증 {(creditsGranted - creditsLeft).toLocaleString("ko-KR")}장 · 무료 기간 안전 상한 {creditsGranted.toLocaleString("ko-KR")}장
+        </span>
       </p>
     </section>
   );

@@ -4,54 +4,54 @@ import type { BillingAddon, BillingPlan, CreditStatus } from "@/lib/admin/billin
 import { checkoutPrice } from "@/lib/billing/checkout";
 import { COMMON_FEATURES, planBenefits, PRICING_RULES } from "@/lib/billing/plan-benefits";
 import { formatWon } from "@/lib/format";
+import { todayKst } from "@/lib/dates";
 import { EventBonusBanner } from "./event-bonus-banner";
 import { SurveyButton } from "./survey-dialog";
 
 // 화면 A-05 요금제 (spec/screens/admin-billing.md). 결제는 무료 제공 기간이라 전부 비활성(D-046), 카드 정보는 받지 않는다.
 const DISABLED_TIP = "무료 제공 기간에는 결제할 수 없습니다";
 
-function UsageCard({ s, preview }: { s: CreditStatus; preview: boolean }) {
+// 무료 이용(D-201): 장수가 아니라 기간 — 가입한 달 + 다음 달 세무 마감일까지(첫 월말 마감을 해 보게). 장수는 안전 상한
+const md = (d: string) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8, 10))}일`;
+function UsageCard({ s, preview, today }: { s: CreditStatus; preview: boolean; today: string }) {
   const left = Math.max(s.granted - s.used, 0);
-  const pct = s.granted > 0 ? Math.min(100, Math.round((s.used / s.granted) * 100)) : 0;
   const empty = left === 0 && !s.eventEnabled;
   const low = !empty && left <= 20;
+  const ended = !!s.trialEndsOn && s.trialEndsOn < today;
   return (
     <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-      <p className="text-sm text-zinc-600">무료 제공 중</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums">
-        영수증 {s.used.toLocaleString("ko-KR")} / {s.granted.toLocaleString("ko-KR")}장 사용
+      <p className="text-sm text-zinc-600">무료 이용 중</p>
+      <p className="mt-1 text-2xl font-bold">
+        {s.trialEndsOn ? (ended ? "무료 기간이 끝났어요" : `${md(s.trialEndsOn)}까지 무료`) : "무료 이용 중"}
       </p>
-      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-zinc-100" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="무료 영수증 사용량">
-        <div className={`h-full rounded-full ${empty ? "bg-red-500" : low ? "bg-amber-500" : "bg-brand-600"}`} style={{ width: `${pct}%` }} />
-      </div>
-      <p className="mt-2 text-sm text-zinc-700">
-        남은 장수 <b className="tabular-nums">{left.toLocaleString("ko-KR")}장</b>
-        <span className="text-zinc-500">
-          {" "}
-          · 기본 {s.freeTrial.toLocaleString("ko-KR")}장{s.eventCount > 0 && ` + 이벤트 추가 지급 ${s.eventCount}회(${s.eventTotal.toLocaleString("ko-KR")}장)`}{s.surveyDone && " + 설문 100장"}
-        </span>
+      <p className="mt-1 break-keep text-sm text-zinc-600">
+        {ended
+          ? "지금은 결제 준비 중이라 그대로 계속 무료로 쓸 수 있어요. 결제가 열리면 미리 알려 드릴게요."
+          : "첫 월말 마감(세무사무소 전달)까지 모든 기능을 써 보세요. 결제 정보는 필요 없어요."}
+      </p>
+      <p className="mt-3 text-sm text-zinc-700">
+        올린 영수증 <b className="tabular-nums">{s.used.toLocaleString("ko-KR")}장</b>
+        <span className="text-zinc-500"> · 무료 기간 안전 상한 {s.granted.toLocaleString("ko-KR")}장</span>
       </p>
       {empty ? (
-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">무료 사용량을 모두 사용했습니다. 영수증 업로드가 중지되었습니다.</p>
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">무료 기간 안전 상한을 모두 사용했습니다. 영수증 업로드가 중지되었습니다.</p>
       ) : low ? (
         <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          무료 사용량이 {left}장 남았습니다.{s.eventEnabled && ` 소진 시 이벤트로 ${s.eventAmount}장이 추가 지급됩니다.`}
+          안전 상한까지 {left}장 남았습니다.{s.eventEnabled && ` 다 쓰면 이벤트로 ${s.eventAmount}장이 추가 지급됩니다.`}
         </p>
       ) : null}
-      <p className="mt-3 text-sm text-zinc-600">
-        현재 한시적 무료 제공 기간입니다.{s.eventEnabled && ` 이벤트 기간에는 무료 영수증을 모두 사용하면 추가 ${s.eventAmount}장을 무료로 더 드립니다.`} 유료 플랜 결제는 준비 중입니다.
-      </p>
-      {/* 후기·설문 +100장(D-130): 남은 장수가 적거나 없으면 눈에 띄게 */}
+      {/* 후기 = 첫 결제 50% 할인 쿠폰(D-201). 무료 기간이 3일 안으로 남았거나 끝났으면 눈에 띄게 */}
       <div className="mt-4 border-t border-zinc-100 pt-4">
-        <SurveyButton done={s.surveyDone} emphasize={empty || low || left === 0} preview={preview} />
+        <SurveyButton done={s.surveyDone} emphasize={ended || (!!s.trialEndsOn && daysBetween(today, s.trialEndsOn) <= 3)} preview={preview} />
       </div>
     </section>
   );
 }
+const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
 
-// 첫 결제(D-134)면 정가에 줄을 긋고 50% 할인가·부가세 포함 결제 금액을 보여 준다(월간만)
-function PlanCard({ plan, firstPurchase }: { plan: BillingPlan; firstPurchase: boolean }) {
-  const c = checkoutPrice(plan.monthly_price, firstPurchase);
+// 후기 쿠폰(D-201)이 있으면 정가에 줄을 긋고 50% 할인가·부가세 포함 결제 금액을 보여 준다(월간만). 없으면 정가 + 쿠폰 안내
+function PlanCard({ plan, coupon }: { plan: BillingPlan; coupon: boolean }) {
+  const c = checkoutPrice(plan.monthly_price, coupon);
   return (
     <li className={`relative flex flex-col rounded-xl border bg-white p-5 ${plan.is_featured ? "border-brand-500 ring-1 ring-brand-500" : "border-zinc-200"}`}>
       {plan.is_featured && <span className="absolute -top-3 left-5 rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-semibold text-white">추천</span>}
@@ -60,10 +60,10 @@ function PlanCard({ plan, firstPurchase }: { plan: BillingPlan; firstPurchase: b
         <span className="text-xs">{plan.recommended_size}</span>
       </label>
       <h3 className="mt-1 text-lg font-semibold">{plan.name}</h3>
-      {c.firstPurchase ? (
+      {c.coupon ? (
         <>
           <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-600">첫 결제 50% 할인</span>
+            <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-600">후기 쿠폰 · 첫 결제 50% 할인</span>
             <s className="text-sm text-zinc-400 tabular-nums">{formatWon(c.list)}</s>
           </p>
           <p className="mt-1 text-2xl font-bold tabular-nums">
@@ -82,6 +82,7 @@ function PlanCard({ plan, firstPurchase }: { plan: BillingPlan; firstPurchase: b
           <span className="ml-1 text-xs font-normal text-zinc-400">(VAT 별도)</span>
         </p>
       )}
+      {!c.coupon && <p className="mt-1 break-keep text-xs text-rose-600">후기를 남기면 첫 결제 50% 할인 쿠폰을 드려요</p>}
       {/* 이 가격에 포함(D-198): 직원 수·AI 영수증 읽기·모든 기능 */}
       <p className="mt-4 text-xs font-medium text-zinc-500">이 가격에 포함</p>
       <ul className="mt-1.5 flex flex-col gap-2">
@@ -169,7 +170,7 @@ function PaymentForm() {
   );
 }
 
-export function BillingView({ status, plans, addons = [], preview = false }: { status: CreditStatus; plans: BillingPlan[]; addons?: BillingAddon[]; preview?: boolean }) {
+export function BillingView({ status, plans, addons = [], preview = false, today = todayKst() }: { status: CreditStatus; plans: BillingPlan[]; addons?: BillingAddon[]; preview?: boolean; today?: string }) {
   const exhausted = status.granted - status.used <= 0;
   return (
     <>
@@ -177,7 +178,7 @@ export function BillingView({ status, plans, addons = [], preview = false }: { s
       <SectionHeading
         as="h1"
         title="요금제"
-        summary="모든 기능이 포함된 월 구독이에요. 직원 수와 AI 영수증 읽기 장수로 플랜을 골라요. 지금은 무료 제공 기간이라 결제하지 않고 쓰실 수 있어요."
+        summary="모든 기능이 포함된 월 구독이에요. 직원 수와 AI 영수증 읽기 장수로 플랜을 골라요. 지금은 첫 월말 마감까지 무료 이용 기간이라 결제하지 않고 쓰실 수 있어요."
         helpId="billing"
         help={
           <>
@@ -187,14 +188,14 @@ export function BillingView({ status, plans, addons = [], preview = false }: { s
           </>
         }
       />
-      <UsageCard s={status} preview={preview} />
+      <UsageCard s={status} preview={preview} today={today} />
       {exhausted && <AddonCard addons={addons} />}
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">정식 플랜</h2>
         <p className="-mt-1 break-keep text-sm text-zinc-600">모든 기능은 모든 플랜에 같아요. 직원 수와 AI 영수증 읽기 장수로 팀 규모에 맞춰 고르세요.</p>
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {plans.map((p) => (
-            <PlanCard key={p.code} plan={p} firstPurchase={status.firstPurchase} />
+            <PlanCard key={p.code} plan={p} coupon={status.coupon} />
           ))}
         </ul>
         <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
