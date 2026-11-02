@@ -1,4 +1,4 @@
-import { Building2, CreditCard, FileSpreadsheet, MessageCircle, ScanLine } from "lucide-react";
+import { Briefcase, Building2, Camera, CheckCircle2, CreditCard, Crown, FileSpreadsheet, Landmark, MessageCircle, ScanLine, Smartphone, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AiSimulator } from "@/components/landing/ai-simulator";
@@ -47,6 +47,22 @@ const FEATURES = [
   },
 ];
 
+// 한 달이 이렇게 흘러가요(D-200) — 지금 있는 기능만. 결재 알림(알림톡)은 아직 연결 전이라 "알림을 받고"라고 쓰지 않는다
+const FLOW = [
+  { icon: Camera, when: "매일", who: "직원", title: "영수증을 찍으면 결의서가 채워져요", body: "AI가 가맹점·금액·부가세·계정과목을 읽어 결의서에 넣어요. 직원은 확인하고 결재만 올리면 돼요." },
+  { icon: CheckCircle2, when: "수시로", who: "대표·팀장", title: "휴대폰에서 바로 승인", body: "영수증 원본과 내역을 보고 승인·반려해요. 기본은 대표 직통 승인, 필요하면 팀장 사전 검토만 더해요." },
+  { icon: Wallet, when: "월말", who: "경리·관리자", title: "정산·카드 대조·마감을 한 화면에서", body: "직원별 정산 지급, 법인카드 내역 대조, 세무 마감 파일(엑셀 장부·영수증·지출결의서 PDF)을 한 번에 끝내요." },
+  { icon: Landmark, when: "마감 뒤", who: "세무사무소", title: "세무사무소가 바로 받아요", body: "무료 전용 화면에서 장부와 영수증을 보고, 더존 위하고 일반전표 엑셀로 그대로 올려요. 메일로 압축 파일을 보낼 필요가 없어요." },
+];
+
+// 누구에게 좋은가(D-200) — 예전 "5인 회사에 과하지 않나요?" 문단을 대표 카드로 흡수
+const ROLES = [
+  { icon: Crown, who: "대표", body: "결재는 휴대폰으로 몇 초. 조직도 없이 직통 승인으로 시작하고, 이번 달 지출을 계정과목별로 한눈에 봐요." },
+  { icon: Briefcase, who: "경리·관리자", body: "영수증 풀칠·엑셀 취합 없이 승인된 것만 모여요. 정산 지급 목록과 세무 마감 파일이 자동으로 만들어져요." },
+  { icon: Smartphone, who: "직원", body: "앱 설치 없이 링크로 가입하고 찍기만 하면 돼요. 식대 한도 초과분은 자동으로 나눠 계산되고, 출장 비용은 출장비로 따로 묶여요." },
+  { icon: Landmark, who: "세무사무소", body: "고객사 자료를 무료 전용 화면에서 바로 받아요. 확인할 영수증은 표시되어 오고, 궁금한 건 영수증에 바로 물어봐요." },
+];
+
 export default function LandingPage() {
   return (
     <div className="flex-1 overflow-x-clip bg-gradient-to-b from-zinc-950 via-slate-900 to-zinc-950 text-white">
@@ -85,7 +101,7 @@ export default function LandingPage() {
             <span className="text-blue-400">사진 한 장</span>으로 끝.
           </h1>
           <p className="mt-5 max-w-md text-balance break-keep text-lg leading-relaxed text-zinc-300 sm:text-xl">
-            영수증 등록부터 월말 세무회계용 엑셀 정리까지 한 번에.
+            영수증 사진 한 장에서 결재, 직원 정산, 세무사무소 전달까지 한 흐름으로.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link href={START_HREF} className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-xl bg-blue-500 px-6 font-semibold hover:bg-blue-400">
@@ -112,14 +128,42 @@ export default function LandingPage() {
         </ul>
       </section>
 
+      <section className="mx-auto max-w-5xl px-4 py-16" aria-labelledby="flow-title">
+        <h2 id="flow-title" className="text-balance break-keep text-center text-3xl font-bold tracking-tight">한 달이 이렇게 흘러가요</h2>
+        <p className="mt-2 text-balance break-keep text-center text-zinc-400">영수증을 찍는 순간부터 세무사무소가 받기까지, 손으로 옮기는 단계가 없어요.</p>
+        <ol className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {FLOW.map(({ icon: Icon, when, who, title, body }, i) => (
+            <li key={title} className="relative flex flex-col rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+              <span className="flex items-center gap-2 text-xs font-semibold text-blue-300">
+                <span className="flex size-6 items-center justify-center rounded-full bg-blue-500/20 tabular-nums">{i + 1}</span>
+                {when} · {who}
+              </span>
+              <Icon className="mt-4 size-7 text-blue-300" aria-hidden />
+              <h3 className="mt-3 break-keep font-semibold">{title}</h3>
+              <p className="mt-2 break-keep text-sm leading-relaxed text-zinc-300">{body}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
       <AiSimulator startHref={START_HREF} />
 
-      <section className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <p className="text-balance text-2xl font-semibold leading-snug">&ldquo;팀장 결재, 복잡한 조직도… 5인 회사에 과하지 않나요?&rdquo;</p>
-        <p className="mt-4 text-zinc-300">
-          기본은 사장님 직통 승인. 필요할 때만 팀장 사전 검토를 추가하세요. 개인카드·법인카드 모두 지원하고, 일반 식대 한도
-          초과분은 자동으로 나눠 계산하며 출장 중 비용은 출장비로 따로 묶입니다.
-        </p>
+      <section className="mx-auto max-w-5xl px-4 py-16" aria-labelledby="roles-title">
+        <h2 id="roles-title" className="text-balance break-keep text-center text-3xl font-bold tracking-tight">누구에게 좋은가요?</h2>
+        <p className="mt-2 text-balance break-keep text-center text-zinc-400">5인 회사에도 과하지 않게. 쓰는 사람마다 편해지는 게 달라요.</p>
+        <ul className="mt-10 grid gap-4 sm:grid-cols-2">
+          {ROLES.map(({ icon: Icon, who, body }) => (
+            <li key={who} className="flex gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-blue-500/15">
+                <Icon className="size-6 text-blue-300" aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-semibold">{who}</span>
+                <span className="mt-1 block break-keep text-sm leading-relaxed text-zinc-300">{body}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <Pricing />
