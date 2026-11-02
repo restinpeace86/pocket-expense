@@ -1,8 +1,10 @@
-import { Download, FileImage } from "lucide-react";
+import { Download } from "lucide-react";
 import type { TaxMonth } from "@/lib/tax/closing";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, issueKinds, rowHasFile, statusLabel, supplyVat, type ExportRow, type IssueKind } from "@/lib/tax/export-rows";
 import { countIssues, IssueChips } from "@/components/tax/issue-chips";
+import { Fragment } from "react";
 import { MonthPicker } from "./month-picker";
+import { ReceiptButton } from "./receipt-button";
 import { OfficeItemAccount } from "./office-item-account";
 import { CardReconcileStatus } from "@/components/admin/card-reconcile-status";
 import { SavedReconcilePanel } from "@/components/admin/card-reconcile-saved";
@@ -24,6 +26,17 @@ const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const th = "whitespace-nowrap border-b border-zinc-200 px-2 py-2 text-left text-xs font-medium text-zinc-500";
 const td = "border-b border-zinc-100 px-2 py-2 align-top text-sm";
 const num = `${td} whitespace-nowrap text-right tabular-nums`;
+// 확인 항목은 짧은 배지로(D-197)
+const Warns = ({ list }: { list: string[] }) =>
+  list.length ? (
+    <span className="flex flex-wrap gap-1">
+      {list.map((w) => (
+        <span key={w} className="whitespace-nowrap rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-900">
+          {w}
+        </span>
+      ))}
+    </span>
+  ) : null;
 const payLabel = (r: ExportRow) => (r.payment_method === "corporate_card" ? `법인카드${r.card_last4 ? ` ${r.card_last4}` : ""}` : "개인(사비)");
 const titleLabel = (r: ExportRow) => (r.account_title_name ? `${r.account_title_name}${r.account_title_code ? ` (${r.account_title_code})` : ""}` : "미지정");
 
@@ -81,7 +94,6 @@ export function TaxOfficeMonthView({
         {r.tax_review_request}
       </span>
     ) : null;
-  const pendingReviews = data.rows.filter((r) => r.tax_review_request && !r.tax_review_resolved_at).length;
   const rows = data.rows;
   const totals = rows.reduce(
     (s, r) => {
@@ -139,39 +151,8 @@ export function TaxOfficeMonthView({
         </a>
         </div>
       </section>
-      {/* 회계 프로그램 시트 안내 + 고객사 법인카드 수집 방식 (D-176 → D-189) */}
-      {exportOptions.main.kind === "wehago" ? (
-        <div className="-mt-2 flex flex-col gap-2">
-          <p className="break-keep text-xs text-zinc-500">
-            세무용 엑셀의 [{mainSheetName(exportOptions.main)}] 시트는 더존 위하고 일반전표 [엑셀올리기]에 그대로 올리는 두 줄 전표(차변 비용 / 대변 253 미지급금)예요.
-          </p>
-          <CardViaHometaxToggle key={`${companyId}-${exportOptions.cardViaHometax}`} companyId={companyId} value={exportOptions.cardViaHometax} />
-        </div>
-      ) : (
-        <p className="-mt-2 break-keep text-xs text-zinc-500">
-          세무용 엑셀의 [{mainSheetName(exportOptions.main)}] 시트는 우리 사무소 결산 양식 [{exportOptions.main.name}]대로 채운 거예요(넣은 지출: {TARGET_LABEL[exportOptions.main.target]}). 양식 파일의 서식까지 그대로 필요하면 아래 양식 받기 버튼을 쓰세요.
-        </p>
-      )}
-      {rows.length > 0 && <IssueChips counts={counts} flagged={flagged} active={issue} hrefs={hrefs} />}
-      {workbookPreview}
-      {/* 회사가 한 법인카드 대조 결과와 처리(D-154) — 보기만 */}
-      <CardReconcileStatus saved={cardReconcile} month={data.month} />
-      {cardReconcile && cardReconcile.issues.length > 0 && <SavedReconcilePanel saved={cardReconcile} editable={false} />}
-      <TemplateDownloads templates={templates} hrefFor={(id) => `${base}/template?id=${id}&month=${data.month}`} disabled={rows.length === 0} />
-      <HometaxFiles key={`ht-${data.month}`} uploads={hometax} month={data.month} downloadBase={`${base}/hometax?id=`} viewer="tax_office" uploadAction={uploadOfficeHometaxAction.bind(null, companyId)} deleteAction={deleteOfficeHometaxAction} />
-      <TaxRequests
-        mode="office"
-        requests={requests}
-        month={data.month}
-        companyId={companyId}
-        items={rows.map((r) => ({ id: r.item_id, label: `${r.expense_date} · ${r.merchant_name ?? classLabels(r).category} · ${won(r.amount ?? 0)}` }))}
-      />
 
-      {pendingReviews > 0 && (
-        <p className="break-keep rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          회사가 계정과목 확인을 요청한 영수증이 {pendingReviews}건 있어요. 아래 지출 내역에서 계정과목을 바꾸거나, 지금 계정과목이 맞으면 [이대로 확인]을 눌러 주세요.
-        </p>
-      )}
+      {/* D-197 배치: 요약 숫자 → 확인할 것(칩·확인 요청) → 엑셀 안내·미리보기 → 지출 내역 → 계정과목별 → 카드 대조 → 양식·홈택스 */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label={`${m}월 승인 지출`} value={`${rows.length.toLocaleString("ko-KR")}건`} />
         <Stat label="공급가액" value={won(totals.supply)} />
@@ -183,6 +164,28 @@ export function TaxOfficeMonthView({
           아직 승인되지 않은 지출 {excluded}건(작성 중 {data.excluded.draft} · 결재 중 {data.excluded.submitted} · 반려 {data.excluded.rejected})은 빠져 있어요.
         </p>
       )}
+      {rows.length > 0 && <IssueChips counts={counts} flagged={flagged} active={issue} hrefs={hrefs} />}
+      <TaxRequests
+        mode="office"
+        requests={requests}
+        month={data.month}
+        companyId={companyId}
+        items={rows.map((r) => ({ id: r.item_id, label: `${r.expense_date} · ${r.merchant_name ?? classLabels(r).category} · ${won(r.amount ?? 0)}` }))}
+      />
+      {/* 회계 프로그램 시트 안내 + 고객사 법인카드 수집 방식 (D-176 → D-189) */}
+      {exportOptions.main.kind === "wehago" ? (
+        <div className="flex flex-col gap-2">
+          <p className="break-keep text-xs text-zinc-500">
+            세무용 엑셀의 [{mainSheetName(exportOptions.main)}] 시트는 더존 위하고 일반전표 [엑셀올리기]에 그대로 올리는 두 줄 전표(차변 비용 / 대변 253 미지급금)예요.
+          </p>
+          <CardViaHometaxToggle key={`${companyId}-${exportOptions.cardViaHometax}`} companyId={companyId} value={exportOptions.cardViaHometax} />
+        </div>
+      ) : (
+        <p className="break-keep text-xs text-zinc-500">
+          세무용 엑셀의 [{mainSheetName(exportOptions.main)}] 시트는 우리 사무소 결산 양식 [{exportOptions.main.name}]대로 채운 거예요(넣은 지출: {TARGET_LABEL[exportOptions.main.target]}). 양식 파일의 서식까지 그대로 필요하면 아래 양식 받기 버튼을 쓰세요.
+        </p>
+      )}
+      {workbookPreview}
 
       {rows.length === 0 ? (
         <p className="rounded-xl border border-zinc-200 bg-white px-4 py-10 text-center text-sm text-zinc-500">
@@ -190,22 +193,6 @@ export function TaxOfficeMonthView({
         </p>
       ) : (
         <>
-          <section className="rounded-xl border border-zinc-200 bg-white">
-            <h2 className="border-b border-zinc-100 px-4 py-3 font-semibold">계정과목별</h2>
-            <ul className="divide-y divide-zinc-100">
-              {[...byTitle.entries()]
-                .sort((a, b) => b[1].amount - a[1].amount)
-                .map(([k, v]) => (
-                  <li key={k} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
-                    <span className="min-w-0 truncate">{k}</span>
-                    <span className="whitespace-nowrap tabular-nums text-zinc-700">
-                      {v.count}건 · <b className="text-zinc-900">{won(v.amount)}</b>
-                    </span>
-                  </li>
-                ))}
-            </ul>
-          </section>
-
           <section id="expenses" className="scroll-mt-4 rounded-xl border border-zinc-200 bg-white">
             <h2 className="border-b border-zinc-100 px-4 py-3 font-semibold">
               지출 내역 · 증빙
@@ -228,42 +215,37 @@ export function TaxOfficeMonthView({
                     <p className="text-xs text-zinc-500">
                       {r.expense_date} · {EVIDENCE_LABEL[r.evidence_type ?? ""] ?? "증빙 없음"} · {payLabel(r)}
                     </p>
-                    <div className="text-sm">
-                      {accountCell(r)}
-                      {reviewNote(r)}
-                    </div>
+                    <div className="text-sm">{accountCell(r)}</div>
+                    {reviewNote(r)}
                     <p className="text-xs text-zinc-500">
                       {r.member_name} · {statusLabel(r)}
                       {r.merchant_business_number && ` · ${bizNo(r.merchant_business_number)}`}
                     </p>
-                    {warn.length > 0 && <p className="text-xs text-amber-700">확인: {warn.join(", ")}</p>}
-                    {url && (
-                      <a href={url} target="_blank" rel="noreferrer" className="mt-1 inline-flex min-h-10 w-fit items-center gap-1.5 rounded-lg border border-zinc-300 px-3 text-sm">
-                        <FileImage className="size-4" aria-hidden />
-                        영수증 보기
-                      </a>
-                    )}
+                    <Warns list={warn} />
+                    {url && <ReceiptButton url={url} title={`${r.expense_date} · ${r.merchant_name ?? classLabels(r).category}`} variant="button" />}
                   </li>
                 );
               })}
             </ul>
             {/* PC: 표 */}
-            <div className="hidden overflow-x-auto px-4 pb-2 md:block">
-              <table className="w-full min-w-[860px] border-collapse">
+            <div className="hidden overflow-x-auto px-2 pb-2 md:block">
+              <table className="w-full min-w-[880px] border-collapse">
                 <thead>
                   <tr>
                     {bulk && <th className={th}><span className="sr-only">고르기</span></th>}
                     <th className={th}>번호</th>
                     <th className={th}>사용일</th>
                     <th className={th}>가맹점 · 사업자번호</th>
-                    <th className={th}>계정과목</th>
+                    <th className={`${th} min-w-[10rem]`}>계정과목</th>
                     <th className={th}>증빙</th>
                     <th className={th}>결제</th>
-                    <th className={`${th} text-right`}>공급가액</th>
-                    <th className={`${th} text-right`}>부가세</th>
+                    <th className={`${th} text-right`}>
+                      공급가액
+                      <span className="block font-normal">부가세</span>
+                    </th>
                     <th className={`${th} text-right`}>합계</th>
                     <th className={th}>사용자</th>
-                    <th className={th}>확인</th>
+                    <th className={`${th} min-w-[7.5rem]`}>확인</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -271,7 +253,7 @@ export function TaxOfficeMonthView({
                     const url = r.receipt_path ? receiptUrls[r.receipt_path] : undefined;
                     const { supply, vat } = supplyVat(r);
                     const warn = checks(r, !!r.receipt_path || !!r.route_card_path).filter((w) => !w.startsWith("세무사 확인 요청"));
-                    return (
+                    const row = (
                       <tr key={r.item_id} className={kinds.get(r.item_id)?.length ? "bg-amber-50/70" : ""}>
                         {bulk && (
                           <td className={td}>
@@ -286,28 +268,38 @@ export function TaxOfficeMonthView({
                         <td className={td}>
                           {r.merchant_name ?? classLabels(r).category}
                           {r.merchant_business_number && <span className="block text-xs text-zinc-500">{bizNo(r.merchant_business_number)}</span>}
-                          {url && (
-                            <a href={url} target="_blank" rel="noreferrer" className="mt-0.5 inline-flex items-center gap-1 text-xs text-brand-700 underline underline-offset-2">
-                              <FileImage className="size-3.5" aria-hidden />
-                              영수증 보기
-                            </a>
-                          )}
+                          {url && <ReceiptButton url={url} title={`${r.seq}번 · ${r.expense_date} · ${r.merchant_name ?? classLabels(r).category}`} />}
                         </td>
-                        <td className={td}>
-                          {accountCell(r)}
-                          {reviewNote(r)}
-                        </td>
+                        <td className={td}>{accountCell(r)}</td>
                         <td className={`${td} whitespace-nowrap`}>{EVIDENCE_LABEL[r.evidence_type ?? ""] ?? "증빙 없음"}</td>
                         <td className={`${td} whitespace-nowrap`}>{payLabel(r)}</td>
-                        <td className={num}>{supply.toLocaleString("ko-KR")}</td>
-                        <td className={num}>{vat.toLocaleString("ko-KR")}</td>
+                        <td className={num}>
+                          {supply.toLocaleString("ko-KR")}
+                          <span className="block text-xs text-zinc-500">{vat.toLocaleString("ko-KR")}</span>
+                        </td>
                         <td className={`${num} font-semibold`}>{(r.amount ?? 0).toLocaleString("ko-KR")}</td>
                         <td className={`${td} whitespace-nowrap`}>
                           {r.member_name}
                           <span className="block text-xs text-zinc-500">{statusLabel(r)}</span>
                         </td>
-                        <td className={`${td} min-w-24 text-xs text-amber-700`}>{warn.join(", ")}</td>
+                        <td className={td}>
+                          <Warns list={warn} />
+                        </td>
                       </tr>
+                    );
+                    // 회사가 남긴 확인 요청 메모는 좁은 칸 대신 줄 아래 한 줄로(D-197)
+                    const note = reviewNote(r);
+                    return note ? (
+                      <Fragment key={r.item_id}>
+                        {row}
+                        <tr className={kinds.get(r.item_id)?.length ? "bg-amber-50/70" : ""}>
+                          <td colSpan={bulk ? 11 : 10} className="border-b border-zinc-100 px-2 pb-2 pt-0">
+                            {note}
+                          </td>
+                        </tr>
+                      </Fragment>
+                    ) : (
+                      row
                     );
                   })}
                 </tbody>
@@ -316,8 +308,29 @@ export function TaxOfficeMonthView({
             </BulkWrap>
           </section>
           <p className="text-xs text-zinc-500">영수증 링크는 10분 동안 열려요. 지나면 화면을 새로고침해 주세요.</p>
+          <section className="rounded-xl border border-zinc-200 bg-white">
+            <h2 className="border-b border-zinc-100 px-4 py-3 font-semibold">계정과목별</h2>
+            <ul className="divide-y divide-zinc-100">
+              {[...byTitle.entries()]
+                .sort((a, b) => b[1].amount - a[1].amount)
+                .map(([k, v]) => (
+                  <li key={k} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                    <span className="min-w-0 truncate">{k}</span>
+                    <span className="whitespace-nowrap tabular-nums text-zinc-700">
+                      {v.count}건 · <b className="text-zinc-900">{won(v.amount)}</b>
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          </section>
+
         </>
       )}
+      {/* 회사가 한 법인카드 대조 결과와 처리(D-154) — 보기만 */}
+      <CardReconcileStatus saved={cardReconcile} month={data.month} />
+      {cardReconcile && cardReconcile.issues.length > 0 && <SavedReconcilePanel saved={cardReconcile} editable={false} />}
+      <TemplateDownloads templates={templates} hrefFor={(id) => `${base}/template?id=${id}&month=${data.month}`} disabled={rows.length === 0} />
+      <HometaxFiles key={`ht-${data.month}`} uploads={hometax} month={data.month} downloadBase={`${base}/hometax?id=`} viewer="tax_office" uploadAction={uploadOfficeHometaxAction.bind(null, companyId)} deleteAction={deleteOfficeHometaxAction} />
     </>
   );
 }
