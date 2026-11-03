@@ -47,7 +47,8 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
   ]);
   // 후기 요청(D-201): 첫 마감을 마쳤거나 무료 기간이 3일 안으로 남았을 때, 아직 후기를 안 남긴 회사만
   const trialSoon = !!credit?.trialEndsOn && Date.parse(credit.trialEndsOn) - Date.parse(todayKst()) <= 3 * 86400000;
-  const askReview = !!credit && !credit.surveyDone && ((closedMonths ?? 0) > 0 || trialSoon);
+  // 무료 종료일이 없는 회사 = 예외 회사(우리 회사, D-202) → 기간 끝 없음·후기 요청 안 함(자기 후기 방지)
+  const askReview = !!credit?.trialEndsOn && !credit.surveyDone && ((closedMonths ?? 0) > 0 || trialSoon);
   const officeInfo = office as { registered?: boolean; registered_name?: string | null } | null;
   if (!company || !dashboard) return null;
   return (
