@@ -25,8 +25,9 @@ function detect(): Exclude<State, "loading" | "on" | "off"> | null {
   return null;
 }
 
+// 이 기기 알림 상태·켜기/끄기. 설정 화면의 PushToggle과 채팅 목록 안내 줄(D-203)이 함께 쓴다
 // office: 세무사무소 계정용(고객사 마감 완료·자료 요청 답변, D-168) — 구독 표가 따로다
-export function PushToggle({ office = false }: { office?: boolean } = {}) {
+export function usePushSubscription(office = false) {
   const save = office ? saveOfficePushAction : savePushSubscriptionAction;
   const remove = office ? deleteOfficePushAction : deletePushSubscriptionAction;
   const sendTest = office ? testOfficePushAction : sendTestPushAction;
@@ -92,6 +93,11 @@ export function PushToggle({ office = false }: { office?: boolean } = {}) {
       setMsg(r.ok ? "시험 알림을 보냈어요. 몇 초 안에 와요." : r.error);
     });
 
+  return { state, msg, pending, turnOn, turnOff, test };
+}
+
+export function PushToggle({ office = false }: { office?: boolean } = {}) {
+  const { state, msg, pending, turnOn, turnOff, test } = usePushSubscription(office);
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-4" aria-label="알림 받기">
       <div className="flex items-start gap-3">

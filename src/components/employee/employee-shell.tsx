@@ -33,48 +33,65 @@ export function EmployeeShell({
   const realPath = usePathname();
   const chatUnread = useChatUnread(chat, membership.member_id);
   const pathname = previewPath !== undefined ? `${ws}${previewPath}` : realPath;
-  const tabs: Tab[] = [
-    { href: `${ws}/employee`, label: "홈", icon: Home, ready: true },
-    { href: `${ws}/employee/settlements`, label: "정산", icon: Wallet, ready: true },
-    ...(inbox ? [{ href: `${ws}/approvals`, label: "결재함", icon: Inbox, ready: true, badge: inbox.waiting }] : []),
-    ...(chatUnread !== null ? [{ href: `${ws}/chat`, label: "채팅", icon: MessageCircle, ready: true, badge: chatUnread }] : []),
-    { href: `${ws}/employee/profile`, label: "내 정보", icon: UserRound, ready: true },
-  ];
   const showNav = !pathname.includes("/employee/claims/") && !/\/approvals\/[^/]+/.test(pathname);
 
   return (
     <div className="flex min-h-dvh flex-1 flex-col bg-page" data-theme={theme}>
       <WorkspaceHeader membership={membership} mode="employee" />
       <div className={`flex flex-1 flex-col ${showNav ? "pb-[calc(4rem+env(safe-area-inset-bottom))]" : ""}`}>{children}</div>
-      {showNav && (
-        <nav aria-label="직원 메뉴" className="kb-hide fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)]">
-          <ul className="mx-auto grid h-16 max-w-md" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
-            {tabs.map(({ href, label, icon: Icon, ready, badge }) => {
-              const active = href === `${ws}/employee` ? pathname === href : pathname.startsWith(href);
-              const cls = "relative flex h-full flex-col items-center justify-center gap-0.5 text-xs";
-              return (
-                <li key={label}>
-                  {ready ? (
-                    <Link href={href} aria-current={active ? "page" : undefined} className={`${cls} ${active ? "font-semibold text-brand-700" : "text-zinc-600"}`}>
-                      <Icon className="size-6" />
-                      {label}
-                      {!!badge && <span className="absolute right-[calc(50%-1.5rem)] top-1.5 min-w-5 rounded-full bg-red-600 px-1 text-center text-[11px] font-semibold leading-5 text-white">{badge > 99 ? "99+" : badge}</span>}
-                    </Link>
-                  ) : (
-                    <span className={`${cls} cursor-not-allowed text-zinc-400`} aria-disabled>
-                      <Icon className="size-6" />
-                      <span className="text-center leading-tight">
-                        {label}
-                        <span className="block text-[10px]">(준비 중)</span>
-                      </span>
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-      )}
+      {showNav && <EmployeeTabBar ws={ws} pathname={pathname} inbox={inbox} chatUnread={chatUnread} fixed />}
     </div>
+  );
+}
+
+// 직원 하단 메뉴. 채팅 목록 화면(D-203)도 같은 메뉴를 아래에 붙여 쓴다(fixed=false: 채팅 화면 틀 안에 놓임)
+export function EmployeeTabBar({
+  ws,
+  pathname,
+  inbox,
+  chatUnread,
+  fixed = false,
+}: {
+  ws: string;
+  pathname: string;
+  inbox?: { waiting: number } | null;
+  chatUnread?: number | null;
+  fixed?: boolean;
+}) {
+  const tabs: Tab[] = [
+    { href: `${ws}/employee`, label: "홈", icon: Home, ready: true },
+    { href: `${ws}/employee/settlements`, label: "정산", icon: Wallet, ready: true },
+    ...(inbox ? [{ href: `${ws}/approvals`, label: "결재함", icon: Inbox, ready: true, badge: inbox.waiting }] : []),
+    ...(chatUnread !== null && chatUnread !== undefined ? [{ href: `${ws}/chat`, label: "채팅", icon: MessageCircle, ready: true, badge: chatUnread }] : []),
+    { href: `${ws}/employee/profile`, label: "내 정보", icon: UserRound, ready: true },
+  ];
+  return (
+    <nav aria-label="직원 메뉴" className={`kb-hide ${fixed ? "fixed inset-x-0 bottom-0 z-30" : "shrink-0"} border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)]`}>
+      <ul className="mx-auto grid h-16 max-w-md" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+        {tabs.map(({ href, label, icon: Icon, ready, badge }) => {
+          const active = href === `${ws}/employee` ? pathname === href : pathname.startsWith(href);
+          const cls = "relative flex h-full flex-col items-center justify-center gap-0.5 text-xs";
+          return (
+            <li key={label}>
+              {ready ? (
+                <Link href={href} aria-current={active ? "page" : undefined} className={`${cls} ${active ? "font-semibold text-brand-700" : "text-zinc-600"}`}>
+                  <Icon className="size-6" />
+                  {label}
+                  {!!badge && <span className="absolute right-[calc(50%-1.5rem)] top-1.5 min-w-5 rounded-full bg-red-600 px-1 text-center text-[11px] font-semibold leading-5 text-white">{badge > 99 ? "99+" : badge}</span>}
+                </Link>
+              ) : (
+                <span className={`${cls} cursor-not-allowed text-zinc-400`} aria-disabled>
+                  <Icon className="size-6" />
+                  <span className="text-center leading-tight">
+                    {label}
+                    <span className="block text-[10px]">(준비 중)</span>
+                  </span>
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }

@@ -3,7 +3,8 @@ import { Suspense } from "react";
 import { ChatApp } from "@/components/chat/chat-app";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { isAdminRole, workspaceHome } from "@/lib/auth/paths";
-import { chatEnabled } from "@/lib/chat/server";
+import { getInboxBadge } from "@/lib/claims/inbox";
+import { chatEnabled, chatUnreadTotal } from "@/lib/chat/server";
 
 export const metadata = { title: "채팅 · PocketExpense" };
 
@@ -20,9 +21,12 @@ async function Guarded({ params, children }: { params: LayoutProps<"/workspace/[
   const { id } = await params;
   const membership = await requireWorkspace(id);
   if (!(await chatEnabled())) notFound();
-  const profileHref = isAdminRole(membership.role) ? `/workspace/${id}/admin/settings` : `/workspace/${id}/employee/profile`;
+  const admin = isAdminRole(membership.role);
+  const profileHref = admin ? `/workspace/${id}/admin/settings` : `/workspace/${id}/employee/profile`;
+  // 직원은 채팅 목록에서도 하단 메뉴(홈·정산·결재함·채팅·내 정보)를 그대로
+  const employeeNav = admin ? null : await Promise.all([getInboxBadge(membership), chatUnreadTotal()]).then(([inbox, chat]) => ({ inbox, chat }));
   return (
-    <ChatApp membership={membership} homeHref={workspaceHome(membership)} profileHref={profileHref}>
+    <ChatApp membership={membership} homeHref={workspaceHome(membership)} profileHref={profileHref} employeeNav={employeeNav}>
       {children}
     </ChatApp>
   );

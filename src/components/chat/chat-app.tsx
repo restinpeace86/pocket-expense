@@ -4,7 +4,9 @@ import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Membership } from "@/lib/auth/paths";
 import { createClient } from "@/lib/supabase/client";
+import { EmployeeTabBar } from "@/components/employee/employee-shell";
 import { subscribeChat, type ChatEvent } from "./hub";
+import { useChatUnread } from "./use-chat-unread";
 import { RoomList } from "./room-list";
 
 // 사내 메신저 틀(D-203): 카톡 PC처럼 넓은 화면은 왼쪽 목록 + 오른쪽 대화방, 휴대폰은 목록 ↔ 대화방 한 화면씩
@@ -56,7 +58,20 @@ function useVisibleViewport(): { height: number; top: number } | null {
   return vp;
 }
 
-export function ChatApp({ membership, homeHref, profileHref, children }: { membership: Membership; homeHref: string; profileHref: string; children: ReactNode }) {
+// employeeNav: 직원이면 채팅 목록 화면에도 직원 하단 메뉴를 그대로 둔다(휴대폰은 대화방에 들어가면 숨김, PC는 계속)
+export function ChatApp({
+  membership,
+  homeHref,
+  profileHref,
+  employeeNav,
+  children,
+}: {
+  membership: Membership;
+  homeHref: string;
+  profileHref: string;
+  employeeNav?: { inbox: { waiting: number } | null; chat: number | null } | null;
+  children: ReactNode;
+}) {
   const pathname = usePathname();
   const base = `/workspace/${membership.company_id}/chat`;
   const inRoom = pathname.startsWith(`${base}/`);
@@ -66,6 +81,7 @@ export function ChatApp({ membership, homeHref, profileHref, children }: { membe
     [membership, homeHref, profileHref, supabase],
   );
   const vp = useVisibleViewport();
+  const chatUnread = useChatUnread(employeeNav ? employeeNav.chat : null, membership.member_id);
   // 채팅 화면이 떠 있는 동안 뒤쪽 페이지가 함께 밀리지 않게
   useEffect(() => {
     const html = document.documentElement;
@@ -79,13 +95,20 @@ export function ChatApp({ membership, homeHref, profileHref, children }: { membe
     <Ctx.Provider value={value}>
       <div
         data-keyboard-self
-        className="fixed inset-x-0 top-0 flex h-dvh min-h-0 bg-white"
+        className="fixed inset-x-0 top-0 flex h-dvh min-h-0 flex-col bg-white"
         style={vp ? { height: vp.height, transform: `translateY(${vp.top}px)` } : undefined}
       >
-        <aside className={`${inRoom ? "hidden md:flex" : "flex"} min-h-0 w-full flex-col border-r border-zinc-200 md:w-80 lg:w-96`}>
-          <RoomList base={base} />
-        </aside>
-        <section className={`${inRoom ? "flex" : "hidden md:flex"} min-h-0 min-w-0 flex-1 flex-col`}>{children}</section>
+        <div className="flex min-h-0 flex-1">
+          <aside className={`${inRoom ? "hidden md:flex" : "flex"} min-h-0 w-full flex-col border-r border-zinc-200 md:w-80 lg:w-96`}>
+            <RoomList base={base} />
+          </aside>
+          <section className={`${inRoom ? "flex" : "hidden md:flex"} min-h-0 min-w-0 flex-1 flex-col`}>{children}</section>
+        </div>
+        {employeeNav && (
+          <div className={inRoom ? "hidden md:block" : "block"}>
+            <EmployeeTabBar ws={`/workspace/${membership.company_id}`} pathname={pathname} inbox={employeeNav.inbox} chatUnread={chatUnread} />
+          </div>
+        )}
       </div>
     </Ctx.Provider>
   );
