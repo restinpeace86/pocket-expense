@@ -11,13 +11,22 @@ self.addEventListener("push", (event) => {
   }
   const title = data.title || "PocketExpense";
   event.waitUntil(
-    self.registration.showNotification(title, {
-      body: data.body || "",
-      tag: data.tag || undefined,
-      icon: "/icons/192",
-      badge: "/icons/96",
-      data: { url: data.url || "/" },
-    }),
+    (async () => {
+      // 채팅(D-203): 그 대화방을 지금 보고 있으면 알림을 띄우지 않는다(카톡처럼)
+      if (data.tag && String(data.tag).startsWith("chat-") && data.url) {
+        const target = new URL(data.url, self.location.origin).pathname;
+        const list = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+        if (list.some((c) => c.visibilityState === "visible" && c.focused && new URL(c.url).pathname === target)) return;
+      }
+      await self.registration.showNotification(title, {
+        body: data.body || "",
+        tag: data.tag || undefined,
+        renotify: !!(data.tag && String(data.tag).startsWith("chat-")),
+        icon: "/icons/192",
+        badge: "/icons/96",
+        data: { url: data.url || "/" },
+      });
+    })(),
   );
 });
 

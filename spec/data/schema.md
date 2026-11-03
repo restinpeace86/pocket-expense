@@ -444,6 +444,11 @@
 | error_message | text | null | |
 | sent_at | timestamptz | null | |
 
+### 2.11 사내 메신저·기능 스위치 (D-203, migration 106·107)
+- `company_features(company_id, feature messenger|attendance, enabled)` — 회사별 기능 스위치, 기본 꺼짐, 쓰기는 service role만.
+- `chat_rooms`(direct|group|claim, direct_key·claim_id 회사 안 유일) / `chat_members`(last_read_at·joined_at·left_at) / `chat_messages`(text|image|file|system, attachment_*, deleted_at, pushed_at) — 모두 company_id 복합 FK. 쓰기는 definer 함수만, 읽기는 참여자 + 스위치. 자세한 규칙: `spec/features/messenger.md`.
+- Storage `chat-files/{company_id}/{room_id}/{message_id}.{ext}` (비공개, 20MB) — 그 방 참여자만.
+
 ## 3. RLS 정책 (전 테이블 RLS enable + 아래 정책 필수)
 공통 헬퍼: `current_member()` = `auth.uid()`와 `members.auth_user_id`가 일치하고 `status='approved'`인 멤버. `is_admin()` = current_member의 role이 `super_admin` 또는 `admin`. **아래 표의 "admin"은 `is_admin()`(관리자 이상)을 뜻한다.**
 

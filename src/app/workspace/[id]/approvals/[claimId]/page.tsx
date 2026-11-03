@@ -3,7 +3,9 @@ import { getReviewerInbox } from "@/lib/claims/inbox";
 import { Suspense } from "react";
 import { AdminClaimDetail } from "@/components/claims/admin-claim-detail";
 import { ApprovalTimeline } from "@/components/claims/approval-timeline";
+import { ClaimChatButton } from "@/components/chat/claim-chat-button";
 import { requireWorkspace } from "@/lib/auth/guards";
+import { chatEnabled } from "@/lib/chat/server";
 import { isAdminRole } from "@/lib/auth/paths";
 import { getClaimDetail } from "@/lib/claims/detail";
 import { canActOnClaim } from "@/lib/claims/types";
@@ -29,7 +31,8 @@ async function Approval({ params }: Pick<PageProps<"/workspace/[id]/approvals/[c
   if (detail && detail.claim.member_id === membership.member_id) redirect(`/workspace/${id}/employee/claims/${claimId}`);
   if (!detail || detail.claim.status === "draft") notFound();
   const { can } = canActOnClaim(detail, membership);
-  const nextRows = (await getReviewerInbox(membership.company_id, membership.member_id, "waiting")).filter((r) => r.id !== claimId);
+  const [inboxRows, chat] = await Promise.all([getReviewerInbox(membership.company_id, membership.member_id, "waiting"), chatEnabled()]);
+  const nextRows = inboxRows.filter((r) => r.id !== claimId);
   const myStep = [...detail.approvals].reverse().find((a) => a.approver_member_id === membership.member_id && a.round === detail.claim.current_round);
   // 처리 권한이 없을 때 이유 (approver.md ① 상태별 표시)
   const reason = can
@@ -52,6 +55,7 @@ async function Approval({ params }: Pick<PageProps<"/workspace/[id]/approvals/[c
           payoutsHref="#"
           timeline={<ApprovalTimeline detail={detail} />}
           reviewer
+          chat={chat ? <ClaimChatButton companyId={id} claimId={claimId} /> : null}
           next={nextRows.length ? { href: `/workspace/${id}/approvals/${nextRows[0].id}`, count: nextRows.length } : { href: "", count: 0 }}
         />
     </main>

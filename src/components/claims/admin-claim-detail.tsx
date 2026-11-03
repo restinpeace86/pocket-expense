@@ -29,6 +29,7 @@ export function AdminClaimDetail({
   accountTitles,
   next = null,
   taxOffice = null,
+  chat = null,
 }: {
   detail: ClaimDetail;
   canAct: boolean;
@@ -40,6 +41,7 @@ export function AdminClaimDetail({
   accountTitles?: AccountTitleOption[]; // 관리자: 항목별 계정과목 조정 (T11-3)
   next?: { href: string; count: number } | null; // 처리 뒤 [다음 결재 n건 보기] (approver.md ① 완료 화면)
   taxOffice?: string | null; // 세무사무소가 계정과목을 관리하면 영수증별 조정 대신 세무사 확인 요청(D-156)
+  chat?: React.ReactNode; // 사내 메신저 [이 건으로 대화](D-203) — 스위치가 켜진 회사만
 }) {
   const { claim, owner } = detail;
   const router = useRouter();
@@ -108,7 +110,10 @@ export function AdminClaimDetail({
           <ArrowLeft className="size-4" />
           목록
         </Link>
-        <span className={`ml-auto whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{claim.self_approved ? "결재 생략" : badge.label}</span>
+        <span className="ml-auto flex items-center gap-2">
+          {chat}
+          <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{claim.self_approved ? "결재 생략" : badge.label}</span>
+        </span>
       </div>
 
       <section className="rounded-xl border border-zinc-200 bg-white p-4">

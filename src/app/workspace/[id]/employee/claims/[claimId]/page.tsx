@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { EmployeeClaimDetail } from "@/components/claims/employee-claim-detail";
+import { ClaimChatButton } from "@/components/chat/claim-chat-button";
 import { requireWorkspace } from "@/lib/auth/guards";
+import { chatEnabled } from "@/lib/chat/server";
 import { getClaimDetail } from "@/lib/claims/detail";
 
 export const metadata = { title: "지출결의서 · PocketExpense" };
@@ -18,7 +20,7 @@ export default function EmployeeClaimPage({ params }: PageProps<"/workspace/[id]
 async function EmployeeClaim({ params }: Pick<PageProps<"/workspace/[id]/employee/claims/[claimId]">, "params">) {
   const { id, claimId } = await params;
   const membership = await requireWorkspace(id);
-  const detail = await getClaimDetail(membership.company_id, claimId, { ownerMemberId: membership.member_id });
+  const [detail, chat] = await Promise.all([getClaimDetail(membership.company_id, claimId, { ownerMemberId: membership.member_id }), chatEnabled()]);
   if (!detail) notFound();
-  return <EmployeeClaimDetail detail={detail} base={`/workspace/${id}/employee`} />;
+  return <EmployeeClaimDetail detail={detail} base={`/workspace/${id}/employee`} chat={chat && detail.claim.status !== "draft" ? <ClaimChatButton companyId={id} claimId={claimId} /> : null} />;
 }

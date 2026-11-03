@@ -31,6 +31,7 @@ import type { ThemeKey } from "@/lib/theme";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import type { Membership } from "@/lib/auth/paths";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
+import { useChatUnread } from "@/components/chat/use-chat-unread";
 
 // 관리자 워크스페이스 레이아웃 (spec/screens/admin-dashboard.md 0): PC는 좌측 사이드바, 모바일은 햄버거 메뉴
 // 설정은 하단 배치 + 하위 메뉴 (admin-settings.md §4)
@@ -85,13 +86,28 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
 
 // settingsOpen: 휴대폰 메뉴(서랍)에서는 설정 하위 메뉴를 펼친 채로 연다(개선사항 1-1) — 화면 이름이 바로 보이게
 // feedback: 관리자 1:1 문의 주소 — 휴대폰 서랍 메뉴에서만 넘긴다(PC는 오른쪽 아래 떠 있는 버튼, 7차 개선사항 3)
-function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null }) {
+function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, chat = null }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; chat?: number | null }) {
   const realPath = usePathname();
   const pathname = previewPath ? `${base}${previewPath}` : realPath;
   const settingsActive = SETTINGS_NAV.some((i) => pathname.startsWith(`${base}${i.href}`));
   return (
     <nav className="flex flex-col gap-1 p-3" aria-label="관리자 메뉴">
-      {NAV.map((item) => (
+      {NAV.slice(0, 1).map((item) => (
+        <NavLink key={item.label} item={item} base={base} pathname={pathname} onNavigate={onNavigate} />
+      ))}
+      {/* 사내 메신저(D-203): 회사 스위치가 켜졌을 때만. 채팅은 워크스페이스 공통 화면(/chat)이다 */}
+      {chat !== null && (
+        <Link
+          href={base.replace(/\/admin$/, "/chat")}
+          onClick={onNavigate}
+          className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-sidebar-fg hover:bg-sidebar-hover"
+        >
+          <MessageCircle className="size-5 shrink-0" />
+          <span className="flex-1">채팅</span>
+          {chat > 0 && <span className="min-w-5 rounded-full bg-red-600 px-1.5 text-center text-[11px] font-semibold leading-5 text-white">{chat > 99 ? "99+" : chat}</span>}
+        </Link>
+      )}
+      {NAV.slice(1).map((item) => (
         <NavLink key={item.label} item={item} base={base} pathname={pathname} onNavigate={onNavigate} />
       ))}
       <details className="group mt-3 border-t border-sidebar-border pt-3" open={settingsOpen || settingsActive || undefined}>
@@ -141,13 +157,16 @@ export function AdminShell({
   children,
   theme,
   previewPath,
+  chat,
 }: {
   membership: Membership;
   children: ReactNode;
   theme?: ShellTheme;
   previewPath?: string;
+  chat?: number | null; // 사내 메신저 안 읽은 수(꺼져 있으면 null, D-203)
 }) {
   const base = `/workspace/${membership.company_id}/admin`;
+  const chatUnread = useChatUnread(chat, membership.member_id);
   const [open, setOpen] = useState(false);
 
   return (
@@ -156,7 +175,7 @@ export function AdminShell({
         <p className="px-6 pb-3 pt-5">
           <Brand />
         </p>
-        <NavList base={base} previewPath={previewPath} />
+        <NavList base={base} previewPath={previewPath} chat={chatUnread} />
       </aside>
 
       {open && (
@@ -169,7 +188,7 @@ export function AdminShell({
                 <X className="size-5" />
               </button>
             </div>
-            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} />
+            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} chat={chatUnread} />
             <div className="mt-auto sm:hidden">
               <ThemeOptionsInline />
             </div>
@@ -185,6 +204,12 @@ export function AdminShell({
           <div className="min-w-0 flex-1 [&>header]:border-b-0">
             <WorkspaceHeader membership={membership} mode="admin" />
           </div>
+          {chatUnread !== null && (
+            <Link href={`/workspace/${membership.company_id}/chat`} aria-label={`채팅${chatUnread ? ` 안 읽은 메시지 ${chatUnread}개` : ""}`} className="relative mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-xl hover:bg-zinc-100 md:hidden">
+              <MessageCircle className="size-5" />
+              {chatUnread > 0 && <span className="absolute right-0.5 top-1 min-w-4 rounded-full bg-red-600 px-1 text-center text-[10px] font-semibold leading-4 text-white">{chatUnread > 99 ? "99+" : chatUnread}</span>}
+            </Link>
+          )}
         </div>
         <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 py-6 md:px-8">{children}</main>
       </div>

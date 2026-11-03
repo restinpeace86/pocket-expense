@@ -7,7 +7,9 @@ import { ClaimListPane } from "@/components/claims/claim-list-pane";
 import { getFilterOptions } from "@/lib/claims/filter-options";
 import { filterQuery, parseClaimFilters } from "@/lib/claims/filters";
 import { ApprovalTimeline } from "@/components/claims/approval-timeline";
+import { ClaimChatButton } from "@/components/chat/claim-chat-button";
 import { requireWorkspace } from "@/lib/auth/guards";
+import { chatEnabled } from "@/lib/chat/server";
 import { getAdminClaimList, parseApprovalTab } from "@/lib/claims/admin-list";
 import { getClaimDetail } from "@/lib/claims/detail";
 import { canActOnClaim } from "@/lib/claims/types";
@@ -32,12 +34,13 @@ async function Detail({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
   const supabase = await createClient();
   const filters = parseClaimFilters(sp);
   const query = filterQuery(filters);
-  const [detail, { list, pendingCount }, { data: titles }, options, { data: office }] = await Promise.all([
+  const [detail, { list, pendingCount }, { data: titles }, options, { data: office }, chat] = await Promise.all([
     getClaimDetail(membership.company_id, claimId),
     getAdminClaimList(membership.company_id, tab, filters),
     supabase.from("account_titles").select("id, name, code").eq("company_id", membership.company_id).order("sort_order"),
     getFilterOptions(membership.company_id),
     supabase.rpc("my_company_tax_office"),
+    chatEnabled(),
   ]);
   // 등록된 세무사무소와 연결돼 있으면 영수증별 계정과목은 사무소가 정한다(D-156)
   const o = office as { registered?: boolean; registered_name?: string | null } | null;
@@ -67,6 +70,7 @@ async function Detail({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
         accountTitles={titles ?? []}
         next={nextFor(nextList)}
         taxOffice={taxOffice}
+        chat={chat ? <ClaimChatButton companyId={id} claimId={claimId} /> : null}
       />
     </div>
   );

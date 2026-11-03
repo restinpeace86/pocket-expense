@@ -1,9 +1,10 @@
 "use client";
 
-import { Home, Inbox, UserRound, Wallet, type LucideIcon } from "lucide-react";
+import { Home, Inbox, MessageCircle, UserRound, Wallet, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { useChatUnread } from "@/components/chat/use-chat-unread";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import type { Membership } from "@/lib/auth/paths";
 import type { ThemeKey } from "@/lib/theme";
@@ -19,20 +20,24 @@ export function EmployeeShell({
   theme,
   previewPath,
   inbox,
+  chat,
 }: {
   membership: Membership;
   children: ReactNode;
   theme?: ThemeKey;
   previewPath?: string; // 미리보기 전용: 워크스페이스 기준 경로(예: "/employee", "/approvals")
   inbox?: { waiting: number } | null; // 결재함 탭: 관리자가 아닌 사전 검토자만 (worker-dashboard.md §5, D-082)
+  chat?: number | null; // 채팅 탭: 회사 메신저 스위치가 켜졌을 때만, 안 읽은 메시지 수(D-203)
 }) {
   const ws = `/workspace/${membership.company_id}`;
   const realPath = usePathname();
+  const chatUnread = useChatUnread(chat, membership.member_id);
   const pathname = previewPath !== undefined ? `${ws}${previewPath}` : realPath;
   const tabs: Tab[] = [
     { href: `${ws}/employee`, label: "홈", icon: Home, ready: true },
     { href: `${ws}/employee/settlements`, label: "정산", icon: Wallet, ready: true },
     ...(inbox ? [{ href: `${ws}/approvals`, label: "결재함", icon: Inbox, ready: true, badge: inbox.waiting }] : []),
+    ...(chatUnread !== null ? [{ href: `${ws}/chat`, label: "채팅", icon: MessageCircle, ready: true, badge: chatUnread }] : []),
     { href: `${ws}/employee/profile`, label: "내 정보", icon: UserRound, ready: true },
   ];
   const showNav = !pathname.includes("/employee/claims/") && !/\/approvals\/[^/]+/.test(pathname);

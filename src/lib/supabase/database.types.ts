@@ -609,6 +609,175 @@ export type Database = {
           },
         ]
       }
+      chat_members: {
+        Row: {
+          company_id: string
+          joined_at: string
+          last_read_at: string
+          left_at: string | null
+          member_id: string
+          room_id: string
+        }
+        Insert: {
+          company_id: string
+          joined_at?: string
+          last_read_at?: string
+          left_at?: string | null
+          member_id: string
+          room_id: string
+        }
+        Update: {
+          company_id?: string
+          joined_at?: string
+          last_read_at?: string
+          left_at?: string | null
+          member_id?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_members_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "chat_members_room_id_company_id_fkey"
+            columns: ["room_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          attachment_mime: string | null
+          attachment_name: string | null
+          attachment_path: string | null
+          attachment_size: number | null
+          body: string | null
+          company_id: string
+          created_at: string
+          deleted_at: string | null
+          height: number | null
+          id: string
+          kind: string
+          pushed_at: string | null
+          room_id: string
+          sender_member_id: string | null
+          width: number | null
+        }
+        Insert: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_size?: number | null
+          body?: string | null
+          company_id: string
+          created_at?: string
+          deleted_at?: string | null
+          height?: number | null
+          id?: string
+          kind: string
+          pushed_at?: string | null
+          room_id: string
+          sender_member_id?: string | null
+          width?: number | null
+        }
+        Update: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_size?: number | null
+          body?: string | null
+          company_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          height?: number | null
+          id?: string
+          kind?: string
+          pushed_at?: string | null
+          room_id?: string
+          sender_member_id?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_room_id_company_id_fkey"
+            columns: ["room_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "chat_messages_sender_member_id_company_id_fkey"
+            columns: ["sender_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      chat_rooms: {
+        Row: {
+          claim_id: string | null
+          company_id: string
+          created_at: string
+          created_by_member_id: string | null
+          direct_key: string | null
+          id: string
+          kind: string
+          last_message_at: string | null
+          title: string | null
+        }
+        Insert: {
+          claim_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by_member_id?: string | null
+          direct_key?: string | null
+          id?: string
+          kind: string
+          last_message_at?: string | null
+          title?: string | null
+        }
+        Update: {
+          claim_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by_member_id?: string | null
+          direct_key?: string | null
+          id?: string
+          kind?: string
+          last_message_at?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_rooms_claim_id_company_id_fkey"
+            columns: ["claim_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "expense_claims"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "chat_rooms_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_rooms_created_by_member_id_company_id_fkey"
+            columns: ["created_by_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       claim_approvals: {
         Row: {
           acted_at: string | null
@@ -781,6 +950,35 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      company_features: {
+        Row: {
+          company_id: string
+          enabled: boolean
+          feature: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          enabled?: boolean
+          feature: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          enabled?: boolean
+          feature?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_features_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_referrals: {
         Row: {
@@ -2933,6 +3131,47 @@ export type Database = {
         Returns: string
       }
       business_verify_mode: { Args: never; Returns: string }
+      chat_claim_push: { Args: { p_id: string }; Returns: Json }
+      chat_create_group: {
+        Args: { p_member_ids: string[]; p_title?: string }
+        Returns: string
+      }
+      chat_delete_message: { Args: { p_id: string }; Returns: string }
+      chat_invite: {
+        Args: { p_member_ids: string[]; p_room: string }
+        Returns: undefined
+      }
+      chat_leave: { Args: { p_room: string }; Returns: undefined }
+      chat_mark_read: { Args: { p_room: string }; Returns: undefined }
+      chat_member_directory: { Args: never; Returns: Json }
+      chat_messages_page: {
+        Args: {
+          p_after?: string
+          p_before?: string
+          p_limit?: number
+          p_room: string
+        }
+        Returns: Json
+      }
+      chat_open_claim: { Args: { p_claim: string }; Returns: string }
+      chat_open_direct: { Args: { p_member: string }; Returns: string }
+      chat_rename: {
+        Args: { p_room: string; p_title: string }
+        Returns: undefined
+      }
+      chat_room_detail: { Args: { p_room: string }; Returns: Json }
+      chat_room_list: { Args: never; Returns: Json }
+      chat_send: {
+        Args: {
+          p_attachment?: Json
+          p_body?: string
+          p_id: string
+          p_kind: string
+          p_room: string
+        }
+        Returns: Json
+      }
+      chat_unread_total: { Args: never; Returns: number }
       check_claim_for_submit: { Args: { p_claim_id: string }; Returns: Json }
       claim_duplicate_receipts: { Args: { p_claim_id: string }; Returns: Json }
       clear_company_tax_office: { Args: never; Returns: undefined }
@@ -3080,6 +3319,7 @@ export type Database = {
         }[]
       }
       my_employee_summary: { Args: never; Returns: Json }
+      my_feature_enabled: { Args: { p_feature: string }; Returns: boolean }
       my_membership: { Args: never; Returns: Json }
       my_tax_office: { Args: never; Returns: Json }
       office_answer_tax_request: {

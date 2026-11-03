@@ -1,0 +1,152 @@
+// 사내 메신저 화면 계산 (D-203, spec/features/messenger.md). 순수 함수라 단위 테스트한다.
+
+export type ChatKind = "direct" | "group" | "claim";
+export type ChatMember = { member_id: string; name: string; status: string; last_read_at: string; joined_at: string };
+export type ChatMessage = {
+  id: string;
+  room_id: string;
+  sender_member_id: string | null;
+  sender_name: string | null;
+  kind: "text" | "image" | "file" | "system";
+  body: string | null;
+  attachment_path: string | null;
+  attachment_name: string | null;
+  attachment_size: number | null;
+  attachment_mime: string | null;
+  width: number | null;
+  height: number | null;
+  created_at: string;
+  deleted: boolean;
+  // 화면 전용: 보내는 중·실패(낙관적 표시), 올리기 전 미리보기
+  pending?: "sending" | "failed";
+  localUrl?: string;
+};
+export type ChatRoomSummary = {
+  id: string;
+  kind: ChatKind;
+  title: string | null;
+  claim_id: string | null;
+  claim_title: string | null;
+  sort_at: string;
+  last: ChatMessage | null;
+  unread: number;
+  members: ChatMember[];
+};
+
+const KST = 9 * 3600_000;
+const kst = (iso: string) => new Date(Date.parse(iso) + KST);
+const dayKey = (iso: string) => kst(iso).toISOString().slice(0, 10);
+
+// 퇴사(비활성)한 멤버는 이름 뒤에 표시
+export function displayName(m: Pick<ChatMember, "name" | "status"> | undefined | null, fallback = "알 수 없음"): string {
+  if (!m) return fallback;
+  return m.status === "inactive" ? `${m.name}(퇴사)` : m.name;
+}
+
+// 방 이름: 1:1 = 상대 이름 / 그룹 = 정한 이름 또는 참여자 이름 / 소명서 = 소명서 제목
+export function roomTitle(room: { kind: ChatKind; title: string | null; claim_title?: string | null; members: Pick<ChatMember, "member_id" | "name" | "status">[] }, meId: string): string {
+  const others = room.members.filter((m) => m.member_id !== meId);
+  if (room.kind === "direct") return others[0] ? displayName(others[0]) : "대화 상대 없음";
+  if (room.kind === "claim") return room.claim_title?.trim() ? `📄 ${room.claim_title}` : "📄 소명서 대화";
+  if (room.title?.trim()) return room.title;
+  if (!others.length) return "대화 상대 없음";
+  const names = others.map((m) => displayName(m));
+  return names.length > 3 ? `${names.slice(0, 3).join(", ")} 외 ${names.length - 3}명` : names.join(", ");
+}
+
+// 말풍선 옆 숫자: 보낸 사람을 빼고 아직 이 메시지까지 읽지 않은 참여자 수
+export function unreadCountFor(msg: Pick<ChatMessage, "sender_member_id" | "created_at" | "kind">, members: Pick<ChatMember, "member_id" | "last_read_at">[]): number {
+  if (msg.kind === "system") return 0;
+  const at = Date.parse(msg.created_at);
+  return members.filter((m) => m.member_id !== msg.sender_member_id && Date.parse(m.last_read_at) < at).length;
+}
+
+// "오후 3:05"
+export function timeLabel(iso: string): string {
+  const d = kst(iso);
+  const h = d.getUTCHours();
+  const m = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${h < 12 ? "오전" : "오후"} ${h % 12 === 0 ? 12 : h % 12}:${m}`;
+}
+
+// 날짜 구분선 "2026년 11월 3일 화요일"
+export function dateLabel(iso: string): string {
+  const d = kst(iso);
+  const w = ["일", "월", "화", "수", "목", "금", "토"][d.getUTCDay()];
+  return `${d.getUTCFullYear()}년 ${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 ${w}요일`;
+}
+
+// 목록의 시각: 오늘 = 시각, 어제 = "어제", 올해 = "11월 2일", 그 전 = "2025. 11. 2."
+export function listTimeLabel(iso: string, nowIso: string = new Date().toISOString()): string {
+  const today = dayKey(nowIso);
+  const key = dayKey(iso);
+  if (key === today) return timeLabel(iso);
+  const yesterday = dayKey(new Date(Date.parse(nowIso) - 86400_000).toISOString());
+  if (key === yesterday) return "어제";
+  const d = kst(iso);
+  if (key.slice(0, 4) === today.slice(0, 4)) return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일`;
+  return `${d.getUTCFullYear()}. ${d.getUTCMonth() + 1}. ${d.getUTCDate()}.`;
+}
+
+// 목록·알림의 한 줄 미리보기
+export function previewText(msg: Pick<ChatMessage, "kind" | "body" | "deleted" | "attachment_name"> | null): string {
+  if (!msg) return "";
+  if (msg.deleted) return "삭제된 메시지입니다.";
+  if (msg.kind === "image") return "사진";
+  if (msg.kind === "file") return `파일: ${msg.attachment_name ?? ""}`.trim();
+  return (msg.body ?? "").replace(/\s+/g, " ").trim();
+}
+
+export type ChatRow =
+  | { type: "date"; key: string; label: string }
+  | { type: "system"; key: string; msg: ChatMessage }
+  | { type: "msg"; key: string; msg: ChatMessage; mine: boolean; showName: boolean; showTime: boolean };
+
+// 카톡처럼 묶기: 날짜가 바뀌면 구분선, 같은 사람이 같은 분에 연달아 보내면 이름은 첫 줄만·시각은 마지막 줄만
+export function buildRows(messages: ChatMessage[], meId: string): ChatRow[] {
+  const rows: ChatRow[] = [];
+  const minute = (iso: string) => kst(iso).toISOString().slice(0, 16);
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i];
+    const prev = messages[i - 1];
+    const next = messages[i + 1];
+    if (!prev || dayKey(prev.created_at) !== dayKey(m.created_at)) rows.push({ type: "date", key: `d-${dayKey(m.created_at)}`, label: dateLabel(m.created_at) });
+    if (m.kind === "system") {
+      rows.push({ type: "system", key: m.id, msg: m });
+      continue;
+    }
+    const sameAsPrev = !!prev && prev.kind !== "system" && prev.sender_member_id === m.sender_member_id && minute(prev.created_at) === minute(m.created_at) && dayKey(prev.created_at) === dayKey(m.created_at);
+    const sameAsNext = !!next && next.kind !== "system" && next.sender_member_id === m.sender_member_id && minute(next.created_at) === minute(m.created_at);
+    rows.push({ type: "msg", key: m.id, msg: m, mine: m.sender_member_id === meId, showName: !sameAsPrev, showTime: !sameAsNext });
+  }
+  return rows;
+}
+
+// 실시간·다시 불러오기로 들어온 메시지를 합친다(같은 id는 새 것으로, 시간순)
+export function mergeMessages(current: ChatMessage[], incoming: ChatMessage[]): ChatMessage[] {
+  const map = new Map(current.map((m) => [m.id, m]));
+  for (const m of incoming) {
+    const old = map.get(m.id);
+    map.set(m.id, old?.localUrl && !m.pending ? { ...m, localUrl: old.localUrl } : m);
+  }
+  return [...map.values()].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
+}
+
+// 이름 첫 글자 동그라미 색(사람마다 같은 색)
+const AVATAR_COLORS = ["bg-sky-200 text-sky-900", "bg-amber-200 text-amber-900", "bg-emerald-200 text-emerald-900", "bg-rose-200 text-rose-900", "bg-violet-200 text-violet-900", "bg-lime-200 text-lime-900"];
+export function avatarColor(id: string | null): string {
+  if (!id) return "bg-zinc-200 text-zinc-700";
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+
+export function fileSizeLabel(bytes: number | null): string {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)}KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+}
+
+export const CHAT_FILE_MAX = 20 * 1024 * 1024;
+export const CHAT_BODY_MAX = 4000;

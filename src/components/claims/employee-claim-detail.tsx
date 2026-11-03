@@ -19,7 +19,7 @@ function period(d: ClaimDetail) {
   return a === b ? a : `${a} ~ ${b.slice(5)}`;
 }
 
-export function EmployeeClaimDetail({ detail, base }: { detail: ClaimDetail; base: string }) {
+export function EmployeeClaimDetail({ detail, base, chat = null }: { detail: ClaimDetail; base: string; chat?: React.ReactNode }) {
   const { claim } = detail;
   const badge = claimStatusBadge(claim.status, claim.settlement_required);
   const reviewing = detail.pendingStep?.step_kind === "review" ? `${detail.pendingStep.approver_name ?? "사전 검토자"} 검토 중` : null;
@@ -30,7 +30,10 @@ export function EmployeeClaimDetail({ detail, base }: { detail: ClaimDetail; bas
         <Link href={base} className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100">
           <ArrowLeft className="size-4" />내 결의서
         </Link>
-        <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
+        <span className="flex items-center gap-2">
+          {chat}
+          <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
+        </span>
       </div>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-4">
