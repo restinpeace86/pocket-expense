@@ -168,9 +168,9 @@ const AA_RECORD = {
 } as unknown as ReceiptRecordData["record"];
 
 const SAMPLE_PLANS = [
-  { code: "starter", name: "스타터", monthly_price: 29000, monthly_receipts: 150, recommended_size: "1인 사업자·소규모 현장 팀", is_featured: false, max_members: 10 },
-  { code: "standard", name: "프로", monthly_price: 49000, monthly_receipts: 400, recommended_size: "본격적으로 현장을 뛰는 소기업", is_featured: true, max_members: 20 },
-  { code: "pro", name: "비즈니스", monthly_price: 89000, monthly_receipts: 800, recommended_size: "현장 여러 곳을 함께 운영하는 팀", is_featured: false, max_members: null },
+  { code: "starter", name: "스타터", monthly_price: 29000, monthly_receipts: 150, recommended_size: "1인 사업자·소규모 현장 팀", is_featured: false, max_members: 10, chat_storage_mb: 1024 },
+  { code: "standard", name: "프로", monthly_price: 49000, monthly_receipts: 400, recommended_size: "본격적으로 현장을 뛰는 소기업", is_featured: true, max_members: 20, chat_storage_mb: 3072 },
+  { code: "pro", name: "비즈니스", monthly_price: 89000, monthly_receipts: 800, recommended_size: "현장 여러 곳을 함께 운영하는 팀", is_featured: false, max_members: null, chat_storage_mb: 10240 },
 ];
 const SAMPLE_NOTICES: Notice[] = [
   { id: "n1", scope: "company", title: "11월부터 식대 1인 12,000원 (아주 긴 공지 제목이 들어가도 한 줄로 줄여 보이는지 확인)", body: "11월 1일 사용분부터 1인 한도가 12,000원으로 바뀝니다.\n야근 식대도 같아요.", created_at: "2026-10-22T01:00:00Z" },

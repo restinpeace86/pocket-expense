@@ -12,6 +12,7 @@ type Plan = {
   is_unlimited: boolean;
   is_featured: boolean;
   max_members: number | null;
+  chat_storage_mb: number | null;
 };
 
 // 요금제는 billing_plans에서 읽는다(하드코딩 금지). 공용 데이터라 정적으로 캐시한다. (D-046, D-054, D-133)
@@ -22,7 +23,7 @@ export async function Pricing() {
   try {
     const { data } = await createPublicClient()
       .from("billing_plans")
-      .select("code, name, monthly_price, monthly_receipts, recommended_size, is_unlimited, is_featured, max_members")
+      .select("code, name, monthly_price, monthly_receipts, recommended_size, is_unlimited, is_featured, max_members, chat_storage_mb")
       .order("sort_order");
     plans = data ?? [];
   } catch {

@@ -23,3 +23,7 @@
 - 예전(이 변경 전) 사진은 미리보기가 없어 말풍선에 원본을 쓴다(페이퍼컴퍼니 2장).
 - Supabase 이미지 변환(서버에서 크기 바꾸기)은 Pro 전용이라 쓰지 않고 브라우저에서 만든다.
 - 새벽 정리는 Vercel cron(`CRON_SECRET`)으로 돈다 — 로컬에는 비밀값이 없어 E2E에서 같은 순서(due → remove → mark)로 직접 실행해 확인.
+
+## 추가 (2026-11-04, D-205) 요금 카드 표시
+- `src/lib/billing/plan-benefits.ts` `storageLabel`·혜택 줄 "사내 채팅 사진·파일 저장 nGB"(sub "사진·파일은 90일 보관"), 랜딩 `pricing.tsx`·`getBillingPlans`가 `chat_storage_mb`를 읽음, 미리보기 샘플 값 채움.
+- 확인: tsc·test(269)·build, `.responsive/live/check-pricing-storage.mjs` ALL_OK(랜딩 390·1280, 관리자 요금제 390·1280 — 1GB·3GB·10GB, 넘침 없음), 스크린샷 확인.
