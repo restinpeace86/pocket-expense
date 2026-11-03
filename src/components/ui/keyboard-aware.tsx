@@ -32,6 +32,8 @@ export function KeyboardAware() {
     const onFocus = (e: FocusEvent) => {
       const el = e.target as HTMLElement | null;
       if (!el?.matches?.(TEXT_INPUT)) return;
+      // 스스로 키보드 위에 맞추는 화면(채팅 D-203)은 페이지를 밀어 올리지 않는다
+      if (el.closest("[data-keyboard-self]")) return update();
       // 터치 기기에서만(PC는 키보드가 화면을 가리지 않음). 키보드가 올라오는 시간을 기다린다
       if (!window.matchMedia("(pointer: coarse)").matches) return;
       if (timer) clearTimeout(timer);

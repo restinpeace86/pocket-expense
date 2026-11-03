@@ -143,6 +143,16 @@ export function ChatRoom({ roomId }: { roomId: string }) {
       setNewBelow(0);
     }
   }, [messages, me]);
+  // 휴대폰 키보드가 올라와 대화 칸이 줄어들면, 맨 아래를 보고 있었으면 계속 마지막 메시지가 보이게
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      if (atBottom.current) el.scrollTop = el.scrollHeight;
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const onScroll = () => {
     const el = scroller.current;
     if (!el) return;
@@ -395,7 +405,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
           const meta = (
             <span className={`flex shrink-0 flex-col justify-end pb-0.5 text-[11px] leading-tight ${row.mine ? "items-end" : "items-start"}`}>
               {m.pending === "sending" && <Loader2 className="size-3 animate-spin text-zinc-600" />}
-              {unread > 0 && <span className="font-bold text-amber-500">{unread}</span>}
+              {unread > 0 && <span data-unread className="text-[13px] font-extrabold leading-none text-[#ffe100] [text-shadow:0_0_2px_rgba(0,0,0,0.45)]">{unread}</span>}
               {row.showTime && !m.pending && <span className="whitespace-nowrap text-zinc-600">{timeLabel(m.created_at)}</span>}
             </span>
           );
