@@ -3,6 +3,7 @@
 -- 스위치 꺼짐 = 아무것도 못 함 / 같은 회사 승인 멤버끼리만 / 참여자만 읽기 / 표에 직접 쓰기 불가 /
 -- 1:1 방 하나 / 다시 보내도 한 번 / 남의 방 첨부 경로 불가 / 내 메시지만 삭제 / 읽음·안 읽은 수 /
 -- 그룹 초대·나가기 / 소명서 방은 볼 수 있는 사람만 / 웹푸시 한 번만 / 실시간 주제는 내 것만
+-- (D-204) 저장 한도 STORAGE_FULL / 미리보기 경로도 그 방만 / 90일 지난 첨부 정리 = 서버 전용 / 지운 뒤 expired
 -- =============================================================================
 begin;
 
@@ -190,6 +191,49 @@ declare
   v_room uuid := public.chat_open_claim('e6500000-0000-0000-0000-000000000001');
 begin
   if jsonb_array_length(public.chat_room_detail(v_room) -> 'members') <> 2 then raise exception 'FAIL [owner opens claim room]'; end if;
+end;
+$$;
+reset role;
+
+-- ⑤-3 첨부 저장 한도·미리보기·보관 기간(D-204, migration 108)
+select public._t_as65('a6500000-0000-0000-0000-000000000001');
+set local role authenticated;
+do $$
+declare
+  v_room uuid := current_setting('t.room')::uuid;
+  v_st jsonb := public.chat_storage_status();
+  v_msg jsonb;
+begin
+  if (v_st ->> 'limit')::bigint <> 1073741824 or (v_st ->> 'days')::int <> 90 then raise exception 'FAIL [storage status] %', v_st; end if;
+  perform public._t_raises65(format($q$select public.chat_send(%L, gen_random_uuid(), 'image', null, jsonb_build_object('path', 'c6500000-0000-0000-0000-00000000000a/%s/y.jpg', 'thumb_path', 'c6500000-0000-0000-0000-00000000000a/00000000-0000-0000-0000-000000000000/y_t.webp'))$q$, v_room, v_room), 'INVALID_ATTACHMENT', 'thumb other room');
+  perform public._t_raises65(format($q$select public.chat_send(%L, gen_random_uuid(), 'file', null, jsonb_build_object('path', 'c6500000-0000-0000-0000-00000000000a/%s/big.zip', 'size', 1073741825))$q$, v_room, v_room), 'STORAGE_FULL', 'storage full');
+  v_msg := public.chat_send(v_room, 'f6500000-0000-0000-0000-0000000000a1', 'image', null,
+    jsonb_build_object('path', 'c6500000-0000-0000-0000-00000000000a/' || v_room || '/a1.jpg', 'thumb_path', 'c6500000-0000-0000-0000-00000000000a/' || v_room || '/a1_t.webp', 'size', 250000, 'thumb_size', 30000, 'width', 1280, 'height', 960));
+  if v_msg ->> 'attachment_thumb_path' is null or (v_msg ->> 'expired')::boolean then raise exception 'FAIL [thumb saved] %', v_msg; end if;
+  if (public.chat_storage_status() ->> 'used')::bigint < 280000 then raise exception 'FAIL [used counts thumb]'; end if;
+  perform public._t_raises65($q$select * from public.chat_files_due(10)$q$, '42501', 'user cannot list purge');
+  perform public._t_raises65($q$select public.chat_files_mark_purged(array['f6500000-0000-0000-0000-0000000000a1'::uuid])$q$, '42501', 'user cannot purge');
+end;
+$$;
+reset role;
+-- 91일 지난 것으로 → 새벽 정리 대상 → 지운 뒤 "보관 기간이 지난 사진", 사용량에서 빠짐
+update public.chat_messages set created_at = now() - interval '91 days' where id = 'f6500000-0000-0000-0000-0000000000a1';
+do $$
+begin
+  if not exists (select 1 from public.chat_files_due(1000) d where d.message_id = 'f6500000-0000-0000-0000-0000000000a1' and array_length(d.paths, 1) = 2) then raise exception 'FAIL [due 90 days]'; end if;
+  if public.chat_files_mark_purged(array['f6500000-0000-0000-0000-0000000000a1'::uuid]) <> 1 then raise exception 'FAIL [mark purged]'; end if;
+  if exists (select 1 from public.chat_files_due(1000) d where d.message_id = 'f6500000-0000-0000-0000-0000000000a1') then raise exception 'FAIL [purged not due again]'; end if;
+end;
+$$;
+select public._t_as65('a6500000-0000-0000-0000-000000000002');
+set local role authenticated;
+do $$
+declare
+  v_m jsonb;
+begin
+  select x into v_m from jsonb_array_elements(public.chat_messages_page(current_setting('t.room')::uuid, null, null, 200)) x where x ->> 'id' = 'f6500000-0000-0000-0000-0000000000a1';
+  if v_m is null or not (v_m ->> 'expired')::boolean or v_m ->> 'attachment_path' is not null or v_m ->> 'attachment_thumb_path' is not null then raise exception 'FAIL [expired json] %', v_m; end if;
+  if (public.chat_storage_status() ->> 'used')::bigint >= 250000 + 30000 + (select coalesce(sum(attachment_size), 0) from public.chat_messages where id <> 'f6500000-0000-0000-0000-0000000000a1' and attachment_path is not null and deleted_at is null) + 1 then raise exception 'FAIL [purged not counted]'; end if;
 end;
 $$;
 reset role;

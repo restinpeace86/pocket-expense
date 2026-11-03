@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fitWithin, looksLikePdf, RECEIPT_ORIGINAL_MAX, RECEIPT_THUMB_MAX } from "./image";
+import { CHAT_IMAGE_MAX, CHAT_THUMB_MAX, fitWithin, looksLikePdf, RECEIPT_ORIGINAL_MAX, RECEIPT_THUMB_MAX } from "./image";
 
 describe("fitWithin", () => {
   it("휴대폰 사진(4032×3024)을 긴 변 2000px로 비율 유지해 줄인다", () => {
@@ -34,5 +34,16 @@ describe("looksLikePdf", () => {
   it("이름만 .pdf인 글자 파일·빈 파일은 막는다", async () => {
     expect(await looksLikePdf(new Blob(["not a pdf"]))).toBe(false);
     expect(await looksLikePdf(new Blob([]))).toBe(false);
+  });
+});
+
+describe("채팅 사진 크기(D-204)", () => {
+  it("휴대폰 사진 4032×3024 → 원본 1280×960, 미리보기 480×360", () => {
+    expect(fitWithin(4032, 3024, CHAT_IMAGE_MAX)).toEqual({ width: 1280, height: 960 });
+    expect(fitWithin(4032, 3024, CHAT_THUMB_MAX)).toEqual({ width: 480, height: 360 });
+  });
+  it("세로 사진과 작은 사진", () => {
+    expect(fitWithin(3024, 4032, CHAT_IMAGE_MAX)).toEqual({ width: 960, height: 1280 });
+    expect(fitWithin(800, 600, CHAT_IMAGE_MAX)).toEqual({ width: 800, height: 600 });
   });
 });

@@ -393,6 +393,7 @@ export type Database = {
       billing_plans: {
         Row: {
           annual_price: number | null
+          chat_storage_mb: number | null
           code: string
           created_at: string
           id: string
@@ -409,6 +410,7 @@ export type Database = {
         }
         Insert: {
           annual_price?: number | null
+          chat_storage_mb?: number | null
           code: string
           created_at?: string
           id?: string
@@ -425,6 +427,7 @@ export type Database = {
         }
         Update: {
           annual_price?: number | null
+          chat_storage_mb?: number | null
           code?: string
           created_at?: string
           id?: string
@@ -656,7 +659,10 @@ export type Database = {
           attachment_mime: string | null
           attachment_name: string | null
           attachment_path: string | null
+          attachment_purged_at: string | null
           attachment_size: number | null
+          attachment_thumb_path: string | null
+          attachment_thumb_size: number | null
           body: string | null
           company_id: string
           created_at: string
@@ -673,7 +679,10 @@ export type Database = {
           attachment_mime?: string | null
           attachment_name?: string | null
           attachment_path?: string | null
+          attachment_purged_at?: string | null
           attachment_size?: number | null
+          attachment_thumb_path?: string | null
+          attachment_thumb_size?: number | null
           body?: string | null
           company_id: string
           created_at?: string
@@ -690,7 +699,10 @@ export type Database = {
           attachment_mime?: string | null
           attachment_name?: string | null
           attachment_path?: string | null
+          attachment_purged_at?: string | null
           attachment_size?: number | null
+          attachment_thumb_path?: string | null
+          attachment_thumb_size?: number | null
           body?: string | null
           company_id?: string
           created_at?: string
@@ -3137,6 +3149,14 @@ export type Database = {
         Returns: string
       }
       chat_delete_message: { Args: { p_id: string }; Returns: string }
+      chat_files_due: {
+        Args: { p_limit?: number }
+        Returns: {
+          message_id: string
+          paths: string[]
+        }[]
+      }
+      chat_files_mark_purged: { Args: { p_ids: string[] }; Returns: number }
       chat_invite: {
         Args: { p_member_ids: string[]; p_room: string }
         Returns: undefined
@@ -3171,6 +3191,7 @@ export type Database = {
         }
         Returns: Json
       }
+      chat_storage_status: { Args: never; Returns: Json }
       chat_unread_total: { Args: never; Returns: number }
       check_claim_for_submit: { Args: { p_claim_id: string }; Returns: Json }
       claim_duplicate_receipts: { Args: { p_claim_id: string }; Returns: Json }

@@ -68,6 +68,7 @@
 | is_purchasable | boolean | not null, default false | 결제 가능 여부. 결제 연동 전까지 false (D-046) |
 | is_unlimited | boolean | not null, default false | 무제한 요금제(장수는 공정 사용 기준) (D-077) |
 | is_featured | boolean | not null, default false | 화면에 "추천" 표시 (D-077) |
+| chat_storage_mb | integer | null | 회사별 채팅 첨부 저장 한도(D-204, migration 108) — 1024 / 3072 / 10240 |
 - `id`·`created_at` 외 회사와 무관한 공용 데이터. 시드 마이그레이션으로 넣는다.
 
 ### 2.1a2 `billing_addons` — 추가 크레딧 상품 (D-133, 공용 데이터)
@@ -448,6 +449,7 @@
 - `company_features(company_id, feature messenger|attendance, enabled)` — 회사별 기능 스위치, 기본 꺼짐, 쓰기는 service role만.
 - `chat_rooms`(direct|group|claim, direct_key·claim_id 회사 안 유일) / `chat_members`(last_read_at·joined_at·left_at) / `chat_messages`(text|image|file|system, attachment_*, deleted_at, pushed_at) — 모두 company_id 복합 FK. 쓰기는 definer 함수만, 읽기는 참여자 + 스위치. 자세한 규칙: `spec/features/messenger.md`.
 - Storage `chat-files/{company_id}/{room_id}/{message_id}.{ext}` (비공개, 20MB) — 그 방 참여자만.
+- (D-204, migration 108) `chat_messages.attachment_thumb_path`·`attachment_thumb_size`(사진 미리보기 `{message_id}_t.webp`), `attachment_purged_at`(90일 지나 파일 지움). 회사 저장 한도 = `billing_plans.chat_storage_mb`(지금은 스타터), 보관 일수 = `private.app_settings.chat_attachment_days`(90).
 
 ## 3. RLS 정책 (전 테이블 RLS enable + 아래 정책 필수)
 공통 헬퍼: `current_member()` = `auth.uid()`와 `members.auth_user_id`가 일치하고 `status='approved'`인 멤버. `is_admin()` = current_member의 role이 `super_admin` 또는 `admin`. **아래 표의 "admin"은 `is_admin()`(관리자 이상)을 뜻한다.**

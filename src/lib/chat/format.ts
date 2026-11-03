@@ -10,6 +10,7 @@ export type ChatMessage = {
   kind: "text" | "image" | "file" | "system";
   body: string | null;
   attachment_path: string | null;
+  attachment_thumb_path?: string | null; // 사진 말풍선용 미리보기(D-204). 예전 사진은 없음 → 원본
   attachment_name: string | null;
   attachment_size: number | null;
   attachment_mime: string | null;
@@ -17,6 +18,7 @@ export type ChatMessage = {
   height: number | null;
   created_at: string;
   deleted: boolean;
+  expired?: boolean; // 보관 기간(90일)이 지나 첨부 파일이 지워짐(D-204)
   // 화면 전용: 보내는 중·실패(낙관적 표시), 올리기 전 미리보기
   pending?: "sending" | "failed";
   localUrl?: string;

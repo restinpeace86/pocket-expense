@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowLeft, Copy, Download, FileText, ImagePlus, Loader2, LogOut, Menu, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, Copy, Download, FileText, ImageOff, ImagePlus, Loader2, LogOut, Menu, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -8,10 +8,11 @@ import { pushChatMessageAction } from "@/app/workspace/[id]/chat/actions";
 import { isAdminRole } from "@/lib/auth/paths";
 import { buildRows, CHAT_BODY_MAX, CHAT_FILE_MAX, displayName, fileSizeLabel, mergeMessages, roomTitle, timeLabel, unreadCountFor, type ChatKind, type ChatMember, type ChatMessage } from "@/lib/chat/format";
 import { formatWon } from "@/lib/format";
-import { processReceiptFile } from "@/lib/receipts/image";
+import { processChatImage } from "@/lib/receipts/image";
 import { Avatar } from "./avatar";
 import { useChat } from "./chat-app";
 import { MemberPicker } from "./member-picker";
+import { signedUrls } from "./signed-urls";
 
 type Detail = {
   id: string;
@@ -22,6 +23,8 @@ type Detail = {
   members: ChatMember[];
 };
 const BUCKET = "chat-files";
+// 말풍선에 쓸 파일: 미리보기가 있으면 미리보기, 예전 사진은 원본
+const thumbOf = (m: ChatMessage) => m.attachment_thumb_path ?? m.attachment_path;
 const PAGE = 50;
 
 // 대화방(카톡 대화창): 날짜 구분선, 내 말풍선은 오른쪽 노랑, 상대는 왼쪽 흰색 + 이름·프로필,
@@ -48,7 +51,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
   const scroller = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
   const prependFrom = useRef<number | null>(null);
-  const files = useRef(new Map<string, { file: File | Blob; ext: string; name: string; kind: "image" | "file"; width?: number; height?: number }>());
+  const files = useRef(new Map<string, { file: File | Blob; ext: string; name: string; kind: "image" | "file"; width?: number; height?: number; thumb?: Blob; thumbExt?: string }>());
   const readTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const imageInput = useRef<HTMLInputElement>(null);
@@ -166,31 +169,41 @@ export function ChatRoom({ roomId }: { roomId: string }) {
     setNewBelow(0);
   };
 
-  // ── 첨부 주소(서명된 주소, 1시간) ──
+  // ── 첨부 주소(서명된 주소, D-204): 말풍선은 작은 미리보기만(없는 예전 사진은 원본). 원본은 사진을 눌렀을 때만 ──
   useEffect(() => {
-    const need = messages.filter((m) => m.attachment_path && !m.deleted && !m.pending && !urls[m.attachment_path]).map((m) => m.attachment_path as string);
+    const need = messages.filter((m) => m.kind === "image" && m.attachment_path && !m.deleted && !m.pending && !urls[thumbOf(m) as string]).map((m) => thumbOf(m) as string);
     if (!need.length) return;
-    void supabase.storage
-      .from(BUCKET)
-      .createSignedUrls(need, 3600)
-      .then(({ data }) => {
-        const next: Record<string, string> = {};
-        for (const d of data ?? []) if (d.path && d.signedUrl) next[d.path] = d.signedUrl;
-        if (Object.keys(next).length) setUrls((u) => ({ ...u, ...next }));
-      });
+    void signedUrls(supabase, BUCKET, need).then((next) => {
+      if (Object.keys(next).length) setUrls((u) => ({ ...u, ...next }));
+    });
   }, [messages, urls, supabase]);
+  useEffect(() => {
+    const p = viewer && !viewer.localUrl ? viewer.attachment_path : null;
+    if (!p || urls[p]) return;
+    void signedUrls(supabase, BUCKET, [p]).then((next) => setUrls((u) => ({ ...u, ...next })));
+  }, [viewer, urls, supabase]);
 
   // ── 보내기(화면에 먼저 보여 주고, 저장되면 바꿔 끼움. 실패하면 다시 보내기) ──
   const deliver = async (msg: ChatMessage) => {
     setMessages((m) => mergeMessages(m, [{ ...msg, pending: "sending" }]));
     let attachment: Record<string, unknown> | undefined;
+    let uploaded: string[] = [];
     if (msg.kind !== "text") {
       const f = files.current.get(msg.id);
       if (!f) return setMessages((m) => mergeMessages(m, [{ ...msg, pending: "failed" }]));
-      const path = `${membership.company_id}/${roomId}/${msg.id}.${f.ext}`;
-      const up = await supabase.storage.from(BUCKET).upload(path, f.file, { upsert: true, contentType: f.file.type || "application/octet-stream" });
+      // 파일 이름이 메시지마다 달라 내용이 바뀌지 않으므로 브라우저가 오래 저장해 두게(다시 받지 않게)
+      const dir = `${membership.company_id}/${roomId}/${msg.id}`;
+      const path = `${dir}.${f.ext}`;
+      const up = await supabase.storage.from(BUCKET).upload(path, f.file, { upsert: true, cacheControl: "31536000", contentType: f.file.type || "application/octet-stream" });
       if (up.error) return setMessages((m) => mergeMessages(m, [{ ...msg, pending: "failed" }]));
-      attachment = { path, name: f.name, size: f.file.size, mime: f.file.type || "application/octet-stream", width: f.width, height: f.height };
+      let thumbPath: string | undefined;
+      if (f.thumb) {
+        thumbPath = `${dir}_t.${f.thumbExt ?? "jpg"}`;
+        const t = await supabase.storage.from(BUCKET).upload(thumbPath, f.thumb, { upsert: true, cacheControl: "31536000", contentType: f.thumb.type || "image/jpeg" });
+        if (t.error) thumbPath = undefined; // 미리보기를 못 올려도 원본으로 보여 준다
+      }
+      uploaded = [path, ...(thumbPath ? [thumbPath] : [])];
+      attachment = { path, thumb_path: thumbPath, thumb_size: f.thumb?.size, name: f.name, size: f.file.size, mime: f.file.type || "application/octet-stream", width: f.width, height: f.height };
     }
     const { data, error } = await supabase.rpc("chat_send", {
       p_room: roomId,
@@ -199,6 +212,16 @@ export function ChatRoom({ roomId }: { roomId: string }) {
       p_body: msg.kind === "text" ? (msg.body ?? "") : undefined,
       p_attachment: attachment as never,
     });
+    if (error?.message?.includes("STORAGE_FULL")) {
+      // 회사 채팅 저장 공간이 다 참(D-204) → 올린 파일은 지우고 안내
+      if (uploaded.length) void supabase.storage.from(BUCKET).remove(uploaded);
+      files.current.delete(msg.id);
+      setMessages((m) => m.filter((x) => x.id !== msg.id));
+      const { data: st } = await supabase.rpc("chat_storage_status");
+      const info = st as { limit?: number; days?: number } | null;
+      const gb = info?.limit ? `(${Math.round((info.limit / 1024 ** 3) * 10) / 10}GB)` : "";
+      return setNotice(`회사 채팅 저장 공간${gb}이 다 찼어요. 사진·파일은 ${info?.days ?? 90}일이 지나면 자동으로 지워져 다시 보낼 수 있어요.`);
+    }
     if (error || !data) return setMessages((m) => mergeMessages(m, [{ ...msg, pending: "failed" }]));
     setMessages((m) => mergeMessages(m, [data as unknown as ChatMessage]));
     files.current.delete(msg.id);
@@ -213,6 +236,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
     kind,
     body: null,
     attachment_path: null,
+    attachment_thumb_path: null,
     attachment_name: null,
     attachment_size: null,
     attachment_mime: null,
@@ -243,15 +267,17 @@ export function ChatRoom({ roomId }: { roomId: string }) {
       let ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) || "bin";
       let width: number | undefined;
       let height: number | undefined;
+      let thumb: Blob | undefined;
+      let thumbExt: string | undefined;
       if (kind === "image") {
         try {
-          const p = await processReceiptFile(file); // 휴대폰 사진 회전 반영 + 2000px JPEG로 줄임(영수증과 같은 처리)
-          if (p.kind === "image") {
-            blob = p.original;
-            ext = "jpg";
-            width = p.width;
-            height = p.height;
-          }
+          const p = await processChatImage(file); // 휴대폰 사진 회전 반영 + 1280px JPEG(카톡 일반 화질) + 말풍선용 미리보기
+          blob = p.original;
+          ext = "jpg";
+          width = p.width;
+          height = p.height;
+          thumb = p.thumb;
+          thumbExt = p.thumbExt;
         } catch {
           kind = "file"; // 읽지 못하는 사진 형식은 파일로 보낸다
         }
@@ -264,7 +290,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
         height: height ?? null,
         localUrl: kind === "image" ? URL.createObjectURL(blob) : undefined,
       });
-      files.current.set(msg.id, { file: blob, ext, name: msg.attachment_name ?? file.name, kind, width, height });
+      files.current.set(msg.id, { file: blob, ext, name: msg.attachment_name ?? file.name, kind, width, height, thumb, thumbExt });
       atBottom.current = true;
       void deliver(msg);
     }
@@ -280,8 +306,8 @@ export function ChatRoom({ roomId }: { roomId: string }) {
     if (!window.confirm("이 메시지를 삭제할까요? 모든 참여자에게 '삭제된 메시지입니다'로 보여요.")) return;
     const { data, error } = await supabase.rpc("chat_delete_message", { p_id: m.id });
     if (error) return setNotice("삭제하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
-    if (data) void supabase.storage.from(BUCKET).remove([data]);
-    setMessages((list) => mergeMessages(list, [{ ...m, deleted: true, body: null, attachment_path: null }]));
+    if (data) void supabase.storage.from(BUCKET).remove([data, ...(m.attachment_thumb_path ? [m.attachment_thumb_path] : [])]);
+    setMessages((list) => mergeMessages(list, [{ ...m, deleted: true, body: null, attachment_path: null, attachment_thumb_path: null }]));
   };
 
   const download = async (m: ChatMessage) => {
@@ -413,7 +439,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
             <MessageBody
               m={m}
               mine={row.mine}
-              url={m.localUrl ?? (m.attachment_path ? urls[m.attachment_path] : undefined)}
+              url={m.localUrl ?? (thumbOf(m) ? urls[thumbOf(m) as string] : undefined)}
               onOpenImage={() => setViewer(m)}
               onDownload={() => void download(m)}
               onMenu={() => !m.pending && !m.deleted && setMenuFor(m)}
@@ -538,7 +564,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
             </button>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={viewer.localUrl ?? (viewer.attachment_path ? urls[viewer.attachment_path] : "")} alt={viewer.attachment_name ?? "사진"} className="min-h-0 flex-1 object-contain p-2" />
+          <img src={viewer.localUrl ?? (viewer.attachment_path ? (urls[viewer.attachment_path] ?? urls[thumbOf(viewer) as string] ?? "") : "")} alt={viewer.attachment_name ?? "사진"} className="min-h-0 flex-1 object-contain p-2" />
         </div>
       )}
 
@@ -632,6 +658,16 @@ function MessageBody({
   };
   const tone = mine ? "bg-[#fee500] text-zinc-900" : "bg-white text-zinc-900";
   if (m.deleted) return <span className={`rounded-2xl px-3 py-2 text-sm italic text-zinc-500 ${mine ? "bg-[#fff5a8]" : "bg-white/80"}`}>삭제된 메시지입니다.</span>;
+  if (m.expired && (m.kind === "image" || m.kind === "file"))
+    return (
+      <span {...handlers} className={`flex max-w-64 items-center gap-2 rounded-2xl px-3 py-2.5 text-sm text-zinc-500 ${mine ? "bg-[#fff5a8]" : "bg-white/80"}`}>
+        {m.kind === "image" ? <ImageOff className="size-5 shrink-0" /> : <FileText className="size-5 shrink-0" />}
+        <span className="min-w-0">
+          <span className="block whitespace-nowrap">보관 기간이 지난 {m.kind === "image" ? "사진" : "파일"}이에요.</span>
+          {m.kind === "file" && m.attachment_name && <span className="block truncate text-xs">{m.attachment_name}</span>}
+        </span>
+      </span>
+    );
   if (m.kind === "image") {
     const ratio = m.width && m.height ? m.width / m.height : 1;
     return (

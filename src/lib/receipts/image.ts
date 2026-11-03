@@ -68,3 +68,23 @@ export async function processReceiptFile(file: File): Promise<ProcessedReceipt> 
     bitmap.close();
   }
 }
+
+// 채팅 사진(D-204): 카톡 '일반 화질' 수준 — 원본 긴 변 1280px JPEG, 말풍선용 미리보기 긴 변 480px WebP(안 되면 JPEG).
+// 말풍선은 미리보기만 받고 원본은 눌렀을 때만 받아 트래픽을 줄인다. 영수증(글자를 읽어야 함)은 위의 2000px 그대로
+export const CHAT_IMAGE_MAX = 1280;
+export const CHAT_THUMB_MAX = 480;
+export async function processChatImage(file: File): Promise<{ original: Blob; thumb: Blob; thumbExt: "webp" | "jpg"; width: number; height: number }> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  try {
+    const original = await render(bitmap, CHAT_IMAGE_MAX, "image/jpeg", 0.8);
+    let thumb = await render(bitmap, CHAT_THUMB_MAX, "image/webp", 0.75);
+    let thumbExt: "webp" | "jpg" = "webp";
+    if (thumb.type !== "image/webp") {
+      thumb = await render(bitmap, CHAT_THUMB_MAX, "image/jpeg", 0.75);
+      thumbExt = "jpg";
+    }
+    return { original, thumb, thumbExt, ...fitWithin(bitmap.width, bitmap.height, CHAT_IMAGE_MAX) };
+  } finally {
+    bitmap.close();
+  }
+}
