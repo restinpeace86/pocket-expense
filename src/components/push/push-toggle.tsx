@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, BellOff, Loader2 } from "lucide-react";
+import { Bell, BellOff, Info, Loader2 } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { deletePushSubscriptionAction, savePushSubscriptionAction, sendTestPushAction } from "@/app/push/actions";
 import { deleteOfficePushAction, saveOfficePushAction, testOfficePushAction } from "@/app/tax-office/push-actions";
@@ -137,6 +137,47 @@ export function PushToggle({ office = false }: { office?: boolean } = {}) {
           {msg}
         </p>
       )}
+      <PushHelp className="mt-2 -ml-1.5 text-zinc-600" />
     </section>
+  );
+}
+
+// ⓘ 알림 받는 조건(기기별). 설정의 [이 기기에서 알림 받기]와 채팅 목록 안내 줄에서 함께 쓴다
+export function PushHelp({ className = "" }: { className?: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={className}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="inline-flex min-h-9 items-center gap-1 rounded-lg px-1.5 text-sm font-medium underline-offset-2 hover:underline"
+      >
+        <Info className="size-4" aria-hidden />
+        알림 받는 조건
+      </button>
+      {open && (
+        <div role="region" aria-label="알림 받는 조건" className="mt-1 flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-3 text-sm leading-relaxed text-zinc-700">
+          <p>
+            <b className="text-zinc-900">공통</b> 휴대폰·PC마다 한 번씩 <b>[알림 켜기]</b>를 누르고, 알림을 물어보면 <b>[허용]</b>을 눌러 주세요. 휴대폰 상단 알림
+            배너·잠금화면에 떠요.
+          </p>
+          <p>
+            <b className="text-zinc-900">안드로이드</b> 크롬(또는 삼성 인터넷)에서 켜면 앱을 닫아도 와요. 배터리 절약이 강하면 늦게 올 수 있어요 → 휴대폰 설정 › 애플리케이션 ›
+            Chrome › 배터리 › <b>제한 없음</b>.
+          </p>
+          <p>
+            <b className="text-zinc-900">아이폰</b> iOS 16.4 이상, Safari에서 <b>[공유] → [홈 화면에 추가]</b>를 한 뒤, 홈 화면에 생긴 아이콘으로 열어서 켜야 와요. Safari
+            탭이나 카카오톡 안에서 연 화면에서는 알림이 오지 않아요.
+          </p>
+          <p>
+            <b className="text-zinc-900">PC</b> 크롬·엣지가 켜져 있으면 화면 오른쪽 아래 윈도우 알림으로 떠요. 윈도우 &lsquo;방해 금지(집중 모드)&rsquo;가 켜져 있으면 안 보여요.
+          </p>
+          <p>
+            <b className="text-zinc-900">막혀 있을 때</b> 주소창 왼쪽 자물쇠(사이트 정보) › 알림 › <b>허용</b>으로 바꿔 주세요.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

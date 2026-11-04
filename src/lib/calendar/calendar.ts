@@ -16,11 +16,14 @@ export type CalEvent = {
   end_date: string | null;
   location: string | null;
   memo: string | null;
+  room_id?: string | null; // 회의실(D-207)
+  room_name?: string | null;
   created_by: string;
   creator_name: string | null;
   mine: boolean;
   attendees: CalAttendee[];
 };
+export type MeetingRoom = { id: string; name: string; upcoming: number };
 export type CalMember = { member_id: string; name: string; position: string | null; department_id: string | null };
 export type CalDirectory = {
   me: string;
@@ -196,7 +199,38 @@ export const SAVE_ERRORS: Record<string, string> = {
   NOT_OWNER: "만든 사람만 고칠 수 있어요.",
   NOT_FOUND: "지워졌거나 볼 수 없는 일정이에요.",
   FEATURE_DISABLED: "캘린더를 쓸 수 없는 회사예요.",
+  ROOM_TAKEN: "그 시간에 이미 예약된 회의실이에요. 다른 시간이나 다른 회의실을 골라 주세요.",
+  ROOM_ALL_DAY: "회의실은 시간 일정에만 잡을 수 있어요(종일 일정 불가).",
+  ROOM_NOT_FOUND: "지워졌거나 없는 회의실이에요. 다시 골라 주세요.",
+  ROOM_NAME_REQUIRED: "회의실 이름을 적어 주세요.",
+  ROOM_NAME_TOO_LONG: "회의실 이름은 50자까지예요.",
+  ROOM_NAME_TAKEN: "같은 이름의 회의실이 이미 있어요.",
+  TOO_MANY_ROOMS: "회의실은 30개까지 등록할 수 있어요.",
+  NOT_ALLOWED: "관리자만 할 수 있어요.",
 };
 export function saveErrorText(message: string | undefined): string {
   return (message && SAVE_ERRORS[message]) || "저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.";
+}
+
+// ── 회의실(D-207) ─────────────────────────────────────────────────────────────
+// 장소 표시: 회의실 이름 + 적은 장소("3층 회의실 · 빔 프로젝터")
+export function placeLabel(e: Pick<CalEvent, "room_name" | "location">): string | null {
+  return [e.room_name, e.location].filter((v): v is string => !!v && !!v.trim()).join(" · ") || null;
+}
+
+// 고른 시간에 그 회의실을 이미 잡은 일정(지금 고치는 일정은 빼고). 끝 = 다음 시작은 겹침 아님
+export function roomConflict(bookings: CalEvent[], roomId: string, startsIso: string, endsIso: string, excludeId?: string | null): CalEvent | null {
+  const s = Date.parse(startsIso);
+  const e = Date.parse(endsIso);
+  if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) return null;
+  return (
+    bookings.find(
+      (b) => b.room_id === roomId && b.id !== excludeId && !!b.starts_at && !!b.ends_at && Date.parse(b.starts_at) < e && Date.parse(b.ends_at) > s,
+    ) ?? null
+  );
+}
+
+// 아직 안 끝난 첫 시간 일정(홈 카드 "다음 일정")
+export function nextUpcoming(list: CalEvent[], now: number = Date.now()): CalEvent | undefined {
+  return list.find((e) => !e.all_day && !!e.ends_at && Date.parse(e.ends_at) > now);
 }

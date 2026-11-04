@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ChatApp } from "@/components/chat/chat-app";
 import { requireWorkspace } from "@/lib/auth/guards";
-import { isAdminRole, workspaceHome } from "@/lib/auth/paths";
+import { viewMode } from "@/lib/auth/view-mode";
 import { getInboxBadge } from "@/lib/claims/inbox";
 import { chatEnabled, chatUnreadTotal } from "@/lib/chat/server";
 
@@ -21,12 +21,13 @@ async function Guarded({ params, children }: { params: LayoutProps<"/workspace/[
   const { id } = await params;
   const membership = await requireWorkspace(id);
   if (!(await chatEnabled())) notFound();
-  const admin = isAdminRole(membership.role);
+  // 관리자 계정도 [직원 모드]에서 들어오면 직원처럼 하단 메뉴(홈·정산·결재함·채팅·내 정보)를 그대로(view-mode 쿠키)
+  const admin = (await viewMode(membership)) === "admin";
   const profileHref = admin ? `/workspace/${id}/admin/settings` : `/workspace/${id}/employee/profile`;
-  // 직원은 채팅 목록에서도 하단 메뉴(홈·정산·결재함·채팅·내 정보)를 그대로
+  const homeHref = admin ? `/workspace/${id}/admin` : `/workspace/${id}/employee`;
   const employeeNav = admin ? null : await Promise.all([getInboxBadge(membership), chatUnreadTotal()]).then(([inbox, chat]) => ({ inbox, chat }));
   return (
-    <ChatApp membership={membership} homeHref={workspaceHome(membership)} profileHref={profileHref} employeeNav={employeeNav}>
+    <ChatApp membership={membership} homeHref={homeHref} profileHref={profileHref} employeeNav={employeeNav}>
       {children}
     </ChatApp>
   );

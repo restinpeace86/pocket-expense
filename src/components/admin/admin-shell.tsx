@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  DoorOpen,
   Banknote,
   Building2,
   CalendarDays,
@@ -45,6 +46,8 @@ const NAV: NavItem[] = [
   { href: "/spending", label: "월별 지출 현황", icon: ChartBar, ready: true }, // 계정과목별 보기 전용(D-160)
   { href: "/export", label: "세무 마감", icon: FileDown, ready: true },
 ];
+// 회의실(D-207): 캘린더 스위치가 켜졌을 때만 설정 메뉴에(회사차량 아래)
+const ROOMS_NAV: NavItem = { href: "/meeting-rooms", label: "회의실", icon: DoorOpen, ready: true };
 const SETTINGS_NAV: NavItem[] = [
   { href: "/settings", label: "지출 한도·정책", icon: SlidersHorizontal, ready: true },
   { href: "/corporate-cards", label: "법인카드", icon: CreditCard, ready: true },
@@ -90,7 +93,8 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
 function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, chat = null, calendar = false }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; chat?: number | null; calendar?: boolean }) {
   const realPath = usePathname();
   const pathname = previewPath ? `${base}${previewPath}` : realPath;
-  const settingsActive = SETTINGS_NAV.some((i) => pathname.startsWith(`${base}${i.href}`));
+  const settingsNav = calendar ? SETTINGS_NAV.flatMap((i) => (i.href === "/vehicles" ? [i, ROOMS_NAV] : [i])) : SETTINGS_NAV;
+  const settingsActive = settingsNav.some((i) => pathname.startsWith(`${base}${i.href}`));
   return (
     <nav className="flex flex-col gap-1 p-3" aria-label="관리자 메뉴">
       {NAV.slice(0, 1).map((item) => (
@@ -130,7 +134,7 @@ function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback
           <ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" />
         </summary>
         <div className="mt-1 flex flex-col gap-1 pl-3">
-          {SETTINGS_NAV.map((item) => (
+          {settingsNav.map((item) => (
             <NavLink key={item.label} item={item} base={base} pathname={pathname} onNavigate={onNavigate} />
           ))}
           {feedback && (

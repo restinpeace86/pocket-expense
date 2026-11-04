@@ -2,6 +2,7 @@ import { ArrowLeftRight } from "lucide-react";
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ThemeSwitcher, ThemeSync } from "@/components/workspace/theme-switcher";
+import { ViewModeMark } from "@/components/workspace/view-mode-mark";
 import { isAdminRole, type Membership } from "@/lib/auth/paths";
 
 // 워크스페이스 공통 헤더: 회사명, 모드 전환(관리자 이상만, D-049), 화면 색상(D-066, 관리자 모드만), 로그아웃
@@ -10,6 +11,7 @@ export function WorkspaceHeader({ membership, mode }: { membership: Membership; 
   const base = `/workspace/${membership.company_id}`;
   return (
     <header className="flex items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-3">
+      {isAdminRole(membership.role) && <ViewModeMark companyId={membership.company_id} mode={mode} />}
       <div className="min-w-0">
         <p className="truncate text-xs text-zinc-500">{mode === "admin" ? "관리자 모드" : "직원 모드"}</p>
         <p className="truncate font-semibold">{membership.company_name}</p>

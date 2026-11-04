@@ -11,6 +11,8 @@ import {
   monthCells,
   monthDays,
   nextHour,
+  placeLabel,
+  roomConflict,
   TIME_OPTIONS,
   timeLabelOn,
   type CalEvent,
@@ -123,5 +125,24 @@ describe("일정 색 주인", () => {
   it("만든 사람이 골라져 있으면 만든 사람, 아니면 고른 참석자", () => {
     expect(eventOwnerFor(e, ["a", "b"])).toBe("a");
     expect(eventOwnerFor(e, ["b"])).toBe("b");
+  });
+});
+
+describe("회의실(D-207)", () => {
+  const b = [
+    ev({ id: "a", room_id: "r1", starts_at: "2030-01-07T01:00:00Z", ends_at: "2030-01-07T02:00:00Z" }),
+    ev({ id: "b", room_id: "r2", starts_at: "2030-01-07T01:00:00Z", ends_at: "2030-01-07T02:00:00Z" }),
+  ];
+  it("같은 방·겹치는 시간만 충돌, 끝=다음 시작은 OK, 고치는 일정은 제외", () => {
+    expect(roomConflict(b, "r1", "2030-01-07T01:30:00Z", "2030-01-07T02:30:00Z")?.id).toBe("a");
+    expect(roomConflict(b, "r1", "2030-01-07T02:00:00Z", "2030-01-07T03:00:00Z")).toBeNull();
+    expect(roomConflict(b, "r1", "2030-01-07T00:00:00Z", "2030-01-07T01:00:00Z")).toBeNull();
+    expect(roomConflict(b, "r3", "2030-01-07T01:30:00Z", "2030-01-07T02:30:00Z")).toBeNull();
+    expect(roomConflict(b, "r1", "2030-01-07T01:30:00Z", "2030-01-07T02:30:00Z", "a")).toBeNull();
+  });
+  it("장소 = 회의실 이름 · 적은 장소", () => {
+    expect(placeLabel({ room_name: "3층 회의실", location: "빔 프로젝터" })).toBe("3층 회의실 · 빔 프로젝터");
+    expect(placeLabel({ room_name: null, location: "거래처" })).toBe("거래처");
+    expect(placeLabel({ room_name: null, location: " " })).toBeNull();
   });
 });

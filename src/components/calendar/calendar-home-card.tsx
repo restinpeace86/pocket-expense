@@ -1,6 +1,6 @@
 import { AlarmClock, CalendarDays, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { addDays, deadlinesBetween, eventsOnDay, shortDayLabel, timeLabelOn, todayKst } from "@/lib/calendar/calendar";
+import { addDays, deadlinesBetween, eventsOnDay, nextUpcoming, shortDayLabel, timeLabelOn, todayKst } from "@/lib/calendar/calendar";
 import { getCalendarEvents, getHolidayList } from "@/lib/calendar/server";
 
 // 직원 홈의 [캘린더] 카드(D-206): 오늘 내 일정 수·다음 일정 + 다음 청구 마감(굵게). 누르면 캘린더
@@ -8,8 +8,7 @@ export async function CalendarHomeCard({ ws, memberId }: { ws: string; memberId:
   const today = todayKst();
   const [events, holidays] = await Promise.all([getCalendarEvents(today, addDays(today, 6), [memberId]), getHolidayList()]);
   const todays = eventsOnDay(events, today).filter((e) => e.attendees.find((a) => a.member_id === memberId)?.response !== "declined");
-  const now = Date.now();
-  const next = todays.find((e) => !e.all_day && e.ends_at && Date.parse(e.ends_at) > now) ?? todays[0];
+  const next = nextUpcoming(todays) ?? todays[0];
   const deadline = deadlinesBetween(today, addDays(today, 40), holidays.map((h) => h.day), false)[0];
   return (
     <Link href={`${ws}/calendar`} className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm hover:bg-zinc-50">

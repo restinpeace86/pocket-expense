@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listTimeLabel, previewText, roomTitle, type ChatRoomSummary } from "@/lib/chat/format";
-import { usePushSubscription } from "@/components/push/push-toggle";
+import { PushHelp, usePushSubscription } from "@/components/push/push-toggle";
 import { RoomAvatar } from "./avatar";
 import { useChat } from "./chat-app";
 import { MemberPicker } from "./member-picker";
@@ -134,15 +134,18 @@ function NotifyBar() {
   return (
     <div className="mx-3 mb-2 flex shrink-0 items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900" role="region" aria-label="알림 켜기">
       <Bell className="mt-0.5 size-4 shrink-0" />
-      <p className="min-w-0 flex-1 leading-snug">
-        {state === "on"
-          ? msg
-          : state === "ios-install"
-            ? "아이폰은 Safari [공유] → [홈 화면에 추가]로 연 앱에서 알림을 켤 수 있어요."
-            : state === "denied"
-              ? "알림이 막혀 있어요. 휴대폰(브라우저) 설정 › 알림에서 이 사이트를 허용해 주세요."
-              : (msg ?? "알림을 켜면 새 메시지를 바로 알려 드려요")}
-      </p>
+      <div className="min-w-0 flex-1">
+        <p className="leading-snug">
+          {state === "on"
+            ? msg
+            : state === "ios-install"
+              ? "아이폰은 Safari [공유] → [홈 화면에 추가]로 연 앱에서 알림을 켤 수 있어요."
+              : state === "denied"
+                ? "알림이 막혀 있어요. 휴대폰(브라우저) 설정 › 알림에서 이 사이트를 허용해 주세요."
+                : (msg ?? "알림을 켜면 새 메시지를 바로 알려 드려요")}
+        </p>
+        {state !== "on" && <PushHelp className="-ml-1.5 text-amber-900" />}
+      </div>
       {state === "off" && (
         <button type="button" disabled={pending} onClick={turnOn} className="-my-1 inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg bg-amber-400 px-3 font-semibold text-amber-950 hover:bg-amber-300 disabled:opacity-60">
           {pending && <Loader2 className="size-4 animate-spin" />}

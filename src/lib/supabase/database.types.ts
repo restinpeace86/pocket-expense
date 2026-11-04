@@ -526,6 +526,7 @@ export type Database = {
           location: string | null
           memo: string | null
           reminded_at: string | null
+          room_id: string | null
           start_date: string | null
           starts_at: string | null
           title: string
@@ -543,6 +544,7 @@ export type Database = {
           location?: string | null
           memo?: string | null
           reminded_at?: string | null
+          room_id?: string | null
           start_date?: string | null
           starts_at?: string | null
           title: string
@@ -560,6 +562,7 @@ export type Database = {
           location?: string | null
           memo?: string | null
           reminded_at?: string | null
+          room_id?: string | null
           start_date?: string | null
           starts_at?: string | null
           title?: string
@@ -578,6 +581,13 @@ export type Database = {
             columns: ["created_by_member_id", "company_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "calendar_events_room_fk"
+            columns: ["room_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_rooms"
             referencedColumns: ["id", "company_id"]
           },
         ]
@@ -2103,6 +2113,38 @@ export type Database = {
         }
         Relationships: []
       }
+      meeting_rooms: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_rooms_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_bank_accounts: {
         Row: {
           account_holder: string
@@ -3311,6 +3353,17 @@ export type Database = {
         Args: { p_id: string; p_response: string }
         Returns: undefined
       }
+      calendar_room_bookings: {
+        Args: { p_ends: string; p_starts: string }
+        Returns: Json
+      }
+      calendar_room_delete: { Args: { p_id: string }; Returns: undefined }
+      calendar_room_reorder: { Args: { p_ids: string[] }; Returns: undefined }
+      calendar_room_save: {
+        Args: { p_id: string; p_name: string }
+        Returns: string
+      }
+      calendar_rooms: { Args: never; Returns: Json }
       calendar_save_event: { Args: { p: Json; p_id: string }; Returns: string }
       calendar_save_prefs: {
         Args: { p_member_ids: string[]; p_show_deadlines: boolean }

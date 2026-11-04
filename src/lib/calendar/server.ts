@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import type { CalDirectory, CalEvent, Holiday } from "./calendar";
+import type { CalDirectory, CalEvent, Holiday, MeetingRoom } from "./calendar";
 
 // 사내 캘린더 스위치(D-206): 회사별 company_features 'calendar'. 꺼져 있으면 메뉴·주소·홈 카드를 숨긴다
 export const calendarEnabled = cache(async (): Promise<boolean> => {
@@ -30,4 +30,12 @@ export async function getCalendarEvents(from: string, to: string, memberIds: str
   const { data, error } = await supabase.rpc("calendar_events_range", { p_from: from, p_to: to, p_members: memberIds });
   if (error || !data) return [];
   return data as unknown as CalEvent[];
+}
+
+// 회의실(D-207): 회사 전체 목록(순서대로) + 앞으로 잡힌 예약 수
+export async function getMeetingRooms(): Promise<MeetingRoom[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("calendar_rooms");
+  if (error || !data) return [];
+  return data as unknown as MeetingRoom[];
 }

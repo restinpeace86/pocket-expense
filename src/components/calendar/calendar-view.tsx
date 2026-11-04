@@ -1,9 +1,10 @@
 "use client";
 
-import { AlarmClock, Check, ChevronDown, ChevronLeft, ChevronRight, Loader2, MapPin, Plus, Search, Users, X } from "lucide-react";
+import { AlarmClock, Check, ChevronDown, ChevronLeft, ChevronRight, DoorOpen, Loader2, MapPin, Plus, Search, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
+  addDays,
   addMinutes,
   attendeeSummary,
   dayLabel,
@@ -22,6 +23,8 @@ import {
   monthTitle,
   nextHour,
   personColor,
+  placeLabel,
+  roomConflict,
   saveErrorText,
   shiftMonth,
   TIME_OPTIONS,
@@ -33,6 +36,7 @@ import {
   type CalKind,
   type Deadline,
   type Holiday,
+  type MeetingRoom,
 } from "@/lib/calendar/calendar";
 import { createClient } from "@/lib/supabase/client";
 
@@ -52,12 +56,13 @@ type Props = {
   initialShowDeadlines: boolean;
   initialEvents: CalEvent[];
   holidays: Holiday[];
+  rooms: MeetingRoom[]; // 회의실(D-207). 없으면 회의실 칸·[회의실 현황] 숨김
 };
 
 const TONE_TEXT = { holiday: "text-red-600", sun: "text-red-600", sat: "text-blue-600" } as const;
 
 export function CalendarView(props: Props) {
-  const { ws, admin, today, directory, holidays } = props;
+  const { ws, admin, today, directory, holidays, rooms } = props;
   const me = directory.me;
   const supabase = useMemo(() => createClient(), []);
   const [month, setMonth] = useState(props.initialMonth);
@@ -67,7 +72,8 @@ export function CalendarView(props: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<CalEvent | null>(null);
-  const [editing, setEditing] = useState<{ event?: CalEvent; date?: string } | null>(null);
+  const [editing, setEditing] = useState<{ event?: CalEvent; date?: string; time?: string; roomId?: string } | null>(null);
+  const [roomsOpen, setRoomsOpen] = useState(false);
   const [dayOpen, setDayOpen] = useState<string | null>(null);
   const [peopleOpen, setPeopleOpen] = useState(false);
 
@@ -194,6 +200,12 @@ export function CalendarView(props: Props) {
           >
             오늘
           </button>
+          {rooms.length > 0 && (
+            <button type="button" onClick={() => setRoomsOpen(true)} className="ml-2 hidden min-h-11 items-center gap-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium hover:bg-zinc-50 md:inline-flex">
+              <DoorOpen className="size-4" />
+              회의실 현황
+            </button>
+          )}
           <button type="button" onClick={() => setEditing({ date: undefined })} className="ml-2 hidden min-h-11 items-center gap-1 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 md:inline-flex">
             <Plus className="size-4" />
             일정
@@ -208,6 +220,12 @@ export function CalendarView(props: Props) {
           {peopleButtonLabel}
           <ChevronDown className="size-4 text-zinc-500" />
         </button>
+        {rooms.length > 0 && (
+          <button type="button" onClick={() => setRoomsOpen(true)} aria-label="회의실 현황" className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium">
+            <DoorOpen className="size-4" />
+            회의실
+          </button>
+        )}
         <DeadlineToggle checked={showDeadlines} onChange={toggleDeadlines} />
         {loading && <Loader2 className="ml-auto size-4 animate-spin text-zinc-500" aria-label="불러오는 중" />}
       </div>
@@ -312,6 +330,23 @@ export function CalendarView(props: Props) {
         </Sheet>
       )}
 
+      {roomsOpen && (
+        <RoomsSheet
+          rooms={rooms}
+          initialDate={month === today.slice(0, 7) ? today : `${month}-01`}
+          supabase={supabase}
+          onClose={() => setRoomsOpen(false)}
+          onOpen={(e) => {
+            setRoomsOpen(false);
+            setDetail(e);
+          }}
+          onBook={(date, roomId) => {
+            setRoomsOpen(false);
+            setEditing({ date, roomId });
+          }}
+        />
+      )}
+
       {detail && (
         <EventDetail
           event={detail}
@@ -328,9 +363,12 @@ export function CalendarView(props: Props) {
 
       {editing && (
         <EventEditor
-          key={editing.event?.id ?? `new-${editing.date ?? ""}`}
+          key={editing.event?.id ?? `new-${editing.date ?? ""}-${editing.roomId ?? ""}`}
           event={editing.event}
           date={editing.date}
+          time={editing.time}
+          roomId={editing.roomId}
+          rooms={rooms}
           me={me}
           directory={directory}
           nameOf={nameOf}
@@ -633,7 +671,7 @@ function DayCard({
               <span className="block truncate text-xs text-zinc-500">
                 {KIND_LABEL[e.kind]}
                 {e.attendees.length > 1 && ` · ${attendeeSummary(e)}`}
-                {e.location && ` · ${e.location}`}
+                {placeLabel(e) && ` · ${placeLabel(e)}`}
               </span>
             </span>
           </button>
@@ -725,6 +763,12 @@ function EventDetail({
           <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">{KIND_LABEL[e.kind]}</span>
           <h3 className="mt-1.5 break-words text-lg font-bold">{e.title}</h3>
           <p className="mt-0.5 text-sm text-zinc-700">{fullTimeLabel(e)}</p>
+          {e.room_name && (
+            <p className="mt-1 flex items-center gap-1 text-sm font-medium text-zinc-800">
+              <DoorOpen className="size-4 shrink-0 text-zinc-400" />
+              {e.room_name}
+            </p>
+          )}
           {e.location && (
             <p className="mt-1 flex items-center gap-1 text-sm text-zinc-700">
               <MapPin className="size-4 shrink-0 text-zinc-400" />
@@ -798,6 +842,9 @@ const KINDS: CalKind[] = ["meeting", "outside", "trip", "other"];
 function EventEditor({
   event,
   date,
+  time,
+  roomId: initialRoom,
+  rooms,
   me,
   directory,
   nameOf,
@@ -807,6 +854,9 @@ function EventEditor({
 }: {
   event?: CalEvent;
   date?: string;
+  time?: string;
+  roomId?: string;
+  rooms: MeetingRoom[];
   me: string;
   directory: CalDirectory;
   nameOf: Map<string, string>;
@@ -815,7 +865,7 @@ function EventEditor({
   onSaved: (id: string, date: string) => Promise<void>;
 }) {
   const nh = nextHour();
-  const startDefault = date ? { date, time: "10:00" } : nh;
+  const startDefault = date ? { date, time: time ?? "10:00" } : nh;
   const init = event
     ? event.all_day
       ? { sDate: event.start_date!, sTime: "10:00", eDate: event.end_date!, eTime: "11:00" }
@@ -833,6 +883,8 @@ function EventEditor({
   const [eTime, setETime] = useState(init.eTime);
   const [location, setLocation] = useState(event?.location ?? "");
   const [memo, setMemo] = useState(event?.memo ?? "");
+  const [room, setRoom] = useState<string>(event?.room_id ?? initialRoom ?? "");
+  const [roomBookings, setRoomBookings] = useState<CalEvent[]>([]);
   const [attendees, setAttendees] = useState<string[]>(event ? event.attendees.map((a) => a.member_id).filter((x) => x !== me) : []);
   const [picking, setPicking] = useState(false);
   const [q, setQ] = useState("");
@@ -871,6 +923,17 @@ function EventEditor({
     return () => clearTimeout(t);
   }, [picking, startsIso, endsIso, event?.id, supabase]);
 
+  // 회의실: 고른 시간에 이미 잡힌 방은 "예약됨"(최종 판단은 DB — 동시에 눌러도 한 건만)
+  useEffect(() => {
+    if (!rooms.length || allDay || Date.parse(endsIso) <= Date.parse(startsIso)) return;
+    const t = setTimeout(() => {
+      void supabase.rpc("calendar_room_bookings", { p_starts: startsIso, p_ends: endsIso }).then(({ data }) => setRoomBookings((data as unknown as CalEvent[] | null) ?? []));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [rooms.length, allDay, startsIso, endsIso, supabase]);
+  const taken = (id: string) => roomConflict(roomBookings, id, startsIso, endsIso, event?.id);
+  const roomTaken = room && !allDay ? taken(room) : null;
+
   const save = async () => {
     setErr(null);
     if (!title.trim()) return setErr("제목을 적어 주세요.");
@@ -883,6 +946,7 @@ function EventEditor({
       ...(allDay ? { start_date: sDate, end_date: eDate } : { starts_at: startsIso, ends_at: endsIso }),
       location: location.trim() || null,
       memo: memo.trim() || null,
+      room_id: !allDay && room ? room : null,
       attendee_ids: attendees,
     };
     const { data, error } = await supabase.rpc("calendar_save_event", { p_id: (event?.id ?? null) as unknown as string, p });
@@ -962,11 +1026,47 @@ function EventEditor({
           {event && !event.all_day === !allDay && <p className="text-xs text-zinc-500">시간을 바꾸면 참석자 응답은 다시 &lsquo;대기&rsquo;가 돼요.</p>}
         </div>
 
+        {rooms.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="ev-room" className="text-sm font-semibold">
+              회의실 <span className="font-normal text-zinc-500">(선택)</span>
+            </label>
+            {allDay ? (
+              <p className="text-sm text-zinc-500">회의실은 시간 일정에만 잡을 수 있어요.</p>
+            ) : (
+              <>
+                <select id="ev-room" value={room} onChange={(e) => setRoom(e.target.value)} className={field}>
+                  <option value="">회의실 안 씀</option>
+                  {rooms.map((r) => {
+                    const c = taken(r.id);
+                    return (
+                      <option key={r.id} value={r.id} disabled={!!c && r.id !== room}>
+                        {r.name}
+                        {c ? ` — 예약됨 ${timeLabelOn(c, kstDateOf(c.starts_at!))}` : " — 비어 있음"}
+                      </option>
+                    );
+                  })}
+                </select>
+                {roomTaken && (
+                  <p role="alert" className="text-sm font-medium text-red-700">
+                    이 시간에 이미 예약됐어요: {timeLabelOn(roomTaken, kstDateOf(roomTaken.starts_at!))} {roomTaken.title}({roomTaken.creator_name}). 시간이나 회의실을 바꿔 주세요.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         <label className="flex flex-col gap-1">
           <span className="text-sm font-semibold">
             장소 <span className="font-normal text-zinc-500">(선택)</span>
           </span>
-          <input value={location} onChange={(e) => setLocation(e.target.value.slice(0, 200))} placeholder="예) 3층 회의실" className={field} />
+          <input
+            value={location}
+            onChange={(e) => setLocation(e.target.value.slice(0, 200))}
+            placeholder={rooms.length > 0 ? "예) 거래처 사무실 · 회의실 밖 장소" : "예) 3층 회의실"}
+            className={field}
+          />
         </label>
 
         <div className="flex flex-col gap-1.5">
@@ -1032,12 +1132,112 @@ function EventEditor({
           <button type="button" onClick={onClose} className="min-h-12 flex-1 rounded-xl border border-zinc-300 font-semibold text-zinc-700 hover:bg-zinc-50">
             취소
           </button>
-          <button type="submit" disabled={saving} className="inline-flex min-h-12 flex-[2] items-center justify-center gap-1 rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700 disabled:opacity-60">
+          <button type="submit" disabled={saving || !!roomTaken} className="inline-flex min-h-12 flex-[2] items-center justify-center gap-1 rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700 disabled:opacity-60">
             {saving ? <Loader2 className="size-5 animate-spin" /> : <Check className="size-5" />}
             저장
           </button>
         </div>
       </form>
+    </Sheet>
+  );
+}
+
+// ── 회의실 현황(D-207): 하루 단위로 회의실마다 잡힌 시간, 바로 예약 ─────────────────
+function RoomsSheet({
+  rooms,
+  initialDate,
+  supabase,
+  onClose,
+  onOpen,
+  onBook,
+}: {
+  rooms: MeetingRoom[];
+  initialDate: string;
+  supabase: ReturnType<typeof createClient>;
+  onClose: () => void;
+  onOpen: (e: CalEvent) => void;
+  onBook: (date: string, roomId: string) => void;
+}) {
+  const [day, setDay] = useState(initialDate);
+  const [list, setList] = useState<CalEvent[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void supabase
+      .rpc("calendar_room_bookings", { p_starts: kstIso(day, "00:00"), p_ends: kstIso(addDays(day, 1), "00:00") })
+      .then(({ data, error }) => {
+        if (!alive) return;
+        setFailed(!!error);
+        setList((data as unknown as CalEvent[] | null) ?? []);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [day, supabase]);
+  const go = (n: number) => {
+    setList(null);
+    setDay((d) => addDays(d, n));
+  };
+  return (
+    <Sheet title="회의실 현황" onClose={onClose} wide>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <button type="button" onClick={() => go(-1)} aria-label="전날" className="inline-flex size-11 items-center justify-center rounded-xl hover:bg-zinc-100">
+            <ChevronLeft className="size-5" />
+          </button>
+          <span className="font-semibold tabular-nums" aria-live="polite">
+            {dayLabel(day)}
+          </span>
+          <button type="button" onClick={() => go(1)} aria-label="다음 날" className="inline-flex size-11 items-center justify-center rounded-xl hover:bg-zinc-100">
+            <ChevronRight className="size-5" />
+          </button>
+        </div>
+        {failed && (
+          <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+            예약 현황을 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.
+          </p>
+        )}
+        <ul className="flex flex-col gap-2" aria-label={`${dayLabel(day)} 회의실 예약`}>
+          {rooms.map((r) => {
+            const items = (list ?? []).filter((e) => e.room_id === r.id);
+            return (
+              <li key={r.id} className="rounded-2xl border border-zinc-200 p-3">
+                <div className="flex items-center gap-2">
+                  <DoorOpen className="size-4 shrink-0 text-zinc-500" />
+                  <span className="min-w-0 flex-1 truncate font-semibold">{r.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => onBook(day, r.id)}
+                    aria-label={`${r.name} 예약하기`}
+                    className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-xl bg-brand-600 px-3 text-sm font-semibold text-white hover:bg-brand-700"
+                  >
+                    <Plus className="size-4" />
+                    예약
+                  </button>
+                </div>
+                {list === null ? (
+                  <Loader2 className="mt-2 size-4 animate-spin text-zinc-400" aria-label="불러오는 중" />
+                ) : items.length ? (
+                  <ul className="mt-2 flex flex-col">
+                    {items.map((e) => (
+                      <li key={e.id}>
+                        <button type="button" onClick={() => onOpen(e)} className="flex min-h-10 w-full items-center gap-2 rounded-lg px-1.5 text-left text-sm hover:bg-zinc-50">
+                          <span className="w-[6.5rem] shrink-0 font-semibold tabular-nums text-zinc-800">{timeLabelOn(e, day)}</span>
+                          <span className="min-w-0 flex-1 truncate">{e.title}</span>
+                          <span className="shrink-0 text-xs text-zinc-500">{e.creator_name}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-1 px-1.5 text-sm text-emerald-700">하루 종일 비어 있어요</p>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        <p className="text-xs text-zinc-500">같은 회의실은 같은 시간에 한 건만 잡혀요. 앞 회의가 끝나는 시각부터 다음 예약을 잡을 수 있어요.</p>
+      </div>
     </Sheet>
   );
 }
