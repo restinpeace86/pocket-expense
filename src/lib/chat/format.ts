@@ -1,14 +1,15 @@
 // 사내 메신저 화면 계산 (D-203, spec/features/messenger.md). 순수 함수라 단위 테스트한다.
 
-export type ChatKind = "direct" | "group" | "claim";
+export type ChatKind = "direct" | "group" | "claim" | "notice"; // notice = 사람마다 하나인 알림방(회의 10분 전 등, D-206)
 export type ChatMember = { member_id: string; name: string; status: string; last_read_at: string; joined_at: string };
 export type ChatMessage = {
   id: string;
   room_id: string;
   sender_member_id: string | null;
   sender_name: string | null;
-  kind: "text" | "image" | "file" | "system";
+  kind: "text" | "image" | "file" | "system" | "notice";
   body: string | null;
+  link?: string | null; // 알림 글의 [캘린더에서 보기] 주소(D-206)
   attachment_path: string | null;
   attachment_thumb_path?: string | null; // 사진 말풍선용 미리보기(D-204). 예전 사진은 없음 → 원본
   attachment_name: string | null;
@@ -49,6 +50,7 @@ export function displayName(m: Pick<ChatMember, "name" | "status"> | undefined |
 export function roomTitle(room: { kind: ChatKind; title: string | null; claim_title?: string | null; members: Pick<ChatMember, "member_id" | "name" | "status">[] }, meId: string): string {
   const others = room.members.filter((m) => m.member_id !== meId);
   if (room.kind === "direct") return others[0] ? displayName(others[0]) : "대화 상대 없음";
+  if (room.kind === "notice") return "알림";
   if (room.kind === "claim") return room.claim_title?.trim() ? `📄 ${room.claim_title}` : "📄 소명서 대화";
   if (room.title?.trim()) return room.title;
   if (!others.length) return "대화 상대 없음";
@@ -58,7 +60,7 @@ export function roomTitle(room: { kind: ChatKind; title: string | null; claim_ti
 
 // 말풍선 옆 숫자: 보낸 사람을 빼고 아직 이 메시지까지 읽지 않은 참여자 수
 export function unreadCountFor(msg: Pick<ChatMessage, "sender_member_id" | "created_at" | "kind">, members: Pick<ChatMember, "member_id" | "last_read_at">[]): number {
-  if (msg.kind === "system") return 0;
+  if (msg.kind === "system" || msg.kind === "notice") return 0;
   const at = Date.parse(msg.created_at);
   return members.filter((m) => m.member_id !== msg.sender_member_id && Date.parse(m.last_read_at) < at).length;
 }
@@ -102,6 +104,7 @@ export function previewText(msg: Pick<ChatMessage, "kind" | "body" | "deleted" |
 export type ChatRow =
   | { type: "date"; key: string; label: string }
   | { type: "system"; key: string; msg: ChatMessage }
+  | { type: "notice"; key: string; msg: ChatMessage }
   | { type: "msg"; key: string; msg: ChatMessage; mine: boolean; showName: boolean; showTime: boolean };
 
 // 카톡처럼 묶기: 날짜가 바뀌면 구분선, 같은 사람이 같은 분에 연달아 보내면 이름은 첫 줄만·시각은 마지막 줄만
@@ -113,6 +116,10 @@ export function buildRows(messages: ChatMessage[], meId: string): ChatRow[] {
     const prev = messages[i - 1];
     const next = messages[i + 1];
     if (!prev || dayKey(prev.created_at) !== dayKey(m.created_at)) rows.push({ type: "date", key: `d-${dayKey(m.created_at)}`, label: dateLabel(m.created_at) });
+    if (m.kind === "notice") {
+      rows.push({ type: "notice", key: m.id, msg: m });
+      continue;
+    }
     if (m.kind === "system") {
       rows.push({ type: "system", key: m.id, msg: m });
       continue;

@@ -446,7 +446,8 @@
 | sent_at | timestamptz | null | |
 
 ### 2.11 사내 메신저·기능 스위치 (D-203, migration 106·107)
-- `company_features(company_id, feature messenger|attendance, enabled)` — 회사별 기능 스위치, 기본 꺼짐, 쓰기는 service role만.
+- `company_features(company_id, feature messenger|attendance|calendar, enabled)` — 회사별 기능 스위치. 줄이 없으면 메신저만 켜짐(D-206), 나머지 꺼짐. 쓰기는 service role만.
+- (D-206, migration 109) `calendar_events`·`calendar_attendees`·`calendar_view_prefs` — company_id 복합 FK, 표 권한 없음(함수만). `chat_rooms.kind 'notice'` + `notice_member_id`, `chat_messages.kind 'notice'` + `link`. pg_cron 작업 `calendar-meeting-reminders`(10분마다). 자세한 규칙: `spec/features/calendar.md`.
 - `chat_rooms`(direct|group|claim, direct_key·claim_id 회사 안 유일) / `chat_members`(last_read_at·joined_at·left_at) / `chat_messages`(text|image|file|system, attachment_*, deleted_at, pushed_at) — 모두 company_id 복합 FK. 쓰기는 definer 함수만, 읽기는 참여자 + 스위치. 자세한 규칙: `spec/features/messenger.md`.
 - Storage `chat-files/{company_id}/{room_id}/{message_id}.{ext}` (비공개, 20MB) — 그 방 참여자만.
 - (D-204, migration 108) `chat_messages.attachment_thumb_path`·`attachment_thumb_size`(사진 미리보기 `{message_id}_t.webp`), `attachment_purged_at`(90일 지나 파일 지움). 회사 저장 한도 = `billing_plans.chat_storage_mb`(지금은 스타터), 보관 일수 = `private.app_settings.chat_attachment_days`(90).

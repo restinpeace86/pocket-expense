@@ -3,6 +3,7 @@
 import {
   Banknote,
   Building2,
+  CalendarDays,
   ChartBar,
   ChevronDown,
   Car,
@@ -86,7 +87,7 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
 
 // settingsOpen: 휴대폰 메뉴(서랍)에서는 설정 하위 메뉴를 펼친 채로 연다(개선사항 1-1) — 화면 이름이 바로 보이게
 // feedback: 관리자 1:1 문의 주소 — 휴대폰 서랍 메뉴에서만 넘긴다(PC는 오른쪽 아래 떠 있는 버튼, 7차 개선사항 3)
-function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, chat = null }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; chat?: number | null }) {
+function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, chat = null, calendar = false }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; chat?: number | null; calendar?: boolean }) {
   const realPath = usePathname();
   const pathname = previewPath ? `${base}${previewPath}` : realPath;
   const settingsActive = SETTINGS_NAV.some((i) => pathname.startsWith(`${base}${i.href}`));
@@ -105,6 +106,18 @@ function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback
           <MessageCircle className="size-5 shrink-0" />
           <span className="flex-1">채팅</span>
           {chat > 0 && <span className="min-w-5 rounded-full bg-red-600 px-1.5 text-center text-[11px] font-semibold leading-5 text-white">{chat > 99 ? "99+" : chat}</span>}
+        </Link>
+      )}
+      {/* 사내 캘린더(D-206): 회사 스위치가 켜졌을 때만. 워크스페이스 공통 화면(/calendar) */}
+      {calendar && (
+        <Link
+          href={base.replace(/\/admin$/, "/calendar")}
+          onClick={onNavigate}
+          aria-current={pathname.startsWith(base.replace(/\/admin$/, "/calendar")) ? "page" : undefined}
+          className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm ${pathname.startsWith(base.replace(/\/admin$/, "/calendar")) ? "bg-sidebar-active font-semibold text-sidebar-active-fg" : "text-sidebar-fg hover:bg-sidebar-hover"}`}
+        >
+          <CalendarDays className="size-5 shrink-0" />
+          캘린더
         </Link>
       )}
       {NAV.slice(1).map((item) => (
@@ -158,12 +171,14 @@ export function AdminShell({
   theme,
   previewPath,
   chat,
+  calendar = false,
 }: {
   membership: Membership;
   children: ReactNode;
   theme?: ShellTheme;
   previewPath?: string;
   chat?: number | null; // 사내 메신저 안 읽은 수(꺼져 있으면 null, D-203)
+  calendar?: boolean; // 사내 캘린더 메뉴(회사 스위치, D-206)
 }) {
   const base = `/workspace/${membership.company_id}/admin`;
   const chatUnread = useChatUnread(chat, membership.member_id);
@@ -175,7 +190,7 @@ export function AdminShell({
         <p className="px-6 pb-3 pt-5">
           <Brand />
         </p>
-        <NavList base={base} previewPath={previewPath} chat={chatUnread} />
+        <NavList base={base} previewPath={previewPath} chat={chatUnread} calendar={calendar} />
       </aside>
 
       {open && (
@@ -188,7 +203,7 @@ export function AdminShell({
                 <X className="size-5" />
               </button>
             </div>
-            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} chat={chatUnread} />
+            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} chat={chatUnread} calendar={calendar} />
             <div className="mt-auto sm:hidden">
               <ThemeOptionsInline />
             </div>

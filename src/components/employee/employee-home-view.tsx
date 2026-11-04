@@ -154,6 +154,7 @@ export function EmployeeHomeView({
   initial,
   initialSheet,
   notices,
+  calendar,
 }: {
   name: string;
   base: string;
@@ -165,6 +166,7 @@ export function EmployeeHomeView({
   initial: { items: MyClaimRow[]; nextCursor: string | null };
   initialSheet?: MyClaimRow; // 미리보기 전용: 반려 사유 시트를 연 상태로 그린다
   notices?: React.ReactNode; // 공지(D-116) — 서버에서 그려 넘긴다
+  calendar?: React.ReactNode; // [캘린더] 카드(D-206) — 회사 캘린더 스위치가 켜졌을 때만
 }) {
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
@@ -219,6 +221,8 @@ export function EmployeeHomeView({
         <p className="mt-1 text-3xl font-bold tracking-tight">{formatWon(summary.pending_payout)}</p>
         <p className="mt-1 text-xs text-white/80">승인됐지만 아직 입금되지 않은 내 돈이에요.</p>
       </section>
+
+      {calendar}
 
       {summary.rejected_count > 0 && (
         <Link href={q(month, "rejected")} className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">

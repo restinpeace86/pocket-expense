@@ -474,6 +474,146 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_attendees: {
+        Row: {
+          company_id: string
+          event_id: string
+          member_id: string
+          responded_at: string | null
+          response: string
+        }
+        Insert: {
+          company_id: string
+          event_id: string
+          member_id: string
+          responded_at?: string | null
+          response?: string
+        }
+        Update: {
+          company_id?: string
+          event_id?: string
+          member_id?: string
+          responded_at?: string | null
+          response?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_attendees_event_id_company_id_fkey"
+            columns: ["event_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "calendar_attendees_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          company_id: string
+          created_at: string
+          created_by_member_id: string
+          end_date: string | null
+          ends_at: string | null
+          id: string
+          kind: string
+          location: string | null
+          memo: string | null
+          reminded_at: string | null
+          start_date: string | null
+          starts_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean
+          company_id: string
+          created_at?: string
+          created_by_member_id: string
+          end_date?: string | null
+          ends_at?: string | null
+          id?: string
+          kind: string
+          location?: string | null
+          memo?: string | null
+          reminded_at?: string | null
+          start_date?: string | null
+          starts_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean
+          company_id?: string
+          created_at?: string
+          created_by_member_id?: string
+          end_date?: string | null
+          ends_at?: string | null
+          id?: string
+          kind?: string
+          location?: string | null
+          memo?: string | null
+          reminded_at?: string | null
+          start_date?: string | null
+          starts_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_created_by_member_id_company_id_fkey"
+            columns: ["created_by_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      calendar_view_prefs: {
+        Row: {
+          company_id: string
+          member_id: string
+          member_ids: string[]
+          show_deadlines: boolean
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          member_id: string
+          member_ids?: string[]
+          show_deadlines?: boolean
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          member_id?: string
+          member_ids?: string[]
+          show_deadlines?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_view_prefs_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       card_reconcile_issues: {
         Row: {
           amount: number | null
@@ -670,6 +810,7 @@ export type Database = {
           height: number | null
           id: string
           kind: string
+          link: string | null
           pushed_at: string | null
           room_id: string
           sender_member_id: string | null
@@ -690,6 +831,7 @@ export type Database = {
           height?: number | null
           id?: string
           kind: string
+          link?: string | null
           pushed_at?: string | null
           room_id: string
           sender_member_id?: string | null
@@ -710,6 +852,7 @@ export type Database = {
           height?: number | null
           id?: string
           kind?: string
+          link?: string | null
           pushed_at?: string | null
           room_id?: string
           sender_member_id?: string | null
@@ -742,6 +885,7 @@ export type Database = {
           id: string
           kind: string
           last_message_at: string | null
+          notice_member_id: string | null
           title: string | null
         }
         Insert: {
@@ -753,6 +897,7 @@ export type Database = {
           id?: string
           kind: string
           last_message_at?: string | null
+          notice_member_id?: string | null
           title?: string | null
         }
         Update: {
@@ -764,6 +909,7 @@ export type Database = {
           id?: string
           kind?: string
           last_message_at?: string | null
+          notice_member_id?: string | null
           title?: string | null
         }
         Relationships: [
@@ -784,6 +930,13 @@ export type Database = {
           {
             foreignKeyName: "chat_rooms_created_by_member_id_company_id_fkey"
             columns: ["created_by_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "chat_rooms_notice_member_fk"
+            columns: ["notice_member_id", "company_id"]
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id", "company_id"]
@@ -3143,6 +3296,26 @@ export type Database = {
         Returns: string
       }
       business_verify_mode: { Args: never; Returns: string }
+      calendar_busy: {
+        Args: { p_ends: string; p_exclude?: string; p_starts: string }
+        Returns: string[]
+      }
+      calendar_delete_event: { Args: { p_id: string }; Returns: undefined }
+      calendar_directory: { Args: never; Returns: Json }
+      calendar_event: { Args: { p_id: string }; Returns: Json }
+      calendar_events_range: {
+        Args: { p_from: string; p_members: string[]; p_to: string }
+        Returns: Json
+      }
+      calendar_respond: {
+        Args: { p_id: string; p_response: string }
+        Returns: undefined
+      }
+      calendar_save_event: { Args: { p: Json; p_id: string }; Returns: string }
+      calendar_save_prefs: {
+        Args: { p_member_ids: string[]; p_show_deadlines: boolean }
+        Returns: undefined
+      }
       chat_claim_push: { Args: { p_id: string }; Returns: Json }
       chat_create_group: {
         Args: { p_member_ids: string[]; p_title?: string }
@@ -3173,6 +3346,7 @@ export type Database = {
         }
         Returns: Json
       }
+      chat_notice_push_due: { Args: never; Returns: Json }
       chat_open_claim: { Args: { p_claim: string }; Returns: string }
       chat_open_direct: { Args: { p_member: string }; Returns: string }
       chat_rename: {

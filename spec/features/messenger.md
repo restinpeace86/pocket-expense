@@ -47,7 +47,7 @@
 
 ## 6. 스위치
 - 켜기/끄기: `company_features`에 (회사, 'messenger', true/false). 꺼지면 메뉴·배지 사라짐, 주소는 "찾는 화면이 없어요", DB 함수는 `FEATURE_DISABLED`, 표 읽기·실시간 수신도 막힘(데이터는 남음).
-- 확인용으로 페이퍼컴퍼니만 켜 둠(2026-11-03). 다른 회사는 꺼짐.
+- **D-206(2026-11-04)부터 모든 회사 기본 켜짐** — 줄이 없으면 켜짐, (회사, 'messenger', false) 줄이 있으면 꺼짐(운영자만).
 
 ## 7. 첨부 보관·저장 한도·트래픽 (D-204, migration 108)
 - **사진 화질**: 원본 긴 변 1280px JPEG(품질 0.8), 미리보기 긴 변 480px WebP(안 되는 브라우저는 JPEG). 영수증 사진(2000px)과는 따로.
@@ -57,3 +57,8 @@
 - **회사별 저장 한도**(지우지 않았고 90일 안의 원본 + 미리보기 합): 요금제별 `billing_plans.chat_storage_mb` — 스타터 1GB / 프로 3GB / 비즈니스 10GB. 무료 이용 = 스타터. 결제 연동 전이라 회사에 요금제가 없어 지금은 모든 회사 스타터(`private.chat_storage_limit`, 결제 연동 때 회사 요금제를 읽게 바꾼다). 크기는 저장소에 실제로 올라간 크기로 센다.
 - 한도를 넘으면 보내기가 막히고(`STORAGE_FULL`, 올린 파일은 지움) 대화방에 "회사 채팅 저장 공간(1GB)이 다 찼어요. 사진·파일은 90일이 지나면 자동으로 지워져 다시 보낼 수 있어요." 글은 계속 보낼 수 있다.
 - 읽기: `chat_storage_status()` = 사용량·한도·보관 일수. 정리 함수 `chat_files_due`·`chat_files_mark_purged`는 서버(service role) 전용.
+
+## 8. [알림]방 (D-206, migration 109)
+- 사람마다 하나인 시스템 방(`chat_rooms.kind = 'notice'`, `notice_member_id`). 처음 알림이 올 때 생긴다. 지금은 회의 10분 전 안내(`spec/features/calendar.md` §2-3)만.
+- 글 종류 `notice`(보낸 사람 없음, `link` = [캘린더에서 보기]) — 안 읽은 수·배지에 들어간다. 알림방에는 notice 글만, 다른 방에는 notice 글 불가(트리거). 보내기·초대·나가기 불가(`NOTICE_ROOM`), 화면은 입력창 대신 안내 한 줄, 방 메뉴·인원 수 없음.
+- 웹푸시: pg_net → `/api/cron/reminder-push` → `chat_notice_push_due()`(서버 전용, 한 번만).

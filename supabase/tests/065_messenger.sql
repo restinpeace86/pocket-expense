@@ -42,7 +42,8 @@ insert into public.members (id, auth_user_id, company_id, name, phone, role, sta
 insert into public.expense_claims (id, company_id, member_id, title) values
   ('e6500000-0000-0000-0000-000000000001', 'c6500000-0000-0000-0000-00000000000a', 'a6510000-0000-0000-0000-000000000002', '10월 출장비');
 
--- ① 스위치 꺼짐: 아무것도 못 하고, 배지는 null
+-- ① 스위치 꺼짐(D-206부터 메신저는 기본 켜짐 → 운영자가 false 줄을 넣은 회사): 아무것도 못 하고, 배지는 null
+insert into public.company_features (company_id, feature, enabled) values ('c6500000-0000-0000-0000-00000000000a', 'messenger', false), ('c6500000-0000-0000-0000-00000000000b', 'messenger', false);
 select public._t_as65('a6500000-0000-0000-0000-000000000001');
 set local role authenticated;
 do $$
@@ -55,7 +56,7 @@ end;
 $$;
 reset role;
 
-insert into public.company_features (company_id, feature, enabled) values ('c6500000-0000-0000-0000-00000000000a', 'messenger', true);
+update public.company_features set enabled = true where company_id = 'c6500000-0000-0000-0000-00000000000a' and feature = 'messenger';
 
 -- ② 1:1 방 하나 + 다른 회사 멤버 불가 + 보내기·다시 보내기 + 첨부 경로
 select public._t_as65('a6500000-0000-0000-0000-000000000001');
@@ -124,7 +125,7 @@ begin
 end;
 $$;
 reset role;
-insert into public.company_features (company_id, feature, enabled) values ('c6500000-0000-0000-0000-00000000000b', 'messenger', true);
+update public.company_features set enabled = true where company_id = 'c6500000-0000-0000-0000-00000000000b' and feature = 'messenger';
 select public._t_as65('a6500000-0000-0000-0000-000000000004');
 set local role authenticated;
 do $$

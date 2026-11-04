@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowLeft, Copy, Download, FileText, ImageOff, ImagePlus, Loader2, LogOut, Menu, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, Bell, Copy, Download, FileText, ImageOff, ImagePlus, Loader2, LogOut, Menu, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -360,7 +360,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
   }
 
   const title = detail ? roomTitle({ ...detail, claim_title: detail.claim?.title }, me) : "";
-  const count = detail && detail.kind !== "direct" ? detail.members.length : null;
+  const count = detail && detail.kind !== "direct" && detail.kind !== "notice" ? detail.members.length : null;
   const claimHref = detail?.claim
     ? detail.claim.member_id === me
       ? `${ws}/employee/claims/${detail.claim.id}`
@@ -382,9 +382,11 @@ export function ChatRoom({ roomId }: { roomId: string }) {
           {title}
           {count !== null && <span className="ml-1.5 font-normal text-zinc-600">{count}</span>}
         </h2>
-        <button type="button" onClick={() => setPanel(true)} aria-label="채팅방 메뉴" className="inline-flex size-11 items-center justify-center rounded-xl text-zinc-800 hover:bg-black/5">
-          <Menu className="size-5" />
-        </button>
+        {detail?.kind !== "notice" && (
+          <button type="button" onClick={() => setPanel(true)} aria-label="채팅방 메뉴" className="inline-flex size-11 items-center justify-center rounded-xl text-zinc-800 hover:bg-black/5">
+            <Menu className="size-5" />
+          </button>
+        )}
       </header>
       {detail?.claim && claimHref && (
         <Link href={claimHref} className="mx-3 mb-1 flex shrink-0 items-center gap-2 rounded-xl bg-white/90 px-3 py-2 text-sm shadow-sm hover:bg-white">
@@ -416,6 +418,25 @@ export function ChatRoom({ roomId }: { roomId: string }) {
             return (
               <div key={row.key} className="flex justify-center py-3">
                 <span className="rounded-full bg-black/15 px-3 py-1 text-xs text-white">{row.label}</span>
+              </div>
+            );
+          if (row.type === "notice")
+            return (
+              <div key={row.key} className="mt-2.5 flex justify-start gap-2">
+                <span aria-hidden className="inline-flex size-10 shrink-0 items-center justify-center rounded-[38%] bg-amber-100 text-amber-700">
+                  <Bell className="size-5" />
+                </span>
+                <div className="flex min-w-0 max-w-[75%] items-end gap-1">
+                  <div className="min-w-0 rounded-2xl rounded-tl-md bg-white px-3 py-2.5 text-sm shadow-sm">
+                    <p className="whitespace-pre-line break-words leading-relaxed text-zinc-900">{row.msg.body}</p>
+                    {row.msg.link && (
+                      <Link href={row.msg.link} className="mt-2 flex min-h-10 items-center justify-center rounded-xl bg-zinc-100 px-3 text-sm font-semibold text-brand-700 hover:bg-zinc-200">
+                        캘린더에서 보기
+                      </Link>
+                    )}
+                  </div>
+                  <span className="shrink-0 whitespace-nowrap pb-0.5 text-[11px] text-zinc-600">{timeLabel(row.msg.created_at)}</span>
+                </div>
               </div>
             );
           if (row.type === "system")
@@ -487,6 +508,9 @@ export function ChatRoom({ roomId }: { roomId: string }) {
         </div>
       )}
 
+      {detail?.kind === "notice" ? (
+        <p className="shrink-0 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] text-center text-sm text-zinc-600">회의 10분 전 안내 등 알림만 오는 방이에요. 답장은 보낼 수 없어요.</p>
+      ) : (
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -522,6 +546,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
           <SendHorizontal className="size-5" />
         </button>
       </form>
+      )}
 
       {menuFor && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 md:items-center" onClick={() => setMenuFor(null)} role="dialog" aria-modal aria-label="메시지 메뉴">
