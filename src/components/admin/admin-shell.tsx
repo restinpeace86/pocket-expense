@@ -37,7 +37,7 @@ import { useChatUnread } from "@/components/chat/use-chat-unread";
 
 // 관리자 워크스페이스 레이아웃 (spec/screens/admin-dashboard.md 0): PC는 좌측 사이드바, 모바일은 햄버거 메뉴
 // 설정은 하단 배치 + 하위 메뉴 (admin-settings.md §4)
-type NavItem = { href: string; label: string; icon: LucideIcon; ready: boolean };
+type NavItem = { href: string; label: string; icon: LucideIcon; ready: boolean; chatOnly?: boolean };
 const NAV: NavItem[] = [
   { href: "", label: "홈", icon: LayoutDashboard, ready: true },
   { href: "/claims", label: "지출 승인 관리", icon: ReceiptText, ready: true },
@@ -52,6 +52,8 @@ const SETTINGS_NAV: NavItem[] = [
   { href: "/vehicles", label: "회사차량", icon: Car, ready: true },
   // 캘린더 켜기·끄기 + 회의실(D-207·D-208): 꺼져 있어도 늘 보여야 관리자가 켤 수 있다
   { href: "/calendar-settings", label: "캘린더·회의실", icon: DoorOpen, ready: true },
+  // 채팅 저장 공간·보관 기간(D-212): 메신저가 켜진 회사만
+  { href: "/chat-settings", label: "채팅", icon: MessageCircle, ready: true, chatOnly: true },
   { href: "/recurring", label: "정기 결제", icon: Repeat, ready: true },
   { href: "/form-template", label: "지출결의서 양식", icon: FileText, ready: true },
   { href: "/departments", label: "부서", icon: Building2, ready: true },
@@ -90,10 +92,10 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
 
 // settingsOpen: 휴대폰 메뉴(서랍)에서는 설정 하위 메뉴를 펼친 채로 연다(개선사항 1-1) — 화면 이름이 바로 보이게
 // feedback: 관리자 1:1 문의 주소 — 휴대폰 서랍 메뉴에서만 넘긴다(PC는 오른쪽 아래 떠 있는 버튼, 7차 개선사항 3)
-function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, calendar = false }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; calendar?: boolean }) {
+function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, calendar = false, chat = false }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; calendar?: boolean; chat?: boolean }) {
   const realPath = usePathname();
   const pathname = previewPath ? `${base}${previewPath}` : realPath;
-  const settingsNav = SETTINGS_NAV;
+  const settingsNav = SETTINGS_NAV.filter((i) => !i.chatOnly || chat);
   const settingsActive = settingsNav.some((i) => pathname.startsWith(`${base}${i.href}`));
   return (
     <nav className="flex flex-col gap-1 p-3" aria-label="관리자 메뉴">
@@ -182,7 +184,7 @@ export function AdminShell({
         <p className="px-6 pb-3 pt-5">
           <Brand />
         </p>
-        <NavList base={base} previewPath={previewPath} calendar={calendar} />
+        <NavList base={base} previewPath={previewPath} calendar={calendar} chat={chat != null} />
       </aside>
 
       {open && (
@@ -195,7 +197,7 @@ export function AdminShell({
                 <X className="size-5" />
               </button>
             </div>
-            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} calendar={calendar} />
+            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} calendar={calendar} chat={chat != null} />
             <div className="mt-auto sm:hidden">
               <ThemeOptionsInline />
             </div>

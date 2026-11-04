@@ -1,12 +1,11 @@
 import "server-only";
-import { sendClosingNotice } from "@/lib/notify/dispatch";
 import { closingNotice, type ClosingKind } from "@/lib/notify/templates";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { pushConfigured, pushToMembers } from "./server";
 
 // 관리자 월말 마감 알림 (D-161, 개선사항 1). 매일 아침 cron이 부른다(service role).
 // 1일 마감 주간 시작(전체 관리자) / 3일 홈택스 자료 0개·승인 대기 / 5일 세무 마감 안 함·승인 대기(D-166) — 쉬는 날이면 앞 영업일(DB가 계산).
-// 웹푸시 + 알림톡(대행사 연결 전에는 기록만, O-01). 같은 날 같은 알림은 한 번만(push_logs).
+// 앱 알림(웹푸시)만 — 알림톡은 보내지 않는다(D-213, 관리자 홈 배너·세무 마감 화면에도 보임). 같은 날 같은 알림은 한 번만(push_logs).
 type Target = { company_id: string; member_id: string; kind: ClosingKind; month: string; cutoff: string; due: string; pending: number; hometax_missing: boolean; closed: boolean; has_cards?: boolean; card_missing?: boolean };
 
 export async function runClosingReminders(today?: string): Promise<{ targets: number; pushed: number; alimtalk: number }> {
@@ -18,7 +17,7 @@ export async function runClosingReminders(today?: string): Promise<{ targets: nu
   const { data: companies } = await admin.from("companies").select("id, name").in("id", [...new Set(rows.map((r) => r.company_id))]);
   const names = new Map((companies ?? []).map((c) => [c.id, c.name]));
   let pushed = 0;
-  let alimtalk = 0;
+  const alimtalk = 0; // D-213: 월말 마감은 앱 알림만
   for (const t of rows) {
     // 오늘 처음인 대상만(cron이 여러 번 불려도 한 번)
     const { data: fresh } = await admin
@@ -54,7 +53,6 @@ export async function runClosingReminders(today?: string): Promise<{ targets: nu
       const r = await pushToMembers(t.company_id, [t.member_id], { title, body: msg.text, url: msg.buttonPath, tag: "closing" });
       pushed += r.sent;
     }
-    if (await sendClosingNotice({ ...input, memberId: t.member_id })) alimtalk++;
   }
   return { targets: rows.length, pushed, alimtalk };
 }

@@ -11,6 +11,7 @@ export type Membership = {
   role: MemberRole;
   status: MemberStatus;
   ui_theme?: string | null; // 화면 색상 (D-066)
+  chat_theme?: string | null; // 채팅 색감 (D-211)
 };
 
 // 외부 사이트로 튕기는 오픈 리다이렉트를 막는다: 같은 사이트의 절대 경로만 허용

@@ -19,7 +19,7 @@ export type ChatMessage = {
   height: number | null;
   created_at: string;
   deleted: boolean;
-  expired?: boolean; // 보관 기간(90일)이 지나 첨부 파일이 지워짐(D-204)
+  expired?: boolean; // 보관 기간(회사별 30·60·90일, D-212)이 지나 첨부 파일이 지워짐(D-204)
   // 화면 전용: 보내는 중·실패(낙관적 표시), 올리기 전 미리보기
   pending?: "sending" | "failed";
   localUrl?: string;
@@ -155,6 +155,13 @@ export function fileSizeLabel(bytes: number | null): string {
   if (bytes < 1024) return `${bytes}B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)}KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+}
+
+// 저장 공간 표시(D-212 관리자 [채팅]): 1GB 미만은 MB 정수, 이상은 GB 소수 한 자리 — "320MB" / "1GB" / "1.2GB"
+export function bytesLabel(bytes: number): string {
+  const mb = 1024 * 1024;
+  if (bytes < 1024 * mb) return `${Math.max(0, Math.round(bytes / mb))}MB`;
+  return `${Math.round((bytes / (1024 * mb)) * 10) / 10}GB`;
 }
 
 export const CHAT_FILE_MAX = 20 * 1024 * 1024;

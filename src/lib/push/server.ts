@@ -57,9 +57,9 @@ export async function pushToMembers(
   memberIds: string[],
   payload: PushPayload,
   dedupe?: { kind: "deadline" | "approval_pending" | "closing"; ref: string },
-): Promise<{ members: number; sent: number; failed: number }> {
+): Promise<{ members: number; sent: number; failed: number; reached: string[] }> {
   const admin = createAdminClient();
-  if (!admin || !pushConfigured() || !memberIds.length) return { members: 0, sent: 0, failed: 0 };
+  if (!admin || !pushConfigured() || !memberIds.length) return { members: 0, sent: 0, failed: 0, reached: [] };
   let targets = [...new Set(memberIds)];
   if (dedupe) {
     // 오늘 처음인 멤버만 남긴다(기록이 이미 있으면 건너뜀)
@@ -69,10 +69,10 @@ export async function pushToMembers(
       .select("member_id");
     targets = (data ?? []).map((r) => r.member_id).filter((x): x is string => !!x);
   }
-  if (!targets.length) return { members: 0, sent: 0, failed: 0 };
+  if (!targets.length) return { members: 0, sent: 0, failed: 0, reached: [] };
   const { data: subs } = await admin.from("push_subscriptions").select("id, member_id, endpoint, p256dh, auth").eq("company_id", companyId).in("member_id", targets);
   const r = await sendAll(admin, (subs ?? []) as Sub[], payload);
-  return { members: r.byMember.size, sent: r.sent, failed: r.failed };
+  return { members: r.byMember.size, sent: r.sent, failed: r.failed, reached: [...r.byMember.keys()] };
 }
 
 // 회사 전체(사내 공지) — 그 회사 구독만

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Bell, Loader2, MessageCirclePlus, Search, X } from "lucide-react";
+import { ArrowLeft, Bell, ExternalLink, Loader2, MessageCirclePlus, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -8,6 +8,8 @@ import { listTimeLabel, previewText, roomTitle, type ChatRoomSummary } from "@/l
 import { PushHelp, usePushSubscription } from "@/components/push/push-toggle";
 import { RoomAvatar } from "./avatar";
 import { useChat } from "./chat-app";
+import { ChatThemeButton } from "./chat-theme";
+import { openChatPopup, useChatPopup } from "./popup";
 import { MemberPicker } from "./member-picker";
 
 // 채팅 목록(카톡 '채팅' 탭): 최근 대화 순, 마지막 메시지·시각·안 읽은 수. 새 메시지가 오면 다시 불러온다
@@ -21,6 +23,7 @@ export function RoomList({ base }: { base: string }) {
   const [q, setQ] = useState("");
   const [picking, setPicking] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const popup = useChatPopup();
 
   const load = useCallback(async () => {
     const { data, error: e } = await supabase.rpc("chat_room_list");
@@ -62,10 +65,26 @@ export function RoomList({ base }: { base: string }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex h-14 shrink-0 items-center gap-1 border-b border-zinc-100 px-2">
-        <Link href={homeHref} aria-label="워크스페이스로" className="inline-flex size-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100">
-          <ArrowLeft className="size-5" />
-        </Link>
+        {popup ? (
+          <span className="w-2" />
+        ) : (
+          <Link href={homeHref} aria-label="워크스페이스로" className="inline-flex size-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100">
+            <ArrowLeft className="size-5" />
+          </Link>
+        )}
         <h1 className="flex-1 text-lg font-bold">채팅</h1>
+        {!popup && (
+          <button
+            type="button"
+            onClick={() => openChatPopup(base, pathname)}
+            aria-label="채팅 새 창으로 열기"
+            title="새 창으로 열기"
+            className="hidden size-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100 md:inline-flex"
+          >
+            <ExternalLink className="size-5" />
+          </button>
+        )}
+        <ChatThemeButton />
         <button type="button" onClick={() => setPicking(true)} aria-label="새 채팅" className="inline-flex size-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100">
           <MessageCirclePlus className="size-6" />
         </button>

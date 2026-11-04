@@ -6,6 +6,8 @@ import { isAdminRole, type Membership } from "@/lib/auth/paths";
 import { useViewMode } from "@/components/workspace/view-mode-mark";
 import { createClient } from "@/lib/supabase/client";
 import { subscribeChat, type ChatEvent } from "./hub";
+import { ChatThemeSync } from "./chat-theme";
+import { useChatPopup } from "./popup";
 import { RoomList } from "./room-list";
 
 // 사내 메신저 틀(D-203): 카톡 PC처럼 넓은 화면은 왼쪽 목록 + 오른쪽 대화방, 휴대폰은 목록 ↔ 대화방 한 화면씩
@@ -81,6 +83,7 @@ export function ChatApp({
     [membership, homeHref, profileHref, supabase],
   );
   const vp = useVisibleViewport();
+  const popup = useChatPopup();
   // 채팅 화면이 떠 있는 동안 뒤쪽 페이지가 함께 밀리지 않게
   useEffect(() => {
     const html = document.documentElement;
@@ -92,10 +95,11 @@ export function ChatApp({
   }, []);
   return (
     <Ctx.Provider value={value}>
+      <ChatThemeSync saved={membership.chat_theme} />
       <div
         data-keyboard-self
         // 직원 하단 메뉴(EmployeeBottomNav, 화면 아래 고정)만큼 아래를 비운다. 휴대폰 대화방에서는 메뉴가 없다
-        className={`fixed inset-x-0 top-0 flex h-dvh min-h-0 flex-col bg-white ${mode === "employee" ? (inRoom ? "md:pb-[calc(4rem+env(safe-area-inset-bottom))]" : "kb-nopad pb-[calc(4rem+env(safe-area-inset-bottom))]") : ""}`}
+        className={`fixed inset-x-0 top-0 flex h-dvh min-h-0 flex-col bg-white ${mode === "employee" && !popup ? (inRoom ? "md:pb-[calc(4rem+env(safe-area-inset-bottom))]" : "kb-nopad pb-[calc(4rem+env(safe-area-inset-bottom))]") : ""}`}
         style={vp ? { height: vp.height, transform: `translateY(${vp.top}px)` } : undefined}
       >
         <div className="flex min-h-0 flex-1">

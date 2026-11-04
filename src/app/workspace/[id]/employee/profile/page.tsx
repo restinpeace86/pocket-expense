@@ -3,6 +3,7 @@ import { PushToggle } from "@/components/push/push-toggle";
 import { Suspense } from "react";
 import { ProfileForm } from "@/components/employee/profile-form";
 import { requireWorkspace } from "@/lib/auth/guards";
+import { chatEnabled } from "@/lib/chat/server";
 import { getMyProfile } from "@/lib/employee/profile";
 
 export const metadata = { title: "내 정보 · PocketExpense" };
@@ -22,12 +23,12 @@ export default function ProfilePage({ params }: PageProps<"/workspace/[id]/emplo
 async function Profile({ params }: { params: PageProps<"/workspace/[id]/employee/profile">["params"] }) {
   const { id } = await params;
   const membership = await requireWorkspace(id);
-  const profile = await getMyProfile(membership.member_id);
+  const [profile, chat] = await Promise.all([getMyProfile(membership.member_id), chatEnabled()]);
   if (!profile) notFound();
   return (
     <>
       <PushToggle />
-      <ProfileForm profile={profile} />
+      <ProfileForm profile={profile} chat={chat} />
     </>
   );
 }

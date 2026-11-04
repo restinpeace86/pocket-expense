@@ -1,7 +1,7 @@
 import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
 
-// 채팅 첨부 정리(D-204, 새벽 작업): ① 보관 기간(90일, app_settings.chat_attachment_days)이 지난 사진·파일
+// 채팅 첨부 정리(D-204, 새벽 작업): ① 보관 기간(회사별 30·60·90일 company_chat_settings, 없으면 app_settings.chat_attachment_days = 90일, D-212)이 지난 사진·파일
 // ② 삭제한 메시지에 남은 파일 ③ 올렸지만 메시지가 되지 않은 파일(하루 지난 것). 글·말풍선은 남기고 "보관 기간이 지난 파일"로 보인다
 export async function purgeChatFiles(admin: NonNullable<ReturnType<typeof createAdminClient>>): Promise<{ ok: boolean; purged: number; orphans: number }> {
   let purged = 0;

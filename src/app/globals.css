@@ -274,3 +274,58 @@ html[data-keyboard="open"] .kb-pad {
 html[data-keyboard="open"] .kb-nopad {
   padding-bottom: 0 !important;
 }
+
+/* 채팅 색감(D-211, 계정별): html[data-chat-theme]. 기본(basic) = 지금 색(하늘 배경·노란 내 말풍선),
+   line = 업무형 테두리(흰 배경·남색 테두리·남색 글자), cool = 업무형 쿨톤(연한 회청 배경·하늘빛 말풍선·남색 글자).
+   목록 키는 src/lib/chat/theme.ts. 글자 대비는 모두 4.5:1 이상 */
+:root {
+  --chat-bg: #b2c7da;
+  --chat-head: #b2c7da;
+  --chat-head-border: transparent;
+  --chat-mine: #fee500;
+  --chat-mine-fg: #18181b;
+  --chat-mine-border: transparent;
+  --chat-mine-soft: #fff5a8;
+  --chat-other: #ffffff;
+  --chat-other-fg: #18181b;
+  --chat-other-border: transparent;
+  --chat-unread: #ffe100;
+  --chat-unread-shadow: 0 0 2px rgba(0, 0, 0, 0.45);
+  --chat-chip: rgba(0, 0, 0, 0.15);
+  --chat-chip-fg: #ffffff;
+  --chat-meta: #52525b;
+}
+html[data-chat-theme="line"] {
+  --chat-bg: #fafbfc;
+  --chat-head: #ffffff;
+  --chat-head-border: #e4e4e7;
+  --chat-mine: #ffffff;
+  --chat-mine-fg: #1e3a8a;
+  --chat-mine-border: #1e3a8a;
+  --chat-mine-soft: #f8fafc;
+  --chat-other: #f4f4f5;
+  --chat-other-fg: #18181b;
+  --chat-other-border: #e4e4e7;
+  --chat-unread: #1d4ed8;
+  --chat-unread-shadow: none;
+  --chat-chip: #eef0f3;
+  --chat-chip-fg: #475569;
+  --chat-meta: #64748b;
+}
+html[data-chat-theme="cool"] {
+  --chat-bg: #eef2f7;
+  --chat-head: #ffffff;
+  --chat-head-border: #dde3ec;
+  --chat-mine: #dbe7f6;
+  --chat-mine-fg: #172554;
+  --chat-mine-border: #bfd2ec;
+  --chat-mine-soft: #e9f0f9;
+  --chat-other: #ffffff;
+  --chat-other-fg: #18181b;
+  --chat-other-border: #dde3ec;
+  --chat-unread: #1d4ed8;
+  --chat-unread-shadow: none;
+  --chat-chip: #dde3ec;
+  --chat-chip-fg: #334155;
+  --chat-meta: #64748b;
+}

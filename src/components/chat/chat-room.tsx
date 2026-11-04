@@ -374,8 +374,8 @@ export function ChatRoom({ roomId }: { roomId: string }) {
   const touch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col bg-[#b2c7da]">
-      <header className="flex h-14 shrink-0 items-center gap-1 bg-[#b2c7da] px-2">
+    <div className="relative flex min-h-0 flex-1 flex-col bg-[var(--chat-bg)]">
+      <header className="flex h-14 shrink-0 items-center gap-1 border-b border-[var(--chat-head-border)] bg-[var(--chat-head)] px-2">
         <Link href={`${ws}/chat`} aria-label="채팅 목록" className="inline-flex size-11 items-center justify-center rounded-xl text-zinc-800 hover:bg-black/5 md:hidden">
           <ArrowLeft className="size-5" />
         </Link>
@@ -418,7 +418,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
           if (row.type === "date")
             return (
               <div key={row.key} className="flex justify-center py-3">
-                <span className="rounded-full bg-black/15 px-3 py-1 text-xs text-white">{row.label}</span>
+                <span className="rounded-full bg-[var(--chat-chip)] px-3 py-1 text-xs text-[var(--chat-chip-fg)]">{row.label}</span>
               </div>
             );
           if (row.type === "notice")
@@ -428,7 +428,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
                   <Bell className="size-5" />
                 </span>
                 <div className="flex min-w-0 max-w-[75%] items-end gap-1">
-                  <div className="min-w-0 rounded-2xl rounded-tl-md bg-white px-3 py-2.5 text-sm shadow-sm">
+                  <div className="min-w-0 rounded-2xl rounded-tl-md border border-[var(--chat-other-border)] bg-[var(--chat-other)] px-3 py-2.5 text-sm shadow-sm">
                     <p className="whitespace-pre-line break-words leading-relaxed text-zinc-900">{row.msg.body}</p>
                     {row.msg.link && (
                       <Link href={row.msg.link} className="mt-2 flex min-h-10 items-center justify-center rounded-xl bg-zinc-100 px-3 text-sm font-semibold text-brand-700 hover:bg-zinc-200">
@@ -443,7 +443,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
           if (row.type === "system")
             return (
               <div key={row.key} className="flex justify-center py-1.5">
-                <span className="max-w-[85%] rounded-full bg-black/10 px-3 py-1 text-center text-xs text-zinc-700">{row.msg.body}</span>
+                <span className="max-w-[85%] rounded-full bg-[var(--chat-chip)] px-3 py-1 text-center text-xs text-[var(--chat-chip-fg)]">{row.msg.body}</span>
               </div>
             );
           const m = row.msg;
@@ -453,8 +453,8 @@ export function ChatRoom({ roomId }: { roomId: string }) {
           const meta = (
             <span className={`flex shrink-0 flex-col justify-end pb-0.5 text-[11px] leading-tight ${row.mine ? "items-end" : "items-start"}`}>
               {m.pending === "sending" && <Loader2 className="size-3 animate-spin text-zinc-600" />}
-              {unread > 0 && <span data-unread className="text-[13px] font-extrabold leading-none text-[#ffe100] [text-shadow:0_0_2px_rgba(0,0,0,0.45)]">{unread}</span>}
-              {row.showTime && !m.pending && <span className="whitespace-nowrap text-zinc-600">{timeLabel(m.created_at)}</span>}
+              {unread > 0 && <span data-unread className="text-[13px] font-extrabold leading-none text-[var(--chat-unread)] [text-shadow:var(--chat-unread-shadow)]">{unread}</span>}
+              {row.showTime && !m.pending && <span className="whitespace-nowrap text-[var(--chat-meta)]">{timeLabel(m.created_at)}</span>}
             </span>
           );
           const bubble = (
@@ -688,11 +688,14 @@ function MessageBody({
     onPointerLeave: () => press.current && clearTimeout(press.current),
     onPointerCancel: () => press.current && clearTimeout(press.current),
   };
-  const tone = mine ? "bg-[#fee500] text-zinc-900" : "bg-white text-zinc-900";
-  if (m.deleted) return <span className={`rounded-2xl px-3 py-2 text-sm italic text-zinc-500 ${mine ? "bg-[#fff5a8]" : "bg-white/80"}`}>삭제된 메시지입니다.</span>;
+  const tone = mine
+    ? "border border-[var(--chat-mine-border)] bg-[var(--chat-mine)] text-[var(--chat-mine-fg)]"
+    : "border border-[var(--chat-other-border)] bg-[var(--chat-other)] text-[var(--chat-other-fg)]";
+  const soft = mine ? "border border-[var(--chat-mine-border)] bg-[var(--chat-mine-soft)]" : "border border-[var(--chat-other-border)] bg-[var(--chat-other)]/80";
+  if (m.deleted) return <span className={`rounded-2xl px-3 py-2 text-sm italic text-zinc-500 ${soft}`}>삭제된 메시지입니다.</span>;
   if (m.expired && (m.kind === "image" || m.kind === "file"))
     return (
-      <span {...handlers} className={`flex max-w-64 items-center gap-2 rounded-2xl px-3 py-2.5 text-sm text-zinc-500 ${mine ? "bg-[#fff5a8]" : "bg-white/80"}`}>
+      <span {...handlers} className={`flex max-w-64 items-center gap-2 rounded-2xl px-3 py-2.5 text-sm text-zinc-500 ${soft}`}>
         {m.kind === "image" ? <ImageOff className="size-5 shrink-0" /> : <FileText className="size-5 shrink-0" />}
         <span className="min-w-0">
           <span className="block whitespace-nowrap">보관 기간이 지난 {m.kind === "image" ? "사진" : "파일"}이에요.</span>

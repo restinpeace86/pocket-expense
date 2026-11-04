@@ -23,7 +23,7 @@ export function ClaimChatButton({ companyId, claimId }: { companyId: string; cla
             router.push(`/workspace/${companyId}/chat/${r.roomId}`);
           })
         }
-        className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#fee500] px-3 text-sm font-semibold text-zinc-900 hover:brightness-95 disabled:opacity-60"
+        className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl border border-[var(--chat-mine-border)] bg-[var(--chat-mine)] px-3 text-sm font-semibold text-[var(--chat-mine-fg)] hover:brightness-95 disabled:opacity-60"
       >
         {pending ? <Loader2 className="size-4 animate-spin" /> : <MessageCircle className="size-4" />}이 건으로 대화
       </button>

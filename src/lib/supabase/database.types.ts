@@ -1126,6 +1126,42 @@ export type Database = {
         }
         Relationships: []
       }
+      company_chat_settings: {
+        Row: {
+          attachment_days: number
+          company_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          attachment_days: number
+          company_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          attachment_days?: number
+          company_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_chat_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_chat_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_features: {
         Row: {
           company_id: string
@@ -2284,6 +2320,7 @@ export type Database = {
         Row: {
           approved_at: string | null
           auth_user_id: string
+          chat_theme: string | null
           company_id: string
           created_at: string
           department_id: string | null
@@ -2312,6 +2349,7 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           auth_user_id: string
+          chat_theme?: string | null
           company_id: string
           created_at?: string
           department_id?: string | null
@@ -2340,6 +2378,7 @@ export type Database = {
         Update: {
           approved_at?: string | null
           auth_user_id?: string
+          chat_theme?: string | null
           company_id?: string
           created_at?: string
           department_id?: string | null
@@ -3419,6 +3458,7 @@ export type Database = {
         Args: { p_room: string; p_title: string }
         Returns: undefined
       }
+      chat_retention_status: { Args: never; Returns: Json }
       chat_room_detail: { Args: { p_room: string }; Returns: Json }
       chat_room_list: { Args: never; Returns: Json }
       chat_send: {
@@ -3431,6 +3471,7 @@ export type Database = {
         }
         Returns: Json
       }
+      chat_set_attachment_days: { Args: { p_days: number }; Returns: number }
       chat_storage_status: { Args: never; Returns: Json }
       chat_unread_total: { Args: never; Returns: number }
       check_claim_for_submit: { Args: { p_claim_id: string }; Returns: Json }

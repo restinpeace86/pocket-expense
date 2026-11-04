@@ -1,5 +1,6 @@
 "use server";
 
+import { isChatThemeKey } from "@/lib/chat/theme";
 import { isThemeKey } from "@/lib/theme";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,5 +12,16 @@ export async function saveUiThemeAction(key: string): Promise<{ error: string | 
   const uid = claims?.claims?.sub as string | undefined;
   if (!uid) return { error: "NOT_AUTHENTICATED" };
   const { error } = await supabase.from("members").update({ ui_theme: key }).eq("auth_user_id", uid);
+  return { error: error ? "SAVE_FAILED" : null };
+}
+
+// 채팅 색감을 계정에 저장 (D-211, migration 113). 본인 행만(컬럼 권한 chat_theme)
+export async function saveChatThemeAction(key: string): Promise<{ error: string | null }> {
+  if (!isChatThemeKey(key)) return { error: "INVALID_THEME" };
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  const uid = claims?.claims?.sub as string | undefined;
+  if (!uid) return { error: "NOT_AUTHENTICATED" };
+  const { error } = await supabase.from("members").update({ chat_theme: key }).eq("auth_user_id", uid);
   return { error: error ? "SAVE_FAILED" : null };
 }

@@ -1,6 +1,7 @@
 import "server-only";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { needsAlimtalk, pushOf, CHANNEL } from "./channel";
 import { getSender, siteUrl } from "./sender";
 import { approvalCompleted, approvalRejected, approvalRequest, closingNotice, invite, merchantSummary, normalizePhone, payoutCompleted, recurringReady, reminder, taxClosed, taxOfficeInvite, taxRequest, type BuiltMessage, type ClosingNoticeInput } from "./templates";
 import { pushToMembers, pushToOfficeMembers } from "@/lib/push/server";
@@ -47,6 +48,43 @@ async function deliver(admin: Admin, p: { companyId: string; claimId?: string; m
     .update(result.ok ? { status: "sent", sent_at: new Date().toISOString(), provider_message_id: result.providerMessageId } : { status: "failed", error_message: result.error })
     .eq("id", log.id);
   return result.ok;
+}
+
+// 회사 멤버에게 보내기(D-213, channel.ts): 앱 알림(웹푸시) 먼저 → 알림톡은 늘 보내는 것(초대) 또는
+// '앱 알림을 하나도 못 받은 사람'만(fallback). 앱 알림만인 것은 알림톡을 보내지 않는다.
+// fallback이 앱 알림으로 닿았으면 알림 이력에 webpush로 남긴다(독촉 하루 1회 판정·CS 확인용)
+async function notifyMembers(
+  admin: Admin,
+  p: { companyId: string; claimId?: string; recipients: { id: string; phone: string | null }[]; message: BuiltMessage; push?: { title: string; body: string; url: string; tag?: string } },
+): Promise<{ pushed: number; alimtalk: number }> {
+  const channel = CHANNEL[p.message.template];
+  const ids = [...new Set(p.recipients.map((r) => r.id))];
+  let reached = new Set<string>();
+  if (channel !== "alimtalk" && ids.length) {
+    const r = await pushToMembers(p.companyId, ids, p.push ?? pushOf(p.message, p.claimId ? `claim-${p.claimId}` : p.message.template));
+    reached = new Set(r.reached);
+  }
+  let alimtalk = 0;
+  for (const r of p.recipients) {
+    if (needsAlimtalk(p.message.template, reached.has(r.id))) {
+      await deliver(admin, { companyId: p.companyId, claimId: p.claimId, memberId: r.id, phone: r.phone, message: p.message });
+      alimtalk++;
+    } else if (channel === "fallback") {
+      const now = new Date().toISOString();
+      await admin.from("notification_logs").insert({
+        company_id: p.companyId,
+        claim_id: p.claimId ?? null,
+        recipient_member_id: r.id,
+        recipient_phone: "",
+        template_code: p.message.template,
+        payload: { text: p.message.text, channel: "webpush" },
+        status: "sent",
+        sent_at: now,
+        provider: "webpush",
+      });
+    }
+  }
+  return { pushed: reached.size, alimtalk };
 }
 
 async function loadClaim(admin: Admin, companyId: string, claimId: string) {
@@ -103,7 +141,7 @@ async function sendApprovalRequest(admin: Admin, companyId: string, claimId: str
     personal: c.personal,
     merchant: c.merchant,
   });
-  for (const r of recipients ?? []) await deliver(admin, { companyId, claimId, memberId: r.id, phone: r.phone, message });
+  await notifyMembers(admin, { companyId, claimId, recipients: recipients ?? [], message });
 }
 
 export type ClaimEvent = "submitted" | "approved" | "rejected";
@@ -120,10 +158,10 @@ export async function notifyClaimEvent(companyId: string, claimId: string, event
       // 사전 검토 승인 뒤 다음 단계가 남았으면 다음 결재자에게, 최종 승인이면 청구자에게
       if (c.claim.status === "submitted") return await sendApprovalRequest(admin, companyId, claimId);
       if (c.claim.status !== "approved" && c.claim.status !== "paid") return;
-      return await deliver(admin, { companyId, claimId, memberId: c.owner.id, phone: c.owner.phone, message: approvalCompleted({ companyId, claimId, name: c.owner.name, title: c.claim.title, total: c.claim.total_amount, payout: c.payout, merchant: c.merchant }) });
+      return void (await notifyMembers(admin, { companyId, claimId, recipients: [c.owner], message: approvalCompleted({ companyId, claimId, name: c.owner.name, title: c.claim.title, total: c.claim.total_amount, payout: c.payout, merchant: c.merchant }) }));
     }
     if (event === "rejected" && c.claim.status === "rejected") {
-      return await deliver(admin, { companyId, claimId, memberId: c.owner.id, phone: c.owner.phone, message: approvalRejected({ companyId, claimId, name: c.owner.name, title: c.claim.title, total: c.claim.total_amount, merchant: c.merchant, reason: c.claim.rejection_reason ?? "" }) });
+      return void (await notifyMembers(admin, { companyId, claimId, recipients: [c.owner], message: approvalRejected({ companyId, claimId, name: c.owner.name, title: c.claim.title, total: c.claim.total_amount, merchant: c.merchant, reason: c.claim.rejection_reason ?? "" }) }));
     }
   } catch (e) {
     console.error("[alimtalk] 알림 처리 실패", e);
@@ -138,11 +176,10 @@ export async function notifyPayouts(companyId: string, claimIds: string[]) {
     for (const claimId of claimIds) {
       const c = await loadClaim(admin, companyId, claimId);
       if (!c || !c.owner || c.claim.status !== "paid" || c.payout <= 0) continue;
-      await deliver(admin, {
+      await notifyMembers(admin, {
         companyId,
         claimId,
-        memberId: c.owner.id,
-        phone: c.owner.phone,
+        recipients: [c.owner],
         message: payoutCompleted({ companyId, title: c.claim.title, payout: c.payout, paidAt: formatDateTimeKst(c.claim.paid_at) }),
       });
     }
@@ -164,7 +201,7 @@ export async function sendReminders(companyId: string, targets: { memberId: stri
   let n = 0;
   for (const t of targets) {
     if (!phones.has(t.memberId)) continue;
-    await deliver(admin, { companyId, memberId: t.memberId, phone: phones.get(t.memberId) ?? null, message: reminder({ companyId, companyName: company?.name ?? "", pending: t.openClaims }) });
+    await notifyMembers(admin, { companyId, recipients: [{ id: t.memberId, phone: phones.get(t.memberId) ?? null }], message: reminder({ companyId, companyName: company?.name ?? "", pending: t.openClaims }) });
     n++;
   }
   return n;
@@ -233,11 +270,10 @@ export async function sendRecurringReady(rows: { claim_id: string | null; compan
   for (const r of rows) {
     const m = byId.get(r.member_id);
     if (!m || m.company_id !== r.company_id) continue; // 같은 회사 담당자만
-    await deliver(admin, {
+    await notifyMembers(admin, {
       companyId: r.company_id,
       claimId: r.claim_id ?? undefined,
-      memberId: r.member_id,
-      phone: m.phone,
+      recipients: [{ id: r.member_id, phone: m.phone }],
       message: recurringReady({ companyId: r.company_id, claimId: r.claim_id, serviceName: r.service_name, periodLabel: r.period_label, amount: r.amount }),
     });
     n++;
@@ -268,7 +304,7 @@ export async function notifyOfficeClosed(companyId: string, month: string, count
   if (!targets.length) return 0;
   const { data: company } = await admin.from("companies").select("name").eq("id", companyId).maybeSingle();
   const message = taxClosed({ companyId, companyName: company?.name ?? "", month, count });
-  for (const t of targets) await deliver(admin, { companyId, phone: t.phone, message });
+  // 앱 알림만(D-213) — 사무소는 세무사무소 화면 고객사 현황에서도 마감을 본다
   await pushToOfficeMembers(
     targets.map((t) => t.member_id),
     { title: `${company?.name ?? "고객사"} ${Number(month.slice(5, 7))}월 마감 완료`, body: message.text.replace("[PocketExpense] ", ""), url: message.buttonPath, tag: `tax-closed-${companyId}-${month}` },
@@ -282,8 +318,7 @@ export async function notifyCompanyRequest(companyId: string, p: { officeName: s
   if (!admin) return;
   const { data: admins } = await admin.from("members").select("id, phone").eq("company_id", companyId).eq("status", "approved").in("role", ["super_admin", "admin"]);
   const message = taxRequest({ companyId, ...p });
-  for (const a of admins ?? []) await deliver(admin, { companyId, memberId: a.id, phone: a.phone, message });
-  await pushToMembers(companyId, (admins ?? []).map((a) => a.id), { title: `${p.officeName} 자료 요청`, body: p.body.slice(0, 120), url: message.buttonPath, tag: "tax-request" });
+  await notifyMembers(admin, { companyId, recipients: admins ?? [], message, push: { title: `${p.officeName} 자료 요청`, body: p.body.slice(0, 120), url: message.buttonPath, tag: "tax-request" } });
 }
 
 // 회사가 자료 요청에 답변 → 세무사무소(담당 세무사·없으면 관리자)에게 웹푸시 (D-169)

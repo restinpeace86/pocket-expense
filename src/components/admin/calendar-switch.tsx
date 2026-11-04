@@ -26,7 +26,7 @@ export function CalendarSwitch({ enabled, calendarHref }: { enabled: boolean; ca
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-semibold">사내 캘린더 사용</p>
-          <p className="text-sm text-zinc-600">{enabled ? "켜져 있어요. 관리자 메뉴 [캘린더]와 직원 홈 [캘린더] 카드로 들어가요." : "꺼져 있어요. 켜면 관리자 메뉴와 직원 홈에 캘린더가 생겨요."}</p>
+          <p className="text-sm text-zinc-600">{enabled ? "켜져 있어요. 관리자 메뉴 [캘린더]와 직원 하단 [캘린더] 탭으로 들어가요." : "꺼져 있어요. 켜면 관리자 메뉴와 직원 하단 메뉴에 캘린더가 생겨요."}</p>
         </div>
         <button
           type="button"
