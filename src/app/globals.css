@@ -269,3 +269,8 @@ html[data-keyboard="open"] .kb-pad {
     scroll-behavior: smooth;
   }
 }
+
+/* 채팅 목록(D-207): 키보드가 올라오면 직원 하단 메뉴가 숨으므로 그만큼 비워 둔 아래 여백도 없앤다 */
+html[data-keyboard="open"] .kb-nopad {
+  padding-bottom: 0 !important;
+}

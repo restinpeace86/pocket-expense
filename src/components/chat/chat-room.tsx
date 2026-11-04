@@ -11,6 +11,7 @@ import { formatWon } from "@/lib/format";
 import { processChatImage } from "@/lib/receipts/image";
 import { Avatar } from "./avatar";
 import { useChat } from "./chat-app";
+import { ChatOverlay } from "./overlay";
 import { MemberPicker } from "./member-picker";
 import { signedUrls } from "./signed-urls";
 
@@ -549,6 +550,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
       )}
 
       {menuFor && (
+        <ChatOverlay>
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 md:items-center" onClick={() => setMenuFor(null)} role="dialog" aria-modal aria-label="메시지 메뉴">
           <div className="w-full max-w-sm overflow-hidden rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
             {menuFor.kind === "text" && (
@@ -576,9 +578,11 @@ export function ChatRoom({ roomId }: { roomId: string }) {
             </button>
           </div>
         </div>
+        </ChatOverlay>
       )}
 
       {viewer && (
+        <ChatOverlay>
         <div className="fixed inset-0 z-50 flex flex-col bg-black/90" role="dialog" aria-modal aria-label="사진 보기" onClick={() => setViewer(null)}>
           <div className="flex h-14 shrink-0 items-center justify-end gap-1 px-2" onClick={(e) => e.stopPropagation()}>
             <button type="button" onClick={() => void download(viewer)} aria-label="사진 저장" className="inline-flex size-11 items-center justify-center rounded-xl text-white hover:bg-white/10">
@@ -591,9 +595,11 @@ export function ChatRoom({ roomId }: { roomId: string }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={viewer.localUrl ?? (viewer.attachment_path ? (urls[viewer.attachment_path] ?? urls[thumbOf(viewer) as string] ?? "") : "")} alt={viewer.attachment_name ?? "사진"} className="min-h-0 flex-1 object-contain p-2" />
         </div>
+        </ChatOverlay>
       )}
 
       {panel && detail && (
+        <ChatOverlay>
         <div className="fixed inset-0 z-40 flex justify-end bg-black/30" onClick={() => setPanel(false)} role="dialog" aria-modal aria-label="채팅방 정보">
           <div className="flex h-full w-80 max-w-[85vw] flex-col bg-white" onClick={(e) => e.stopPropagation()}>
             <div className="flex h-14 shrink-0 items-center border-b border-zinc-100 px-4">
@@ -642,6 +648,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
             </div>
           </div>
         </div>
+        </ChatOverlay>
       )}
 
       {inviting && detail && <MemberPicker mode="invite" exclude={detail.members.map((x) => x.member_id)} onClose={() => setInviting(false)} onConfirm={(ids) => invite(ids)} />}

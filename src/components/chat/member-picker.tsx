@@ -4,6 +4,7 @@ import { Check, Loader2, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar } from "./avatar";
 import { useChat } from "./chat-app";
+import { ChatOverlay } from "./overlay";
 
 type Person = { member_id: string; name: string; position: string | null; department: string | null };
 
@@ -53,6 +54,7 @@ export function MemberPicker({
   };
 
   return (
+    <ChatOverlay>
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-center" role="dialog" aria-modal aria-label={mode === "new" ? "새 채팅" : "대화상대 초대"}>
       <div className="flex max-h-[85dvh] w-full flex-col rounded-t-2xl bg-white md:max-w-md md:rounded-2xl">
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-zinc-100 px-4">
@@ -108,5 +110,6 @@ export function MemberPicker({
         </div>
       </div>
     </div>
+    </ChatOverlay>
   );
 }

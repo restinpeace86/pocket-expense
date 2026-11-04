@@ -4,6 +4,7 @@ import { Home, Inbox, MessageCircle, UserRound, Wallet, type LucideIcon } from "
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { navVisibility } from "./nav-visibility";
 import { useChatUnread } from "@/components/chat/use-chat-unread";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import type { Membership } from "@/lib/auth/paths";
@@ -31,15 +32,17 @@ export function EmployeeShell({
 }) {
   const ws = `/workspace/${membership.company_id}`;
   const realPath = usePathname();
-  const chatUnread = useChatUnread(chat, membership.member_id);
-  const pathname = previewPath !== undefined ? `${ws}${previewPath}` : realPath;
-  const showNav = !pathname.includes("/employee/claims/") && !/\/approvals\/[^/]+/.test(pathname);
+  const preview = previewPath !== undefined;
+  // 실제 화면의 하단 메뉴는 워크스페이스 공통 레이아웃의 EmployeeBottomNav 하나(D-207, 깜빡임 방지). 여기서는 미리보기에서만 그린다
+  const chatUnread = useChatUnread(preview ? chat : null, membership.member_id);
+  const pathname = preview ? `${ws}${previewPath}` : realPath;
+  const showNav = navVisibility(pathname, ws) !== "none";
 
   return (
     <div className="flex min-h-dvh flex-1 flex-col bg-page" data-theme={theme}>
       <WorkspaceHeader membership={membership} mode="employee" />
       <div className={`flex flex-1 flex-col ${showNav ? "pb-[calc(4rem+env(safe-area-inset-bottom))]" : ""}`}>{children}</div>
-      {showNav && <EmployeeTabBar ws={ws} pathname={pathname} inbox={inbox} chatUnread={chatUnread} fixed />}
+      {preview && showNav && <EmployeeTabBar ws={ws} pathname={pathname} inbox={inbox} chatUnread={chatUnread} fixed />}
     </div>
   );
 }
