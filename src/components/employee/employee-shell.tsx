@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Inbox, MessageCircle, UserRound, Wallet, type LucideIcon } from "lucide-react";
+import { CalendarDays, Home, Inbox, MessageCircle, UserRound, Wallet, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -53,12 +53,14 @@ export function EmployeeTabBar({
   pathname,
   inbox,
   chatUnread,
+  calendar = false,
   fixed = false,
 }: {
   ws: string;
   pathname: string;
   inbox?: { waiting: number } | null;
   chatUnread?: number | null;
+  calendar?: boolean; // [캘린더] 탭(D-209): 회사 캘린더 스위치가 켜졌을 때만
   fixed?: boolean;
 }) {
   const tabs: Tab[] = [
@@ -66,6 +68,7 @@ export function EmployeeTabBar({
     { href: `${ws}/employee/settlements`, label: "정산", icon: Wallet, ready: true },
     ...(inbox ? [{ href: `${ws}/approvals`, label: "결재함", icon: Inbox, ready: true, badge: inbox.waiting }] : []),
     ...(chatUnread !== null && chatUnread !== undefined ? [{ href: `${ws}/chat`, label: "채팅", icon: MessageCircle, ready: true, badge: chatUnread }] : []),
+    ...(calendar ? [{ href: `${ws}/calendar`, label: "캘린더", icon: CalendarDays, ready: true }] : []),
     { href: `${ws}/employee/profile`, label: "내 정보", icon: UserRound, ready: true },
   ];
   return (

@@ -230,7 +230,3 @@ export function roomConflict(bookings: CalEvent[], roomId: string, startsIso: st
   );
 }
 
-// 아직 안 끝난 첫 시간 일정(홈 카드 "다음 일정")
-export function nextUpcoming(list: CalEvent[], now: number = Date.now()): CalEvent | undefined {
-  return list.find((e) => !e.all_day && !!e.ends_at && Date.parse(e.ends_at) > now);
-}
