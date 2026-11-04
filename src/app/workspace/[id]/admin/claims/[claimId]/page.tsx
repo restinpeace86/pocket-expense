@@ -7,6 +7,7 @@ import { ClaimListPane } from "@/components/claims/claim-list-pane";
 import { getFilterOptions } from "@/lib/claims/filter-options";
 import { filterQuery, parseClaimFilters } from "@/lib/claims/filters";
 import { ApprovalTimeline } from "@/components/claims/approval-timeline";
+import { ClaimEventLink } from "@/components/calendar/claim-event-link";
 import { ClaimChatButton } from "@/components/chat/claim-chat-button";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { chatEnabled } from "@/lib/chat/server";
@@ -71,6 +72,7 @@ async function Detail({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
         next={nextFor(nextList)}
         taxOffice={taxOffice}
         chat={chat ? <ClaimChatButton companyId={id} claimId={claimId} /> : null}
+        eventLink={<ClaimEventLink companyId={id} claimId={claimId} />}
       />
     </div>
   );

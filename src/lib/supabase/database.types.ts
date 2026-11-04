@@ -1476,6 +1476,7 @@ export type Database = {
         Row: {
           approved_at: string | null
           attendees: string | null
+          calendar_event_id: string | null
           category: Database["public"]["Enums"]["expense_category"] | null
           client_name: string | null
           company_id: string
@@ -1523,6 +1524,7 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           attendees?: string | null
+          calendar_event_id?: string | null
           category?: Database["public"]["Enums"]["expense_category"] | null
           client_name?: string | null
           company_id: string
@@ -1570,6 +1572,7 @@ export type Database = {
         Update: {
           approved_at?: string | null
           attendees?: string | null
+          calendar_event_id?: string | null
           category?: Database["public"]["Enums"]["expense_category"] | null
           client_name?: string | null
           company_id?: string
@@ -1615,6 +1618,13 @@ export type Database = {
           vehicle_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "expense_claims_calendar_event_fk"
+            columns: ["calendar_event_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id", "company_id"]
+          },
           {
             foreignKeyName: "expense_claims_company_id_fkey"
             columns: ["company_id"]
@@ -3342,9 +3352,11 @@ export type Database = {
         Args: { p_ends: string; p_exclude?: string; p_starts: string }
         Returns: string[]
       }
+      calendar_create_claim: { Args: { p_event_id: string }; Returns: string }
       calendar_delete_event: { Args: { p_id: string }; Returns: undefined }
       calendar_directory: { Args: never; Returns: Json }
       calendar_event: { Args: { p_id: string }; Returns: Json }
+      calendar_event_claims: { Args: { p_event_id: string }; Returns: Json }
       calendar_events_range: {
         Args: { p_from: string; p_members: string[]; p_to: string }
         Returns: Json

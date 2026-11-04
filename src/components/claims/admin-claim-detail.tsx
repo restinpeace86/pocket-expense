@@ -30,6 +30,7 @@ export function AdminClaimDetail({
   next = null,
   taxOffice = null,
   chat = null,
+  eventLink = null,
 }: {
   detail: ClaimDetail;
   canAct: boolean;
@@ -42,6 +43,7 @@ export function AdminClaimDetail({
   next?: { href: string; count: number } | null; // 처리 뒤 [다음 결재 n건 보기] (approver.md ① 완료 화면)
   taxOffice?: string | null; // 세무사무소가 계정과목을 관리하면 영수증별 조정 대신 세무사 확인 요청(D-156)
   chat?: React.ReactNode; // 사내 메신저 [이 건으로 대화](D-203) — 스위치가 켜진 회사만
+  eventLink?: React.ReactNode; // 연결된 일정(D-210) — 캘린더에서 [경비 올리기]로 만든 결의서만
 }) {
   const { claim, owner } = detail;
   const router = useRouter();
@@ -123,6 +125,7 @@ export function AdminClaimDetail({
           {owner.department && ` (${owner.department})`}
           {owner.position && ` · ${owner.position}`} · 상신 {formatDateTimeKst(claim.submitted_at)}
         </p>
+        {eventLink && <div className="mt-3">{eventLink}</div>}
         {(claim.category || claim.vehicle) && (
           <p className="mt-2 text-sm text-zinc-700">
             {claim.category && `📂 ${CATEGORY_LABEL[claim.category]}`}

@@ -447,6 +447,7 @@
 
 ### 2.11 사내 메신저·기능 스위치 (D-203, migration 106·107)
 - `company_features(company_id, feature messenger|attendance|calendar, enabled)` — 회사별 기능 스위치. 줄이 없으면 메신저만 켜짐(D-206), 나머지 꺼짐. 쓰기는 service role만.
+- (D-210, migration 112) `expense_claims.calendar_event_id` — (calendar_event_id, company_id) → calendar_events, 일정 지우면 null. 쓰기는 `calendar_create_claim`만.
 - (D-207, migration 110) `meeting_rooms(company_id, name, sort_order)` — 함수만. `calendar_events.room_id`(복합 FK, 시간 일정만) + exclusion `(room_id =, tstzrange &&)`로 같은 방 겹침 금지.
 - (D-206, migration 109) `calendar_events`·`calendar_attendees`·`calendar_view_prefs` — company_id 복합 FK, 표 권한 없음(함수만). `chat_rooms.kind 'notice'` + `notice_member_id`, `chat_messages.kind 'notice'` + `link`. pg_cron 작업 `calendar-meeting-reminders`(10분마다). 자세한 규칙: `spec/features/calendar.md`.
 - `chat_rooms`(direct|group|claim, direct_key·claim_id 회사 안 유일) / `chat_members`(last_read_at·joined_at·left_at) / `chat_messages`(text|image|file|system, attachment_*, deleted_at, pushed_at) — 모두 company_id 복합 FK. 쓰기는 definer 함수만, 읽기는 참여자 + 스위치. 자세한 규칙: `spec/features/messenger.md`.

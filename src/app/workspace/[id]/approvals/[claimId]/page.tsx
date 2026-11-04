@@ -3,6 +3,7 @@ import { getReviewerInbox } from "@/lib/claims/inbox";
 import { Suspense } from "react";
 import { AdminClaimDetail } from "@/components/claims/admin-claim-detail";
 import { ApprovalTimeline } from "@/components/claims/approval-timeline";
+import { ClaimEventLink } from "@/components/calendar/claim-event-link";
 import { ClaimChatButton } from "@/components/chat/claim-chat-button";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { chatEnabled } from "@/lib/chat/server";
@@ -56,6 +57,7 @@ async function Approval({ params }: Pick<PageProps<"/workspace/[id]/approvals/[c
           timeline={<ApprovalTimeline detail={detail} />}
           reviewer
           chat={chat ? <ClaimChatButton companyId={id} claimId={claimId} /> : null}
+          eventLink={<ClaimEventLink companyId={id} claimId={claimId} />}
           next={nextRows.length ? { href: `/workspace/${id}/approvals/${nextRows[0].id}`, count: nextRows.length } : { href: "", count: 0 }}
         />
     </main>

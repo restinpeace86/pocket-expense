@@ -1,12 +1,16 @@
 "use client";
 
-import { AlarmClock, Check, ChevronDown, ChevronLeft, ChevronRight, DoorOpen, Loader2, MapPin, Plus, Search, Users, X } from "lucide-react";
+import { AlarmClock, Check, ChevronDown, ChevronLeft, ChevronRight, DoorOpen, Loader2, MapPin, Plus, Receipt, Search, Users, X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { createClaimFromEventAction } from "@/app/workspace/[id]/calendar/actions";
+import { claimStatusBadge } from "@/lib/expense/status";
+import { formatWon } from "@/lib/format";
 import {
   addDays,
   addMinutes,
   attendeeSummary,
+  CLAIM_KINDS,
   dayLabel,
   dayTone,
   deadlinesBetween,
@@ -35,6 +39,7 @@ import {
   type CalEvent,
   type CalKind,
   type Deadline,
+  type EventClaim,
   type Holiday,
   type MeetingRoom,
 } from "@/lib/calendar/calendar";
@@ -351,6 +356,8 @@ export function CalendarView(props: Props) {
         <EventDetail
           event={detail}
           me={me}
+          ws={ws}
+          admin={admin}
           onClose={() => setDetail(null)}
           onEdit={() => {
             setEditing({ event: detail });
@@ -725,6 +732,8 @@ const RESPONSE_CLS = { pending: "bg-zinc-100 text-zinc-600", accepted: "bg-emera
 function EventDetail({
   event: e,
   me,
+  ws,
+  admin,
   onClose,
   onEdit,
   onChanged,
@@ -732,6 +741,8 @@ function EventDetail({
 }: {
   event: CalEvent;
   me: string;
+  ws: string;
+  admin: boolean;
   onClose: () => void;
   onEdit: () => void;
   onChanged: (openId: string | null) => Promise<void>;
@@ -794,6 +805,7 @@ function EventDetail({
             ))}
           </ul>
         </div>
+        {CLAIM_KINDS.includes(e.kind) && <EventClaims event={e} me={me} ws={ws} admin={admin} supabase={supabase} />}
         {e.kind === "meeting" && !e.all_day && <p className="text-xs text-zinc-500">회의 시작 10분 전에 참석자(불참 제외)의 채팅 [알림]방으로 안내가 가요.</p>}
         {err && (
           <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -833,6 +845,82 @@ function EventDetail({
         ) : null}
       </div>
     </Sheet>
+  );
+}
+
+// ── 이 일정 경비(D-210): 출장·회의 일정에서 [경비 올리기] + 묶인 결의서 ─────────────────
+// 직원은 내 결의서만, 관리자는 다른 사람이 올린 결의서도(작성 중 제외). 올리기는 참석자(불참 제외)만
+function EventClaims({ event: e, me, ws, admin, supabase }: { event: CalEvent; me: string; ws: string; admin: boolean; supabase: ReturnType<typeof createClient> }) {
+  const [list, setList] = useState<EventClaim[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  useEffect(() => {
+    let alive = true;
+    void supabase.rpc("calendar_event_claims", { p_event_id: e.id }).then(({ data }) => alive && setList((data as unknown as EventClaim[] | null) ?? []));
+    return () => {
+      alive = false;
+    };
+  }, [e.id, supabase]);
+  const mine = e.attendees.find((a) => a.member_id === me);
+  const canAdd = !!mine && mine.response !== "declined";
+  if (!canAdd && !admin && !list?.length) return null;
+  const label = e.kind === "trip" ? "출장 경비 올리기" : "회의 경비 올리기";
+  const hrefOf = (c: EventClaim) =>
+    c.mine ? (c.status === "draft" || c.status === "rejected" ? `${ws}/employee/claims/${c.id}/edit` : `${ws}/employee/claims/${c.id}`) : `${ws}/admin/claims/${c.id}`;
+  const add = () =>
+    start(async () => {
+      setErr(null);
+      const r = await createClaimFromEventAction(e.id);
+      if (r?.error) setErr(r.error);
+    });
+  const total = (list ?? []).reduce((n, c) => n + c.total_amount, 0);
+  return (
+    <section className="flex flex-col gap-2 rounded-xl border border-zinc-200 p-3" aria-label="이 일정 경비">
+      <div className="flex items-center gap-2">
+        <Receipt className="size-4 shrink-0 text-zinc-500" />
+        <p className="flex-1 text-sm font-semibold">이 일정 경비{list && list.length > 0 && <span className="ml-1 font-normal text-zinc-600">{list.length}건 · {formatWon(total)}</span>}</p>
+      </div>
+      {list === null ? (
+        <Loader2 className="size-4 animate-spin text-zinc-400" aria-label="불러오는 중" />
+      ) : list.length ? (
+        <ul className="flex flex-col">
+          {list.map((c) => {
+            const badge = claimStatusBadge(c.status);
+            return (
+              <li key={c.id}>
+                <Link href={hrefOf(c)} className="flex min-h-11 items-center gap-2 rounded-lg px-1.5 text-sm hover:bg-zinc-50">
+                  <span className="min-w-0 flex-1 truncate">
+                    {c.title || "제목 없는 결의서"}
+                    {!c.mine && <span className="ml-1 text-xs text-zinc-500">{c.member_name}</span>}
+                  </span>
+                  <span className="shrink-0 tabular-nums text-zinc-800">{formatWon(c.total_amount)}</span>
+                  <span className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}>{badge.label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="text-sm text-zinc-500">아직 이 일정으로 올린 경비가 없어요.</p>
+      )}
+      {canAdd && (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={add}
+          className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-brand-300 bg-brand-50 text-sm font-semibold text-brand-800 hover:bg-brand-100 disabled:opacity-60"
+        >
+          {pending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+          {label}
+        </button>
+      )}
+      {canAdd && <p className="text-xs text-zinc-500">{e.kind === "trip" ? "출장지·기간·목적이 채워진 출장 결의서가 만들어져요." : "회의 목적·참석자가 채워진 결의서가 만들어져요. 카테고리는 골라 주세요."}</p>}
+      {err && (
+        <p role="alert" className="text-sm text-red-700">
+          {err}
+        </p>
+      )}
+    </section>
   );
 }
 

@@ -19,7 +19,7 @@ function period(d: ClaimDetail) {
   return a === b ? a : `${a} ~ ${b.slice(5)}`;
 }
 
-export function EmployeeClaimDetail({ detail, base, chat = null }: { detail: ClaimDetail; base: string; chat?: React.ReactNode }) {
+export function EmployeeClaimDetail({ detail, base, chat = null, eventLink = null }: { detail: ClaimDetail; base: string; chat?: React.ReactNode; eventLink?: React.ReactNode }) {
   const { claim } = detail;
   const badge = claimStatusBadge(claim.status, claim.settlement_required);
   const reviewing = detail.pendingStep?.step_kind === "review" ? `${detail.pendingStep.approver_name ?? "사전 검토자"} 검토 중` : null;
@@ -40,6 +40,7 @@ export function EmployeeClaimDetail({ detail, base, chat = null }: { detail: Cla
         <h1 className="break-keep text-lg font-bold [overflow-wrap:anywhere]">{claim.title || "제목 없는 결의서"}</h1>
         <p className="mt-1 text-sm text-zinc-500">{[period(detail), `영수증 ${claim.item_count}건`, reviewing].filter(Boolean).join(" · ")}</p>
         <p className="mt-2 text-2xl font-bold tabular-nums">{formatWon(claim.total_amount)}</p>
+        {eventLink && <div className="mt-3">{eventLink}</div>}
         {claim.description && <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{claim.description}</p>}
         <ExceptionNote memo={claim.exception_memo} items={detail.items} />
         {(claim.category || claim.vehicle) && (

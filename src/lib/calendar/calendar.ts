@@ -207,7 +207,14 @@ export const SAVE_ERRORS: Record<string, string> = {
   ROOM_NAME_TAKEN: "같은 이름의 회의실이 이미 있어요.",
   TOO_MANY_ROOMS: "회의실은 30개까지 등록할 수 있어요.",
   NOT_ALLOWED: "관리자만 할 수 있어요.",
+  EVENT_KIND_NO_CLAIM: "출장·회의 일정에서만 경비를 올릴 수 있어요.",
+  NOT_ATTENDEE: "이 일정의 참석자(불참 제외)만 경비를 올릴 수 있어요.",
+  NOT_A_MEMBER: "다시 로그인해 주세요.",
 };
+
+// 일정에 묶인 경비(D-210, calendar_event_claims)
+export type EventClaim = { id: string; title: string; status: "draft" | "submitted" | "approved" | "rejected" | "paid"; total_amount: number; member_name: string; mine: boolean };
+export const CLAIM_KINDS: CalKind[] = ["trip", "meeting"];
 export function saveErrorText(message: string | undefined): string {
   return (message && SAVE_ERRORS[message]) || "저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.";
 }

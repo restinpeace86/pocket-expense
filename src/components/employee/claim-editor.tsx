@@ -366,6 +366,7 @@ export function ClaimEditor({
   openItemId = null,
   selfApprove = false,
   approvalPreview = "관리자 승인",
+  eventLink = null,
 }: {
   data: EditorData;
   base: string;
@@ -373,6 +374,7 @@ export function ClaimEditor({
   openItemId?: string | null; // ?item=<id>: 그 영수증을 펼친 채로 연다
   selfApprove?: boolean;
   approvalPreview?: string;
+  eventLink?: React.ReactNode; // 연결된 일정(D-210)
 }) {
   const { claim, items } = data;
   const router = useRouter();
@@ -692,6 +694,8 @@ export function ClaimEditor({
           <span className="ml-auto font-bold tabular-nums">{formatWon(claim.total_amount)}</span>
         </div>
       )}
+
+      {eventLink}
 
       {claim.recurring_payment_id && claim.status === "draft" && (
         <p className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">

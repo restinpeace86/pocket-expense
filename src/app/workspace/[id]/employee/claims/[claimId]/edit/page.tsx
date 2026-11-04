@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { ClaimEditor } from "@/components/employee/claim-editor";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { getApprovalPreview } from "@/lib/admin/approval-lines";
+import { ClaimEventLink } from "@/components/calendar/claim-event-link";
 import { getMyClaimForEdit } from "@/lib/employee/claim";
 
 export const metadata = { title: "지출결의서 작성 · PocketExpense" };
@@ -25,5 +26,5 @@ async function ClaimEdit({ params, searchParams }: Pick<PageProps<"/workspace/[i
   const base = `/workspace/${id}/employee`;
   // 상신 이후에는 편집하지 않고 읽기 전용 상세로
   if (data.claim.status !== "draft" && data.claim.status !== "rejected") redirect(`${base}/claims/${claimId}`);
-  return <ClaimEditor key={data.claim.id} data={data} base={base} openAdd={sp.add === "1"} openItemId={typeof sp.item === "string" ? sp.item : null} selfApprove={membership.role === "super_admin"} approvalPreview={approvalPreview} />;
+  return <ClaimEditor key={data.claim.id} data={data} base={base} openAdd={sp.add === "1"} openItemId={typeof sp.item === "string" ? sp.item : null} selfApprove={membership.role === "super_admin"} approvalPreview={approvalPreview} eventLink={<ClaimEventLink companyId={id} claimId={claimId} />} />;
 }
