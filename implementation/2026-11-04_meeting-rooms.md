@@ -23,3 +23,4 @@
 - 이제 모드는 브라우저에서 고른다: `useViewMode`(view-mode-mark.tsx) → `ChatApp`·`CalendarShell`(캘린더 틀). 서버 값은 처음 그릴 때만.
 - 쿠키는 화면이 실제로 열릴 때만(헤더의 ViewModeMark) 남긴다 — proxy에서 남기면 [직원 모드로 전환] 링크 미리 불러오기 요청이 모드를 바꿔 버려서 뺐다.
 - 확인: `.responsive/live/e2e-viewmode.mjs`(관리자 → [직원 모드로 전환] → 하단 [채팅] 클릭 → 하단 메뉴 있음 / 관리자 모드로 돌아가 채팅 → 없음), Chrome·Edge × 1280·390 ALL_OK.
+- 보강: [직원 모드로 전환]·[관리자 모드로 전환]을 누르는 순간 바로 모드 기록(ModeSwitchLink) — 전환 직후 바로 [채팅]을 눌러도 맞는 틀(e2e-viewmode에서 대기 없이 클릭, Chrome·Edge ALL_OK).

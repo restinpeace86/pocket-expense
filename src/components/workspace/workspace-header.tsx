@@ -1,8 +1,7 @@
 import { ArrowLeftRight } from "lucide-react";
-import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ThemeSwitcher, ThemeSync } from "@/components/workspace/theme-switcher";
-import { ViewModeMark } from "@/components/workspace/view-mode-mark";
+import { ModeSwitchLink, ViewModeMark } from "@/components/workspace/view-mode-mark";
 import { isAdminRole, type Membership } from "@/lib/auth/paths";
 
 // 워크스페이스 공통 헤더: 회사명, 모드 전환(관리자 이상만, D-049), 화면 색상(D-066, 관리자 모드만), 로그아웃
@@ -18,14 +17,16 @@ export function WorkspaceHeader({ membership, mode }: { membership: Membership; 
       </div>
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         {isAdminRole(membership.role) && (
-          <Link
+          <ModeSwitchLink
+            companyId={membership.company_id}
+            to={mode === "admin" ? "employee" : "admin"}
             href={mode === "admin" ? `${base}/employee` : `${base}/admin`}
             className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-xl border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50"
           >
             <ArrowLeftRight className="size-4" />
             <span className="sm:hidden">{mode === "admin" ? "직원 모드" : "관리자 모드"}</span>
             <span className="hidden sm:inline">{mode === "admin" ? "직원 모드로 전환" : "관리자 모드로 전환"}</span>
-          </Link>
+          </ModeSwitchLink>
         )}
         {mode === "admin" ? (
           // 모바일에서 관리자 이상은 헤더가 좁아 관리자 메뉴(햄버거) 안에서 고른다

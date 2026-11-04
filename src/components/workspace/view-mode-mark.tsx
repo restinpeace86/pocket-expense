@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import Link from "next/link";
+import { useEffect, useSyncExternalStore, type ComponentProps } from "react";
 
 // 관리자 모드 / 직원 모드(D-049·D-207). 지금 보는 모드를 쿠키 pe_view에 남기고(화면이 실제로 열릴 때만 — 미리 불러오기 요청은 모드를 바꾸지 않게),
 // 채팅·캘린더처럼 두 모드가 같은 주소를 쓰는 화면은 브라우저에서 이 값을 읽어 틀(하단 메뉴·왼쪽 메뉴)을 고른다.
@@ -14,13 +15,20 @@ function readMode(companyId: string): "admin" | "employee" | null {
   return v === `${companyId}:employee` ? "employee" : v === `${companyId}:admin` ? "admin" : null;
 }
 
+function writeMode(companyId: string, mode: "admin" | "employee") {
+  if (readMode(companyId) === mode) return;
+  document.cookie = `pe_view=${companyId}:${mode}; path=/; max-age=31536000; samesite=lax`;
+  window.dispatchEvent(new Event(EVENT));
+}
+
 export function ViewModeMark({ companyId, mode }: { companyId: string; mode: "admin" | "employee" }) {
-  useEffect(() => {
-    if (readMode(companyId) === mode) return;
-    document.cookie = `pe_view=${companyId}:${mode}; path=/; max-age=31536000; samesite=lax`;
-    window.dispatchEvent(new Event(EVENT));
-  }, [companyId, mode]);
+  useEffect(() => writeMode(companyId, mode), [companyId, mode]);
   return null;
+}
+
+// [직원 모드로 전환]·[관리자 모드로 전환]: 누르는 순간 바로 기록(전환 직후 바로 채팅을 눌러도 맞는 틀)
+export function ModeSwitchLink({ companyId, to, ...rest }: ComponentProps<typeof Link> & { companyId: string; to: "admin" | "employee" }) {
+  return <Link {...rest} onClick={() => writeMode(companyId, to)} />;
 }
 
 function subscribe(cb: () => void) {
