@@ -46,12 +46,12 @@ const NAV: NavItem[] = [
   { href: "/spending", label: "월별 지출 현황", icon: ChartBar, ready: true }, // 계정과목별 보기 전용(D-160)
   { href: "/export", label: "세무 마감", icon: FileDown, ready: true },
 ];
-// 회의실(D-207): 캘린더 스위치가 켜졌을 때만 설정 메뉴에(회사차량 아래)
-const ROOMS_NAV: NavItem = { href: "/meeting-rooms", label: "회의실", icon: DoorOpen, ready: true };
 const SETTINGS_NAV: NavItem[] = [
   { href: "/settings", label: "지출 한도·정책", icon: SlidersHorizontal, ready: true },
   { href: "/corporate-cards", label: "법인카드", icon: CreditCard, ready: true },
   { href: "/vehicles", label: "회사차량", icon: Car, ready: true },
+  // 캘린더 켜기·끄기 + 회의실(D-207·D-208): 꺼져 있어도 늘 보여야 관리자가 켤 수 있다
+  { href: "/calendar-settings", label: "캘린더·회의실", icon: DoorOpen, ready: true },
   { href: "/recurring", label: "정기 결제", icon: Repeat, ready: true },
   { href: "/form-template", label: "지출결의서 양식", icon: FileText, ready: true },
   { href: "/departments", label: "부서", icon: Building2, ready: true },
@@ -90,28 +90,16 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
 
 // settingsOpen: 휴대폰 메뉴(서랍)에서는 설정 하위 메뉴를 펼친 채로 연다(개선사항 1-1) — 화면 이름이 바로 보이게
 // feedback: 관리자 1:1 문의 주소 — 휴대폰 서랍 메뉴에서만 넘긴다(PC는 오른쪽 아래 떠 있는 버튼, 7차 개선사항 3)
-function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, chat = null, calendar = false }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; chat?: number | null; calendar?: boolean }) {
+function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, calendar = false }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; calendar?: boolean }) {
   const realPath = usePathname();
   const pathname = previewPath ? `${base}${previewPath}` : realPath;
-  const settingsNav = calendar ? SETTINGS_NAV.flatMap((i) => (i.href === "/vehicles" ? [i, ROOMS_NAV] : [i])) : SETTINGS_NAV;
+  const settingsNav = SETTINGS_NAV;
   const settingsActive = settingsNav.some((i) => pathname.startsWith(`${base}${i.href}`));
   return (
     <nav className="flex flex-col gap-1 p-3" aria-label="관리자 메뉴">
       {NAV.slice(0, 1).map((item) => (
         <NavLink key={item.label} item={item} base={base} pathname={pathname} onNavigate={onNavigate} />
       ))}
-      {/* 사내 메신저(D-203): 회사 스위치가 켜졌을 때만. 채팅은 워크스페이스 공통 화면(/chat)이다 */}
-      {chat !== null && (
-        <Link
-          href={base.replace(/\/admin$/, "/chat")}
-          onClick={onNavigate}
-          className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-sidebar-fg hover:bg-sidebar-hover"
-        >
-          <MessageCircle className="size-5 shrink-0" />
-          <span className="flex-1">채팅</span>
-          {chat > 0 && <span className="min-w-5 rounded-full bg-red-600 px-1.5 text-center text-[11px] font-semibold leading-5 text-white">{chat > 99 ? "99+" : chat}</span>}
-        </Link>
-      )}
       {/* 사내 캘린더(D-206): 회사 스위치가 켜졌을 때만. 워크스페이스 공통 화면(/calendar) */}
       {calendar && (
         <Link
@@ -194,7 +182,7 @@ export function AdminShell({
         <p className="px-6 pb-3 pt-5">
           <Brand />
         </p>
-        <NavList base={base} previewPath={previewPath} chat={chatUnread} calendar={calendar} />
+        <NavList base={base} previewPath={previewPath} calendar={calendar} />
       </aside>
 
       {open && (
@@ -207,7 +195,7 @@ export function AdminShell({
                 <X className="size-5" />
               </button>
             </div>
-            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} chat={chatUnread} calendar={calendar} />
+            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} calendar={calendar} />
             <div className="mt-auto sm:hidden">
               <ThemeOptionsInline />
             </div>
@@ -223,8 +211,9 @@ export function AdminShell({
           <div className="min-w-0 flex-1 [&>header]:border-b-0">
             <WorkspaceHeader membership={membership} mode="admin" />
           </div>
+          {/* 채팅(D-208): 왼쪽 메뉴가 아니라 머리글 아이콘(PC·휴대폰 같음) — 채팅은 관리자 틀 밖 전체 화면이라 메뉴 항목과 동작이 달라서 */}
           {chatUnread !== null && (
-            <Link href={`/workspace/${membership.company_id}/chat`} aria-label={`채팅${chatUnread ? ` 안 읽은 메시지 ${chatUnread}개` : ""}`} className="relative mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-xl hover:bg-zinc-100 md:hidden">
+            <Link href={`/workspace/${membership.company_id}/chat`} aria-label={`채팅${chatUnread ? ` 안 읽은 메시지 ${chatUnread}개` : ""}`} className="relative mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-xl hover:bg-zinc-100 md:order-last md:mr-4">
               <MessageCircle className="size-5" />
               {chatUnread > 0 && <span className="absolute right-0.5 top-1 min-w-4 rounded-full bg-red-600 px-1 text-center text-[10px] font-semibold leading-4 text-white">{chatUnread > 99 ? "99+" : chatUnread}</span>}
             </Link>

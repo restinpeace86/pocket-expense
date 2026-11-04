@@ -3,38 +3,12 @@
 import { ArrowDown, ArrowUp, Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { deleteMeetingRoomAction, reorderMeetingRoomsAction, saveMeetingRoomAction } from "@/app/workspace/[id]/admin/meeting-rooms/actions";
+import { deleteMeetingRoomAction, reorderMeetingRoomsAction, saveMeetingRoomAction } from "@/app/workspace/[id]/admin/calendar-settings/actions";
 import { FormError } from "@/components/onboarding/field";
-import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { MeetingRoom } from "@/lib/calendar/calendar";
 
 type Result = { error: string | null };
-
-export function MeetingRoomsHeading() {
-  return (
-    <SectionHeading
-      as="h1"
-      title="회의실"
-      summary="캘린더에서 예약할 수 있는 우리 회사 회의실이에요."
-      helpId="admin.meeting-rooms"
-      help={
-        <>
-          <p>
-            <b>어디에 쓰이나요?</b> 캘린더에서 일정을 만들 때 회의실을 고를 수 있어요. 같은 회의실은 같은 시간에 한 건만 잡혀요(앞 회의가 끝나는 시각부터는 다음
-            예약 가능).
-          </p>
-          <p>
-            <b>회의실이 없으면</b> 등록하지 않아도 돼요. 그때는 일정의 &lsquo;장소&rsquo;에 글자로 적으면 돼요. 회의실이 1~2개뿐인 회사도 그대로 쓰면 돼요.
-          </p>
-          <p>
-            <b>삭제</b>해도 잡혀 있던 일정은 지워지지 않아요. 회의실 이름이 그 일정의 장소 글자로 옮겨져요.
-          </p>
-        </>
-      }
-    />
-  );
-}
 
 // 회의실 설정(D-207): 추가·이름 변경·순서 변경·삭제
 export function MeetingRoomsView({ rooms, calendarHref }: { rooms: MeetingRoom[]; calendarHref: string }) {

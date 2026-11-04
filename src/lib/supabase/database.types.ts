@@ -3369,6 +3369,7 @@ export type Database = {
         Args: { p_member_ids: string[]; p_show_deadlines: boolean }
         Returns: undefined
       }
+      calendar_set_enabled: { Args: { p_enabled: boolean }; Returns: boolean }
       chat_claim_push: { Args: { p_id: string }; Returns: Json }
       chat_create_group: {
         Args: { p_member_ids: string[]; p_title?: string }

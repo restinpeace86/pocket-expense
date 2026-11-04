@@ -29,3 +29,10 @@ export async function deleteMeetingRoomAction(id: string): Promise<ActionResult>
   const { error } = await supabase.rpc("calendar_room_delete", { p_id: id });
   return result(error);
 }
+
+// 캘린더 켜기·끄기(D-208): 관리자만, 자기 회사만(calendar_set_enabled). 메뉴·홈 카드가 바로 바뀌도록 화면 새로 그림
+export async function setCalendarEnabledAction(enabled: boolean): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("calendar_set_enabled", { p_enabled: enabled });
+  return result(error);
+}
