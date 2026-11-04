@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { AdminShell } from "@/components/admin/admin-shell";
-import { EmployeeShell } from "@/components/employee/employee-shell";
+import { CalendarShell } from "@/components/calendar/calendar-shell";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { viewMode } from "@/lib/auth/view-mode";
 import { calendarEnabled } from "@/lib/calendar/server";
@@ -24,18 +23,10 @@ async function Guarded({ params, children }: { params: LayoutProps<"/workspace/[
   const { id } = await params;
   const membership = await requireWorkspace(id);
   if (!(await calendarEnabled())) notFound();
-  if ((await viewMode(membership)) === "admin") {
-    const chat = await chatUnreadTotal();
-    return (
-      <AdminShell membership={membership} chat={chat} calendar>
-        {children}
-      </AdminShell>
-    );
-  }
-  const [inbox, chat] = await Promise.all([getInboxBadge(membership), chatUnreadTotal()]);
+  const [serverMode, inbox, chat] = await Promise.all([viewMode(membership), getInboxBadge(membership), chatUnreadTotal()]);
   return (
-    <EmployeeShell membership={membership} inbox={inbox} chat={chat}>
+    <CalendarShell membership={membership} serverMode={serverMode} inbox={inbox} chat={chat}>
       {children}
-    </EmployeeShell>
+    </CalendarShell>
   );
 }

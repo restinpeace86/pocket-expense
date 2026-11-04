@@ -21,13 +21,10 @@ async function Guarded({ params, children }: { params: LayoutProps<"/workspace/[
   const { id } = await params;
   const membership = await requireWorkspace(id);
   if (!(await chatEnabled())) notFound();
-  // 관리자 계정도 [직원 모드]에서 들어오면 직원처럼 하단 메뉴(홈·정산·결재함·채팅·내 정보)를 그대로(view-mode 쿠키)
-  const admin = (await viewMode(membership)) === "admin";
-  const profileHref = admin ? `/workspace/${id}/admin/settings` : `/workspace/${id}/employee/profile`;
-  const homeHref = admin ? `/workspace/${id}/admin` : `/workspace/${id}/employee`;
-  const employeeNav = admin ? null : await Promise.all([getInboxBadge(membership), chatUnreadTotal()]).then(([inbox, chat]) => ({ inbox, chat }));
+  // 관리자 계정도 [직원 모드]면 직원처럼 하단 메뉴(홈·정산·결재함·채팅·내 정보) — 고르는 건 ChatApp(브라우저), 여기는 처음 그릴 값
+  const [serverMode, inbox, chat] = await Promise.all([viewMode(membership), getInboxBadge(membership), chatUnreadTotal()]);
   return (
-    <ChatApp membership={membership} homeHref={homeHref} profileHref={profileHref} employeeNav={employeeNav}>
+    <ChatApp membership={membership} serverMode={serverMode} employeeNav={{ inbox, chat }}>
       {children}
     </ChatApp>
   );

@@ -2,7 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { Membership } from "@/lib/auth/paths";
+import { isAdminRole, type Membership } from "@/lib/auth/paths";
+import { useViewMode } from "@/components/workspace/view-mode-mark";
 import { createClient } from "@/lib/supabase/client";
 import { EmployeeTabBar } from "@/components/employee/employee-shell";
 import { subscribeChat, type ChatEvent } from "./hub";
@@ -58,20 +59,23 @@ function useVisibleViewport(): { height: number; top: number } | null {
   return vp;
 }
 
-// employeeNav: 직원이면 채팅 목록 화면에도 직원 하단 메뉴를 그대로 둔다(휴대폰은 대화방에 들어가면 숨김, PC는 계속)
+// 직원·직원 모드면 채팅 목록 화면에도 직원 하단 메뉴를 그대로 둔다(휴대폰은 대화방에 들어가면 숨김, PC는 계속).
+// 관리자 계정의 모드는 브라우저에서 고른다(useViewMode, D-207)
 export function ChatApp({
   membership,
-  homeHref,
-  profileHref,
+  serverMode,
   employeeNav,
   children,
 }: {
   membership: Membership;
-  homeHref: string;
-  profileHref: string;
-  employeeNav?: { inbox: { waiting: number } | null; chat: number | null } | null;
+  serverMode: "admin" | "employee";
+  employeeNav: { inbox: { waiting: number } | null; chat: number | null };
   children: ReactNode;
 }) {
+  const mode = useViewMode(membership.company_id, isAdminRole(membership.role), serverMode);
+  const ws = `/workspace/${membership.company_id}`;
+  const homeHref = mode === "admin" ? `${ws}/admin` : `${ws}/employee`;
+  const profileHref = mode === "admin" ? `${ws}/admin/settings` : `${ws}/employee/profile`;
   const pathname = usePathname();
   const base = `/workspace/${membership.company_id}/chat`;
   const inRoom = pathname.startsWith(`${base}/`);
@@ -81,7 +85,7 @@ export function ChatApp({
     [membership, homeHref, profileHref, supabase],
   );
   const vp = useVisibleViewport();
-  const chatUnread = useChatUnread(employeeNav ? employeeNav.chat : null, membership.member_id);
+  const chatUnread = useChatUnread(employeeNav.chat, membership.member_id);
   // 채팅 화면이 떠 있는 동안 뒤쪽 페이지가 함께 밀리지 않게
   useEffect(() => {
     const html = document.documentElement;
@@ -104,7 +108,7 @@ export function ChatApp({
           </aside>
           <section className={`${inRoom ? "flex" : "hidden md:flex"} min-h-0 min-w-0 flex-1 flex-col`}>{children}</section>
         </div>
-        {employeeNav && (
+        {mode === "employee" && (
           <div className={inRoom ? "hidden md:block" : "block"}>
             <EmployeeTabBar ws={`/workspace/${membership.company_id}`} pathname={pathname} inbox={employeeNav.inbox} chatUnread={chatUnread} />
           </div>
