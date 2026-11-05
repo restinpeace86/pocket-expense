@@ -12,7 +12,7 @@ export const OPERATOR = {
   ceo: "조용걸", // 대표자
   businessNumber: "548-23-02343", // 사업자등록번호
   address: "서울특별시 노원구 한글비석로 480, 208동 709호", // 사업장 소재지
-  privacyOfficer: "", // 개인정보 보호책임자
+  privacyOfficer: "조호신", // 개인정보 보호책임자(연락처 = 이메일 없으면 문의 전화)
   email: "", // 문의 이메일
   phone: "010-9982-0958", // 고객 문의 전화(랜딩 푸터·약관)
   mailOrderNumber: "", // 통신판매업 신고번호(랜딩 푸터)
