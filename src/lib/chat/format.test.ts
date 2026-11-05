@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRows, bytesLabel, oneLine, dateLabel, listTimeLabel, mergeMessages, previewText, roomTitle, timeLabel, unreadCountFor, type ChatMessage } from "./format";
+import { buildRows, bytesLabel, meetingNoticeCard, oneLine, dateLabel, listTimeLabel, mergeMessages, previewText, roomTitle, timeLabel, unreadCountFor, type ChatMessage } from "./format";
 
 const msg = (id: string, sender: string | null, at: string, extra: Partial<ChatMessage> = {}): ChatMessage => ({
   id,
@@ -106,5 +106,16 @@ describe("oneLine (D-214 알림 한 줄)", () => {
     const long = oneLine("가".repeat(100));
     expect(long.length).toBe(60);
     expect(long.endsWith("…")).toBe(true);
+  });
+});
+
+describe("meetingNoticeCard (D-217 10분 전 카드)", () => {
+  it("시간·제목·장소·안건·자료 수", () => {
+    expect(meetingNoticeCard("회의 시작 10분 전입니다.\n14:00~15:00 분기 점검\n장소: 3층 회의실\n안건: 1. 실적\n자료: 2개")).toEqual({ time: "14:00~15:00", title: "분기 점검", place: "3층 회의실", agenda: "1. 실적", files: 2 });
+    expect(meetingNoticeCard("회의 시작 10분 전입니다.\n09:00~09:30 스탠드업")).toEqual({ time: "09:00~09:30", title: "스탠드업", place: null, agenda: null, files: 0 });
+  });
+  it("다른 알림 글은 카드가 아님", () => {
+    expect(meetingNoticeCard("공지입니다")).toBeNull();
+    expect(meetingNoticeCard(null)).toBeNull();
   });
 });

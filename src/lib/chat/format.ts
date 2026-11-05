@@ -172,3 +172,14 @@ export function oneLine(s: string, max = 60): string {
   const t = s.replace(/\s+/g, " ").trim();
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 }
+
+// 회의 10분 전 알림 글 → 카드(D-217). 글 모양: "회의 시작 10분 전입니다.\n14:00~15:00 제목\n장소: …\n안건: …\n자료: n개"
+export type MeetingNoticeCard = { time: string; title: string; place: string | null; agenda: string | null; files: number };
+export function meetingNoticeCard(body: string | null): MeetingNoticeCard | null {
+  const lines = (body ?? "").split("\n");
+  if (lines[0] !== "회의 시작 10분 전입니다." || !lines[1]) return null;
+  const m = lines[1].match(/^(\d{2}:\d{2}~\d{2}:\d{2})\s+(.+)$/);
+  if (!m) return null;
+  const field = (k: string) => lines.slice(2).find((l) => l.startsWith(`${k}: `))?.slice(k.length + 2) ?? null;
+  return { time: m[1], title: m[2], place: field("장소"), agenda: field("안건"), files: Number(field("자료")?.replace(/개$/, "") ?? 0) || 0 };
+}

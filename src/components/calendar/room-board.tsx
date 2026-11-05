@@ -238,6 +238,7 @@ export function RoomBoard({ ws, admin, today, initialDate, initialRoom, director
 
       {picking && (
         <EventEditor
+          ws={ws}
           key={`${picking.roomId}-${picking.range.from}-${picking.range.to}`}
           date={day}
           time={slotTime(picking.range.from)}
@@ -257,6 +258,7 @@ export function RoomBoard({ ws, admin, today, initialDate, initialRoom, director
       )}
       {editEvent && (
         <EventEditor
+          ws={ws}
           key={editEvent.id}
           event={editEvent}
           rooms={rooms}

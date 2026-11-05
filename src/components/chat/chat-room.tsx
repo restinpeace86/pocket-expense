@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowDown, ArrowLeft, Bell, Copy, Download, FileText, ImageOff, ImagePlus, Loader2, LogOut, Menu, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
+import { AlarmClock, ArrowDown, ArrowLeft, Bell, Copy, Download, FileText, ImageOff, ImagePlus, ListChecks, Loader2, LogOut, MapPin, Menu, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { pushChatMessageAction } from "@/app/workspace/[id]/chat/actions";
 import { isAdminRole } from "@/lib/auth/paths";
-import { buildRows, CHAT_BODY_MAX, CHAT_FILE_MAX, displayName, fileSizeLabel, mergeMessages, roomTitle, timeLabel, unreadCountFor, type ChatKind, type ChatMember, type ChatMessage } from "@/lib/chat/format";
+import { buildRows, CHAT_BODY_MAX, CHAT_FILE_MAX, displayName, fileSizeLabel, mergeMessages, roomTitle, timeLabel, unreadCountFor, type ChatKind, type ChatMember, type ChatMessage, meetingNoticeCard } from "@/lib/chat/format";
 import { formatWon } from "@/lib/format";
 import { processChatImage } from "@/lib/receipts/image";
 import { Avatar } from "./avatar";
@@ -437,15 +437,8 @@ export function ChatRoom({ roomId }: { roomId: string }) {
                 <span aria-hidden className="inline-flex size-10 shrink-0 items-center justify-center rounded-[38%] bg-amber-100 text-amber-700">
                   <Bell className="size-5" />
                 </span>
-                <div className="flex min-w-0 max-w-[75%] items-end gap-1">
-                  <div className="min-w-0 rounded-2xl rounded-tl-md border border-[var(--chat-other-border)] bg-[var(--chat-other)] px-3 py-2.5 text-sm shadow-sm">
-                    <p className="whitespace-pre-line break-words leading-relaxed text-zinc-900">{row.msg.body}</p>
-                    {row.msg.link && (
-                      <Link href={row.msg.link} className="mt-2 flex min-h-10 items-center justify-center rounded-xl bg-zinc-100 px-3 text-sm font-semibold text-brand-700 hover:bg-zinc-200">
-                        캘린더에서 보기
-                      </Link>
-                    )}
-                  </div>
+                <div className="flex min-w-0 max-w-[80%] items-end gap-1">
+                  <NoticeBubble body={row.msg.body} link={row.msg.link ?? null} />
                   <span className="shrink-0 whitespace-nowrap pb-0.5 text-[11px] text-zinc-600">{timeLabel(row.msg.created_at)}</span>
                 </div>
               </div>
@@ -746,3 +739,55 @@ function MessageBody({
     </span>
   );
 }
+
+// [알림]방 글(D-206). 회의 10분 전 글은 카드로(D-217): 시간·제목·장소·안건 첫 줄·자료 수 + [안건·자료 보기]
+function NoticeBubble({ body, link }: { body: string | null; link: string | null }) {
+  const card = meetingNoticeCard(body);
+  if (!card)
+    return (
+      <div className="min-w-0 rounded-2xl rounded-tl-md border border-[var(--chat-other-border)] bg-[var(--chat-other)] px-3 py-2.5 text-sm shadow-sm">
+        <p className="whitespace-pre-line break-words leading-relaxed text-zinc-900">{body}</p>
+        {link && (
+          <Link href={link} className="mt-2 flex min-h-10 items-center justify-center rounded-xl bg-zinc-100 px-3 text-sm font-semibold text-brand-700 hover:bg-zinc-200">
+            캘린더에서 보기
+          </Link>
+        )}
+      </div>
+    );
+  return (
+    <article aria-label="회의 시작 10분 전 안내" className="w-64 min-w-0 max-w-full overflow-hidden rounded-2xl rounded-tl-md border border-[var(--chat-other-border)] bg-white text-sm shadow-sm">
+      <p className="flex items-center gap-1.5 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">
+        <AlarmClock className="size-4" />
+        회의 시작 10분 전
+      </p>
+      <div className="flex flex-col gap-1.5 px-3 py-2.5">
+        <p className="break-words text-base font-bold leading-snug text-zinc-900">{card.title}</p>
+        <p className="font-semibold tabular-nums text-brand-700">{card.time}</p>
+        {card.place && (
+          <p className="flex items-start gap-1.5 text-zinc-700">
+            <MapPin className="mt-0.5 size-4 shrink-0 text-zinc-400" />
+            <span className="break-words">{card.place}</span>
+          </p>
+        )}
+        {card.agenda && (
+          <p className="flex items-start gap-1.5 text-zinc-700">
+            <ListChecks className="mt-0.5 size-4 shrink-0 text-zinc-400" />
+            <span className="break-words">{card.agenda}</span>
+          </p>
+        )}
+        {card.files > 0 && (
+          <p className="flex items-center gap-1.5 text-zinc-700">
+            <Paperclip className="size-4 shrink-0 text-zinc-400" />
+            회의 자료 {card.files}개
+          </p>
+        )}
+      </div>
+      {link && (
+        <Link href={link} className="flex min-h-11 items-center justify-center border-t border-zinc-100 px-3 text-sm font-semibold text-brand-700 hover:bg-zinc-50">
+          {card.agenda || card.files ? "안건·자료 보기" : "캘린더에서 보기"}
+        </Link>
+      )}
+    </article>
+  );
+}
+

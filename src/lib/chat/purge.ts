@@ -26,3 +26,19 @@ export async function purgeChatFiles(admin: NonNullable<ReturnType<typeof create
   }
   return { ok: true, purged, orphans };
 }
+
+// 회의 자료 정리(D-217, 새벽 작업): 줄이 없는 meeting-files 파일(취소한 회의·지운 자료·올리다 만 것, 하루 지난 것).
+// 회의를 지울 때 화면이 바로 지우지만, 못 지운 것을 여기서 마저 지운다
+export async function purgeMeetingOrphans(admin: NonNullable<ReturnType<typeof createAdminClient>>): Promise<{ ok: boolean; removed: number }> {
+  let removed = 0;
+  for (let round = 0; round < 10; round++) {
+    const { data, error } = await admin.rpc("meeting_files_orphans", { p_limit: 200 });
+    if (error) return { ok: false, removed };
+    const paths = ((data ?? []) as unknown as string[]).filter(Boolean);
+    if (!paths.length) break;
+    const { error: removeError } = await admin.storage.from("meeting-files").remove(paths);
+    if (removeError) return { ok: false, removed };
+    removed += paths.length;
+  }
+  return { ok: true, removed };
+}

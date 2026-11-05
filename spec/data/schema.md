@@ -494,3 +494,4 @@
 - 영수증 보관본은 긴 변 2000px JPEG, 썸네일은 320px WebP로 업로드 전에 브라우저에서 만든다(`spec/common/performance.md` §1).
 - (D-214, migration 114) `push_subscriptions.vibrate boolean default true` — 기기별 소리·진동. 본인 구독의 이 칸만 update 가능(RLS).
 - (D-216, migration 115) 함수 `calendar_my_trip_events()`·`claim_link_calendar_event(claim, event|null)` — 결의서 쓰기에서 출장·외근 일정 불러오기(`expense_claims.calendar_event_id` 연결은 함수로만).
+- (D-217, migration 116·117) `calendar_events.agenda`(2,000자), `calendar_event_files(company_id, event_id, uploaded_by_member_id, path, name, size, mime)` — 복합 FK로 일정·멤버, 일정 삭제 시 연쇄, 표 권한 없음(함수만). 비공개 버킷 `meeting-files/{company}/{event}/…`(올리기 = 일정 만든 사람, 보기 = 같은 회사의 등록된 자료 또는 올린 본인, 지우기 = 올린 본인). `private.chat_storage_used`에 회의 자료 크기 합산.

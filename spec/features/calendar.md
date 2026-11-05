@@ -128,3 +128,14 @@
 - 함수: `calendar_my_trip_events()`, `claim_link_calendar_event(결의서, 일정|null)` — 내 결의서·작성 중만(NOT_EDITABLE), 참석자만(NOT_ATTENDEE), 출장·외근만(EVENT_KIND_NO_CLAIM), 다른 회사 불가.
 - 확인: DB `supabase/tests/072_claim_trip_events.sql`, 화면 `.responsive/live/e2e-tripfill.mjs`.
 
+## 15. 회의 안건·자료 + 10분 전 알림 카드 (D-217, migration 116·117)
+- **어디**: 일정 만들기·수정 폼(캘린더 [+ 일정], 회의실 예약 화면 둘 다 같은 폼). 종류가 **회의**이거나 **회의실을 잡은 시간 일정**이면 [안건 및 자료] 칸이 보인다.
+- **안건**: 글 2,000자(선택). 첫 줄은 10분 전 알림 카드에도 나온다.
+- **자료**: [파일 첨부] — 일정마다 10개, 파일마다 20MB, PDF·doc/docx·xls/xlsx/csv·ppt/pptx·hwp/hwpx·txt·이미지(png/jpg/gif/webp/heic)·zip. 안 되는 파일은 고를 때 안내하고 뺀다. 고른 파일은 "저장하면 올라가요" → [저장] 때 일정 저장 뒤 올린다(일부 실패 시 "일정은 저장했어요. 다만 자료 일부를…" 안내). 수정에서 × = 저장할 때 지움.
+- **권한**: 올리기·빼기 = 일정 만든 사람만(NOT_OWNER). 보기·내려받기 = 같은 회사 사람(캘린더는 회사 안 모두 공개). 다른 회사 불가. 표 직접 읽기·쓰기 없음(함수만).
+- **저장 한도**: 회사 첨부 저장 공간(요금제 1/3/10GB, 채팅과 함께)에 더해 센다 → 넘치면 STORAGE_FULL "회사 저장 공간이 다 찼어요". 관리자 설정 › 채팅의 사용량에 함께 보인다("채팅 사진·파일과 회의 자료를 함께 세요"). 회의 자료는 채팅 보관 기간으로 지우지 않는다.
+- **상세**: 회의 안건(줄바꿈 그대로) + 회의 자료 n(이름·크기) — 누르면 새 창에서 바로 보기(PDF·이미지·글) 또는 내려받기. 주소는 5분짜리 서명 주소.
+- **취소(삭제)**: 확인 창에 "올린 회의 자료 n개도 함께 지워져요" → 자료 줄은 DB 연쇄 삭제, 파일은 화면이 바로 지움(올린 사람은 자기 파일을 볼 수 있어 지울 수 있음, migration 117). 못 지운 파일은 새벽 작업(`meeting_files_orphans` → `purgeMeetingOrphans`)이 하루 뒤 지운다.
+- **10분 전 알림 카드**: 예약 작업 글 = "회의 시작 10분 전입니다. / 시간 제목 / 장소: … / 안건: 첫 줄 / 자료: n개". 채팅 [알림]방은 이 글을 카드로 그린다: ⏰ 회의 시작 10분 전 · 제목 · 시간 · 장소 · 안건 · 회의 자료 n개 · [안건·자료 보기](안건·자료 없으면 [캘린더에서 보기]) → 그 회의 상세. 휴대폰 알림(웹푸시)에도 같은 줄이 이어서 나온다.
+- 함수: `calendar_save_event`(agenda), `calendar_event`/범위 JSON에 `agenda`·`files`, `calendar_event_file_add(일정, 경로, 이름, 형식)`, `calendar_event_file_delete(자료)`, `meeting_files_orphans()`(서버 전용). 확인: DB `supabase/tests/073_meeting_agenda_files.sql`, 화면 `.responsive/live/e2e-meeting.mjs`.
+

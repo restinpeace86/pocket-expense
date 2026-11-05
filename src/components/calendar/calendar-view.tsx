@@ -44,6 +44,7 @@ import {
   type MeetingRoom,
 } from "@/lib/calendar/calendar";
 import { createClient } from "@/lib/supabase/client";
+import { deleteMeetingFile, MeetingFilesEdit, MeetingFilesView, uploadMeetingFiles } from "./meeting-files";
 
 // 사내 캘린더(D-206, spec/features/calendar.md)
 // - PC(md 이상) = 월 달력(월요일 시작), 휴대폰 = 그 달 날짜별 목록. 같은 데이터를 CSS로만 바꿔 보여 준다(local-open-spaces 파트너 월간 화면과 같은 방식)
@@ -355,6 +356,7 @@ export function CalendarView(props: Props) {
 
       {editing && (
         <EventEditor
+          ws={ws}
           key={editing.event?.id ?? `new-${editing.date ?? ""}-${editing.roomId ?? ""}`}
           event={editing.event}
           date={editing.date}
@@ -745,9 +747,12 @@ export function EventDetail({
     await onChanged(e.id);
   };
   const remove = async () => {
-    if (!window.confirm("이 일정을 지울까요? 참석자 캘린더에서도 사라져요.")) return;
+    if (!window.confirm(e.files?.length ? `이 일정을 지울까요? 참석자 캘린더에서도 사라지고, 올린 회의 자료 ${e.files.length}개도 함께 지워져요.` : "이 일정을 지울까요? 참석자 캘린더에서도 사라져요.")) return;
     setBusy(true);
+    const paths = (e.files ?? []).map((f) => f.path);
     const { error } = await supabase.rpc("calendar_delete_event", { p_id: e.id });
+    // 회의를 지우면(취소) 자료 파일도 바로 지운다(자료 줄은 DB가 함께 지움, 못 지운 파일은 새벽 정리 — D-217)
+    if (!error && paths.length) await supabase.storage.from("meeting-files").remove(paths);
     setBusy(false);
     if (error) return setErr(saveErrorText(error.message));
     await onChanged(null);
@@ -772,6 +777,13 @@ export function EventDetail({
             </p>
           )}
         </div>
+        {e.agenda && (
+          <div>
+            <p className="mb-1 text-sm font-semibold">회의 안건</p>
+            <p className="whitespace-pre-line break-words rounded-xl border border-brand-100 bg-brand-50/60 px-3 py-2 text-sm text-zinc-900">{e.agenda}</p>
+          </div>
+        )}
+        <MeetingFilesView files={e.files ?? []} supabase={supabase} />
         {e.memo && <p className="whitespace-pre-line break-words rounded-xl bg-zinc-50 px-3 py-2 text-sm text-zinc-800">{e.memo}</p>}
         <div>
           <p className="mb-1 text-sm font-semibold">참석자 {e.attendees.length}</p>
@@ -913,6 +925,7 @@ function EventClaims({ event: e, me, ws, admin, supabase }: { event: CalEvent; m
 const KINDS: CalKind[] = ["meeting", "outside", "trip", "other"];
 
 export function EventEditor({
+  ws,
   event,
   date,
   time,
@@ -926,6 +939,7 @@ export function EventEditor({
   onClose,
   onSaved,
 }: {
+  ws: string;
   event?: CalEvent;
   date?: string;
   time?: string;
@@ -958,6 +972,11 @@ export function EventEditor({
   const [eTime, setETime] = useState(init.eTime);
   const [location, setLocation] = useState(event?.location ?? "");
   const [memo, setMemo] = useState(event?.memo ?? "");
+  // 회의 안건·자료(D-217): 회의 종류이거나 회의실을 잡을 때
+  const [agenda, setAgenda] = useState(event?.agenda ?? "");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [removedFiles, setRemovedFiles] = useState<string[]>([]);
+  const [fileNote, setFileNote] = useState<string | null>(null);
   const [room, setRoom] = useState<string>(event?.room_id ?? initialRoom ?? "");
   const [roomBookings, setRoomBookings] = useState<CalEvent[]>([]);
   const [attendees, setAttendees] = useState<string[]>(event ? event.attendees.map((a) => a.member_id).filter((x) => x !== me) : []);
@@ -1008,6 +1027,7 @@ export function EventEditor({
   }, [rooms.length, allDay, startsIso, endsIso, supabase]);
   const taken = (id: string) => roomConflict(roomBookings, id, startsIso, endsIso, event?.id);
   const roomTaken = room && !allDay ? taken(room) : null;
+  const meetingExtras = kind === "meeting" || (!!room && !allDay);
 
   const save = async () => {
     setErr(null);
@@ -1021,12 +1041,22 @@ export function EventEditor({
       ...(allDay ? { start_date: sDate, end_date: eDate } : { starts_at: startsIso, ends_at: endsIso }),
       location: location.trim() || null,
       memo: memo.trim() || null,
+      agenda: meetingExtras ? agenda.trim() || null : (event?.agenda ?? null),
       room_id: !allDay && room ? room : null,
       attendee_ids: attendees,
     };
     const { data, error } = await supabase.rpc("calendar_save_event", { p_id: (event?.id ?? null) as unknown as string, p });
+    if (error || !data) {
+      setSaving(false);
+      return setErr(saveErrorText(error?.message));
+    }
+    // 자료: 뺀 것 지우고, 고른 것 올리기(일정이 저장된 뒤라야 그 일정 폴더에 올릴 수 있다)
+    for (const id of removedFiles) await deleteMeetingFile(supabase, id);
+    if (meetingExtras && pendingFiles.length) {
+      const problems = await uploadMeetingFiles(supabase, ws.split("/")[2], data as string, pendingFiles);
+      if (problems.length) window.alert(`일정은 저장했어요. 다만 자료 일부를 올리지 못했어요.\n\n${problems.join("\n")}`);
+    }
     setSaving(false);
-    if (error || !data) return setErr(saveErrorText(error?.message));
     await onSaved(data as string, sDate);
   };
 
@@ -1190,6 +1220,41 @@ export function EventEditor({
             </div>
           )}
         </div>
+
+        {meetingExtras && (
+          <section className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3" aria-label="안건 및 자료">
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-semibold">
+                회의 안건 <span className="font-normal text-zinc-500">(선택)</span>
+              </span>
+              <textarea
+                value={agenda}
+                onChange={(e) => setAgenda(e.target.value.slice(0, 2000))}
+                rows={3}
+                aria-label="회의 안건"
+                placeholder={"예) 1. 3분기 실적 점검\n2. 4분기 계획"}
+                className={`${field} py-2`}
+              />
+              <span className="text-xs text-zinc-500">첫 줄은 회의 10분 전 알림에도 보여요.</span>
+            </label>
+            <MeetingFilesEdit
+              existing={event?.files ?? []}
+              removed={removedFiles}
+              pending={pendingFiles}
+              onRemoveExisting={(id) => setRemovedFiles((x) => [...x, id])}
+              onAdd={(files, problems) => {
+                setPendingFiles((x) => [...x, ...files]);
+                setFileNote(problems.length ? problems.join(" ") : null);
+              }}
+              onRemovePending={(i) => setPendingFiles((x) => x.filter((_, k) => k !== i))}
+            />
+            {fileNote && (
+              <p role="alert" className="text-sm text-amber-800">
+                {fileNote}
+              </p>
+            )}
+          </section>
+        )}
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-semibold">

@@ -49,6 +49,7 @@ export function ChatRetention({ status }: { status: RetentionStatus }) {
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-semibold">사진·파일 저장 공간</p>
+            <p className="text-xs text-zinc-500">채팅 사진·파일과 회의 자료를 함께 세요.</p>
             <p className="text-sm text-zinc-600">
               <span className="font-semibold tabular-nums text-zinc-900">{bytesLabel(status.used)}</span> / {bytesLabel(status.limit)} 사용 중
             </p>

@@ -290,7 +290,7 @@
 - [x] 8-66 웹푸시 다듬기 — 바로 도착(urgency high)·누르면 그 방으로·알림 한 줄·방 들어가면 치움·기기별 소리·진동 (todo_improvement 개선사항 1, 2026-11-05, D-214, migration 114·테스트 071, `implementation/2026-11-05_push-polish.md`)
 - [x] 8-67 회의실 예약 전용 화면(캘린더 탭 안 [회의실 예약], PC 타임라인·휴대폰 세로 목록, 10분 칸 끌어서 고르기) (todo_improvement 개선사항 2, 2026-11-05, D-215, `implementation/2026-11-05_room-board.md`)
 - [x] 8-68 결의서 쓰기에서 출장·외근 일정 불러와 채우기(캘린더 등록은 선택) (todo_improvement 개선사항 3, 2026-11-05, D-216, migration 115·테스트 072, `implementation/2026-11-05_claim-trip-events.md`)
-- [ ] 8-69 회의 안건·자료 첨부(예약 폼·상세·캘린더, 취소 시 삭제, 저장 한도에 포함) + 10분 전 알림 카드 (todo_improvement 개선사항 4)
+- [x] 8-69 회의 안건·자료 첨부(예약 폼·상세·캘린더, 취소 시 삭제, 저장 한도에 포함) + 10분 전 알림 카드 (todo_improvement 개선사항 4, 2026-11-05, D-217, migration 116·117·테스트 073, `implementation/2026-11-05_meeting-agenda-files.md`)
 - [ ] 8-60 사용자 확인 대기: ① ~~직원 홈 [캘린더] 카드 위치 확인~~ → 하단 [캘린더] 탭으로, 홈 카드 뺌(D-209) ② 회의 10분 전 웹푸시용 비밀값 등록(Vercel `REMINDER_PUSH_SECRET` + Supabase Vault `reminder_push_secret`·`reminder_push_url`) ③ ~~페이퍼컴퍼니 캘린더 스위치 켜기~~ → 관리자가 설정 › 캘린더·회의실에서 직접(D-208) ④ Supabase Pro 업그레이드(메신저 기본 켜짐, 무료 1GB 전체 공유)
 - [ ] 8-17 보류(사용자 확인 대기) 계기판 사진을 세무 ZIP에(D-144에서 미정 — 사진 있을 때만 넣기 제안)
 - [ ] 8-18 보류(필요 확인) 부서 예산 경고 — 5~10인 사업장에 필요한지 확인 뒤. 지금은 부서별 조회(D-162)로 대신

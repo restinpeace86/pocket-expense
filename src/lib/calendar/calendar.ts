@@ -18,11 +18,14 @@ export type CalEvent = {
   memo: string | null;
   room_id?: string | null; // 회의실(D-207)
   room_name?: string | null;
+  agenda?: string | null; // 회의 안건(D-217)
+  files?: MeetingFile[]; // 회의 자료(D-217)
   created_by: string;
   creator_name: string | null;
   mine: boolean;
   attendees: CalAttendee[];
 };
+export type MeetingFile = { id: string; name: string; size: number; mime: string | null; path: string };
 export type MeetingRoom = { id: string; name: string; upcoming: number };
 export type CalMember = { member_id: string; name: string; position: string | null; department_id: string | null };
 export type CalDirectory = {
@@ -196,6 +199,7 @@ export const SAVE_ERRORS: Record<string, string> = {
   TIME_UNIT_10MIN: "시간은 10분 단위로 골라 주세요.",
   LOCATION_TOO_LONG: "장소는 200자까지예요.",
   MEMO_TOO_LONG: "메모는 2,000자까지예요.",
+  AGENDA_TOO_LONG: "안건은 2,000자까지예요.",
   NOT_OWNER: "만든 사람만 고칠 수 있어요.",
   NOT_FOUND: "지워졌거나 볼 수 없는 일정이에요.",
   FEATURE_DISABLED: "캘린더를 쓸 수 없는 회사예요.",

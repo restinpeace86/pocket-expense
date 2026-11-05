@@ -513,8 +513,67 @@ export type Database = {
           },
         ]
       }
+      calendar_event_files: {
+        Row: {
+          company_id: string
+          created_at: string
+          event_id: string
+          id: string
+          mime: string | null
+          name: string
+          path: string
+          size: number
+          uploaded_by_member_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          event_id: string
+          id?: string
+          mime?: string | null
+          name: string
+          path: string
+          size: number
+          uploaded_by_member_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          mime?: string | null
+          name?: string
+          path?: string
+          size?: number
+          uploaded_by_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_event_files_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_event_files_event_id_company_id_fkey"
+            columns: ["event_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "calendar_event_files_uploaded_by_member_id_company_id_fkey"
+            columns: ["uploaded_by_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
+          agenda: string | null
           all_day: boolean
           company_id: string
           created_at: string
@@ -533,6 +592,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agenda?: string | null
           all_day?: boolean
           company_id: string
           created_at?: string
@@ -551,6 +611,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agenda?: string | null
           all_day?: boolean
           company_id?: string
           created_at?: string
@@ -3399,6 +3460,16 @@ export type Database = {
       calendar_directory: { Args: never; Returns: Json }
       calendar_event: { Args: { p_id: string }; Returns: Json }
       calendar_event_claims: { Args: { p_event_id: string }; Returns: Json }
+      calendar_event_file_add: {
+        Args: {
+          p_event: string
+          p_mime: string
+          p_name: string
+          p_path: string
+        }
+        Returns: Json
+      }
+      calendar_event_file_delete: { Args: { p_id: string }; Returns: string }
       calendar_events_range: {
         Args: { p_from: string; p_members: string[]; p_to: string }
         Returns: Json
@@ -3612,6 +3683,7 @@ export type Database = {
         Args: { p_company_id: string }
         Returns: number
       }
+      meeting_files_orphans: { Args: { p_limit?: number }; Returns: string[] }
       member_deactivation_check: {
         Args: { p_member_id: string }
         Returns: Json
