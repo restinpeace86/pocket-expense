@@ -10,6 +10,7 @@ import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import type { Membership } from "@/lib/auth/paths";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 import { useChatUnread } from "@/components/chat/use-chat-unread";
+import { LogoMark, Wordmark } from "@/components/brand/logo";
 
 // 관리자 워크스페이스 레이아웃 (spec/screens/admin-dashboard.md 0): PC는 좌측 사이드바, 모바일은 햄버거 메뉴
 // 설정은 하단 배치 + 하위 메뉴 (admin-settings.md §4)
@@ -126,8 +127,8 @@ function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback
 function Brand() {
   return (
     <span className="flex items-center gap-2.5">
-      <span className="inline-flex size-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm">W</span>
-      <span className="text-[15px] font-bold tracking-tight">WORKON</span>
+      <LogoMark className="size-8" />
+      <Wordmark tone="current" className="text-[17px]" />
     </span>
   );
 }

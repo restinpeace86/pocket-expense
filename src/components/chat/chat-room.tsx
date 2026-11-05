@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { pushChatMessageAction } from "@/app/workspace/[id]/chat/actions";
 import { isAdminRole } from "@/lib/auth/paths";
-import { buildRows, CHAT_BODY_MAX, CHAT_FILE_MAX, displayName, fileSizeLabel, mergeMessages, roomTitle, timeLabel, unreadCountFor, type ChatKind, type ChatMember, type ChatMessage, meetingNoticeCard } from "@/lib/chat/format";
+import { assistantLinkLabel, buildRows, CHAT_BODY_MAX, CHAT_FILE_MAX, displayName, fileSizeLabel, mergeMessages, roomTitle, timeLabel, unreadCountFor, type ChatKind, type ChatMember, type ChatMessage, meetingNoticeCard } from "@/lib/chat/format";
 import { formatWon } from "@/lib/format";
 import { processChatImage } from "@/lib/receipts/image";
+import { LogoMark } from "@/components/brand/logo";
 import { Avatar } from "./avatar";
 import { useChat } from "./chat-app";
 import { ChatOverlay } from "./overlay";
@@ -49,6 +50,8 @@ export function ChatRoom({ roomId }: { roomId: string }) {
   const [inviting, setInviting] = useState(false);
   const [newBelow, setNewBelow] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
+  // 도우미 방(D-222): 답을 찾는 동안 "확인하고 있어요…"
+  const [thinking, setThinking] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
   const prependFrom = useRef<number | null>(null);
@@ -236,6 +239,17 @@ export function ChatRoom({ roomId }: { roomId: string }) {
     if (error || !data) return setMessages((m) => mergeMessages(m, [{ ...msg, pending: "failed" }]));
     setMessages((m) => mergeMessages(m, [data as unknown as ChatMessage]));
     files.current.delete(msg.id);
+    if (detail?.kind === "assistant" && msg.kind === "text") {
+      // 도우미 방: 서버가 답(bot 글)을 만들어 돌려준다 — 실시간으로도 오지만 바로 붙인다
+      setThinking(true);
+      const reply = (await pushChatMessageAction(msg.id).catch(() => null)) as ChatMessage | null;
+      setThinking(false);
+      if (reply) {
+        atBottom.current = true;
+        setMessages((m) => mergeMessages(m, [reply]));
+      }
+      return;
+    }
     void pushChatMessageAction(msg.id).catch(() => undefined);
   };
 
@@ -371,7 +385,12 @@ export function ChatRoom({ roomId }: { roomId: string }) {
   }
 
   const title = detail ? roomTitle({ ...detail, claim_title: detail.claim?.title }, me) : "";
-  const count = detail && detail.kind !== "direct" && detail.kind !== "notice" ? detail.members.length : null;
+  const assistant = detail?.kind === "assistant";
+  const count = detail && detail.kind !== "direct" && detail.kind !== "notice" && !assistant ? detail.members.length : null;
+  const ask = (q: string) => {
+    atBottom.current = true;
+    void deliver(draft("text", { body: q }));
+  };
   const claimHref = detail?.claim
     ? detail.claim.member_id === me
       ? `${ws}/employee/claims/${detail.claim.id}`
@@ -393,7 +412,8 @@ export function ChatRoom({ roomId }: { roomId: string }) {
           {title}
           {count !== null && <span className="ml-1.5 font-normal text-zinc-600">{count}</span>}
         </h2>
-        {detail?.kind !== "notice" && (
+        {assistant && <span className="shrink-0 px-1 text-xs text-zinc-600">조회·화면 이동 · 하루 30번</span>}
+        {detail?.kind !== "notice" && !assistant && (
           <button type="button" onClick={() => setPanel(true)} aria-label="채팅방 메뉴" className="inline-flex size-11 items-center justify-center rounded-xl text-zinc-800 hover:bg-black/5">
             <Menu className="size-5" />
           </button>
@@ -423,7 +443,22 @@ export function ChatRoom({ roomId }: { roomId: string }) {
             <Loader2 className="size-6 animate-spin text-zinc-600" />
           </div>
         )}
-        {loaded && !messages.length && <p className="py-10 text-center text-sm text-zinc-700">첫 메시지를 보내 보세요.</p>}
+        {loaded && !messages.length && !assistant && <p className="py-10 text-center text-sm text-zinc-700">첫 메시지를 보내 보세요.</p>}
+        {loaded && assistant && (
+          <div className="mx-auto mt-4 flex max-w-sm flex-col items-center gap-3 rounded-2xl bg-white/90 p-4 text-center shadow-sm" aria-label="도우미 안내">
+            <LogoMark className="size-12" />
+            <p className="text-sm leading-relaxed text-zinc-800">
+              그냥 대화하듯 물어보세요. 일정·회의실 빈 시간·내 결의서·승인 대기를 찾아 주고, 필요한 화면을 열어 드려요. 질문과 답은 나만 봐요.
+            </p>
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {["오늘 일정", "내일 회의실 빈 시간", "반려된 결의서", "승인 대기 몇 건?"].map((q) => (
+                <button key={q} type="button" onClick={() => ask(q)} className="min-h-10 rounded-full border border-brand-200 bg-brand-50 px-3 text-sm font-medium text-brand-800 hover:bg-brand-100">
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {rows.map((row) => {
           if (row.type === "date")
             return (
@@ -440,6 +475,26 @@ export function ChatRoom({ roomId }: { roomId: string }) {
                 <div className="flex min-w-0 max-w-[80%] items-end gap-1">
                   <NoticeBubble body={row.msg.body} link={row.msg.link ?? null} />
                   <span className="shrink-0 whitespace-nowrap pb-0.5 text-[11px] text-zinc-600">{timeLabel(row.msg.created_at)}</span>
+                </div>
+              </div>
+            );
+          if (row.type === "bot")
+            return (
+              <div key={row.key} className="mt-2.5 flex justify-start gap-2">
+                <LogoMark className="size-10 rounded-[38%]" />
+                <div className="min-w-0 max-w-[80%]">
+                  <p className="mb-0.5 text-xs text-zinc-700">WORKON 도우미</p>
+                  <div className="flex items-end gap-1">
+                    <div className="min-w-0 rounded-2xl rounded-tl-md border border-[var(--chat-other-border)] bg-[var(--chat-other)] px-3 py-2.5 text-sm shadow-sm" data-bot>
+                      <p className="whitespace-pre-line break-words leading-relaxed text-zinc-900">{row.msg.body}</p>
+                      {row.msg.link && (
+                        <Link href={row.msg.link} className="mt-2 flex min-h-10 items-center justify-center rounded-xl bg-brand-50 px-3 text-sm font-semibold text-brand-700 hover:bg-brand-100">
+                          {assistantLinkLabel(row.msg.link)}
+                        </Link>
+                      )}
+                    </div>
+                    <span className="shrink-0 whitespace-nowrap pb-0.5 text-[11px] text-zinc-600">{timeLabel(row.msg.created_at)}</span>
+                  </div>
                 </div>
               </div>
             );
@@ -496,6 +551,15 @@ export function ChatRoom({ roomId }: { roomId: string }) {
             </div>
           );
         })}
+        {/* 답이 실시간으로 먼저 오면(마지막 글이 답) 바로 숨김 */}
+        {thinking && messages[messages.length - 1]?.kind !== "bot" && (
+          <div className="mt-2.5 flex items-center gap-2" role="status">
+            <LogoMark className="size-10 rounded-[38%]" />
+            <span className="inline-flex items-center gap-1.5 rounded-2xl bg-[var(--chat-other)] px-3 py-2.5 text-sm text-zinc-700 shadow-sm">
+              <Loader2 className="size-4 animate-spin" /> 확인하고 있어요…
+            </span>
+          </div>
+        )}
       </div>
 
       {newBelow > 0 && (
@@ -522,6 +586,8 @@ export function ChatRoom({ roomId }: { roomId: string }) {
         }}
         className="flex shrink-0 items-end gap-1 bg-white p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]"
       >
+        {!assistant && (
+        <>
         <button type="button" onClick={() => imageInput.current?.click()} aria-label="사진 보내기" className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-zinc-600 hover:bg-zinc-100">
           <ImagePlus className="size-5" />
         </button>
@@ -530,6 +596,8 @@ export function ChatRoom({ roomId }: { roomId: string }) {
         </button>
         <input ref={imageInput} type="file" accept="image/*" multiple hidden onChange={(e) => (void attach(e.target.files, "image"), (e.target.value = ""))} />
         <input ref={fileInput} type="file" multiple hidden onChange={(e) => (void attach(e.target.files, "file"), (e.target.value = ""))} />
+        </>
+        )}
         <textarea
           ref={input}
           value={text}
@@ -542,7 +610,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
             }
           }}
           rows={1}
-          placeholder="메시지 입력"
+          placeholder={assistant ? "예) 내일 회의실 빈 시간" : "메시지 입력"}
           aria-label="메시지 입력"
           className="max-h-32 min-h-11 flex-1 resize-none rounded-xl bg-zinc-100 px-3 py-2.5 text-base leading-6 outline-none [field-sizing:content] md:text-sm md:leading-6"
         />

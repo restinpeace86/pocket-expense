@@ -951,6 +951,7 @@ export type Database = {
       }
       chat_rooms: {
         Row: {
+          assistant_member_id: string | null
           claim_id: string | null
           company_id: string
           created_at: string
@@ -963,6 +964,7 @@ export type Database = {
           title: string | null
         }
         Insert: {
+          assistant_member_id?: string | null
           claim_id?: string | null
           company_id: string
           created_at?: string
@@ -975,6 +977,7 @@ export type Database = {
           title?: string | null
         }
         Update: {
+          assistant_member_id?: string | null
           claim_id?: string | null
           company_id?: string
           created_at?: string
@@ -987,6 +990,13 @@ export type Database = {
           title?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_rooms_assistant_member_fk"
+            columns: ["assistant_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
           {
             foreignKeyName: "chat_rooms_claim_id_company_id_fkey"
             columns: ["claim_id", "company_id"]
@@ -3499,6 +3509,7 @@ export type Database = {
         Returns: undefined
       }
       calendar_set_enabled: { Args: { p_enabled: boolean }; Returns: boolean }
+      chat_assistant_room: { Args: never; Returns: string }
       chat_claim_push: { Args: { p_id: string }; Returns: Json }
       chat_create_group: {
         Args: { p_member_ids: string[]; p_title?: string }

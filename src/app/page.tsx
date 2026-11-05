@@ -8,6 +8,7 @@ import { Pricing } from "@/components/landing/pricing";
 import { Testimonials } from "@/components/landing/testimonials";
 import { OPERATOR } from "@/components/legal/documents";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
+import { Wordmark } from "@/components/brand/logo";
 
 // 랜딩 페이지 (spec/screens/landing-page.md). 정적 화면 — 세션을 읽지 않는다.
 // CTA는 로그인 후 회사 생성 위저드로 간다. 이미 소속이 있으면 /login이 본인 워크스페이스로 보낸다.
@@ -97,7 +98,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-10 border-b border-white/10 bg-zinc-950/70 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="whitespace-nowrap text-lg font-bold">WORKON</span>
+            <Wordmark tone="light" className="whitespace-nowrap text-xl" />
             <span className="hidden whitespace-nowrap rounded-full border border-white/20 px-2 py-0.5 text-xs text-zinc-300 md:inline">작은 회사 통합 운영관리</span>
           </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">

@@ -29,7 +29,7 @@ export default async function OpengraphImage() {
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 88px", background: "linear-gradient(135deg, #09090b 0%, #0f172a 60%, #1e1b4b 100%)", color: "white", fontFamily: ko ? "NotoSansKR" : "sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <div style={{ width: 64, height: 64, borderRadius: 16, background: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38, fontWeight: 800 }}>W</div>
+          <div style={{ width: 64, height: 64, borderRadius: 16, background: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 39, height: 23, borderRadius: 999, background: "white", display: "flex", alignItems: "center", justifyContent: "flex-end", padding: 3 }}><div style={{ width: 16, height: 16, borderRadius: 999, background: "#3b82f6" }} /></div></div>
           <div style={{ fontSize: 36, fontWeight: 800 }}>WORKON</div>
         </div>
         {/* 이미지 생성기(satori)는 여러 자식을 가진 상자마다 display:flex가 필요하다 — 문구 묶음을 세로 상자로 감싼다 */}

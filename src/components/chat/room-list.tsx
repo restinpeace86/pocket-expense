@@ -6,6 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listTimeLabel, previewText, roomTitle, type ChatRoomSummary } from "@/lib/chat/format";
 import { PushHelp, usePushSubscription } from "@/components/push/push-toggle";
+import { openAssistantRoomAction } from "@/app/workspace/[id]/chat/actions";
+import { LogoMark } from "@/components/brand/logo";
 import { RoomAvatar } from "./avatar";
 import { useChat } from "./chat-app";
 import { ChatThemeButton } from "./chat-theme";
@@ -56,7 +58,10 @@ export function RoomList({ base }: { base: string }) {
     return null;
   };
 
+  // 도우미 방(D-222)은 맨 위 고정 줄로 따로 보여 준다
+  const assistantRoom = (rooms ?? []).find((r) => r.kind === "assistant") ?? null;
   const shown = (rooms ?? []).filter((r) => {
+    if (r.kind === "assistant") return false;
     if (!q.trim()) return true;
     const t = `${roomTitle(r, me)} ${r.members.map((m) => m.name).join(" ")}`;
     return t.toLowerCase().includes(q.trim().toLowerCase());
@@ -106,7 +111,8 @@ export function RoomList({ base }: { base: string }) {
             </button>
           </li>
         )}
-        {rooms !== null && !rooms.length && (
+        {rooms !== null && !q.trim() && <AssistantRow base={base} room={assistantRoom} active={!!assistantRoom && pathname === `${base}/${assistantRoom.id}`} />}
+        {rooms !== null && !shown.length && !q.trim() && (
           <li className="flex flex-col items-center gap-3 p-8 text-center text-sm text-zinc-600">
             아직 대화가 없어요.
             <button type="button" onClick={() => setPicking(true)} className="min-h-11 rounded-xl bg-brand-600 px-4 font-semibold text-white hover:bg-brand-700">
@@ -177,3 +183,35 @@ function NotifyBar() {
     </div>
   );
 }
+
+// 맨 위 [WORKON 도우미](D-222): 누르면 내 도우미 방(없으면 만들고)으로
+function AssistantRow({ base, room, active }: { base: string; room: ChatRoomSummary | null; active: boolean }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const open = async () => {
+    if (room) return router.push(`${base}/${room.id}`);
+    setBusy(true);
+    setErr(null);
+    const r = await openAssistantRoomAction();
+    setBusy(false);
+    if ("error" in r) return setErr(r.error);
+    router.push(`${base}/${r.roomId}`);
+  };
+  return (
+    <li className="border-b border-zinc-100">
+      <button type="button" onClick={() => void open()} aria-current={active ? "page" : undefined} className={`flex w-full items-center gap-3 px-3 py-2.5 text-left ${active ? "bg-zinc-100" : "hover:bg-zinc-50"}`}>
+        <LogoMark className="size-12 rounded-[38%]" />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            <span className="truncate font-semibold text-zinc-900">WORKON 도우미</span>
+            <span className="shrink-0 rounded bg-brand-50 px-1 text-[11px] font-semibold text-brand-700">AI</span>
+          </span>
+          <span className="block truncate text-sm text-zinc-500">{err ?? (room?.last ? previewText(room.last) : "일정·회의실 빈 시간·내 결의서를 물어보세요")}</span>
+        </span>
+        {busy && <Loader2 className="size-4 shrink-0 animate-spin text-zinc-400" />}
+      </button>
+    </li>
+  );
+}
+

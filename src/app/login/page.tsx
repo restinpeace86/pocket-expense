@@ -6,6 +6,7 @@ import { Card, PageShell } from "@/components/ui/page-shell";
 import { destinationAfterLogin } from "@/lib/auth/paths";
 import { isTaxOfficeUser } from "@/lib/tax-office/queries";
 import { getCurrentUserId, getMembership } from "@/lib/auth/session";
+import { StackedLogo } from "@/components/brand/logo";
 
 export const metadata = { title: "로그인 · WORKON" };
 
@@ -18,8 +19,9 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <PageShell>
       <div className="flex flex-col gap-2 pt-8 text-center">
+        <StackedLogo className="mx-auto mb-2 text-[2.6rem]" />
         <h1 className="text-2xl font-bold tracking-tight">WORKON 시작하기</h1>
-        <p className="text-zinc-600">영수증 한 장으로 경비 청구부터 결재까지</p>
+        <p className="text-zinc-600">경비·결재부터 사내 채팅·캘린더까지, 작은 회사 업무를 한곳에서</p>
       </div>
       <Card>
         <Suspense fallback={<div className="h-28 animate-pulse rounded-xl bg-zinc-100" />}>

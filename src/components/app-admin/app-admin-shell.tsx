@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Wordmark } from "@/components/brand/logo";
 
 // 앱관리자(운영자) 화면 틀 (D-080) — PC 기준, 읽기 전용(전체 공지 쓰기만 예외, D-116). 고객 화면 어디에도 링크하지 않는다.
 export function AppAdminShell({ children }: { children: ReactNode }) {
@@ -8,8 +9,8 @@ export function AppAdminShell({ children }: { children: ReactNode }) {
       <header className="border-b border-zinc-800 bg-zinc-900 text-white">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 md:px-6">
           <Link href="/app-admin" className="flex items-center gap-2 whitespace-nowrap font-bold">
-            <span className="inline-flex size-7 items-center justify-center rounded-md bg-amber-400 text-sm text-zinc-900">W</span>
-            WORKON 운영자
+            <Wordmark tone="light" className="text-base" />
+            <span className="rounded-md bg-amber-400 px-1.5 py-0.5 text-xs text-zinc-900">운영자</span>
           </Link>
           <nav className="flex items-center gap-3 whitespace-nowrap text-sm">
             <Link href="/app-admin" className="text-zinc-300 hover:text-white">회사</Link>

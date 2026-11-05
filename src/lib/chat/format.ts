@@ -1,13 +1,13 @@
 // 사내 메신저 화면 계산 (D-203, spec/features/messenger.md). 순수 함수라 단위 테스트한다.
 
-export type ChatKind = "direct" | "group" | "claim" | "notice"; // notice = 사람마다 하나인 알림방(회의 10분 전 등, D-206)
+export type ChatKind = "direct" | "group" | "claim" | "notice" | "assistant"; // notice = 사람마다 하나인 알림방(D-206), assistant = WORKON 도우미 방(D-222)
 export type ChatMember = { member_id: string; name: string; status: string; last_read_at: string; joined_at: string };
 export type ChatMessage = {
   id: string;
   room_id: string;
   sender_member_id: string | null;
   sender_name: string | null;
-  kind: "text" | "image" | "file" | "system" | "notice";
+  kind: "text" | "image" | "file" | "system" | "notice" | "bot"; // bot = 도우미 답(D-222)
   body: string | null;
   link?: string | null; // 알림 글의 [캘린더에서 보기] 주소(D-206)
   attachment_path: string | null;
@@ -51,6 +51,7 @@ export function roomTitle(room: { kind: ChatKind; title: string | null; claim_ti
   const others = room.members.filter((m) => m.member_id !== meId);
   if (room.kind === "direct") return others[0] ? displayName(others[0]) : "대화 상대 없음";
   if (room.kind === "notice") return "알림";
+  if (room.kind === "assistant") return "WORKON 도우미";
   if (room.kind === "claim") return room.claim_title?.trim() ? `📄 ${room.claim_title}` : "📄 소명서 대화";
   if (room.title?.trim()) return room.title;
   if (!others.length) return "대화 상대 없음";
@@ -60,7 +61,7 @@ export function roomTitle(room: { kind: ChatKind; title: string | null; claim_ti
 
 // 말풍선 옆 숫자: 보낸 사람을 빼고 아직 이 메시지까지 읽지 않은 참여자 수
 export function unreadCountFor(msg: Pick<ChatMessage, "sender_member_id" | "created_at" | "kind">, members: Pick<ChatMember, "member_id" | "last_read_at">[]): number {
-  if (msg.kind === "system" || msg.kind === "notice") return 0;
+  if (msg.kind === "system" || msg.kind === "notice" || msg.kind === "bot") return 0;
   const at = Date.parse(msg.created_at);
   return members.filter((m) => m.member_id !== msg.sender_member_id && Date.parse(m.last_read_at) < at).length;
 }
@@ -105,6 +106,7 @@ export type ChatRow =
   | { type: "date"; key: string; label: string }
   | { type: "system"; key: string; msg: ChatMessage }
   | { type: "notice"; key: string; msg: ChatMessage }
+  | { type: "bot"; key: string; msg: ChatMessage }
   | { type: "msg"; key: string; msg: ChatMessage; mine: boolean; showName: boolean; showTime: boolean };
 
 // 카톡처럼 묶기: 날짜가 바뀌면 구분선, 같은 사람이 같은 분에 연달아 보내면 이름은 첫 줄만·시각은 마지막 줄만
@@ -118,6 +120,10 @@ export function buildRows(messages: ChatMessage[], meId: string): ChatRow[] {
     if (!prev || dayKey(prev.created_at) !== dayKey(m.created_at)) rows.push({ type: "date", key: `d-${dayKey(m.created_at)}`, label: dateLabel(m.created_at) });
     if (m.kind === "notice") {
       rows.push({ type: "notice", key: m.id, msg: m });
+      continue;
+    }
+    if (m.kind === "bot") {
+      rows.push({ type: "bot", key: m.id, msg: m });
       continue;
     }
     if (m.kind === "system") {
@@ -183,3 +189,18 @@ export function meetingNoticeCard(body: string | null): MeetingNoticeCard | null
   const field = (k: string) => lines.slice(2).find((l) => l.startsWith(`${k}: `))?.slice(k.length + 2) ?? null;
   return { time: m[1], title: m[2], place: field("장소"), agenda: field("안건"), files: Number(field("자료")?.replace(/개$/, "") ?? 0) || 0 };
 }
+
+// 도우미 답의 [열기] 버튼 글자(D-222) — 주소로 정한다
+export function assistantLinkLabel(link: string): string {
+  const p = link.replace(/^\/workspace\/[^/]+/, "");
+  if (p.startsWith("/calendar/rooms")) return "회의실 예약 열기";
+  if (p.startsWith("/calendar")) return "캘린더에서 보기";
+  if (/^\/employee\/claims\/[^/]+\/edit/.test(p)) return "결의서 열기";
+  if (p.startsWith("/employee/settlements") || p.startsWith("/admin/payouts")) return "정산 화면 열기";
+  if (p.startsWith("/employee/profile")) return "내 정보 열기";
+  if (p.startsWith("/employee")) return "내 결의서 보기";
+  if (p.startsWith("/admin/claims") || p.startsWith("/approvals")) return "결재하러 가기";
+  if (p.startsWith("/chat")) return "채팅 목록 열기";
+  return "화면 열기";
+}
+
