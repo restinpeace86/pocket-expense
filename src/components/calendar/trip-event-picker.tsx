@@ -6,8 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import { KIND_LABEL, shortDayLabel, type CalKind } from "@/lib/calendar/calendar";
 import { createClient } from "@/lib/supabase/client";
 
-// 결의서 쓰기 › 출장 정보: 캘린더 출장·외근 일정 불러오기(D-216, spec/features/calendar.md §14)
-// - 내가 참석하는 출장·외근(60일 전 ~ 30일 뒤, 가까운 순). 누르면 출장지·기간·목적이 채워지고 결의서에 그 일정이 연결된다
+// 결의서 쓰기 › 출장 정보: 캘린더 출장 일정 불러오기(D-216 → D-223 출장만, spec/features/calendar.md §14)
+// - 내가 참석하는 출장(60일 전 ~ 30일 뒤, 가까운 순). 외근은 캘린더에만 적는다(정산과 잇지 않음, D-223). 누르면 출장지·기간·목적이 채워지고 결의서에 그 일정이 연결된다
 // - 캘린더 등록은 선택 — 일정이 없으면 한 줄 안내만, 캘린더가 꺼진 회사면 아무것도 안 그림
 export type TripFill = { destination: string | null; startDate: string; endDate: string; purpose: string };
 type TripEvent = { id: string; kind: CalKind; title: string; start_date: string; end_date: string; place: string | null };
@@ -43,7 +43,7 @@ export function TripEventPicker({ claimId, linkedEventId, onFill }: { claimId: s
   if (off) return null;
   if (list === null) return <Loader2 className="size-4 animate-spin text-zinc-400" aria-label="캘린더 일정 불러오는 중" />;
   if (!list.length) {
-    return <p className="text-xs text-zinc-500">📅 캘린더에 출장·외근을 등록해 두면 여기서 눌러 바로 채울 수 있어요(선택).</p>;
+    return <p className="text-xs text-zinc-500">📅 캘린더에 출장을 등록해 두면 여기서 눌러 바로 채울 수 있어요(선택).</p>;
   }
 
   const pick = async (e: TripEvent) => {

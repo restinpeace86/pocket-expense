@@ -1,5 +1,5 @@
 -- =============================================================================
--- 072_claim_trip_events.sql — 결의서 쓰기에서 캘린더 출장·외근 일정 불러오기 (D-216, migration 115)
+-- 072_claim_trip_events.sql — 결의서 쓰기에서 캘린더 출장 일정 불러오기 (D-216 → D-223 출장만, migration 115·121)
 -- 내 출장·외근만(불참·회의·남의 일정·기간 밖 빠짐, 가까운 순) / 내 작성 중 결의서만 연결 / 채울 값(출장지·기간·목적) /
 -- 끊기 / 다른 회사·참석자 아님·회의 일정 불가 / 상신한 결의서 불가 / 캘린더 꺼짐 불가
 -- =============================================================================
@@ -53,7 +53,7 @@ begin
   perform set_config('t.out', public.calendar_save_event(null, jsonb_build_object('title', '은행 업무', 'kind', 'outside', 'starts_at', ((d - 1)::text || 'T10:00:00+09:00'), 'ends_at', ((d - 1)::text || 'T11:00:00+09:00'), 'room_id', 'd7200000-0000-0000-0000-000000000001', 'location', '역삼', 'attendee_ids', jsonb_build_array('a7210000-0000-0000-0000-000000000002')))::text, true);
   perform set_config('t.meet', public.calendar_save_event(null, jsonb_build_object('title', '주간회의', 'kind', 'meeting', 'starts_at', (d::text || 'T14:00:00+09:00'), 'ends_at', (d::text || 'T15:00:00+09:00'), 'attendee_ids', jsonb_build_array('a7210000-0000-0000-0000-000000000002')))::text, true);
   perform set_config('t.old', public.calendar_save_event(null, jsonb_build_object('title', '옛 출장', 'kind', 'trip', 'all_day', true, 'start_date', d - 90, 'end_date', d - 90, 'attendee_ids', jsonb_build_array('a7210000-0000-0000-0000-000000000002')))::text, true);
-  perform set_config('t.other', public.calendar_save_event(null, jsonb_build_object('title', '사원 외근', 'kind', 'outside', 'all_day', true, 'start_date', d, 'end_date', d, 'attendee_ids', jsonb_build_array('a7210000-0000-0000-0000-000000000003')))::text, true);
+  perform set_config('t.other', public.calendar_save_event(null, jsonb_build_object('title', '사원 출장', 'kind', 'trip', 'all_day', true, 'start_date', d, 'end_date', d, 'attendee_ids', jsonb_build_array('a7210000-0000-0000-0000-000000000003')))::text, true);
 end;
 $$;
 reset role;
@@ -71,18 +71,16 @@ declare
   l jsonb := public.calendar_my_trip_events();
   r jsonb;
 begin
-  -- ① 목록: 외근(어제, 가까움) → 출장(3일 뒤). 회의·기간 밖·남의 일정 없음
-  if jsonb_array_length(l) <> 2 then raise exception 'FAIL [list size] %', l; end if;
-  if l -> 0 ->> 'id' <> current_setting('t.out') or l -> 1 ->> 'id' <> current_setting('t.trip') then raise exception 'FAIL [list order] %', l; end if;
-  if l -> 0 ->> 'place' <> '본사 3층 · 역삼' then raise exception 'FAIL [place] %', l -> 0; end if;
+  -- ① 목록: 출장만(D-223 — 외근·회의·기간 밖·남의 일정 없음)
+  if jsonb_array_length(l) <> 1 then raise exception 'FAIL [list size] %', l; end if;
+  if l -> 0 ->> 'id' <> current_setting('t.trip') then raise exception 'FAIL [list trip only] %', l; end if;
   -- ② 연결: 채울 값 + 연결됨
   r := public.claim_link_calendar_event('e7200000-0000-0000-0000-000000000001', current_setting('t.trip')::uuid);
   if r ->> 'destination' <> '부산' or (r ->> 'start_date')::date <> (now() at time zone 'Asia/Seoul')::date + 3 or (r ->> 'end_date')::date <> (now() at time zone 'Asia/Seoul')::date + 4 or r ->> 'purpose' <> '부산 거래처 방문' then
     raise exception 'FAIL [fill values] %', r; end if;
   if (select calendar_event_id from public.expense_claims where id = 'e7200000-0000-0000-0000-000000000001') <> current_setting('t.trip')::uuid then raise exception 'FAIL [linked]'; end if;
-  -- 시간 외근 = 그날 하루
-  r := public.claim_link_calendar_event('e7200000-0000-0000-0000-000000000001', current_setting('t.out')::uuid);
-  if r ->> 'start_date' <> r ->> 'end_date' or r ->> 'destination' <> '본사 3층 · 역삼' then raise exception 'FAIL [outside one day] %', r; end if;
+  -- 외근은 연결 불가(D-223)
+  perform public._t_raises72(format($q$select public.claim_link_calendar_event('e7200000-0000-0000-0000-000000000001', %L)$q$, current_setting('t.out')), 'EVENT_KIND_NO_CLAIM', 'outside kind');
   -- ③ 끊기
   perform public.claim_link_calendar_event('e7200000-0000-0000-0000-000000000001', null);
   if (select calendar_event_id from public.expense_claims where id = 'e7200000-0000-0000-0000-000000000001') is not null then raise exception 'FAIL [unlink]'; end if;
