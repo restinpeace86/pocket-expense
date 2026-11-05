@@ -11,6 +11,8 @@ import { createClient } from "@/lib/supabase/server";
 import { refresh } from "next/cache";
 import { issuesFromResult, type IssueStatus } from "@/lib/cards/saved";
 import { pushToMembers } from "@/lib/push/server";
+import { postNoticeCards } from "@/lib/notify/card";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { formatWon } from "@/lib/format";
 
 // 법인카드 사용 내역 대조 (D-111). 관리자만. 올린 카드 내역은 저장하지 않고 이 요청에서만 쓴다.
@@ -126,13 +128,16 @@ export async function setCardIssueStatusAction(issueId: string, status: IssueSta
   if (status === "claim_requested" && d?.last4) {
     const { data: card } = await supabase.from("corporate_cards").select("holder_member_id").eq("company_id", m.company_id).eq("last4", d.last4).not("holder_member_id", "is", null).limit(1).maybeSingle();
     if (card?.holder_member_id) {
-      const r = await pushToMembers(m.company_id, [card.holder_member_id], {
+      const push = {
         title: "법인카드 결제 결의서를 올려 주세요",
         body: `${d.date ?? ""} ${d.merchant ?? ""} ${d.amount != null ? formatWon(d.amount) : ""} — 영수증과 결의서가 없어요.`.trim(),
         url: `/workspace/${m.company_id}/employee`,
         tag: `card-issue-${issueId}`,
-      });
-      notified = r.sent > 0;
+      };
+      const r = await pushToMembers(m.company_id, [card.holder_member_id], push);
+      const admin = createAdminClient();
+      const carded = admin ? await postNoticeCards(admin, m.company_id, [card.holder_member_id], { title: push.title, lines: [push.body], url: push.url }).catch(() => 0) : 0;
+      notified = r.sent > 0 || carded > 0;
     }
   }
   refresh();

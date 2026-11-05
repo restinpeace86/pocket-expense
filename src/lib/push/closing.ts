@@ -1,6 +1,7 @@
 import "server-only";
 import { closingNotice, type ClosingKind } from "@/lib/notify/templates";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { postNoticeCards } from "@/lib/notify/card";
 import { pushConfigured, pushToMembers } from "./server";
 
 // 관리자 월말 마감 알림 (D-161, 개선사항 1). 매일 아침 cron이 부른다(service role).
@@ -39,8 +40,7 @@ export async function runClosingReminders(today?: string): Promise<{ targets: nu
       cardMissing: !!t.card_missing,
     };
     const msg = closingNotice(input);
-    if (pushConfigured()) {
-      const title =
+    const title =
         t.kind === "week_start"
           ? "지출 마감 주간 시작"
           : input.pending > 0
@@ -50,9 +50,12 @@ export async function runClosingReminders(today?: string): Promise<{ targets: nu
                 ? "홈택스 자료를 올려 주세요"
                 : "법인카드 내역 대조를 해 주세요"
               : "오늘이 세무 마감일이에요";
+    if (pushConfigured()) {
       const r = await pushToMembers(t.company_id, [t.member_id], { title, body: msg.text, url: msg.buttonPath, tag: "closing" });
       pushed += r.sent;
     }
+    // 채팅 [알림]방 카드(D-224) — 앱 알림을 못 받는 기기여도 채팅에서 보인다
+    await postNoticeCards(admin, t.company_id, [t.member_id], { title, lines: msg.text.split("\n").map((l) => l.replace(/^\[WORKON\]\s*/, "").trim()).filter(Boolean), url: msg.buttonPath }).catch(() => 0);
   }
   return { targets: rows.length, pushed, alimtalk };
 }

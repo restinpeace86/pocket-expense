@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { postNoticeCards } from "@/lib/notify/card";
 import { pushToMembers } from "./server";
 
 // 매일 아침 웹푸시 리마인더 (D-116). cron이 부른다(service role).
@@ -23,6 +24,8 @@ export async function runPushReminders(today?: string): Promise<{ deadline: numb
         : `이번 달 지출 정산 마감이 ${t.days_left}일 남았어요(${md(t.deadline)}까지). 작성 중인 결의서 ${t.open_claims}건을 상신해 주세요.`;
     const r = await pushToMembers(t.company_id, [t.member_id], { title, body, url: `/workspace/${t.company_id}/employee`, tag: "deadline" }, { kind: "deadline", ref: `${t.deadline}:${t.days_left}` });
     deadline += r.sent;
+    // 오늘 처음인 사람만(같은 알림 하루 한 번) 채팅 카드도(D-224)
+    await postNoticeCards(admin, t.company_id, r.targets, { title, lines: [body], url: `/workspace/${t.company_id}/employee` }).catch(() => 0);
   }
 
   const { data: ap } = await admin.rpc("push_approval_targets", {});
@@ -33,6 +36,7 @@ export async function runPushReminders(today?: string): Promise<{ deadline: numb
     const url = isAdmin.get(t.member_id) ? `/workspace/${t.company_id}/admin/claims` : `/workspace/${t.company_id}/approvals`;
     const r = await pushToMembers(t.company_id, [t.member_id], { title: `결재 대기 ${t.pending}건`, body: `현재 결재 대기 중인 지출결의서가 ${t.pending}건 있어요. 확인해 주세요.`, url, tag: "approval" }, { kind: "approval_pending", ref: "daily" });
     approval += r.sent;
+    await postNoticeCards(admin, t.company_id, r.targets, { title: `결재 대기 ${t.pending}건`, lines: [`결재 대기 중인 지출결의서가 ${t.pending}건 있어요. 확인해 주세요.`], url }).catch(() => 0);
   }
   return { deadline, approval };
 }

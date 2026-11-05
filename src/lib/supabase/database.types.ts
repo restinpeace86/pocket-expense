@@ -3543,6 +3543,15 @@ export type Database = {
       chat_notice_push_due: { Args: never; Returns: Json }
       chat_open_claim: { Args: { p_claim: string }; Returns: string }
       chat_open_direct: { Args: { p_member: string }; Returns: string }
+      chat_post_notices: {
+        Args: {
+          p_body: string
+          p_company: string
+          p_link: string
+          p_members: string[]
+        }
+        Returns: number
+      }
       chat_rename: {
         Args: { p_room: string; p_title: string }
         Returns: undefined

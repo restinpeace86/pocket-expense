@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assistantLinkLabel, buildRows, bytesLabel, meetingNoticeCard, oneLine, dateLabel, listTimeLabel, mergeMessages, previewText, roomTitle, timeLabel, unreadCountFor, type ChatMessage } from "./format";
+import { assistantLinkLabel, buildRows, noticeCard, bytesLabel, meetingNoticeCard, oneLine, dateLabel, listTimeLabel, mergeMessages, previewText, roomTitle, timeLabel, unreadCountFor, type ChatMessage } from "./format";
 
 const msg = (id: string, sender: string | null, at: string, extra: Partial<ChatMessage> = {}): ChatMessage => ({
   id,
@@ -130,3 +130,20 @@ describe("도우미 방 (D-222)", () => {
     expect(assistantLinkLabel("/workspace/c1/admin/claims")).toBe("결재하러 가기");
   });
 });
+
+describe("noticeCard (D-224 앱 알림 카드)", () => {
+  it("제목 + 이름: 값 줄 + 글 줄", () => {
+    expect(noticeCard("결재가 완료됐어요\n제목: 택시비\n금액: 10,000 원\n지급까지 기다려 주세요.")).toEqual({
+      title: "결재가 완료됐어요",
+      rows: [
+        { label: "제목", value: "택시비" },
+        { label: "금액", value: "10,000 원" },
+        { label: null, value: "지급까지 기다려 주세요." },
+      ],
+    });
+    expect(assistantLinkLabel("/workspace/c/employee#notices")).toBe("공지 보기");
+    expect(assistantLinkLabel("/workspace/c/admin/export?month=2026-10")).toBe("세무 마감 열기");
+    expect(assistantLinkLabel("/workspace/c/employee/claims/x")).toBe("결의서 열기");
+  });
+});
+

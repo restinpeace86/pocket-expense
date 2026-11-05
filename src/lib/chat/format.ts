@@ -193,14 +193,29 @@ export function meetingNoticeCard(body: string | null): MeetingNoticeCard | null
 // 도우미 답의 [열기] 버튼 글자(D-222) — 주소로 정한다
 export function assistantLinkLabel(link: string): string {
   const p = link.replace(/^\/workspace\/[^/]+/, "");
+  if (p.includes("#notices")) return "공지 보기";
+  if (p.startsWith("/admin/export")) return "세무 마감 열기";
+  if (p.startsWith("/admin/recurring")) return "정기 결제 보기";
+  if (p.startsWith("/admin/corporate-cards")) return "카드 대조 열기";
   if (p.startsWith("/calendar/rooms")) return "회의실 예약 열기";
   if (p.startsWith("/calendar")) return "캘린더에서 보기";
-  if (/^\/employee\/claims\/[^/]+\/edit/.test(p)) return "결의서 열기";
+  if (/^\/employee\/claims\/[^/]+/.test(p)) return "결의서 열기";
   if (p.startsWith("/employee/settlements") || p.startsWith("/admin/payouts")) return "정산 화면 열기";
   if (p.startsWith("/employee/profile")) return "내 정보 열기";
   if (p.startsWith("/employee")) return "내 결의서 보기";
   if (p.startsWith("/admin/claims") || p.startsWith("/approvals")) return "결재하러 가기";
   if (p.startsWith("/chat")) return "채팅 목록 열기";
   return "화면 열기";
+}
+
+// 앱 알림 카드(D-224): 첫 줄 = 제목, 나머지 줄은 "이름: 값"(짧은 이름)이면 표처럼, 아니면 글로
+export function noticeCard(body: string | null): { title: string; rows: { label: string | null; value: string }[] } {
+  const lines = (body ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+  const title = lines[0] ?? "알림";
+  const rows = lines.slice(1).map((l) => {
+    const m = l.match(/^([^:：]{1,8})\s*[:：]\s*(.+)$/);
+    return m ? { label: m[1].trim(), value: m[2].trim() } : { label: null, value: l };
+  });
+  return { title, rows };
 }
 

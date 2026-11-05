@@ -1,6 +1,7 @@
 import "server-only";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { cardOf, postNoticeCards } from "./card";
 import { needsAlimtalk, pushOf, CHANNEL } from "./channel";
 import { getSender, siteUrl } from "./sender";
 import { approvalCompleted, approvalRejected, approvalRequest, closingNotice, invite, merchantSummary, normalizePhone, payoutCompleted, recurringReady, reminder, taxClosed, taxOfficeInvite, taxRequest, type BuiltMessage, type ClosingNoticeInput } from "./templates";
@@ -63,6 +64,10 @@ async function notifyMembers(
   if (channel !== "alimtalk" && ids.length) {
     const r = await pushToMembers(p.companyId, ids, p.push ?? pushOf(p.message, p.claimId ? `claim-${p.claimId}` : p.message.template));
     reached = new Set(r.reached);
+  }
+  // 앱 알림만인 알림(결재 완료·정산 지급·정기 결제 등) → 채팅 [알림]방에도 카드(D-224). 핵심 알림(알림톡·fallback)은 넣지 않는다
+  if (channel === "push" && ids.length) {
+    await postNoticeCards(admin, p.companyId, ids, p.push ? { title: p.push.title, lines: [p.push.body], url: p.push.url } : cardOf(p.message)).catch(() => 0);
   }
   let alimtalk = 0;
   for (const r of p.recipients) {
@@ -350,12 +355,15 @@ export async function notifyCompanyAnswered(companyId: string, p: { officeName: 
   const admin = createAdminClient();
   if (!admin) return;
   const { data: admins } = await admin.from("members").select("id").eq("company_id", companyId).eq("status", "approved").in("role", ["super_admin", "admin"]);
-  await pushToMembers(companyId, (admins ?? []).map((a) => a.id), {
+  const push = {
     title: `${p.officeName}이(가) 확인 요청에 답했어요`,
     body: p.answer.slice(0, 120),
     url: `/workspace/${companyId}/admin/export?month=${p.month}#tax-requests`,
     tag: "tax-request-answer-company",
-  });
+  };
+  const ids = (admins ?? []).map((a) => a.id);
+  await pushToMembers(companyId, ids, push);
+  await postNoticeCards(admin, companyId, ids, { title: push.title, lines: [p.answer.slice(0, 200)], url: push.url }).catch(() => 0);
 }
 
 // 회사가 세무사무소를 지정 → 담당 세무사 휴대폰으로 초대 알림톡 (D-173). 아직 연결 안 된 경우만

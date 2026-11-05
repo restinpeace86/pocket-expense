@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { pushChatMessageAction } from "@/app/workspace/[id]/chat/actions";
 import { isAdminRole } from "@/lib/auth/paths";
-import { assistantLinkLabel, buildRows, CHAT_BODY_MAX, CHAT_FILE_MAX, displayName, fileSizeLabel, mergeMessages, roomTitle, timeLabel, unreadCountFor, type ChatKind, type ChatMember, type ChatMessage, meetingNoticeCard } from "@/lib/chat/format";
+import { assistantLinkLabel, buildRows, noticeCard, CHAT_BODY_MAX, CHAT_FILE_MAX, displayName, fileSizeLabel, mergeMessages, roomTitle, timeLabel, unreadCountFor, type ChatKind, type ChatMember, type ChatMessage, meetingNoticeCard } from "@/lib/chat/format";
 import { formatWon } from "@/lib/format";
 import { processChatImage } from "@/lib/receipts/image";
 import { LogoMark } from "@/components/brand/logo";
@@ -577,7 +577,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
       )}
 
       {detail?.kind === "notice" ? (
-        <p className="shrink-0 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] text-center text-sm text-zinc-600">회의 10분 전 안내 등 알림만 오는 방이에요. 답장은 보낼 수 없어요.</p>
+        <p className="shrink-0 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] text-center text-sm text-zinc-600">회의 10분 전·결재 완료·공지 같은 알림이 카드로 오는 방이에요. 답장은 보낼 수 없어요.</p>
       ) : (
       <form
         onSubmit={(e) => {
@@ -811,17 +811,39 @@ function MessageBody({
 // [알림]방 글(D-206). 회의 10분 전 글은 카드로(D-217): 시간·제목·장소·안건 첫 줄·자료 수 + [안건·자료 보기]
 function NoticeBubble({ body, link }: { body: string | null; link: string | null }) {
   const card = meetingNoticeCard(body);
-  if (!card)
+  if (!card) {
+    // 앱 알림 카드(D-224): 첫 줄 = 제목, 나머지 = "이름: 값" 줄 또는 글
+    const n = noticeCard(body);
     return (
-      <div className="min-w-0 rounded-2xl rounded-tl-md border border-[var(--chat-other-border)] bg-[var(--chat-other)] px-3 py-2.5 text-sm shadow-sm">
-        <p className="whitespace-pre-line break-words leading-relaxed text-zinc-900">{body}</p>
+      <article aria-label={`알림: ${n.title}`} className="w-64 min-w-0 max-w-full overflow-hidden rounded-2xl rounded-tl-md border border-[var(--chat-other-border)] bg-white text-sm shadow-sm" data-notice-card>
+        <p className="flex items-center gap-1.5 bg-brand-50 px-3 py-2 text-xs font-bold text-brand-800">
+          <Bell className="size-4 shrink-0" />
+          <span className="min-w-0 break-words">{n.title}</span>
+        </p>
+        {n.rows.length > 0 && (
+          <dl className="flex flex-col gap-1 px-3 py-2.5">
+            {n.rows.map((r, i) =>
+              r.label ? (
+                <div key={i} className="flex gap-2">
+                  <dt className="shrink-0 text-zinc-500">{r.label}</dt>
+                  <dd className="min-w-0 break-words font-medium text-zinc-900">{r.value}</dd>
+                </div>
+              ) : (
+                <p key={i} className="whitespace-pre-line break-words leading-relaxed text-zinc-800">
+                  {r.value}
+                </p>
+              ),
+            )}
+          </dl>
+        )}
         {link && (
-          <Link href={link} className="mt-2 flex min-h-10 items-center justify-center rounded-xl bg-zinc-100 px-3 text-sm font-semibold text-brand-700 hover:bg-zinc-200">
-            캘린더에서 보기
+          <Link href={link} className="flex min-h-11 items-center justify-center border-t border-zinc-100 px-3 text-sm font-semibold text-brand-700 hover:bg-zinc-50">
+            {assistantLinkLabel(link)}
           </Link>
         )}
-      </div>
+      </article>
     );
+  }
   return (
     <article aria-label="회의 시작 10분 전 안내" className="w-64 min-w-0 max-w-full overflow-hidden rounded-2xl rounded-tl-md border border-[var(--chat-other-border)] bg-white text-sm shadow-sm">
       <p className="flex items-center gap-1.5 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">

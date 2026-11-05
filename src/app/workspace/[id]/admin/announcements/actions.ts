@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { getMembership } from "@/lib/auth/session";
 import { isAdminRole } from "@/lib/auth/paths";
+import { postNoticeCards } from "@/lib/notify/card";
 import { pushToCompany } from "@/lib/push/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -19,7 +20,13 @@ export async function postCompanyAnnouncementAction(input: { title: string; body
   const { data, error } = await supabase.from("announcements").insert({ scope: "company", company_id: m.company_id, title, body, created_by_member_id: m.member_id }).select("id").single();
   if (error || !data) return { ok: false, error: "공지를 올리지 못했어요. 잠시 후 다시 시도해 주세요." };
   const r = await pushToCompany(m.company_id, { title: `[사내 공지] ${title}`, body: body.slice(0, 120), url: `/workspace/${m.company_id}/employee#notices`, tag: `notice-${data.id}` });
-  await createAdminClient()?.from("announcements").update({ pushed_count: r.sent }).eq("id", data.id).eq("company_id", m.company_id);
+  const admin = createAdminClient();
+  await admin?.from("announcements").update({ pushed_count: r.sent }).eq("id", data.id).eq("company_id", m.company_id);
+  // 채팅 [알림]방 카드(D-224): 회사 승인 멤버 모두(올린 사람 빼고)
+  if (admin) {
+    const { data: ms } = await admin.from("members").select("id").eq("company_id", m.company_id).eq("status", "approved").neq("id", m.member_id);
+    await postNoticeCards(admin, m.company_id, (ms ?? []).map((x) => x.id), { title: `[사내 공지] ${title}`, lines: [body.slice(0, 600)], url: `/workspace/${m.company_id}/employee#notices` }).catch(() => 0);
+  }
   refresh();
   return { ok: true, sent: r.sent };
 }
