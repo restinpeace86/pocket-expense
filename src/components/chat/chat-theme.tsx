@@ -28,8 +28,26 @@ function applyChatTheme(key: ChatThemeKey) {
   window.dispatchEvent(new Event(EVENT));
 }
 
+// 방금 고른 색(이 브라우저): 저장이 끝나기 전에 다른 화면으로 가면 서버가 아직 옛 계정 값을 그려 되돌리던 문제 → 잠깐은 방금 고른 것이 이긴다
+const PICK_KEY = `${CHAT_THEME_STORAGE_KEY}-picked-at`;
+const PICK_WINDOW_MS = 2 * 60_000;
+function recentPick(): ChatThemeKey | null {
+  try {
+    const at = Number(window.localStorage.getItem(PICK_KEY) ?? 0);
+    const local = window.localStorage.getItem(CHAT_THEME_STORAGE_KEY);
+    return Date.now() - at < PICK_WINDOW_MS && isChatThemeKey(local) ? local : null;
+  } catch {
+    return null;
+  }
+}
+
 function chooseChatTheme(key: ChatThemeKey) {
   applyChatTheme(key);
+  try {
+    window.localStorage.setItem(PICK_KEY, String(Date.now()));
+  } catch {
+    // 이번 화면에만
+  }
   saveChatThemeAction(key).catch(() => {});
 }
 
@@ -37,6 +55,13 @@ function chooseChatTheme(key: ChatThemeKey) {
 export function ChatThemeSync({ saved }: { saved?: string | null }) {
   useEffect(() => {
     if (isChatThemeKey(saved)) {
+      const picked = recentPick();
+      if (picked && picked !== saved) {
+        // 방금 고른 색이 아직 계정에 안 실렸으면 그대로 두고 다시 저장
+        if (current() !== picked) applyChatTheme(picked);
+        saveChatThemeAction(picked).catch(() => {});
+        return;
+      }
       if (current() !== saved) applyChatTheme(saved);
       return;
     }
