@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, BellOff, Info, Loader2 } from "lucide-react";
+import { Bell, BellOff, Info, Loader2, Smartphone } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { deletePushSubscriptionAction, getPushVibrateAction, savePushSubscriptionAction, sendTestPushAction, setPushVibrateAction } from "@/app/push/actions";
+import { useInstallPrompt } from "./install";
 import { deleteOfficePushAction, saveOfficePushAction, testOfficePushAction } from "@/app/tax-office/push-actions";
 
 // 이 기기에서 알림 받기 (D-116): 마감 리마인더 · 결재 대기 · 공지. 무료 웹푸시.
@@ -106,6 +107,7 @@ export function usePushSubscription(office = false) {
 
 export function PushToggle({ office = false }: { office?: boolean } = {}) {
   const { state, msg, pending, turnOn, turnOff, test, endpoint } = usePushSubscription(office);
+  const inst = useInstallPrompt();
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-4" aria-label="알림 받기">
       <div className="flex items-start gap-3">
@@ -137,6 +139,17 @@ export function PushToggle({ office = false }: { office?: boolean } = {}) {
           </>
         )}
         {state === "on" && !office && endpoint && <VibrateSwitch endpoint={endpoint} />}
+        {inst.kind === "prompt" && !inst.installed && (
+          <button
+            type="button"
+            onClick={() => void inst.install().catch(() => false)}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-brand-600 px-4 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+          >
+            <Smartphone className="size-4" />
+            홈 화면에 추가
+          </button>
+        )}
+        {inst.installed && <span className="text-sm text-green-700">✓ 홈 화면에 추가했어요. 아이콘으로 열어 주세요.</span>}
         {state === "ios-install" && <p className="text-sm text-zinc-600">아이폰은 Safari 아래 [공유] → [홈 화면에 추가]로 연 앱에서 알림을 켤 수 있어요.</p>}
         {state === "denied" && <p className="text-sm text-amber-700">이 브라우저에서 알림이 막혀 있어요. 브라우저(또는 휴대폰) 설정 › 알림에서 이 사이트를 허용해 주세요.</p>}
         {state === "unsupported" && <p className="text-sm text-zinc-500">이 브라우저는 웹 알림을 지원하지 않아요.</p>}
@@ -220,8 +233,8 @@ export function PushHelp({ className = "" }: { className?: string }) {
             배너·잠금화면에 떠요.
           </p>
           <p>
-            <b className="text-zinc-900">안드로이드</b> 크롬(또는 삼성 인터넷)에서 켜면 앱을 닫아도 와요. 배터리 절약이 강하면 늦게 올 수 있어요 → 휴대폰 설정 › 애플리케이션 ›
-            Chrome › 배터리 › <b>제한 없음</b>.
+            <b className="text-zinc-900">안드로이드</b> 크롬(또는 삼성 인터넷)에서 켜면 앱을 닫아도 와요. 안 오면 휴대폰 설정 › 애플리케이션 › Chrome(삼성 인터넷) › <b>알림 허용</b>, 배터리 ›{" "}
+            <b>제한 없음</b>을 확인해 주세요.
           </p>
           <p>
             <b className="text-zinc-900">아이폰</b> iOS 16.4 이상, Safari에서 <b>[공유] → [홈 화면에 추가]</b>를 한 뒤, 홈 화면에 생긴 아이콘으로 열어서 켜야 와요. Safari
@@ -232,7 +245,7 @@ export function PushHelp({ className = "" }: { className?: string }) {
             <b>Chrome을 닫아도 백그라운드 앱 계속 실행</b>을 켜 주세요. 윈도우 &lsquo;방해 금지(집중 모드)&rsquo;가 켜져 있으면 안 보여요.
           </p>
           <p>
-            <b className="text-zinc-900">바탕화면 바로가기</b> 안드로이드·PC는 없어도 알림이 와요(아이폰만 홈 화면 추가가 꼭 필요). 알림을 누르면 그 대화방·화면이 바로 열려요.
+            <b className="text-zinc-900">홈 화면에 추가</b> 휴대폰은 홈 화면에 아이콘을 두고 그 아이콘으로 열면 알림이 가장 잘 와요(아이폰은 꼭 필요). 안드로이드는 아래 <b>[홈 화면에 추가]</b> 버튼(또는 ⋮ 메뉴 › 홈 화면에 추가), 아이폰은 Safari [공유] › 홈 화면에 추가. 알림을 누르면 그 대화방·화면이 바로 열려요.
           </p>
           <p>
             <b className="text-zinc-900">소리·진동</b> [알림 올 때 소리·진동]을 켜면 짧게 두 번 울려요. 휴대폰이 무음이면 배너만 뜨고, 진동 세기·모양은 휴대폰 설정 › 알림 › 크롬(삼성

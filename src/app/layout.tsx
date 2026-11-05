@@ -45,6 +45,8 @@ export const metadata: Metadata = {
 // 값이 없으면 기본(A · 딥 네이비). 계정에 저장된 값과 다르면 워크스페이스 헤더가 계정 값으로 맞춘다.
 // 채팅 색감(D-211)도 같은 방식
 const THEME_BOOT = `try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(${JSON.stringify(THEME_KEYS)}.indexOf(t)>=0)document.documentElement.setAttribute("data-theme",t);var c=localStorage.getItem(${JSON.stringify(CHAT_THEME_STORAGE_KEY)});if(${JSON.stringify(CHAT_THEME_KEYS)}.indexOf(c)>=0)document.documentElement.setAttribute("data-chat-theme",c)}catch(e){}`;
+// 홈 화면에 추가(D-219): 안드로이드 크롬·삼성 인터넷은 화면이 그려지기 전에 '설치 가능' 신호를 한 번 보낸다 → 잡아 두었다가 [홈 화면에 추가] 버튼이 쓴다
+const INSTALL_BOOT = `window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__peInstall=e;window.dispatchEvent(new Event("pe-install-ready"))});window.addEventListener("appinstalled",function(){window.__peInstall=null;window.__peInstalled=true;window.dispatchEvent(new Event("pe-install-ready"))});`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -55,6 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+        <script dangerouslySetInnerHTML={{ __html: INSTALL_BOOT }} />
       </head>
       <body className="min-h-full flex flex-col">
         <WebVitals />
