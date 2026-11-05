@@ -13,7 +13,7 @@ export const OPERATOR = {
   businessNumber: "548-23-02343", // 사업자등록번호
   address: "", // 사업장 소재지 — 비상주 오피스로 바꾼 뒤 넣기(사용자 2026-11-06 "일단 빼 놔"). 유료 판매(PG) 전 꼭 표시
   privacyOfficer: "조호신", // 개인정보 보호책임자(연락처 = 이메일 없으면 문의 전화)
-  email: "", // 문의 이메일
+  email: "damoun.workon@gmail.com", // 문의 이메일(회사 계정, 2026-11-06 — 도메인 정하면 바꿀 수 있음)
   phone: "010-9982-0958", // 고객 문의 전화(랜딩 푸터·약관)
   mailOrderNumber: "", // 통신판매업 신고번호(랜딩 푸터)
   hosting: "Vercel Inc.", // 호스팅 서비스 제공자(랜딩 푸터)
@@ -401,7 +401,7 @@ export function PrivacyContent() {
       </Section>
       <Section title="12. 개인정보 보호책임자">
         <p>
-          개인정보 보호책임자 {v(OPERATOR.privacyOfficer)} · 연락처 {OPERATOR.email || OPERATOR.phone || v("")}
+          개인정보 보호책임자 {v(OPERATOR.privacyOfficer)} · 연락처 {[OPERATOR.email, OPERATOR.phone].filter(Boolean).join(" · ") || v("")}
         </p>
       </Section>
       <Section title="13. 권익 침해 구제 방법">
