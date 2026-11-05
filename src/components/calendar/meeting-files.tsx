@@ -82,17 +82,25 @@ export function MeetingFilesView({ files, supabase }: { files: MeetingFile[]; su
     <div>
       <p className="mb-1 flex items-center gap-1 text-sm font-semibold">
         <Paperclip className="size-4 text-zinc-500" />
-        회의 자료 {files.length}
+        회의 자료 {files.filter((f) => !f.purged).length}
       </p>
       <ul className="flex flex-col gap-1" aria-label="회의 자료">
         {files.map((f) => (
           <li key={f.id}>
+            {f.purged ? (
+              <p className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-dashed border-zinc-200 px-3 text-sm text-zinc-500">
+                <FileText className="size-4 shrink-0" />
+                <span className="min-w-0 flex-1 truncate line-through">{f.name}</span>
+                <span className="shrink-0 text-xs">보관 기간이 지나 지워졌어요</span>
+              </p>
+            ) : (
             <button type="button" onClick={() => void open(f)} className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-zinc-200 px-3 text-left text-sm hover:bg-zinc-50">
               <FileText className="size-4 shrink-0 text-brand-600" />
               <span className="min-w-0 flex-1 truncate font-medium">{f.name}</span>
               <span className="shrink-0 text-xs tabular-nums text-zinc-500">{sizeLabel(f.size)}</span>
               {opening === f.id && <Loader2 className="size-4 shrink-0 animate-spin text-zinc-400" />}
             </button>
+            )}
           </li>
         ))}
       </ul>
@@ -118,7 +126,7 @@ export function MeetingFilesEdit({
   onRemovePending: (i: number) => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
-  const kept = existing.filter((f) => !removed.includes(f.id));
+  const kept = existing.filter((f) => !removed.includes(f.id) && !f.purged);
   const left = MEETING_FILE_MAX - kept.length - pending.length;
   return (
     <div className="flex flex-col gap-1.5">
@@ -171,7 +179,7 @@ export function MeetingFilesEdit({
           파일 첨부
         </button>
       )}
-      <p className="text-xs text-zinc-500">PDF·워드·엑셀·파워포인트·한글·이미지·txt·zip. 회사 저장 공간에 함께 들어가고, 회의를 지우면 자료도 지워져요.</p>
+      <p className="text-xs text-zinc-500">PDF·워드·엑셀·파워포인트·한글·이미지·txt·zip. 회사 저장 공간에 함께 들어가요. 회의가 끝난 뒤 회사 보관 기간(30·60·90일)이 지나거나 회의를 지우면 자료도 지워져요.</p>
     </div>
   );
 }

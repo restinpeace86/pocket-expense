@@ -25,7 +25,7 @@ export type CalEvent = {
   mine: boolean;
   attendees: CalAttendee[];
 };
-export type MeetingFile = { id: string; name: string; size: number; mime: string | null; path: string };
+export type MeetingFile = { id: string; name: string; size: number; mime: string | null; path: string; purged?: boolean }; // purged = 보관 기간이 지나 파일만 지워짐(D-218)
 export type MeetingRoom = { id: string; name: string; upcoming: number };
 export type CalMember = { member_id: string; name: string; position: string | null; department_id: string | null };
 export type CalDirectory = {

@@ -27,7 +27,7 @@ export function ChatRetention({ status }: { status: RetentionStatus }) {
     if (days < status.days) {
       const f = freed(days);
       const ok = confirm(
-        `보관 기간을 ${days}일로 줄일까요?\n\n보낸 지 ${days}일이 지난 사진·파일은 오늘 새벽에 지워져요${f > 0 ? `(약 ${bytesLabel(f)} 비워짐)` : ""}. 글·말풍선은 남고, 지워진 파일은 되살릴 수 없어요.`,
+        `보관 기간을 ${days}일로 줄일까요?\n\n보낸 지 ${days}일이 지난 채팅 사진·파일과 끝난 지 ${days}일이 지난 회의 자료는 오늘 새벽에 지워져요${f > 0 ? `(약 ${bytesLabel(f)} 비워짐)` : ""}. 글·안건은 남고, 지워진 파일은 되살릴 수 없어요.`,
       );
       if (!ok) return;
     }
@@ -66,7 +66,7 @@ export function ChatRetention({ status }: { status: RetentionStatus }) {
         <h2 id="retention-title" className="font-semibold">
           사진·파일 보관 기간
         </h2>
-        <p className="mt-0.5 text-sm text-zinc-600">보낸 날부터 이 기간이 지나면 사진·파일이 자동으로 지워져요. 글은 남아요.</p>
+        <p className="mt-0.5 text-sm text-zinc-600">채팅 사진·파일은 보낸 날부터, 회의 자료는 회의가 끝난 날부터 이 기간이 지나면 자동으로 지워져요. 글·안건은 남고, 영수증·증빙은 지우지 않아요.</p>
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="사진·파일 보관 기간">
           {OPTIONS.map((o) => {
             const on = status.days === o.days;

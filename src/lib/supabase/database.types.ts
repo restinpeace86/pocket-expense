@@ -522,6 +522,7 @@ export type Database = {
           mime: string | null
           name: string
           path: string
+          purged_at: string | null
           size: number
           uploaded_by_member_id: string
         }
@@ -533,6 +534,7 @@ export type Database = {
           mime?: string | null
           name: string
           path: string
+          purged_at?: string | null
           size: number
           uploaded_by_member_id: string
         }
@@ -544,6 +546,7 @@ export type Database = {
           mime?: string | null
           name?: string
           path?: string
+          purged_at?: string | null
           size?: number
           uploaded_by_member_id?: string
         }
@@ -3683,6 +3686,14 @@ export type Database = {
         Args: { p_company_id: string }
         Returns: number
       }
+      meeting_files_due: {
+        Args: { p_limit?: number }
+        Returns: {
+          id: string
+          path: string
+        }[]
+      }
+      meeting_files_mark_purged: { Args: { p_ids: string[] }; Returns: number }
       meeting_files_orphans: { Args: { p_limit?: number }; Returns: string[] }
       member_deactivation_check: {
         Args: { p_member_id: string }

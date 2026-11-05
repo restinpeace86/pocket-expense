@@ -128,13 +128,13 @@ begin
 end;
 $$;
 
--- ⑤ 메신저가 꺼진 회사는 못 바꿈
+-- ⑤ 메신저가 꺼진 회사도 바꿀 수 있음(D-218: 보관 기간은 회의 자료에도 적용)
 update public.company_features set enabled = false where company_id = 'c7000000-0000-0000-0000-00000000000b' and feature = 'messenger';
 select public._t_as70('a7000000-0000-0000-0000-000000000003');
 set local role authenticated;
 do $$
 begin
-  perform public._t_raises70($q$select public.chat_set_attachment_days(30)$q$, 'FEATURE_DISABLED', 'messenger off');
+  if public.chat_set_attachment_days(30) <> 30 then raise exception 'FAIL [messenger off can set]'; end if;
 end;
 $$;
 reset role;

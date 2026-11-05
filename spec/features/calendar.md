@@ -138,4 +138,4 @@
 - **취소(삭제)**: 확인 창에 "올린 회의 자료 n개도 함께 지워져요" → 자료 줄은 DB 연쇄 삭제, 파일은 화면이 바로 지움(올린 사람은 자기 파일을 볼 수 있어 지울 수 있음, migration 117). 못 지운 파일은 새벽 작업(`meeting_files_orphans` → `purgeMeetingOrphans`)이 하루 뒤 지운다.
 - **10분 전 알림 카드**: 예약 작업 글 = "회의 시작 10분 전입니다. / 시간 제목 / 장소: … / 안건: 첫 줄 / 자료: n개". 채팅 [알림]방은 이 글을 카드로 그린다: ⏰ 회의 시작 10분 전 · 제목 · 시간 · 장소 · 안건 · 회의 자료 n개 · [안건·자료 보기](안건·자료 없으면 [캘린더에서 보기]) → 그 회의 상세. 휴대폰 알림(웹푸시)에도 같은 줄이 이어서 나온다.
 - 함수: `calendar_save_event`(agenda), `calendar_event`/범위 JSON에 `agenda`·`files`, `calendar_event_file_add(일정, 경로, 이름, 형식)`, `calendar_event_file_delete(자료)`, `meeting_files_orphans()`(서버 전용). 확인: DB `supabase/tests/073_meeting_agenda_files.sql`, 화면 `.responsive/live/e2e-meeting.mjs`.
-
+- (D-218) **보관 기간**: 회의 자료도 회사 보관 기간(30·60·90일)을 따른다. 기준일 = 올린 날·회의 끝난 날 중 늦은 날. 지나면 새벽 작업(`meeting_files_due` → `purgeMeetingExpired`)이 파일을 지우고 `purged_at` — 상세·폼에 이름만 흐리게 "보관 기간이 지나 지워졌어요", 저장 공간·10개 한도에서 빠짐.

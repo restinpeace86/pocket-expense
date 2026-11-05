@@ -1,6 +1,6 @@
 import { connection, NextResponse, type NextRequest } from "next/server";
 import { syncOilPrices } from "@/lib/fuel/sync";
-import { purgeChatFiles, purgeMeetingOrphans } from "@/lib/chat/purge";
+import { purgeChatFiles, purgeMeetingExpired, purgeMeetingOrphans } from "@/lib/chat/purge";
 import { purgeReceiptArchive } from "@/lib/receipts/purge";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -15,6 +15,6 @@ export async function GET(request: NextRequest) {
   const admin = createAdminClient();
   if (!admin) return NextResponse.json({ ok: false }, { status: 500 });
   const fail = (e: unknown) => ({ ok: false, error: String(e) });
-  const [purge, oil, chat, meeting] = await Promise.all([purgeReceiptArchive(admin).catch(fail), syncOilPrices(admin).catch(fail), purgeChatFiles(admin).catch(fail), purgeMeetingOrphans(admin).catch(fail)]);
-  return NextResponse.json({ ok: true, purge, oil, chat, meeting });
+  const [purge, oil, chat, meeting, meetingExpired] = await Promise.all([purgeReceiptArchive(admin).catch(fail), syncOilPrices(admin).catch(fail), purgeChatFiles(admin).catch(fail), purgeMeetingOrphans(admin).catch(fail), purgeMeetingExpired(admin).catch(fail)]);
+  return NextResponse.json({ ok: true, purge, oil, chat, meeting, meetingExpired });
 }
