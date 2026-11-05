@@ -131,3 +131,7 @@
 - 서버만 넣는다(`chat_post_notices`, service role). 메신저가 꺼진 회사는 앱 알림만. 하루 한 번인 알림은 앱 알림과 같은 기준(오늘 처음인 사람)으로 한 번. 카드 글은 다시 웹푸시되지 않게 `pushed_at`을 채운다.
 - 확인: DB `supabase/tests/076_notice_cards.sql`, 화면 `.responsive/live/e2e-noticecards.mjs`.
 
+## 0-4. 알림톡 심사용 고정 글 (D-226)
+- 알림톡 6종(초대·세무사무소 초대·결재 요청·반려·미제출 독촉·세무 자료 요청)의 글은 `src/lib/notify/templates.ts` `ALIMTALK_TEMPLATES`가 단일 기준이다(카카오 심사 글과 같음). 제출용 정리: `implementation/alimtalk-templates.md`.
+- 보내는 글은 템플릿에 변수만 넣는다(`renderAlimtalk`, 빈 변수면 보내지 않음). 버튼은 `https://{도메인}/#{링크}`(링크 = 앞 "/" 뺀 경로).
+
