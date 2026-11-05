@@ -166,3 +166,9 @@ export function bytesLabel(bytes: number): string {
 
 export const CHAT_FILE_MAX = 20 * 1024 * 1024;
 export const CHAT_BODY_MAX = 4000;
+
+// 알림 한 줄(D-214): 줄바꿈·여러 칸을 한 칸으로, 길면 끝을 …로
+export function oneLine(s: string, max = 60): string {
+  const t = s.replace(/\s+/g, " ").trim();
+  return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRows, bytesLabel, dateLabel, listTimeLabel, mergeMessages, previewText, roomTitle, timeLabel, unreadCountFor, type ChatMessage } from "./format";
+import { buildRows, bytesLabel, oneLine, dateLabel, listTimeLabel, mergeMessages, previewText, roomTitle, timeLabel, unreadCountFor, type ChatMessage } from "./format";
 
 const msg = (id: string, sender: string | null, at: string, extra: Partial<ChatMessage> = {}): ChatMessage => ({
   id,
@@ -97,5 +97,14 @@ describe("bytesLabel (D-212 저장 공간)", () => {
     expect(bytesLabel(320 * 1024 * 1024)).toBe("320MB");
     expect(bytesLabel(1024 ** 3)).toBe("1GB");
     expect(bytesLabel(1.25 * 1024 ** 3)).toBe("1.3GB");
+  });
+});
+
+describe("oneLine (D-214 알림 한 줄)", () => {
+  it("줄바꿈을 한 칸으로, 길면 …", () => {
+    expect(oneLine("김대표: 안녕\n하세요")).toBe("김대표: 안녕 하세요");
+    const long = oneLine("가".repeat(100));
+    expect(long.length).toBe(60);
+    expect(long.endsWith("…")).toBe(true);
   });
 });

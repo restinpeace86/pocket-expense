@@ -2,7 +2,7 @@
 
 import { Bell, BellOff, Info, Loader2 } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
-import { deletePushSubscriptionAction, savePushSubscriptionAction, sendTestPushAction } from "@/app/push/actions";
+import { deletePushSubscriptionAction, getPushVibrateAction, savePushSubscriptionAction, sendTestPushAction, setPushVibrateAction } from "@/app/push/actions";
 import { deleteOfficePushAction, saveOfficePushAction, testOfficePushAction } from "@/app/tax-office/push-actions";
 
 // 이 기기에서 알림 받기 (D-116): 마감 리마인더 · 결재 대기 · 공지. 무료 웹푸시.
@@ -34,6 +34,7 @@ export function usePushSubscription(office = false) {
   const [state, setState] = useState<State>("loading");
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const [endpoint, setEndpoint] = useState<string | null>(null);
   const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
   useEffect(() => {
@@ -42,8 +43,13 @@ export function usePushSubscription(office = false) {
       const blocked = detect();
       if (blocked) return alive && setState(blocked);
       const reg = await navigator.serviceWorker.getRegistration("/sw.js");
+      // 바뀐 서비스 워커(알림 모양·누르면 열기, D-214)를 바로 받도록 확인만 한 번
+      reg?.update().catch(() => undefined);
       const sub = await reg?.pushManager.getSubscription();
-      if (alive) setState(sub && Notification.permission === "granted" ? "on" : "off");
+      if (alive) {
+        setState(sub && Notification.permission === "granted" ? "on" : "off");
+        setEndpoint(sub?.endpoint ?? null);
+      }
     })().catch(() => alive && setState("unsupported"));
     return () => {
       alive = false;
@@ -66,6 +72,7 @@ export function usePushSubscription(office = false) {
         const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
         const r = await save(json, navigator.userAgent);
         if (!r.ok) return setMsg(r.error);
+        setEndpoint(json.endpoint);
         setState("on");
         setMsg("알림을 켰어요. 시험 알림으로 확인해 보세요.");
       } catch {
@@ -83,6 +90,7 @@ export function usePushSubscription(office = false) {
         await sub.unsubscribe().catch(() => undefined);
       }
       setState("off");
+      setEndpoint(null);
       setMsg("이 기기에서 알림을 껐어요.");
     });
 
@@ -93,11 +101,11 @@ export function usePushSubscription(office = false) {
       setMsg(r.ok ? "시험 알림을 보냈어요. 몇 초 안에 와요." : r.error);
     });
 
-  return { state, msg, pending, turnOn, turnOff, test };
+  return { state, msg, pending, turnOn, turnOff, test, endpoint };
 }
 
 export function PushToggle({ office = false }: { office?: boolean } = {}) {
-  const { state, msg, pending, turnOn, turnOff, test } = usePushSubscription(office);
+  const { state, msg, pending, turnOn, turnOff, test, endpoint } = usePushSubscription(office);
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-4" aria-label="알림 받기">
       <div className="flex items-start gap-3">
@@ -128,6 +136,7 @@ export function PushToggle({ office = false }: { office?: boolean } = {}) {
             </button>
           </>
         )}
+        {state === "on" && !office && endpoint && <VibrateSwitch endpoint={endpoint} />}
         {state === "ios-install" && <p className="text-sm text-zinc-600">아이폰은 Safari 아래 [공유] → [홈 화면에 추가]로 연 앱에서 알림을 켤 수 있어요.</p>}
         {state === "denied" && <p className="text-sm text-amber-700">이 브라우저에서 알림이 막혀 있어요. 브라우저(또는 휴대폰) 설정 › 알림에서 이 사이트를 허용해 주세요.</p>}
         {state === "unsupported" && <p className="text-sm text-zinc-500">이 브라우저는 웹 알림을 지원하지 않아요.</p>}
@@ -139,6 +148,54 @@ export function PushToggle({ office = false }: { office?: boolean } = {}) {
       )}
       <PushHelp className="mt-2 -ml-1.5 text-zinc-600" />
     </section>
+  );
+}
+
+// 이 기기 [알림 올 때 소리·진동](D-214). 끄면 배너만 조용히(무음 모드처럼). 휴대폰이 무음·진동 모드면 그 설정을 따른다
+function VibrateSwitch({ endpoint }: { endpoint: string }) {
+  const [on, setOn] = useState<boolean | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  useEffect(() => {
+    let alive = true;
+    getPushVibrateAction(endpoint).then((v) => alive && setOn(v ?? true)).catch(() => alive && setOn(true));
+    return () => {
+      alive = false;
+    };
+  }, [endpoint]);
+  if (on === null) return null;
+  const flip = () =>
+    start(async () => {
+      const next = !on;
+      setErr(null);
+      setOn(next);
+      const r = await setPushVibrateAction(endpoint, next);
+      if (!r.ok) {
+        setOn(!next);
+        setErr(r.error);
+      }
+    });
+  return (
+    <div className="flex w-full flex-col gap-1 border-t border-zinc-100 pt-2">
+      <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-medium text-zinc-900">알림 올 때 소리·진동</span>
+          <span className="block text-xs text-zinc-500">{on ? "짧게 두 번 진동해요. 휴대폰이 무음이면 울리지 않아요." : "소리·진동 없이 배너만 조용히 떠요."}</span>
+        </span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={on}
+          aria-label="알림 올 때 소리·진동"
+          disabled={pending}
+          onClick={flip}
+          className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-60 ${on ? "bg-brand-600" : "bg-zinc-300"}`}
+        >
+          <span className={`inline-block size-5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-6" : "translate-x-1"}`} />
+        </button>
+      </label>
+      {err && <p className="text-sm text-red-700">{err}</p>}
+    </div>
   );
 }
 
@@ -171,7 +228,15 @@ export function PushHelp({ className = "" }: { className?: string }) {
             탭이나 카카오톡 안에서 연 화면에서는 알림이 오지 않아요.
           </p>
           <p>
-            <b className="text-zinc-900">PC</b> 크롬·엣지가 켜져 있으면 화면 오른쪽 아래 윈도우 알림으로 떠요. 윈도우 &lsquo;방해 금지(집중 모드)&rsquo;가 켜져 있으면 안 보여요.
+            <b className="text-zinc-900">PC</b> 크롬·엣지가 켜져 있으면 화면 오른쪽 아래 윈도우 알림으로 떠요. 창을 다 닫아도 받으려면 크롬 설정 › 시스템 ›{" "}
+            <b>Chrome을 닫아도 백그라운드 앱 계속 실행</b>을 켜 주세요. 윈도우 &lsquo;방해 금지(집중 모드)&rsquo;가 켜져 있으면 안 보여요.
+          </p>
+          <p>
+            <b className="text-zinc-900">바탕화면 바로가기</b> 안드로이드·PC는 없어도 알림이 와요(아이폰만 홈 화면 추가가 꼭 필요). 알림을 누르면 그 대화방·화면이 바로 열려요.
+          </p>
+          <p>
+            <b className="text-zinc-900">소리·진동</b> [알림 올 때 소리·진동]을 켜면 짧게 두 번 울려요. 휴대폰이 무음이면 배너만 뜨고, 진동 세기·모양은 휴대폰 설정 › 알림 › 크롬(삼성
+            인터넷) 쪽 설정을 따라요.
           </p>
           <p>
             <b className="text-zinc-900">막혀 있을 때</b> 주소창 왼쪽 자물쇠(사이트 정보) › 알림 › <b>허용</b>으로 바꿔 주세요.

@@ -82,6 +82,16 @@ export function ChatRoom({ roomId }: { roomId: string }) {
     markRead();
   }, [supabase, roomId, markRead]);
 
+  // 방에 들어오면 이 방 알림(상단 배너)을 치운다 — 카톡처럼(D-214)
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker
+      .getRegistration("/sw.js")
+      .then((reg) => reg?.getNotifications({ tag: `chat-${roomId}` }))
+      .then((list) => list?.forEach((n) => n.close()))
+      .catch(() => undefined);
+  }, [roomId]);
+
   useEffect(() => {
     void Promise.resolve().then(() => Promise.all([loadDetail(), loadLatest()]));
     return () => {

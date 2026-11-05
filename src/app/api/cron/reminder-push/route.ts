@@ -25,6 +25,7 @@ async function handle(request: NextRequest) {
       body: rest.join(" · "),
       url: d.link ?? `/workspace/${d.company_id}/chat/${d.room_id}`,
       tag: `notice-${d.id}`,
+      urgency: "high",
     }).catch(() => ({ sent: 0 }));
     sent += r.sent;
   }

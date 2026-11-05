@@ -43,3 +43,19 @@ export async function sendTestPushAction(): Promise<Result & { sent?: number }> 
   if (!r.sent) return { ok: false, error: "시험 알림을 보내지 못했어요. 알림을 다시 켜 주세요." };
   return { ok: true, sent: r.sent };
 }
+
+// 이 기기 [알림 올 때 소리·진동](D-214) — 본인 구독만(RLS). 끄면 서버가 이 기기에는 조용한 알림(배너만)으로 보낸다
+export async function getPushVibrateAction(endpoint: string): Promise<boolean | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("push_subscriptions").select("vibrate").eq("endpoint", endpoint).maybeSingle();
+  return data ? data.vibrate : null;
+}
+
+export async function setPushVibrateAction(endpoint: string, on: boolean): Promise<Result> {
+  const m = await getMembership();
+  if (!m) return { ok: false, error: "로그인이 필요해요." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("push_subscriptions").update({ vibrate: !!on }).eq("endpoint", endpoint).select("id");
+  if (error || !data?.length) return { ok: false, error: "저장하지 못했어요. 알림을 다시 켜 주세요." };
+  return { ok: true };
+}

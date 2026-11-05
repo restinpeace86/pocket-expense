@@ -7,9 +7,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // - 키: NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT(운영 주소). 없으면 보내지 않고 0을 돌려준다.
 // - 받는 사람 조회·기록은 service role로 하고, 부르는 쪽이 회사·권한을 먼저 확인한다.
 // - 404·410(구독 끝남)이면 그 구독을 지운다. 같은 날 같은 리마인더는 push_logs로 한 번만.
-export type PushPayload = { title: string; body: string; url: string; tag?: string };
+// urgency: 채팅·회의 알림처럼 바로 봐야 하는 것은 "high"(휴대폰이 절전 중이어도 바로 깨워 보냄, D-214). 나머지는 "normal"
+export type PushPayload = { title: string; body: string; url: string; tag?: string; urgency?: "high" | "normal" };
 type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
-type Sub = { id: string; member_id: string; endpoint: string; p256dh: string; auth: string };
+// vibrate: 그 기기의 [알림 올 때 소리·진동](D-214). false면 서비스 워커가 조용한 알림(배너만)으로 띄운다
+type Sub = { id: string; member_id: string; endpoint: string; p256dh: string; auth: string; vibrate?: boolean };
+const SUB_COLS = "id, member_id, endpoint, p256dh, auth, vibrate";
 
 let configured: boolean | null = null;
 export function pushConfigured(): boolean {
@@ -28,13 +31,15 @@ async function sendAll(admin: Admin, subs: Sub[], payload: PushPayload, table: S
   let sent = 0;
   let failed = 0;
   const gone: string[] = [];
-  const body = JSON.stringify(payload);
+  const { urgency = "normal", ...rest } = payload;
+  const loud = JSON.stringify({ ...rest, vibrate: true });
+  const quiet = JSON.stringify({ ...rest, vibrate: false });
   // 한 번에 너무 많이 보내지 않게 20개씩
   for (let i = 0; i < subs.length; i += 20) {
     await Promise.all(
       subs.slice(i, i + 20).map(async (s) => {
         try {
-          await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, body, { TTL: 60 * 60 * 24, urgency: "normal" });
+          await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, s.vibrate === false ? quiet : loud, { TTL: 60 * 60 * 24, urgency });
           sent++;
           byMember.set(s.member_id, (byMember.get(s.member_id) ?? 0) + 1);
         } catch (e) {
@@ -70,7 +75,7 @@ export async function pushToMembers(
     targets = (data ?? []).map((r) => r.member_id).filter((x): x is string => !!x);
   }
   if (!targets.length) return { members: 0, sent: 0, failed: 0, reached: [] };
-  const { data: subs } = await admin.from("push_subscriptions").select("id, member_id, endpoint, p256dh, auth").eq("company_id", companyId).in("member_id", targets);
+  const { data: subs } = await admin.from("push_subscriptions").select(SUB_COLS).eq("company_id", companyId).in("member_id", targets);
   const r = await sendAll(admin, (subs ?? []) as Sub[], payload);
   return { members: r.byMember.size, sent: r.sent, failed: r.failed, reached: [...r.byMember.keys()] };
 }
@@ -79,7 +84,7 @@ export async function pushToMembers(
 export async function pushToCompany(companyId: string, payload: PushPayload): Promise<{ sent: number; failed: number }> {
   const admin = createAdminClient();
   if (!admin || !pushConfigured()) return { sent: 0, failed: 0 };
-  const { data: subs } = await admin.from("push_subscriptions").select("id, member_id, endpoint, p256dh, auth").eq("company_id", companyId);
+  const { data: subs } = await admin.from("push_subscriptions").select(SUB_COLS).eq("company_id", companyId);
   const r = await sendAll(admin, (subs ?? []) as Sub[], payload);
   return { sent: r.sent, failed: r.failed };
 }
@@ -91,7 +96,7 @@ export async function pushToAll(payload: Omit<PushPayload, "url">, urlFor: (comp
   let sent = 0;
   let failed = 0;
   for (let from = 0; ; from += 1000) {
-    const { data } = await admin.from("push_subscriptions").select("id, member_id, company_id, endpoint, p256dh, auth").order("id").range(from, from + 999);
+    const { data } = await admin.from("push_subscriptions").select(`${SUB_COLS}, company_id`).order("id").range(from, from + 999);
     if (!data?.length) break;
     const byCompany = new Map<string, Sub[]>();
     for (const s of data) byCompany.set(s.company_id, [...(byCompany.get(s.company_id) ?? []), s as Sub]);

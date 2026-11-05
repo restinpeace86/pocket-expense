@@ -2716,6 +2716,7 @@ export type Database = {
           member_id: string
           p256dh: string
           user_agent: string | null
+          vibrate: boolean
         }
         Insert: {
           auth: string
@@ -2727,6 +2728,7 @@ export type Database = {
           member_id: string
           p256dh: string
           user_agent?: string | null
+          vibrate?: boolean
         }
         Update: {
           auth?: string
@@ -2738,6 +2740,7 @@ export type Database = {
           member_id?: string
           p256dh?: string
           user_agent?: string | null
+          vibrate?: boolean
         }
         Relationships: [
           {
