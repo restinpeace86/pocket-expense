@@ -158,7 +158,7 @@ function CompanyPicker({ value, onChange }: { value: ReferralCompany | null; onC
           </ul>
         )
       )}
-      {!showList && <span className="text-xs text-zinc-500">PocketExpense를 쓰고 있는 회사 중에서 골라 주세요</span>}
+      {!showList && <span className="text-xs text-zinc-500">WORKON을 쓰고 있는 회사 중에서 골라 주세요</span>}
     </div>
   );
 }

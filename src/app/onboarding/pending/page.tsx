@@ -5,7 +5,7 @@ import { buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
 import { requireUnapprovedMembership } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "승인 대기 · PocketExpense" };
+export const metadata = { title: "승인 대기 · WORKON" };
 
 // 승인 대기 / 이용 중지 안내 (spec/features/auth-onboarding.md §3.3)
 export default function PendingPage() {

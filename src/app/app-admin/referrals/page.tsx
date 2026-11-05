@@ -5,7 +5,7 @@ import { formatKst } from "@/lib/app-admin/labels";
 import { requireAppAdmin } from "@/lib/app-admin/guard";
 import { formatPhone } from "@/lib/format";
 
-export const metadata = { title: "추천 현황 · PocketExpense 운영자" };
+export const metadata = { title: "추천 현황 · WORKON 운영자" };
 
 type Filter = "all" | "paid" | "unpaid";
 const FILTERS: [Filter, string][] = [

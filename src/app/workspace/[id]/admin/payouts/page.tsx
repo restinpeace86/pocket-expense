@@ -4,7 +4,7 @@ import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { getPayoutGroups } from "@/lib/claims/payouts";
 
-export const metadata = { title: "정산 지급 관리 · PocketExpense" };
+export const metadata = { title: "정산 지급 관리 · WORKON" };
 
 // 화면 A-02 정산 지급 관리 (admin-payouts.md)
 export default function PayoutsPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/payouts">) {

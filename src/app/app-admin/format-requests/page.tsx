@@ -5,7 +5,7 @@ import { FORMAT_PROGRAM_LABEL, type FormatProgram } from "@/lib/accounting-forma
 import { requireAppAdmin } from "@/lib/app-admin/guard";
 import { formatDateTimeKst } from "@/lib/claims/format";
 
-export const metadata = { title: "양식 접수 · PocketExpense 운영자" };
+export const metadata = { title: "양식 접수 · WORKON 운영자" };
 
 // 회계 양식 접수 (D-180): 회사가 세무 마감 화면에서 등록한 이카운트·세무사랑 엑셀 업로드 서식. 원본을 받아 맞는 파일을 준비하고 '준비 완료'를 표시한다
 export default function FormatRequestsPage() {

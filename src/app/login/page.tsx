@@ -7,7 +7,7 @@ import { destinationAfterLogin } from "@/lib/auth/paths";
 import { isTaxOfficeUser } from "@/lib/tax-office/queries";
 import { getCurrentUserId, getMembership } from "@/lib/auth/session";
 
-export const metadata = { title: "로그인 · PocketExpense" };
+export const metadata = { title: "로그인 · WORKON" };
 
 const ERRORS: Record<string, string> = {
   missing_code: "로그인 정보가 없어요. 다시 시도해 주세요.",
@@ -18,7 +18,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <PageShell>
       <div className="flex flex-col gap-2 pt-8 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">PocketExpense 시작하기</h1>
+        <h1 className="text-2xl font-bold tracking-tight">WORKON 시작하기</h1>
         <p className="text-zinc-600">영수증 한 장으로 경비 청구부터 결재까지</p>
       </div>
       <Card>

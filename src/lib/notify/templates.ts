@@ -46,7 +46,7 @@ export function approvalRequest(p: { companyId: string; claimId: string; name: s
   };
   return {
     template: "APPROVAL_REQUEST",
-    text: ["[PocketExpense] 새로운 지출결의서가 상신되었습니다.", ...linesOf(vars)].join("\n"),
+    text: ["[WORKON] 새로운 지출결의서가 상신되었습니다.", ...linesOf(vars)].join("\n"),
     buttonLabel: "결재하러 가기",
     buttonPath: `/workspace/${p.companyId}/approvals/${p.claimId}`,
     vars,
@@ -63,7 +63,7 @@ export function approvalCompleted(p: { companyId: string; claimId: string; name:
   };
   return {
     template: "APPROVAL_COMPLETED",
-    text: ["[PocketExpense] 결재가 정상 완료되었습니다. ✅", ...linesOf(vars)].join("\n"),
+    text: ["[WORKON] 결재가 정상 완료되었습니다. ✅", ...linesOf(vars)].join("\n"),
     buttonLabel: "내 내역 확인하기",
     buttonPath: `/workspace/${p.companyId}/employee/claims/${p.claimId}`,
     vars,
@@ -81,7 +81,7 @@ export function approvalRejected(p: { companyId: string; claimId: string; name: 
   };
   return {
     template: "APPROVAL_REJECTED",
-    text: ["[PocketExpense] 지출결의서가 반려되었습니다. 🔴", ...linesOf(vars)].join("\n"),
+    text: ["[WORKON] 지출결의서가 반려되었습니다. 🔴", ...linesOf(vars)].join("\n"),
     buttonLabel: "수정 후 재상신하기",
     buttonPath: `/workspace/${p.companyId}/employee/claims/${p.claimId}/edit`,
     vars,
@@ -91,7 +91,7 @@ export function approvalRejected(p: { companyId: string; claimId: string; name: 
 export function payoutCompleted(p: { companyId: string; title: string; payout: number; paidAt: string }): BuiltMessage {
   return {
     template: "PAYOUT_COMPLETED",
-    text: ["[PocketExpense] 사비 정산금이 지급되었습니다. 💰", `항목: ${p.title}`, `지급 금액: ${won(p.payout)} 원`, `지급 일시: ${p.paidAt}`].join("\n"),
+    text: ["[WORKON] 사비 정산금이 지급되었습니다. 💰", `항목: ${p.title}`, `지급 금액: ${won(p.payout)} 원`, `지급 일시: ${p.paidAt}`].join("\n"),
     buttonLabel: "나의 정산 타임라인 확인",
     buttonPath: `/workspace/${p.companyId}/employee/settlements`,
   };
@@ -182,7 +182,7 @@ export function taxClosed(p: { companyId: string; companyName: string; month: st
   const m = `${Number(p.month.slice(5, 7))}월`;
   return {
     template: "TAX_CLOSED",
-    text: `[PocketExpense] 고객사 ${p.companyName}이(가) ${p.month.slice(0, 4)}년 ${m} 지출을 세무 마감했어요(${p.count.toLocaleString("ko-KR")}건). 장부·영수증·지출결의서·홈택스 자료를 세무사무소 화면에서 받을 수 있어요.`,
+    text: `[WORKON] 고객사 ${p.companyName}이(가) ${p.month.slice(0, 4)}년 ${m} 지출을 세무 마감했어요(${p.count.toLocaleString("ko-KR")}건). 장부·영수증·지출결의서·홈택스 자료를 세무사무소 화면에서 받을 수 있어요.`,
     buttonLabel: "세무 자료 보기",
     buttonPath: `/tax-office/${p.companyId}?month=${p.month}`,
     vars: { company: p.companyName, month: p.month, count: String(p.count) },
@@ -195,7 +195,7 @@ export function taxRequest(p: { companyId: string; officeName: string; month: st
   const body = p.body.length > 80 ? `${p.body.slice(0, 80)}…` : p.body;
   return {
     template: "TAX_REQUEST",
-    text: `[PocketExpense] ${p.officeName}에서 ${m} 세무 자료를 요청했어요${p.itemLabel ? `(영수증 ${p.itemLabel})` : ""}: "${body}" 세무 마감 화면에서 답변해 주세요.`,
+    text: `[WORKON] ${p.officeName}에서 ${m} 세무 자료를 요청했어요${p.itemLabel ? `(영수증 ${p.itemLabel})` : ""}: "${body}" 세무 마감 화면에서 답변해 주세요.`,
     buttonLabel: "요청 확인하기",
     buttonPath: `/workspace/${p.companyId}/admin/export?month=${p.month}#tax-requests`,
     vars: { office: p.officeName, month: p.month },
@@ -206,7 +206,7 @@ export function taxRequest(p: { companyId: string; officeName: string; month: st
 export function taxOfficeInvite(p: { companyName: string; officeName: string; agentName: string | null; code: string }): BuiltMessage {
   return {
     template: "TAX_OFFICE_INVITE",
-    text: `[PocketExpense] ${p.agentName ? `${p.agentName}님, ` : ""}고객사 ${p.companyName}이(가) 지출·증빙 관리에 PocketExpense를 쓰고 있고, ${p.officeName}을(를) 세무대행 사무소로 지정했어요. 무료 세무사무소 워크스페이스에서 승인된 지출 장부·영수증·지출결의서·홈택스 자료를 한 번에 받을 수 있어요.`,
+    text: `[WORKON] ${p.agentName ? `${p.agentName}님, ` : ""}고객사 ${p.companyName}이(가) 지출·증빙 관리에 WORKON을 쓰고 있고, ${p.officeName}을(를) 세무대행 사무소로 지정했어요. 무료 세무사무소 워크스페이스에서 승인된 지출 장부·영수증·지출결의서·홈택스 자료를 한 번에 받을 수 있어요.`,
     buttonLabel: "세무사무소로 시작하기",
     buttonPath: `/for-tax-office/${p.code}`,
     vars: { company: p.companyName, office: p.officeName },

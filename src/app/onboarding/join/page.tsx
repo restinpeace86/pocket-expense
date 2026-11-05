@@ -6,7 +6,7 @@ import { requireNoMembership } from "@/lib/auth/guards";
 import { messageForDbError } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "직원 가입 · PocketExpense" };
+export const metadata = { title: "직원 가입 · WORKON" };
 
 export default function JoinPage({ searchParams }: PageProps<"/onboarding/join">) {
   return (

@@ -151,7 +151,7 @@ function NavItem({ item, onNavigate }: { item: Item; onNavigate?: () => void }) 
 function Brand({ officeName }: { officeName: string }) {
   return (
     <Link href="/tax-office" className="flex min-w-0 items-center gap-2.5">
-      <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm">P</span>
+      <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm">W</span>
       <span className="min-w-0">
         <span className="block truncate text-[15px] font-bold tracking-tight text-white">{officeName}</span>
         <span className="block text-[11px] text-sidebar-muted">세무사무소</span>

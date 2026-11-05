@@ -1,4 +1,4 @@
-import { Briefcase, Building2, Camera, CheckCircle2, CreditCard, Crown, FileSpreadsheet, Landmark, MessageCircle, ScanLine, Smartphone, Wallet } from "lucide-react";
+import { Briefcase, Building2, CalendarDays, Camera, CheckCircle2, CreditCard, Crown, DoorOpen, FileSpreadsheet, Landmark, Link2, MessageCircle, MessagesSquare, ReceiptText, ScanLine, Smartphone, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AiSimulator } from "@/components/landing/ai-simulator";
@@ -16,12 +16,40 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 // 상단 메뉴 바로 가기(D-143) — PC(lg 이상)에서만 보인다(휴대폰·태블릿은 자리가 없어 로그인·시작 버튼만)
 const SECTION_LINKS = [
+  { href: "#pillars", label: "기능" },
   { href: "#preview", label: "미리보기" },
   { href: "#pricing", label: "요금제" },
   { href: "#faq", label: "자주 묻는 질문" },
 ];
 
 const START_HREF = `/login?next=${encodeURIComponent("/onboarding/create-company")}`;
+
+// WORKON(D-220): 작은 회사 통합 운영관리 — 세 기둥. 지금 있는 기능만 쓴다(D-200 원칙)
+const PILLARS = [
+  {
+    icon: ReceiptText,
+    title: "경비·결재",
+    points: ["영수증 사진 → AI가 지출결의서 채움", "카카오톡 알림으로 휴대폰 결재", "직원 사비 정산 · 법인카드 내역 대조"],
+  },
+  {
+    icon: MessagesSquare,
+    title: "사내 협업",
+    points: ["우리 회사 직원끼리 사내 채팅", "일정 공유 캘린더 · 출장·외근 일정", "회의실 예약 · 안건·자료 · 10분 전 알림"],
+  },
+  {
+    icon: Landmark,
+    title: "세무사무소 연계",
+    points: ["월말 마감 파일(장부·영수증·결의서 PDF)", "세무사무소는 무료 전용 화면에서 받음", "더존 위하고 일반전표 엑셀 그대로"],
+  },
+];
+
+// 따로 쓰던 도구를 묶으면 생기는 것 — 기능끼리 이어진 부분(D-210·D-216·D-217·D-203)
+const LINKS = [
+  { icon: CalendarDays, title: "출장 일정 → 결의서 자동 채움", body: "캘린더에 적어 둔 출장·외근을 결의서에서 누르면 출장지·기간·목적이 들어가요. 두 번 적지 않아요." },
+  { icon: DoorOpen, title: "회의실 예약 = 참석자 일정", body: "예약하면 참석자 캘린더에 회의로 잡히고, 안건·자료가 붙고, 10분 전에 채팅 알림이 가요." },
+  { icon: MessageCircle, title: "결의서마다 바로 대화", body: "궁금한 결의서는 그 자리에서 [이 건으로 대화] — 카톡에 캡처해 보낼 필요가 없어요." },
+  { icon: Link2, title: "승인된 경비는 세무사무소로", body: "대표가 승인한 지출만 모여 월말에 세무사무소 화면으로 넘어가요. 메일·압축 파일이 없어요." },
+];
 
 const FEATURES = [
   {
@@ -47,19 +75,19 @@ const FEATURES = [
   },
 ];
 
-// 한 달이 이렇게 흘러가요(D-200) — 지금 있는 기능만. 결재 알림(알림톡)은 아직 연결 전이라 "알림을 받고"라고 쓰지 않는다
+// 한 달이 이렇게 흘러가요(D-200) — 지금 있는 기능만. 알림톡은 연결을 전제로 쓴다(사용자 결정 2026-11-05, B-3)
 const FLOW = [
   { icon: Camera, when: "매일", who: "직원", title: "영수증을 찍으면 결의서가 채워져요", body: "AI가 가맹점·금액·부가세·계정과목을 읽어 결의서에 넣어요. 직원은 확인하고 결재만 올리면 돼요." },
-  { icon: CheckCircle2, when: "수시로", who: "대표·팀장", title: "휴대폰에서 바로 승인", body: "영수증 원본과 내역을 보고 승인·반려해요. 기본은 대표 직통 승인, 필요하면 팀장 사전 검토만 더해요." },
+  { icon: CheckCircle2, when: "수시로", who: "대표·팀장", title: "알림 받고 휴대폰에서 바로 승인", body: "카카오톡·앱 알림을 누르면 영수증 원본과 내역이 열려요. 기본은 대표 직통 승인, 필요하면 팀장 사전 검토만 더해요." },
   { icon: Wallet, when: "월말", who: "경리·관리자", title: "정산·카드 대조·마감을 한 화면에서", body: "직원별 정산 지급, 법인카드 내역 대조, 세무 마감 파일(엑셀 장부·영수증·지출결의서 PDF)을 한 번에 끝내요." },
   { icon: Landmark, when: "마감 뒤", who: "세무사무소", title: "세무사무소가 바로 받아요", body: "무료 전용 화면에서 장부와 영수증을 보고, 더존 위하고 일반전표 엑셀로 그대로 올려요. 메일로 압축 파일을 보낼 필요가 없어요." },
 ];
 
 // 누구에게 좋은가(D-200) — 예전 "5인 회사에 과하지 않나요?" 문단을 대표 카드로 흡수
 const ROLES = [
-  { icon: Crown, who: "대표", body: "결재는 휴대폰으로 몇 초. 조직도 없이 직통 승인으로 시작하고, 이번 달 지출을 계정과목별로 한눈에 봐요." },
+  { icon: Crown, who: "대표", body: "결재는 휴대폰으로 몇 초. 이번 달 지출은 계정과목별로, 직원 일정·회의실은 캘린더에서 한눈에 봐요. 도구 여러 개를 따로 결제하지 않아도 돼요." },
   { icon: Briefcase, who: "경리·관리자", body: "영수증 풀칠·엑셀 취합 없이 승인된 것만 모여요. 정산 지급 목록과 세무 마감 파일이 자동으로 만들어져요." },
-  { icon: Smartphone, who: "직원", body: "앱 설치 없이 링크로 가입하고 찍기만 하면 돼요. 식대 한도 초과분은 자동으로 나눠 계산되고, 출장 비용은 출장비로 따로 묶여요." },
+  { icon: Smartphone, who: "직원", body: "앱 설치 없이 링크로 가입해요. 영수증은 찍기만, 동료와는 사내 채팅으로, 일정·회의실 예약도 같은 곳에서 해요." },
   { icon: Landmark, who: "세무사무소", body: "고객사 자료를 무료 전용 화면에서 바로 받아요. 확인할 영수증은 표시되어 오고, 궁금한 건 영수증에 바로 물어봐요." },
 ];
 
@@ -69,8 +97,8 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-10 border-b border-white/10 bg-zinc-950/70 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="whitespace-nowrap text-lg font-bold">PocketExpense</span>
-            <span className="hidden whitespace-nowrap rounded-full border border-white/20 px-2 py-0.5 text-xs text-zinc-300 md:inline">for Startups &amp; SMBs</span>
+            <span className="whitespace-nowrap text-lg font-bold">WORKON</span>
+            <span className="hidden whitespace-nowrap rounded-full border border-white/20 px-2 py-0.5 text-xs text-zinc-300 md:inline">작은 회사 통합 운영관리</span>
           </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {SECTION_LINKS.map(({ href, label }) => (
@@ -92,16 +120,16 @@ export default function LandingPage() {
       <header className="mx-auto grid max-w-5xl items-center gap-12 px-4 pb-24 pt-12 sm:pt-16 lg:grid-cols-2 lg:gap-16 lg:pt-24">
         <div>
           <p className="inline-flex rounded-full border border-blue-300/30 bg-blue-400/10 px-3 py-1 text-sm font-medium text-blue-200">
-            소기업·스타트업을 위한 AI 경비 정산
+            5~20인 작은 회사를 위한 통합 운영관리
           </p>
           {/* 메인 카피는 두 줄로 고정(휴대폰에서도 어절 중간에서 끊기지 않게 break-keep) */}
           <h1 className="mt-5 break-keep text-[2.5rem] font-extrabold leading-[1.15] tracking-tight sm:text-6xl lg:text-[3.5rem]">
-            복잡한 경비처리,
+            작은 회사 운영,
             <br />
-            <span className="text-blue-400">사진 한 장</span>으로 끝.
+            <span className="text-blue-400">WORKON</span> 하나로.
           </h1>
           <p className="mt-5 max-w-md text-balance break-keep text-lg leading-relaxed text-zinc-300 sm:text-xl">
-            영수증 사진 한 장에서 결재, 직원 정산, 세무사무소 전달까지 한 흐름으로.
+            경비·결재부터 사내 채팅·캘린더·회의실 예약, 세무사무소 전달까지. 따로 쓰던 업무 도구를 한 구독으로 묶고 서로 이어 놨어요.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link href={START_HREF} className="inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-xl bg-blue-500 px-6 font-semibold hover:bg-blue-400">
@@ -111,13 +139,54 @@ export default function LandingPage() {
               요금제 보기
             </a>
           </div>
-          <p className="mt-3 text-sm text-zinc-400">첫 월말 마감까지 무료 · 결제 정보 필요 없음</p>
+          <p className="mt-3 text-sm text-zinc-400">첫 월말 마감까지 무료 · 결제 정보 필요 없음 · 초기 도입비 없음</p>
         </div>
         <HeroMockup />
       </header>
 
-      <section className="mx-auto max-w-5xl px-4 py-16">
-        <ul className="grid gap-4 md:grid-cols-2">
+      <section id="pillars" className="mx-auto max-w-5xl scroll-mt-20 px-4 py-16" aria-labelledby="pillars-title">
+        <h2 id="pillars-title" className="text-balance break-keep text-center text-3xl font-bold tracking-tight">회사 운영에 필요한 것, 한곳에서</h2>
+        <p className="mt-2 text-balance break-keep text-center text-zinc-400">메신저·캘린더·경비 앱을 따로 쓰고 따로 결제하던 일을 하나로.</p>
+        <ul className="mt-10 grid gap-4 md:grid-cols-3">
+          {PILLARS.map(({ icon: Icon, title, points }) => (
+            <li key={title} className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+              <Icon className="size-7 text-blue-300" aria-hidden />
+              <h3 className="mt-4 text-lg font-semibold">{title}</h3>
+              <ul className="mt-3 flex flex-col gap-2">
+                {points.map((t) => (
+                  <li key={t} className="flex gap-2 break-keep text-sm leading-relaxed text-zinc-300">
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-blue-300" aria-hidden />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-4 py-16" aria-labelledby="links-title">
+        <h2 id="links-title" className="text-balance break-keep text-center text-3xl font-bold tracking-tight">하나로 묶어서, 이어지니까 편해요</h2>
+        <p className="mt-2 text-balance break-keep text-center text-zinc-400">기능을 모아 놓기만 한 게 아니라 서로 이어져 있어서 손이 덜 가요.</p>
+        <ul className="mt-10 grid gap-4 md:grid-cols-2">
+          {LINKS.map(({ icon: Icon, title, body }) => (
+            <li key={title} className="flex gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-blue-500/15">
+                <Icon className="size-6 text-blue-300" aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className="block break-keep font-semibold">{title}</span>
+                <span className="mt-1 block break-keep text-sm leading-relaxed text-zinc-300">{body}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-4 py-16" aria-labelledby="expense-title">
+        <h2 id="expense-title" className="text-balance break-keep text-center text-3xl font-bold tracking-tight">경비 처리는 더 깊게</h2>
+        <p className="mt-2 text-balance break-keep text-center text-zinc-400">작은 회사에서 손이 가장 많이 가는 경비·결재는 AI가 대신 채우고 맞춰요.</p>
+        <ul className="mt-10 grid gap-4 md:grid-cols-2">
           {FEATURES.map(({ icon: Icon, title, body }) => (
             <li key={title} className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
               <Icon className="size-7 text-blue-300" />
@@ -129,7 +198,7 @@ export default function LandingPage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 py-16" aria-labelledby="flow-title">
-        <h2 id="flow-title" className="text-balance break-keep text-center text-3xl font-bold tracking-tight">한 달이 이렇게 흘러가요</h2>
+        <h2 id="flow-title" className="text-balance break-keep text-center text-3xl font-bold tracking-tight">경비는 한 달이 이렇게 흘러가요</h2>
         <p className="mt-2 text-balance break-keep text-center text-zinc-400">영수증을 찍는 순간부터 세무사무소가 받기까지, 손으로 옮기는 단계가 없어요.</p>
         <ol className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {FLOW.map(({ icon: Icon, when, who, title, body }, i) => (
@@ -173,7 +242,8 @@ export default function LandingPage() {
       <Faq />
 
       <section className="mx-auto max-w-3xl px-4 pb-28 pt-8 text-center">
-        <h2 className="text-balance text-3xl font-bold tracking-tight">엑셀과 영수증 지옥에서 벗어날 준비가 되셨나요?</h2>
+        <h2 className="text-balance break-keep text-3xl font-bold tracking-tight">회사 운영, 이제 WORKON 하나로 시작하세요.</h2>
+        <p className="mt-3 text-balance break-keep text-zinc-400">경비부터 결재, 사내 소통, 일정까지. 초기 도입비 없이 월 구독 하나로.</p>
         <Link href={START_HREF} className="mt-8 inline-flex min-h-14 items-center justify-center whitespace-nowrap rounded-xl bg-blue-500 px-8 text-lg font-semibold hover:bg-blue-400">
           🏢 우리 회사 무료로 시작하기
         </Link>
@@ -199,7 +269,7 @@ export default function LandingPage() {
           <Link href="/for-tax-office" className="inline-flex min-h-11 items-center hover:text-zinc-300">세무사무소</Link>
         </nav>
         <BusinessInfo />
-        <p>© PocketExpense</p>
+        <p>© 다모은랩 · WORKON</p>
       </footer>
     </div>
   );

@@ -8,7 +8,7 @@ import { currentMonthKst } from "@/lib/dates";
 import { getMyClaims, getMySummary } from "@/lib/employee/queries";
 import { filterStatuses, parseFilter, parseMonth } from "@/lib/expense/status";
 
-export const metadata = { title: "내 경비 · PocketExpense" };
+export const metadata = { title: "내 경비 · WORKON" };
 
 // 화면 E-01 직원 메인 (spec/screens/worker-dashboard.md)
 export default function EmployeeHomePage({ params, searchParams }: PageProps<"/workspace/[id]/employee">) {

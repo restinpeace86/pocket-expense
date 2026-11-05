@@ -58,7 +58,7 @@ export async function notifyFormatRequest(companyName: string, program: FormatPr
     await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: `📥 [PocketExpense] 회계 양식 접수: ${companyName} · ${FORMAT_PROGRAM_LABEL[program]} — 운영자 화면 [양식 접수]에서 확인` }),
+      body: JSON.stringify({ content: `📥 [WORKON] 회계 양식 접수: ${companyName} · ${FORMAT_PROGRAM_LABEL[program]} — 운영자 화면 [양식 접수]에서 확인` }),
       signal: AbortSignal.timeout(3000),
     });
   } catch {

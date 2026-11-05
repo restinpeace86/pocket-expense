@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AccountTitleHistory, type AccountTitleChange } from "@/components/tax-office/account-title-history";
 import { taxAgentAddTitleAction, taxAgentSetMappingAction, taxAgentUpdateTitleAction } from "./actions";
 
-export const metadata = { title: "계정과목 · PocketExpense 세무사무소" };
+export const metadata = { title: "계정과목 · WORKON 세무사무소" };
 
 // 세무사무소: 고객사의 계정과목·계정코드·분류 연결 (D-149). 회사 관리자 화면과 같은 화면, 삭제만 없음
 export default function TaxOfficeAccountTitlesPage({ params }: PageProps<"/tax-office/[companyId]/account-titles">) {

@@ -55,7 +55,7 @@ function rows(d: RouteCardDoc): [string, string][] {
 export async function renderRouteCardPng(d: RouteCardDoc): Promise<ArrayBuffer | null> {
   const r = rows(d);
   const title = "출장 경로 및 거리 산정 요약";
-  const footer = `${d.companyName} · 상신 ${d.submittedAt ? formatDateTimeKst(d.submittedAt) : "-"} · PocketExpense 자동 생성 · 항목 ${d.itemId.slice(0, 8)}`;
+  const footer = `${d.companyName} · 상신 ${d.submittedAt ? formatDateTimeKst(d.submittedAt) : "-"} · WORKON 자동 생성 · 항목 ${d.itemId.slice(0, 8)}`;
   const amount = `정산 금액 ${formatWon(d.card.amount)}`;
   const allText = [title, footer, amount, ...r.flat(), "주유 영수증 없이 경로·거리·단가로 산정한 자차 유류비 증빙입니다"].join("");
   const [regular, bold] = await Promise.all([loadFont(allText, 400), loadFont(allText, 700)]);

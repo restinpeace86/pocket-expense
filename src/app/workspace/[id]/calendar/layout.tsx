@@ -7,7 +7,7 @@ import { calendarEnabled } from "@/lib/calendar/server";
 import { getInboxBadge } from "@/lib/claims/inbox";
 import { chatUnreadTotal } from "@/lib/chat/server";
 
-export const metadata = { title: "캘린더 · PocketExpense" };
+export const metadata = { title: "캘린더 · WORKON" };
 
 // 사내 캘린더(D-206, spec/features/calendar.md): 직원·관리자 같은 화면. 관리자 모드면 관리자 틀(왼쪽 메뉴), 직원·직원 모드면 직원 틀(하단 메뉴)
 // 회사 스위치가 꺼져 있으면 주소도 404

@@ -126,8 +126,8 @@ function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback
 function Brand() {
   return (
     <span className="flex items-center gap-2.5">
-      <span className="inline-flex size-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm">P</span>
-      <span className="text-[15px] font-bold tracking-tight">PocketExpense</span>
+      <span className="inline-flex size-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm">W</span>
+      <span className="text-[15px] font-bold tracking-tight">WORKON</span>
     </span>
   );
 }

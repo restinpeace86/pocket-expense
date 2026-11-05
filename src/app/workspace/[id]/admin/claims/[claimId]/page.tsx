@@ -16,7 +16,7 @@ import { getClaimDetail } from "@/lib/claims/detail";
 import { canActOnClaim } from "@/lib/claims/types";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "지출결의서 검토 · PocketExpense" };
+export const metadata = { title: "지출결의서 검토 · WORKON" };
 
 // 지출 승인 관리 상세 (admin-expense-approvals.md §2: 넓은 화면은 25/75 분할, 휴대폰은 상세만)
 export default function ClaimDetailPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/claims/[claimId]">) {

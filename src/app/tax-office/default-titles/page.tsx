@@ -4,7 +4,7 @@ import { DefaultTitlesApply, type DefaultTitles } from "@/components/tax-office/
 import { createClient } from "@/lib/supabase/server";
 import { getMyTaxOffice, getTaxOfficeClients, isActiveMember } from "@/lib/tax-office/queries";
 
-export const metadata = { title: "기본 계정과목 · PocketExpense 세무사무소" };
+export const metadata = { title: "기본 계정과목 · WORKON 세무사무소" };
 
 // 사무소 기본 계정과목 (D-160, D-167) — 모든 고객사에 자동 적용. 사무소 관리자만. [사무소 관리]에서 메뉴로 옮김(D-184)
 export default function TaxOfficeDefaultTitlesPage() {

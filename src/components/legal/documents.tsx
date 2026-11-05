@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 
 // 이용약관 · 개인정보 처리방침 · 선택 동의 (D-059, D-125 — 일반적인 국내 B2B SaaS 약관·개인정보보호위원회 처리방침 작성지침 구성을 따름)
 // 버전을 바꾸면 private.app_settings의 terms_version / privacy_version도 함께 바꾼다(동의 기록에 남는 버전).
-export const LEGAL_VERSION = "2026-11-04";
-export const LEGAL_EFFECTIVE_DATE = "2026년 11월 4일";
+export const LEGAL_VERSION = "2026-11-05";
+export const LEGAL_EFFECTIVE_DATE = "2026년 11월 5일";
 
 // 운영자 정보 — 비어 있으면 "(등록 예정)"으로 보인다. 사업자 정보가 정해지면 여기만 채우면 된다
 export const OPERATOR = {
-  serviceName: "PocketExpense",
+  serviceName: "WORKON",
   name: "", // 상호(또는 운영자 이름)
   ceo: "", // 대표자
   businessNumber: "", // 사업자등록번호

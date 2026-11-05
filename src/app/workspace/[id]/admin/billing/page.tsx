@@ -4,7 +4,7 @@ import { BillingView } from "@/components/admin/billing-view";
 import { getBillingAddons, getBillingPlans, getCreditStatus } from "@/lib/admin/billing";
 import { requireWorkspace } from "@/lib/auth/guards";
 
-export const metadata = { title: "요금제 · PocketExpense" };
+export const metadata = { title: "요금제 · WORKON" };
 
 // 화면 A-05 요금제 (spec/screens/admin-billing.md)
 export default function BillingPage({ params }: PageProps<"/workspace/[id]/admin/billing">) {

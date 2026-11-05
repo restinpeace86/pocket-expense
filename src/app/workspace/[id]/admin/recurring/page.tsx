@@ -4,7 +4,7 @@ import { getRecurringPayments } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { todayKst } from "@/lib/dates";
 
-export const metadata = { title: "정기 결제 · PocketExpense" };
+export const metadata = { title: "정기 결제 · WORKON" };
 
 // 정기 결제 (D-110, spec/features/recurring-subscriptions.md)
 export default function RecurringPage({ params }: PageProps<"/workspace/[id]/admin/recurring">) {

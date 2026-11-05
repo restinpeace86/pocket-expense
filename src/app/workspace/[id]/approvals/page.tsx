@@ -6,7 +6,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { isAdminRole } from "@/lib/auth/paths";
 import { getReviewerInbox } from "@/lib/claims/inbox";
 
-export const metadata = { title: "결재함 · PocketExpense" };
+export const metadata = { title: "결재함 · WORKON" };
 
 // 내 결재함 (approver.md ②). 관리자 이상은 [지출 승인 관리]와 같은 목록이라 그쪽으로 보낸다
 export default function InboxPage({ params, searchParams }: PageProps<"/workspace/[id]/approvals">) {

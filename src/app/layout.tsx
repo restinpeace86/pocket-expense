@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// 검색·공유 메타데이터(7차 개선사항 6, D-129). 화면별 제목은 각 page의 metadata.title("… · PocketExpense")이 덮어쓴다.
+// 검색·공유 메타데이터(7차 개선사항 6, D-129). 화면별 제목은 각 page의 metadata.title("… · WORKON")이 덮어쓴다.
 // 공유 이미지는 app/opengraph-image.tsx, 사이트맵·robots는 app/sitemap.ts·robots.ts
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   verification: verificationTags(),
   // 홈 화면에 추가했을 때 아이콘·이름(아이폰 웹 알림은 홈 화면 앱에서만, D-116)
   icons: { apple: "/icons/180" },
-  appleWebApp: { capable: true, title: "PocketExpense", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "WORKON", statusBarStyle: "default" },
 };
 
 // 화면 색상(D-066): 이 브라우저에 저장된 값을 첫 화면을 그리기 전에 적용해 색이 바뀌며 깜빡이지 않게 한다.

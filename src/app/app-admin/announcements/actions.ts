@@ -14,7 +14,7 @@ export async function postPlatformAnnouncementAction(input: { title: string; bod
   if (!body || body.length > 1000) return { ok: false, error: "내용은 1~1000자로 써 주세요." };
   const { data, error } = await ok.admin.from("announcements").insert({ scope: "platform", title, body }).select("id").single();
   if (error || !data) return { ok: false, error: "공지를 올리지 못했어요." };
-  const r = await pushToAll({ title: `[PocketExpense] ${title}`, body: body.slice(0, 120), tag: `notice-${data.id}` }, (cid) => `/workspace/${cid}/employee#notices`);
+  const r = await pushToAll({ title: `[WORKON] ${title}`, body: body.slice(0, 120), tag: `notice-${data.id}` }, (cid) => `/workspace/${cid}/employee#notices`);
   await ok.admin.from("announcements").update({ pushed_count: r.sent }).eq("id", data.id);
   refresh();
   return { ok: true, sent: r.sent };

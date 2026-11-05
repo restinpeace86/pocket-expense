@@ -61,7 +61,7 @@ export function TaxClosingView({
   const issueStats = countIssues([...kinds.values()]);
   const shownRows = issue ? rows.filter((r) => kinds.get(r.item_id)?.includes(issue)) : rows;
   const [busy, start] = useTransition();
-  const zipBase = `PocketExpense_${companyName.replace(/[\\/:*?"<>|\s]/g, "")}_${month}`;
+  const zipBase = `WORKON_${companyName.replace(/[\\/:*?"<>|\s]/g, "")}_${month}`;
 
   async function downloadPackage(only?: string[]) {
     setMessage(null);

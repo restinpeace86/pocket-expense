@@ -46,7 +46,7 @@ export function HeroMockup() {
       <div className="ml-auto mt-4 flex w-full max-w-64 flex-col gap-2 lg:absolute lg:-bottom-44 lg:-right-8 lg:mt-0 lg:w-64">
         <div className="landing-bubble rounded-2xl bg-[#FEE500] p-3 text-sm text-black/85 shadow-xl" style={{ animationDelay: "3.6s" }}>
           <p className="text-[11px] text-black/60">카카오톡 알림톡</p>
-          <p className="font-semibold">[PocketExpense] 결재 요청</p>
+          <p className="font-semibold">[WORKON] 결재 요청</p>
           <p className="mt-1">김개발님 · 부산 출장 3건 · 72,000원</p>
           <p className="mt-2 rounded-lg bg-white py-1.5 text-center text-black/85">결재하러 가기</p>
         </div>

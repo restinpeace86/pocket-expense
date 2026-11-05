@@ -8,7 +8,7 @@ import { currentMonthKst } from "@/lib/dates";
 import { claimCutoff, taxCloseDue } from "@/lib/expense/deadline";
 import { getHolidays } from "@/lib/expense/holidays";
 
-export const metadata = { title: "지출 한도·정책 · PocketExpense" };
+export const metadata = { title: "지출 한도·정책 · WORKON" };
 
 // 회사·정책 설정 (spec/screens/admin-settings.md): 회사 정보, 정산 정책 (직원 초대는 홈·멤버 관리에서, D-068)
 export default function SettingsPage({ params }: PageProps<"/workspace/[id]/admin/settings">) {

@@ -36,12 +36,12 @@ const PUSH_TITLE: Partial<Record<TemplateCode, string>> = {
   RECURRING_READY: "정기 결제 결의서를 확인해 주세요",
 };
 
-// 알림톡 문구 → 앱 알림(제목 + 한 줄 요약). "[PocketExpense] 머리말" 줄은 제목이 대신하고, 나머지 줄은 " · "로 잇는다
+// 알림톡 문구 → 앱 알림(제목 + 한 줄 요약). "[WORKON] 머리말" 줄은 제목이 대신하고, 나머지 줄은 " · "로 잇는다
 export function pushOf(m: BuiltMessage, tag?: string): { title: string; body: string; url: string; tag?: string } {
   const lines = m.text.split("\n").map((l) => l.trim()).filter(Boolean);
   const rest = lines.length > 1 ? lines.slice(1) : lines;
   const body = rest
-    .map((l) => l.replace(/^\[PocketExpense\]\s*/, "").replace(/^[▶•·\-\s]+/, ""))
+    .map((l) => l.replace(/^\[WORKON\]\s*/, "").replace(/^[▶•·\-\s]+/, ""))
     .join(" · ");
-  return { title: PUSH_TITLE[m.template] ?? "PocketExpense", body: body.length > 150 ? `${body.slice(0, 149)}…` : body, url: m.buttonPath, ...(tag ? { tag } : {}) };
+  return { title: PUSH_TITLE[m.template] ?? "WORKON", body: body.length > 150 ? `${body.slice(0, 149)}…` : body, url: m.buttonPath, ...(tag ? { tag } : {}) };
 }

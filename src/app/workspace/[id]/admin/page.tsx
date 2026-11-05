@@ -12,7 +12,7 @@ import { getCompanySummary } from "@/lib/admin/queries";
 import { currentMonthKst, todayKst } from "@/lib/dates";
 import { requireWorkspace } from "@/lib/auth/guards";
 
-export const metadata = { title: "관리자 · PocketExpense" };
+export const metadata = { title: "관리자 · WORKON" };
 
 export default function AdminHomePage({ params }: PageProps<"/workspace/[id]/admin">) {
   return (

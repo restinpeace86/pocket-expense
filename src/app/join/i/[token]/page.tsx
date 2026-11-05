@@ -7,7 +7,7 @@ import { destinationAfterLogin } from "@/lib/auth/paths";
 import { getCurrentUserId, getMembership } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "회사 초대 · PocketExpense" };
+export const metadata = { title: "회사 초대 · WORKON" };
 
 // 개별 초대 링크 진입 (D-042)
 export default function PersonalInvitePage({ params }: PageProps<"/join/i/[token]">) {

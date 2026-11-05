@@ -1,11 +1,18 @@
 import { configuredSiteUrl } from "@/lib/site-url";
 
 // 검색·공유용 기본 정보 (7차 개선사항 6, D-129)
-export const SITE_NAME = "PocketExpense";
-export const SITE_TITLE = "PocketExpense - 영수증 사진 한 장으로 끝내는 경비 정산·지출결의서";
+export const SITE_NAME = "WORKON";
+export const SITE_TITLE = "WORKON - 작은 회사 통합 운영관리 · 경비 정산·결재·사내 채팅·캘린더";
 export const SITE_DESCRIPTION =
-  "소기업·스타트업을 위한 AI 경비 정산 SaaS. 영수증 사진만 찍으면 AI가 지출결의서를 채우고, 카카오톡으로 결재하고, 월말 세무사무소 제출용 엑셀·영수증 ZIP까지 한 번에 정리합니다.";
+  "5~20인 작은 회사를 위한 통합 운영관리 WORKON. 영수증 사진으로 AI가 지출결의서를 채우고 카카오톡으로 결재하며, 사내 채팅·일정 공유 캘린더·회의실 예약과 월말 세무사무소 자료 전달까지 한 구독으로 이어서 씁니다.";
 export const SITE_KEYWORDS = [
+  "WORKON",
+  "워크온",
+  "소규모 회사 그룹웨어",
+  "통합 운영관리",
+  "사내 메신저",
+  "회의실 예약",
+  "일정 공유 캘린더",
   "경비 정산",
   "경비처리",
   "지출결의서",

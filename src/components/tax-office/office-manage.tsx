@@ -24,7 +24,7 @@ export function OfficeInvite({ code, officeName }: { code: string; officeName: s
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(`[PocketExpense] ${officeName}에 합류해 주세요. 로그인한 뒤 담당 고객사의 세무 자료를 볼 수 있어요.\n${link}`);
+      await navigator.clipboard.writeText(`[WORKON] ${officeName}에 합류해 주세요. 로그인한 뒤 담당 고객사의 세무 자료를 볼 수 있어요.\n${link}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {

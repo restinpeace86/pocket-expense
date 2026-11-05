@@ -5,7 +5,7 @@ import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { calendarEnabled, getMeetingRooms } from "@/lib/calendar/server";
 
-export const metadata = { title: "캘린더·회의실 · PocketExpense" };
+export const metadata = { title: "캘린더·회의실 · WORKON" };
 
 // 캘린더·회의실 설정(D-207·D-208, spec/features/calendar.md §9·§10): 관리자가 캘린더를 켜고 끄고, 켜져 있으면 회의실을 등록
 export default function CalendarSettingsPage({ params }: PageProps<"/workspace/[id]/admin/calendar-settings">) {

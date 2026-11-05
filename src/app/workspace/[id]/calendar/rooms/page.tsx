@@ -6,7 +6,7 @@ import { isAdminRole } from "@/lib/auth/paths";
 import { todayKst } from "@/lib/calendar/calendar";
 import { getCalendarDirectory, getMeetingRooms } from "@/lib/calendar/server";
 
-export const metadata = { title: "회의실 예약 · PocketExpense" };
+export const metadata = { title: "회의실 예약 · WORKON" };
 
 // 회의실 예약(D-215, spec/features/calendar.md §13): 캘린더 탭 안의 전용 화면.
 // PC = 회의실별 가로 타임라인, 휴대폰 = 회의실 고르기 + 세로 시간 목록. 빈 칸을 누르거나 끌어(10분 칸) 고르면 예약 폼.

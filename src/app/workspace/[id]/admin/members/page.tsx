@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCompanySummary, getDepartments, getMembers } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 
-export const metadata = { title: "멤버 관리 · PocketExpense" };
+export const metadata = { title: "멤버 관리 · WORKON" };
 
 // 멤버 관리 (spec/screens/admin-team-members.md). 이번 범위: 초대 링크·QR, 가입 승인·거절, 목록
 export default function MembersPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/members">) {

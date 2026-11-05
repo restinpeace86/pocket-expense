@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { getMyClaimForEdit } from "@/lib/employee/claim";
 
-export const metadata = { title: "영수증 항목 · PocketExpense" };
+export const metadata = { title: "영수증 항목 · WORKON" };
 
 // 화면 E-02 항목 편집 (spec/screens/worker-tax-processing.md §3-3): 결의서 화면의 펼침으로 옮김(주소만 남김)
 export default function ItemEditPage({ params }: PageProps<"/workspace/[id]/employee/claims/[claimId]/items/[itemId]">) {

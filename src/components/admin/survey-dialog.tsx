@@ -138,7 +138,7 @@ function SurveyDialog({ onClose, onDone, preview }: { onClose: () => void; onDon
           <div className="flex flex-col gap-1.5">
             <label htmlFor="survey-review" className="text-sm font-semibold">
               한 줄 후기 <span className="text-red-600">*</span>
-              <span className="mt-0.5 block font-normal text-zinc-600">PocketExpense로 어떤 일이 편해졌나요?</span>
+              <span className="mt-0.5 block font-normal text-zinc-600">WORKON으로 어떤 일이 편해졌나요?</span>
             </label>
             <textarea
               id="survey-review"

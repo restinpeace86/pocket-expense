@@ -5,7 +5,7 @@ import { capabilitiesFor } from "@/lib/admin/capabilities";
 import { getCompanyMealLimit, getDepartments, getMember } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 
-export const metadata = { title: "멤버 정보 · PocketExpense" };
+export const metadata = { title: "멤버 정보 · WORKON" };
 
 type Props = PageProps<"/workspace/[id]/admin/members/[memberId]">;
 

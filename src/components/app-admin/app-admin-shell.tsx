@@ -8,8 +8,8 @@ export function AppAdminShell({ children }: { children: ReactNode }) {
       <header className="border-b border-zinc-800 bg-zinc-900 text-white">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 md:px-6">
           <Link href="/app-admin" className="flex items-center gap-2 whitespace-nowrap font-bold">
-            <span className="inline-flex size-7 items-center justify-center rounded-md bg-amber-400 text-sm text-zinc-900">P</span>
-            PocketExpense 운영자
+            <span className="inline-flex size-7 items-center justify-center rounded-md bg-amber-400 text-sm text-zinc-900">W</span>
+            WORKON 운영자
           </Link>
           <nav className="flex items-center gap-3 whitespace-nowrap text-sm">
             <Link href="/app-admin" className="text-zinc-300 hover:text-white">회사</Link>

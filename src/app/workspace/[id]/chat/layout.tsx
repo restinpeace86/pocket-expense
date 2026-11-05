@@ -5,7 +5,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { viewMode } from "@/lib/auth/view-mode";
 import { chatEnabled } from "@/lib/chat/server";
 
-export const metadata = { title: "채팅 · PocketExpense" };
+export const metadata = { title: "채팅 · WORKON" };
 
 // 사내 메신저(D-203, spec/features/messenger.md): 같은 회사 승인 멤버만. 회사 스위치가 꺼져 있으면 주소도 404
 export default function ChatLayout({ children, params }: LayoutProps<"/workspace/[id]/chat">) {

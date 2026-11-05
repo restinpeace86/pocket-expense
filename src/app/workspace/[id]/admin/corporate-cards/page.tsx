@@ -5,7 +5,7 @@ import { getCorporateCards } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { currentMonthKst, monthRange } from "@/lib/dates";
 
-export const metadata = { title: "법인카드 · PocketExpense" };
+export const metadata = { title: "법인카드 · WORKON" };
 
 // 법인카드 (선택 기능, spec/screens/admin-dashboard.md ⑫, spec/features/corporate-cards.md)
 export default function CorporateCardsPage({ params }: PageProps<"/workspace/[id]/admin/corporate-cards">) {

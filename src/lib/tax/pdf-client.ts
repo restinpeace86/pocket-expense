@@ -235,7 +235,7 @@ export async function buildClaimsPdf(opts: {
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
   pdf.setTitle(opts.month ? `지출결의서 ${opts.month}` : `지출결의서 ${opts.docs[0]?.title ?? ""}`);
-  pdf.setProducer("PocketExpense");
+  pdf.setProducer("WORKON");
   const layout = opts.layout ?? DEFAULT_LAYOUT;
   const evidence = opts.evidence ?? null;
   const evidenceNo = evidence ? new Map([...evidence].map(([id, e]) => [id, e.no])) : null;

@@ -5,7 +5,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { postCompanyAnnouncementAction } from "./actions";
 
-export const metadata = { title: "사내 공지 · PocketExpense" };
+export const metadata = { title: "사내 공지 · WORKON" };
 
 // 사내 공지 (D-116 채널 B)
 export default function AnnouncementsPage({ params }: PageProps<"/workspace/[id]/admin/announcements">) {

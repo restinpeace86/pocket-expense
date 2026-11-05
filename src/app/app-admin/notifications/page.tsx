@@ -5,7 +5,7 @@ import { formatKst } from "@/lib/app-admin/labels";
 import { requireAppAdmin } from "@/lib/app-admin/guard";
 import { maskPhone } from "@/lib/notify/templates";
 
-export const metadata = { title: "알림 이력 · PocketExpense 운영자" };
+export const metadata = { title: "알림 이력 · WORKON 운영자" };
 
 // 회사별 알림톡 발송 이력·실패 사유 (D-159, 개선사항 2): 회사 관리자 화면에서 옮겨 온 CS용 조회 화면(읽기 전용, D-080).
 // ?company=회사 id & status=failed. 최근 200건

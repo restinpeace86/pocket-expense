@@ -307,7 +307,7 @@ export async function notifyOfficeClosed(companyId: string, month: string, count
   // 앱 알림만(D-213) — 사무소는 세무사무소 화면 고객사 현황에서도 마감을 본다
   await pushToOfficeMembers(
     targets.map((t) => t.member_id),
-    { title: `${company?.name ?? "고객사"} ${Number(month.slice(5, 7))}월 마감 완료`, body: message.text.replace("[PocketExpense] ", ""), url: message.buttonPath, tag: `tax-closed-${companyId}-${month}` },
+    { title: `${company?.name ?? "고객사"} ${Number(month.slice(5, 7))}월 마감 완료`, body: message.text.replace("[WORKON] ", ""), url: message.buttonPath, tag: `tax-closed-${companyId}-${month}` },
   );
   return targets.length;
 }
