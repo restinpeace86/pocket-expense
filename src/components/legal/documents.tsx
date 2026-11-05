@@ -8,13 +8,13 @@ export const LEGAL_EFFECTIVE_DATE = "2026년 11월 5일";
 // 운영자 정보 — 비어 있으면 "(등록 예정)"으로 보인다. 사업자 정보가 정해지면 여기만 채우면 된다
 export const OPERATOR = {
   serviceName: "WORKON",
-  name: "", // 상호(또는 운영자 이름)
-  ceo: "", // 대표자
-  businessNumber: "", // 사업자등록번호
-  address: "", // 주소
+  name: "다모은랩", // 상호(사업자등록 2026-11-05, B-5)
+  ceo: "조용걸", // 대표자
+  businessNumber: "548-23-02343", // 사업자등록번호
+  address: "서울특별시 노원구 한글비석로 480, 208동 709호", // 사업장 소재지
   privacyOfficer: "", // 개인정보 보호책임자
   email: "", // 문의 이메일
-  phone: "", // 대표 전화번호(랜딩 푸터)
+  phone: "010-9982-0958", // 고객 문의 전화(랜딩 푸터·약관)
   mailOrderNumber: "", // 통신판매업 신고번호(랜딩 푸터)
   hosting: "Vercel Inc.", // 호스팅 서비스 제공자(랜딩 푸터)
 };
@@ -96,7 +96,8 @@ function OperatorInfo() {
         상호 {v(OPERATOR.name)} · 대표자 {v(OPERATOR.ceo)} · 사업자등록번호 {v(OPERATOR.businessNumber)}
       </p>
       <p>
-        주소 {v(OPERATOR.address)} · 문의 {v(OPERATOR.email)}
+        주소 {v(OPERATOR.address)} · 문의 {OPERATOR.email ? `${OPERATOR.email} · ` : ""}
+        {v(OPERATOR.phone)}
       </p>
     </section>
   );
@@ -400,7 +401,7 @@ export function PrivacyContent() {
       </Section>
       <Section title="12. 개인정보 보호책임자">
         <p>
-          개인정보 보호책임자 {v(OPERATOR.privacyOfficer)} · 연락처 {v(OPERATOR.email)}
+          개인정보 보호책임자 {v(OPERATOR.privacyOfficer)} · 연락처 {OPERATOR.email || OPERATOR.phone || v("")}
         </p>
       </Section>
       <Section title="13. 권익 침해 구제 방법">
