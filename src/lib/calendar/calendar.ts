@@ -237,3 +237,56 @@ export function roomConflict(bookings: CalEvent[], roomId: string, startsIso: st
   );
 }
 
+
+// ── 회의실 예약 화면(D-215): 하루를 10분 칸(0~143)으로 나눠 잡힌 칸·고른 칸을 계산 ─────────────
+export const SLOT_MIN = 10;
+export const DAY_SLOTS = 144;
+export type SlotRange = { from: number; to: number }; // [from, to) 칸
+
+// 그날 안에서 몇 번째 칸인지(앞날·다음 날로 넘어가면 0·144로 자름)
+export function slotOf(iso: string, day: string): number {
+  const min = (Date.parse(iso) - Date.parse(kstIso(day, "00:00"))) / 60_000;
+  return Math.max(0, Math.min(DAY_SLOTS, Math.floor(min / SLOT_MIN)));
+}
+export function slotEndOf(iso: string, day: string): number {
+  const min = (Date.parse(iso) - Date.parse(kstIso(day, "00:00"))) / 60_000;
+  return Math.max(0, Math.min(DAY_SLOTS, Math.ceil(min / SLOT_MIN)));
+}
+// 칸 → "HH:MM"(144 = "24:00")
+export const slotTime = (i: number) => (i >= DAY_SLOTS ? "24:00" : `${String(Math.floor(i / 6)).padStart(2, "0")}:${String((i % 6) * SLOT_MIN).padStart(2, "0")}`);
+
+// 그 회의실의 그날 잡힌 칸들
+export function busyRanges(bookings: Pick<CalEvent, "room_id" | "starts_at" | "ends_at">[], roomId: string, day: string): SlotRange[] {
+  return bookings
+    .filter((b) => b.room_id === roomId && b.starts_at && b.ends_at)
+    .map((b) => ({ from: slotOf(b.starts_at!, day), to: slotEndOf(b.ends_at!, day) }))
+    .filter((r) => r.to > r.from)
+    .sort((a, b) => a.from - b.from);
+}
+export const isBusy = (busy: SlotRange[], i: number) => busy.some((r) => i >= r.from && i < r.to);
+
+// 끌어 고르기: 시작 칸(anchor)에서 지금 칸(target)까지, 잡힌 칸을 넘지 않게
+export function dragRange(anchor: number, target: number, busy: SlotRange[]): SlotRange {
+  const t = Math.max(0, Math.min(DAY_SLOTS - 1, target));
+  let lo = anchor;
+  let hi = anchor;
+  if (t >= anchor) while (hi + 1 <= t && !isBusy(busy, hi + 1)) hi++;
+  else while (lo - 1 >= t && !isBusy(busy, lo - 1)) lo--;
+  return { from: lo, to: hi + 1 };
+}
+// 누르기만 하면: 그 칸부터 1시간(다음 예약·자정 앞에서 멈춤)
+export function tapRange(i: number, busy: SlotRange[], len = 6): SlotRange {
+  let to = i + 1;
+  while (to < Math.min(DAY_SLOTS, i + len) && !isBusy(busy, to)) to++;
+  return { from: i, to };
+}
+// 보여 줄 시간 폭: 기본 08~20시, 그 밖의 예약이 있으면 넓힘
+export function boardHours(all: SlotRange[], from = 8, to = 20): { from: number; to: number } {
+  let a = from;
+  let b = to;
+  for (const r of all) {
+    a = Math.min(a, Math.floor(r.from / 6));
+    b = Math.max(b, Math.ceil(r.to / 6));
+  }
+  return { from: a, to: Math.min(24, b) };
+}

@@ -17,6 +17,7 @@ import {
   timeLabelOn,
   type CalEvent,
 } from "./calendar";
+import { boardHours, busyRanges, dragRange, slotEndOf, slotOf, slotTime, tapRange } from "./calendar";
 
 const ev = (p: Partial<CalEvent>): CalEvent => ({
   id: "e",
@@ -144,5 +145,37 @@ describe("회의실(D-207)", () => {
     expect(placeLabel({ room_name: "3층 회의실", location: "빔 프로젝터" })).toBe("3층 회의실 · 빔 프로젝터");
     expect(placeLabel({ room_name: null, location: "거래처" })).toBe("거래처");
     expect(placeLabel({ room_name: null, location: " " })).toBeNull();
+  });
+});
+
+describe("회의실 예약 칸 (D-215)", () => {
+  const day = "2026-11-10";
+  const b = (s: string, e: string, room = "r1") => ({ room_id: room, starts_at: kstIso(day, s), ends_at: kstIso(day, e) });
+  const busy = busyRanges([b("10:00", "11:00"), b("13:00", "13:30"), b("09:00", "12:00", "r2")], "r1", day);
+  it("잡힌 칸: 그 방만, 10분 칸", () => {
+    expect(busy).toEqual([
+      { from: 60, to: 66 },
+      { from: 78, to: 81 },
+    ]);
+    expect(slotTime(60)).toBe("10:00");
+    expect(slotTime(144)).toBe("24:00");
+  });
+  it("끌어 고르기는 잡힌 칸을 넘지 않음(앞·뒤 모두)", () => {
+    expect(dragRange(54, 70, busy)).toEqual({ from: 54, to: 60 }); // 09:00에서 11:40까지 끌어도 10:00에서 멈춤
+    expect(dragRange(72, 66, busy)).toEqual({ from: 66, to: 73 }); // 12:00에서 거꾸로 11:00까지
+    expect(dragRange(70, 70, busy)).toEqual({ from: 70, to: 71 });
+  });
+  it("누르면 1시간, 다음 예약 앞에서 멈춤", () => {
+    expect(tapRange(48, busy)).toEqual({ from: 48, to: 54 });
+    expect(tapRange(57, busy)).toEqual({ from: 57, to: 60 });
+    expect(tapRange(141, busy)).toEqual({ from: 141, to: 144 });
+  });
+  it("보여 줄 시간: 기본 08~20시, 밖 예약이면 넓힘", () => {
+    expect(boardHours(busy)).toEqual({ from: 8, to: 20 });
+    expect(boardHours([{ from: 42, to: 48 }, { from: 126, to: 132 }])).toEqual({ from: 7, to: 22 });
+  });
+  it("앞날부터 이어진 예약은 0칸부터", () => {
+    expect(slotOf(kstIso("2026-11-09", "23:00"), day)).toBe(0);
+    expect(slotEndOf(kstIso("2026-11-11", "01:00"), day)).toBe(144);
   });
 });

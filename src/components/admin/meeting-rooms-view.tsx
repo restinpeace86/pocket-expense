@@ -91,7 +91,7 @@ export function MeetingRoomsView({ rooms, calendarHref }: { rooms: MeetingRoom[]
         <Link href={calendarHref} className="font-medium text-brand-700 underline underline-offset-2">
           캘린더
         </Link>
-        에서 해요. [회의실 현황]으로 오늘 비어 있는 시간을 보고 바로 잡을 수 있어요.
+        에서 해요. [회의실 예약]에서 회의실별 빈 시간을 보고 끌어서 바로 잡을 수 있어요.
       </p>
     </section>
   );
