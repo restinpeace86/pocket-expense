@@ -3403,6 +3403,7 @@ export type Database = {
         Args: { p_from: string; p_members: string[]; p_to: string }
         Returns: Json
       }
+      calendar_my_trip_events: { Args: never; Returns: Json }
       calendar_respond: {
         Args: { p_id: string; p_response: string }
         Returns: undefined
@@ -3479,6 +3480,10 @@ export type Database = {
       chat_unread_total: { Args: never; Returns: number }
       check_claim_for_submit: { Args: { p_claim_id: string }; Returns: Json }
       claim_duplicate_receipts: { Args: { p_claim_id: string }; Returns: Json }
+      claim_link_calendar_event: {
+        Args: { p_claim: string; p_event: string }
+        Returns: Json
+      }
       clear_company_tax_office: { Args: never; Returns: undefined }
       clear_form_template: { Args: never; Returns: undefined }
       close_tax_month: { Args: { p_month: string }; Returns: Json }

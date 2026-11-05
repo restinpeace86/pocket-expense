@@ -19,6 +19,7 @@ export type EditorClaim = {
   description: string | null;
   exception_memo: string | null; // 예외 소명 사유 (D-084)
   trip_transport: TripTransport | null; // 출장 이동 수단 (D-085)
+  calendar_event_id?: string | null; // 연결된 캘린더 일정(D-210·D-216)
   default_payment_method: PaymentMethod;
   is_business_trip: boolean;
   trip_destination: string | null;

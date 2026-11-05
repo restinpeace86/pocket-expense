@@ -4,6 +4,7 @@ import { exceptionFlags, exceptionSummary } from "@/lib/expense/exceptions";
 import { ArrowLeft, Building2, Camera, Car, ChevronDown, FileText, ImageIcon, Loader2, Minus, PenLine, Plus, ReceiptText, TrainFront, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { TripEventPicker } from "@/components/calendar/trip-event-picker";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import { ackItemCategoryAction, createManualItemAction, createOwnCarItemAction, deleteDraftClaimAction, deleteItemAction, moveItemToNewClaimAction, saveClaimHeaderAction } from "@/app/workspace/[id]/employee/claims/actions";
 import { categoryMismatch } from "@/lib/expense/category-check";
@@ -932,6 +933,13 @@ export function ClaimEditor({
             <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
               🧳 출장 일비 하루 {formatWon(data.perDiem.amount)}(식비 포함)가 출장 기간만큼 자동으로 들어가요. 출장 중 식사 영수증은 올리지 않아도 돼요. 교통·유류비·숙박은 영수증으로 올려 주세요.
             </p>
+          )}
+          {editable && (
+            <TripEventPicker
+              claimId={claim.id}
+              linkedEventId={claim.calendar_event_id ?? null}
+              onFill={(f) => setForm((x) => ({ ...x, tripDestination: f.destination ?? x.tripDestination, tripStartDate: f.startDate, tripEndDate: f.endDate, tripPurpose: f.purpose }))}
+            />
           )}
           {(
             <div className="flex flex-col gap-3">

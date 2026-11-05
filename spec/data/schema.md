@@ -493,3 +493,4 @@
 - 허용 형식: 영수증 jpg/png/webp/pdf, 양식 jpg/png/pdf. 최대 10MB.
 - 영수증 보관본은 긴 변 2000px JPEG, 썸네일은 320px WebP로 업로드 전에 브라우저에서 만든다(`spec/common/performance.md` §1).
 - (D-214, migration 114) `push_subscriptions.vibrate boolean default true` — 기기별 소리·진동. 본인 구독의 이 칸만 update 가능(RLS).
+- (D-216, migration 115) 함수 `calendar_my_trip_events()`·`claim_link_calendar_event(claim, event|null)` — 결의서 쓰기에서 출장·외근 일정 불러오기(`expense_claims.calendar_event_id` 연결은 함수로만).
