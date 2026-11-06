@@ -50,12 +50,17 @@ export function PushAutoPrompt() {
       on.current();
     }
     const needPush = state === "off" && !(typeof Notification !== "undefined" && Notification.permission === "granted");
-    const needInstall = mobileTab && !installed;
+    // 홈 화면 추가는 브라우저가 '추가 가능' 신호를 준 경우(=아직 안 추가)·아이폰만 먼저 묻는다(D-227).
+    // 신호가 없는 안드로이드는 이미 추가했을 때가 많아(크롬은 추가한 사이트엔 신호를 안 줌) 그것만으로는 띄우지 않는다
+    const needInstall = (kind === "prompt" || kind === "ios") && !installed;
     if (!needPush && !needInstall && state !== "ios-install") return;
     if (askedRecently()) return;
-    const t = setTimeout(() => setShow(true), 1200); // 첫 화면을 먼저 보여 준 뒤
+    const t = setTimeout(() => {
+      markAsked(); // 한 번 보여 주면 닫지 않고 다른 화면으로 가도 7일 동안 다시 안 띄움(D-227)
+      setShow(true);
+    }, 1200); // 첫 화면을 먼저 보여 준 뒤
     return () => clearTimeout(t);
-  }, [state, kind, mobileTab, installed]);
+  }, [state, kind, installed]);
 
   if (!show) return null;
   const close = () => {

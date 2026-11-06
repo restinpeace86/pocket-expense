@@ -26,13 +26,25 @@ function detect(): InstallKind {
   return "desktop";
 }
 
+// 홈 화면 아이콘(앱)으로 한 번이라도 연 기기 표시(D-227). 앱과 브라우저 탭은 같은 브라우저 저장소를 써서,
+// 나중에 브라우저 탭으로 열어도 "이미 추가함"으로 보고 홈 화면에 추가 안내를 다시 띄우지 않는다
+const APP_COOKIE = "pe_app";
+function markApp() {
+  document.cookie = `${APP_COOKIE}=1; path=/; max-age=${2 * 365 * 86400}; samesite=lax`;
+}
+function usedApp(): boolean {
+  return document.cookie.split("; ").some((c) => c.startsWith(`${APP_COOKIE}=`));
+}
+
 export function useInstallPrompt() {
   const [kind, setKind] = useState<InstallKind | null>(null);
   const [installed, setInstalled] = useState(false);
   useEffect(() => {
     const update = () => {
-      setKind(detect());
-      setInstalled(!!(window as W).__peInstalled);
+      const k = detect();
+      if (k === "standalone") markApp();
+      setKind(k);
+      setInstalled(!!(window as W).__peInstalled || usedApp());
     };
     update();
     window.addEventListener("pe-install-ready", update);
@@ -48,6 +60,7 @@ export function useInstallPrompt() {
     w.__peInstall = null;
     if (outcome === "accepted") {
       w.__peInstalled = true;
+      markApp();
       setInstalled(true);
     }
     setKind(detect());

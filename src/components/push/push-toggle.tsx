@@ -193,7 +193,7 @@ function VibrateSwitch({ endpoint }: { endpoint: string }) {
       <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3">
         <span className="min-w-0">
           <span className="block text-sm font-medium text-zinc-900">알림 올 때 소리·진동</span>
-          <span className="block text-xs text-zinc-500">{on ? "짧게 두 번 진동해요. 휴대폰이 무음이면 울리지 않아요." : "소리·진동 없이 배너만 조용히 떠요."}</span>
+          <span className="block text-xs text-zinc-500">{on ? "길게 진동해요. 휴대폰이 무음이면 울리지 않아요." : "소리·진동 없이 배너만 조용히 떠요."}</span>
         </span>
         <button
           type="button"
@@ -248,7 +248,7 @@ export function PushHelp({ className = "" }: { className?: string }) {
             <b className="text-zinc-900">홈 화면에 추가</b> 휴대폰은 홈 화면에 아이콘을 두고 그 아이콘으로 열면 알림이 가장 잘 와요(아이폰은 꼭 필요). 안드로이드는 아래 <b>[홈 화면에 추가]</b> 버튼(또는 ⋮ 메뉴 › 홈 화면에 추가), 아이폰은 Safari [공유] › 홈 화면에 추가. 알림을 누르면 그 대화방·화면이 바로 열려요.
           </p>
           <p>
-            <b className="text-zinc-900">소리·진동</b> [알림 올 때 소리·진동]을 켜면 짧게 두 번 울려요. 휴대폰이 무음이면 배너만 뜨고, 진동 세기·모양은 휴대폰 설정 › 알림 › 크롬(삼성
+            <b className="text-zinc-900">소리·진동</b> [알림 올 때 소리·진동]을 켜면 길게 울려요. 휴대폰이 무음이면 배너만 뜨고, 진동 세기·모양은 휴대폰 설정 › 알림 › 크롬(삼성
             인터넷) 쪽 설정을 따라요.
           </p>
           <p>
