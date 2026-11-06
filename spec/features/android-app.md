@@ -44,4 +44,4 @@
 - 앱에서 카카오·Google 로그인: 로그인 끝 주소 = `kr.damounlab.app://auth/callback`(앱 주소). 로그인은 휴대폰 크롬에서 하고(Google은 앱 안 화면 로그인 금지), 끝나면 앱이 다시 열려 그 코드를 우리 `/auth/callback`으로 넘겨 앱 안에서 로그인을 마친다. Supabase Authentication › Redirect URLs에 이 앱 주소가 있어야 한다.
 - 로그인 창에서 그냥 돌아오면(뒤로 가기·취소) 로그인 버튼이 다시 눌리게 돌아온다.
 - 밝은 화면 전용: 웹 `color-scheme: only light`(크롬 자동 다크 끔), 앱 테마 Light·흰 바탕·상단바 흰색.
-
+- Supabase Site URL = 운영 주소(2026-11-07). 도메인을 바꾸면 Site URL·Redirect URLs·앱 server.url을 같이 바꾼다.

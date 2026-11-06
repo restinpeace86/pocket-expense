@@ -17,7 +17,7 @@
 - Supabase Auth Redirect URLs에 `kr.damounlab.app://auth/callback` 추가(사용자 승인, 관리 API로 기존 목록 유지 + 추가).
 
 ## 특이 사항
-- Supabase Site URL이 `http://localhost:3000`으로 되어 있다(허용 목록에 없는 주소로 돌아갈 때 쓰는 기본값). 운영 주소로 바꾸는 것을 권장 — 사용자 결정 필요.
+- Supabase Site URL `http://localhost:3000` → `https://pocket-expense-ruby.vercel.app`로 변경(2026-11-07, 사용자 승인 "바꿔", 관리 API — 허용 주소 목록은 그대로). 확인: 카카오·Google 로그인 시작(운영 주소·앱 주소 둘 다) → 302로 각 로그인 화면, /login 200. 도메인을 바꾸면 Site URL도 같이 바꿔야 한다.
 - 이미 1.0.0을 설치한 사람은 1.0.1을 받아 덮어 설치(같은 서명 키라 데이터 유지).
 
 ## 검증
