@@ -6,7 +6,7 @@ import { Faq } from "@/components/landing/faq";
 import { HeroMockup } from "@/components/landing/hero-mockup";
 import { Pricing } from "@/components/landing/pricing";
 import { Testimonials } from "@/components/landing/testimonials";
-import { OPERATOR } from "@/components/legal/documents";
+import { OPERATOR, SHOW_FULL_BUSINESS_INFO } from "@/components/legal/documents";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 import { Wordmark } from "@/components/brand/logo";
 
@@ -276,7 +276,7 @@ export default function LandingPage() {
   );
 }
 
-// 사업자 정보(전자상거래법 표시 의무, D-142) — 운영자 정보(OPERATOR)가 채워진 칸만 보인다. 사업자등록 전에는 아무것도 보이지 않는다
+// 사업자 정보(D-142) — 운영자 정보(OPERATOR)가 채워진 칸만 보인다. 지금은 상호·이메일만(D-233, SHOW_FULL_BUSINESS_INFO), [사업자 정보 ▾]로 접어 둠
 function BusinessInfo() {
   if (!OPERATOR.name) return null;
   const items = [
@@ -288,14 +288,20 @@ function BusinessInfo() {
     ["전화", OPERATOR.phone],
     ["이메일", OPERATOR.email],
     ["호스팅", OPERATOR.hosting],
-  ].filter(([, value]) => value);
+  ].filter(([label, value]) => value && (SHOW_FULL_BUSINESS_INFO || label === "상호" || label === "이메일"));
+  // 접어 두기(D-233): [사업자 정보 ▾]를 눌러야 펼쳐진다(자바스크립트 없이 details)
   return (
-    <p className="max-w-3xl px-4 text-center leading-relaxed">
-      {items.map(([label, value]) => (
-        <span key={label} className="mx-1.5 inline-block">
-          {label} {value}
-        </span>
-      ))}
-    </p>
+    <details className="group max-w-3xl px-4 text-center">
+      <summary className="mx-auto inline-flex min-h-11 cursor-pointer list-none items-center gap-1 rounded-lg px-3 hover:text-zinc-300 [&::-webkit-details-marker]:hidden">
+        사업자 정보 <span aria-hidden className="transition-transform group-open:rotate-180">▾</span>
+      </summary>
+      <p className="mt-1 leading-relaxed">
+        {items.map(([label, value]) => (
+          <span key={label} className="mx-1.5 inline-block">
+            {label} {value}
+          </span>
+        ))}
+      </p>
+    </details>
   );
 }

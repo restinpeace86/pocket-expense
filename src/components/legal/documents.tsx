@@ -14,10 +14,12 @@ export const OPERATOR = {
   address: "", // 사업장 소재지 — 비상주 오피스로 바꾼 뒤 넣기(사용자 2026-11-06 "일단 빼 놔"). 유료 판매(PG) 전 꼭 표시
   privacyOfficer: "조호신", // 개인정보 보호책임자(연락처 = 이메일 없으면 문의 전화)
   email: "damoun.workon@gmail.com", // 문의 이메일(회사 계정, 2026-11-06 — 도메인 정하면 바꿀 수 있음)
-  phone: "010-9982-0958", // 고객 문의 전화(랜딩 푸터·약관)
+  phone: "", // 고객 문의 전화 — 공개 안 함(사용자 2026-11-07 D-233: "상호·이메일만, 나중에 내가 정할 때"). 넣으면 약관에 보임
   mailOrderNumber: "", // 통신판매업 신고번호(랜딩 푸터)
   hosting: "Vercel Inc.", // 호스팅 서비스 제공자(랜딩 푸터)
 };
+// 랜딩 아래 사업자 정보: false = 상호·이메일만(D-233, 사용자 결정 전까지). true = 채워진 칸 모두(대표·사업자번호·통신판매업·주소·전화·호스팅)
+export const SHOW_FULL_BUSINESS_INFO = false;
 const v = (s: string) => s || "(등록 예정)";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -95,10 +97,7 @@ function OperatorInfo() {
       <p>
         상호 {v(OPERATOR.name)} · 대표자 {v(OPERATOR.ceo)} · 사업자등록번호 {v(OPERATOR.businessNumber)}
       </p>
-      <p>
-        주소 {v(OPERATOR.address)} · 문의 {OPERATOR.email ? `${OPERATOR.email} · ` : ""}
-        {v(OPERATOR.phone)}
-      </p>
+      <p>{[OPERATOR.address && `주소 ${OPERATOR.address}`, `문의 ${[OPERATOR.email, OPERATOR.phone].filter(Boolean).join(" · ") || v("")}`].filter(Boolean).join(" · ")}</p>
     </section>
   );
 }
