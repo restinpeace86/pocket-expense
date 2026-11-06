@@ -2,6 +2,7 @@
 
 import { Loader2, MessageCircle } from "lucide-react";
 import { useState } from "react";
+import { inviteShareOptions } from "@/lib/invite-share";
 
 // 카카오톡으로 초대 링크 공유 (개선사항 1-2). 카카오 JS SDK를 누를 때 불러온다(첫 화면을 느리게 하지 않게).
 // 키: NEXT_PUBLIC_KAKAO_JS_KEY (카카오 개발자 콘솔 › 앱 › 플랫폼 › Web에 사이트 도메인 등록 필요). 키가 없으면 버튼을 숨긴다.
@@ -31,7 +32,8 @@ function loadSdk(): Promise<KakaoSdk> {
   });
 }
 
-export function KakaoShareButton({ link, companyName }: { link: string; companyName: string }) {
+// D-229: 버튼 하나로 [웹으로 가입하기]·[앱 설치 안내] 두 길을 같이 보낸다(src/lib/invite-share.ts)
+export function KakaoShareButton({ link, installLink, companyName }: { link: string; installLink: string; companyName: string }) {
   const key = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,19 +45,7 @@ export function KakaoShareButton({ link, companyName }: { link: string; companyN
     try {
       const kakao = await loadSdk();
       if (!kakao.isInitialized()) kakao.init(key!);
-      const origin = new URL(link).origin;
-      kakao.Share.sendDefault({
-        objectType: "feed",
-        content: {
-          title: `${companyName}에서 경비 정산에 초대했어요`,
-          description: "링크를 열어 로그인하고 이름·연락처를 입력하면 가입 신청이 돼요. 관리자가 승인하면 바로 영수증을 올릴 수 있어요.",
-          imageUrl: `${origin}/share/invite-image`,
-          imageWidth: 800,
-          imageHeight: 400,
-          link: { mobileWebUrl: link, webUrl: link },
-        },
-        buttons: [{ title: "가입하기", link: { mobileWebUrl: link, webUrl: link } }],
-      });
+      kakao.Share.sendDefault(inviteShareOptions({ companyName, joinLink: link, installLink, origin: new URL(link).origin }));
     } catch {
       setError("카카오톡 공유를 열지 못했어요. [링크 복사]로 보내 주세요.");
     } finally {

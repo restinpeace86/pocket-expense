@@ -19,6 +19,7 @@
   - 화면·기능은 웹과 같고 업데이트는 자동
 - 설치할 때 휴대폰이 "출처를 알 수 없는 앱 허용"을 묻는다는 안내, 구글 보안 경고가 뜰 수 있다는 안내.
 - PC: [내 정보] 알림 칸(또는 설치 안내)에 QR. 휴대폰 안드로이드: [앱 받기] 버튼.
+- (D-229) 관리자 직원 초대: 카카오톡 공유에 [웹으로 가입하기]·[앱 설치 안내]를 같이, 초대 링크 카드에 [앱 설치 QR 저장] — spec/screens/admin-team-members.md 끝.
 
 ## 4. 알림 보내기
 - 기존 웹푸시(`push_subscriptions`)는 그대로. 설치 앱 기기는 FCM 토큰을 `push_app_tokens`(migration 123)에 따로 등록하고, 같은 알림을 FCM으로도 보낸다(`src/lib/push/fcm.ts`, `server.ts` pushToMembers·pushToCompany·pushToAll).

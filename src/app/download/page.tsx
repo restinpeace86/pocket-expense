@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { JoinStep } from "./join-step";
 import QRCode from "qrcode";
 import { Check, Download, Smartphone } from "lucide-react";
 import { Card, PageShell } from "@/components/ui/page-shell";
@@ -21,6 +23,10 @@ export default async function DownloadPage() {
         <h1 className="mt-2 text-2xl font-bold tracking-tight">휴대폰에서 WORKON 쓰기</h1>
         <p className="mt-1 text-sm text-zinc-600">결재·채팅 알림을 휴대폰으로 바로 받아요.</p>
       </div>
+
+      <Suspense fallback={null}>
+        <JoinStep />
+      </Suspense>
 
       {qr && (
         <section className="hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm md:flex md:items-center md:gap-5">
@@ -57,14 +63,16 @@ export default async function DownloadPage() {
             <p className="mt-3 text-sm text-zinc-500">설치 파일을 준비하고 있어요.</p>
           )}
           <ol className="mt-3 flex list-decimal flex-col gap-1 pl-5 text-sm leading-relaxed text-zinc-700">
-            <li>받은 파일(WORKON.apk)을 눌러 열어요.</li>
+            <li>
+              [안드로이드 앱 받기]를 눌러 파일(WORKON.apk)을 받고, 받은 파일을 눌러 열어요(카카오톡 안에서 안 받아지면 <b>⋮ → [다른 브라우저로 열기]</b>).
+            </li>
             <li>
               &lsquo;출처를 알 수 없는 앱&rsquo;을 물으면 <b>[설정] → 이 출처 허용</b>을 켜고 돌아와요.
             </li>
             <li>
               <b>[설치]</b>를 눌러요. 구글 보안 검사가 경고를 띄우면 <b>[세부정보 더보기] → [무시하고 설치]</b>를 눌러 주세요(스토어에 아직 올리지 않은 앱이라 뜨는 안내예요).
             </li>
-            <li>앱을 열어 로그인하고 [알림 켜기]를 눌러요.</li>
+            <li>앱을 열어 가입할 때와 같은 방법으로 로그인하고 [알림 켜기]를 눌러요.</li>
           </ol>
         </div>
 
@@ -80,9 +88,21 @@ export default async function DownloadPage() {
         <h2 className="flex items-center gap-2 text-lg font-bold">
           <Smartphone className="size-5 text-brand-700" /> 아이폰
         </h2>
-        <p className="mt-1 text-sm leading-relaxed text-zinc-700">
-          Safari로 이 사이트를 열고 아래 <b>[공유]</b>(네모에 화살표) → <b>[홈 화면에 추가]</b> → <b>[추가]</b>. 홈 화면 아이콘으로 열어야 알림을 받을 수 있어요(iOS 16.4 이상).
-        </p>
+        <p className="mt-1 text-sm text-zinc-600">아이폰은 설치 파일 없이 홈 화면에 추가해서 앱처럼 써요. 알림도 와요(iOS 16.4 이상).</p>
+        <ol className="mt-3 flex list-decimal flex-col gap-1 pl-5 text-sm leading-relaxed text-zinc-700">
+          <li>
+            이 화면을 <b>Safari</b>로 열어요(카카오톡 안에서 열렸다면 오른쪽 아래 <b>⋯ → [Safari로 열기]</b>).
+          </li>
+          <li>
+            아래 가운데 <b>[공유]</b>(네모에 위쪽 화살표)를 눌러요.
+          </li>
+          <li>
+            목록을 내려 <b>[홈 화면에 추가]</b> → 오른쪽 위 <b>[추가]</b>.
+          </li>
+          <li>
+            홈 화면에 생긴 <b>WORKON 아이콘</b>으로 열고 로그인 → [알림 켜기]. 아이콘으로 열어야 알림을 받을 수 있어요.
+          </li>
+        </ol>
       </Card>
     </PageShell>
   );
