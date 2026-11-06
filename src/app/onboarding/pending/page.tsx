@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { InstallNextStep } from "@/components/push/install-next-step";
 import { buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
 import { requireUnapprovedMembership } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
@@ -53,6 +54,7 @@ async function PendingContent() {
           )}
         </dl>
       </Card>
+      {!inactive && <InstallNextStep />}
       {!inactive && (
         <Link href="/onboarding/pending" prefetch={false} className={buttonSecondary}>
           승인 여부 다시 확인
