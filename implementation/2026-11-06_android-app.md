@@ -22,3 +22,17 @@
 - `.responsive/live/e2e-androidapp.mjs` ALL_OK: `/download` PC QR·휴대폰(넘침 없음) / 준비 전 받기·링크 숨김 / 앱 안(Capacitor 흉내) 홈 화면 안내 없음·알림 켜기 → 토큰 등록(본인·회사·앱 버전) / **진짜 FCM**으로 시험 알림 → 가짜 토큰이라 FCM이 거절 → 서버가 토큰 지움(운영 키 인증·보내기 길 확인) / 알림 누르면 채팅 화면·바깥 주소 무시
 - e2e-install · e2e-push ALL_OK, 스크린샷 확인
 - 남은 것: APK 빌드(SDK) → 저장소 업로드 → `ANDROID_APK_READY = true` → 실기기 설치·알림 확인
+
+## 2차 — APK 빌드·배포 (2026-11-06)
+- 빌드: Android Studio에 든 Java 25는 Gradle 8.14가 못 읽어서(class file major version 69) 빌드용 Temurin JDK 21을 `%LOCALAPPDATA%\pe-tools\jdk21`에 둠(압축만, 시스템 설정 변경 없음). `mobile/android/local.properties`(저장소 제외)에 SDK 경로.
+  ```
+  cd mobile && npx cap sync android
+  cd android && JAVA_HOME=%LOCALAPPDATA%\pe-tools\jdk21 gradlew.bat assembleRelease --no-daemon --max-workers=1 -Dorg.gradle.jvmargs=-Xmx1024m
+  ```
+  (PC 메모리가 빠듯해 일꾼 1개·힙 1GB로)
+- 확인: apksigner 서명 = CN=Damounlab, 패키지 `kr.damounlab.app` 1.0.0(versionCode 1), target 36, POST_NOTIFICATIONS·VIBRATE, Firebase 설정(google_app_id) 포함. 4.1MB.
+- 올리기: `node scripts/upload-android-apk.mjs` → `app-downloads/android/workon.apk`(공개 200, APK 형식). `ANDROID_APK_READY = true`로 받기 버튼·안내 링크 켬.
+- 새 버전: `mobile/android/app/build.gradle` versionCode +1·versionName, `src/lib/app-download.ts` ANDROID_APP_VERSION 같게 → 빌드 → 올리기. 같은 서명 키여야 덮어 설치된다.
+- 검증: e2e-androidapp(받기 주소 실제 200·APK 형식, 링크 켜짐) · e2e-invite-share · e2e-install ALL_OK.
+- 참고: 로컬 `.env.local`의 FCM 키가 다시 여러 줄로 돌아가 있어 한 줄로 다시 정리(운영 Vercel 값과 무관).
+

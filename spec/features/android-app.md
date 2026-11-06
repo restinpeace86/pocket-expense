@@ -36,6 +36,6 @@
 ## 6. 확정 (2026-11-06)
 - 패키지 이름 `kr.damounlab.app`(상호 기준 — 서비스 이름이 바뀌어도 그대로). 앱에 보이는 이름은 `WORKON`(바꿀 수 있음).
 - APK 보관: Supabase 공개 저장소 `app-downloads/android/workon.apk`(새 버전은 덮어씀). 안내 화면 `/download`(PC = QR, 휴대폰 = 받기·설치 순서).
-- 설치 파일을 올리기 전에는 `ANDROID_APK_READY = false`로 받기 버튼·안내 링크를 숨긴다(`src/lib/app-download.ts`).
+- 설치 파일을 올리기 전에는 `ANDROID_APK_READY = false`로 받기 버튼·안내 링크를 숨긴다(`src/lib/app-download.ts`). v1.0.0 올림(2026-11-06) → true.
 - 앱 껍데기: `mobile/`(Capacitor 8). 운영 주소를 연다 — 도메인을 바꾸면 `mobile/capacitor.config.json` server.url을 바꿔 앱을 다시 만들어야 한다.
 - 서명 키 `mobile/android/workon-release.jks` + `keystore.properties`는 저장소에 올리지 않는다. 잃어버리면 업데이트를 설치할 수 없다(사용자가 따로 보관).
