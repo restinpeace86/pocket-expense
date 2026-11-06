@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { JoinStep } from "./join-step";
+import { ApkButton } from "./apk-button";
 import QRCode from "qrcode";
-import { Check, Download, Smartphone } from "lucide-react";
+import { Check, Smartphone } from "lucide-react";
 import { Card, PageShell } from "@/components/ui/page-shell";
 import { ANDROID_APP_BENEFITS, ANDROID_APP_VERSION, androidApkUrl } from "@/lib/app-download";
 import { siteOrigin } from "@/lib/seo";
@@ -56,15 +57,13 @@ export default async function DownloadPage() {
             ))}
           </ul>
           {apk ? (
-            <a href={apk} download="WORKON.apk" className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700">
-              <Download className="size-4" aria-hidden /> 안드로이드 앱 받기 (v{ANDROID_APP_VERSION})
-            </a>
+            <ApkButton apk={apk} version={ANDROID_APP_VERSION} />
           ) : (
             <p className="mt-3 text-sm text-zinc-500">설치 파일을 준비하고 있어요.</p>
           )}
           <ol className="mt-3 flex list-decimal flex-col gap-1 pl-5 text-sm leading-relaxed text-zinc-700">
             <li>
-              [안드로이드 앱 받기]를 눌러 파일(WORKON.apk)을 받고, 받은 파일을 눌러 열어요(카카오톡 안에서 안 받아지면 <b>⋮ → [다른 브라우저로 열기]</b>).
+              [앱 받기]를 누르고, 받기가 끝나면 화면 아래(또는 알림창)에 뜨는 <b>[열기]</b>를 눌러요. 카카오톡 안에서 눌렀다면 크롬이 열리면서 받아져요.
             </li>
             <li>
               &lsquo;출처를 알 수 없는 앱&rsquo;을 물으면 <b>[설정] → 이 출처 허용</b>을 켜고 돌아와요.

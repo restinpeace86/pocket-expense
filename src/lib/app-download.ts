@@ -16,3 +16,20 @@ export const ANDROID_APP_BENEFITS = [
   "다른 앱을 쓰는 중에도 화면 위에 크게 떠서 놓치지 않아요",
   "화면·기능은 웹과 똑같고, 업데이트는 자동이에요(다시 설치할 필요 없음)",
 ] as const;
+
+// ── 카카오톡 등 앱 안 브라우저에서는 설치 파일을 받아도 바로 설치 화면을 못 연다(D-231) ──────────────
+// ("파일 관리자에서 직접 설치해 주세요"로 끝남) → 받기를 휴대폰 기본 브라우저(크롬)로 넘겨 받자마자 [열기] → 설치.
+export type InAppBrowser = "kakaotalk" | "other" | null;
+export function inAppBrowser(ua: string): InAppBrowser {
+  if (!/Android/i.test(ua)) return null;
+  if (/KAKAOTALK/i.test(ua)) return "kakaotalk";
+  if (/NAVER\(inapp|Instagram|FBAN|FBAV|\bLine\/|BAND\/|DaumApps|everytimeApp|; wv\)/i.test(ua)) return "other";
+  return null;
+}
+
+// 앱 안 브라우저 밖(기본 브라우저)에서 이 주소를 열게 하는 주소. 카카오톡은 자체 주소, 그 밖은 크롬 열기
+export function openOutsideUrl(url: string, kind: Exclude<InAppBrowser, null>): string {
+  if (kind === "kakaotalk") return `kakaotalk://web/openExternal?url=${encodeURIComponent(url)}`;
+  const u = new URL(url);
+  return `intent://${u.host}${u.pathname}${u.search}#Intent;scheme=${u.protocol.replace(":", "")};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url)};end`;
+}
