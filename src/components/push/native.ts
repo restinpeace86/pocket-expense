@@ -18,7 +18,12 @@ type PushPlugin = {
   getDeliveredNotifications(): Promise<{ notifications: Delivered[] }>;
   removeDeliveredNotifications(o: { notifications: Delivered[] }): Promise<void>;
 };
-type Cap = { isNativePlatform?: () => boolean; getPlatform?: () => string; Plugins?: { PushNotifications?: PushPlugin; App?: { getInfo(): Promise<{ version: string }> } } };
+type AppPlugin = {
+  getInfo(): Promise<{ version: string }>;
+  getLaunchUrl(): Promise<{ url?: string } | undefined>;
+  addListener(event: "appUrlOpen", cb: (e: { url: string }) => void): Promise<unknown>;
+};
+type Cap = { isNativePlatform?: () => boolean; getPlatform?: () => string; Plugins?: { PushNotifications?: PushPlugin; App?: AppPlugin } };
 
 function cap(): Cap | null {
   if (typeof window === "undefined") return null;
@@ -121,3 +126,40 @@ export function closeNativeNotifications(tag: string) {
     })
     .catch(() => undefined);
 }
+
+// ── 로그인(카카오·Google)은 휴대폰 크롬에서 하고 앱으로 돌아온다(D-230) ─────────────────────
+// Google은 앱 안 화면(WebView) 로그인을 막고, 다른 주소는 앱이 크롬으로 넘긴다. 그래서 로그인 끝 주소를 앱 주소
+// (kr.damounlab.app://auth/callback)로 받아, 앱이 열리면 그 코드를 우리 /auth/callback으로 넘겨 앱 안에서 로그인을 마친다.
+// (로그인을 시작한 곳이 앱이라 확인용 값이 앱에 있어 앱 안에서만 마칠 수 있다. Supabase 로그인 허용 주소에 이 앱 주소가 있어야 함)
+export const APP_AUTH_CALLBACK = "kr.damounlab.app://auth/callback";
+
+export function appAuthRedirect(next?: string): string | null {
+  if (!isNativeApp()) return null;
+  return next ? `${APP_AUTH_CALLBACK}?next=${encodeURIComponent(next)}` : APP_AUTH_CALLBACK;
+}
+
+// 앱 주소로 돌아오면 → 우리 로그인 마무리 화면으로(코드·next 그대로)
+export function appUrlToCallback(url: string): string | null {
+  if (!url.startsWith(APP_AUTH_CALLBACK)) return null;
+  const q = url.slice(APP_AUTH_CALLBACK.length);
+  if (q && !q.startsWith("?")) return null;
+  return `/auth/callback${q}`;
+}
+
+let authWired = false;
+export function initNativeAuthReturn() {
+  const app = isNativeApp() ? cap()?.Plugins?.App : null;
+  if (!app || authWired) return;
+  authWired = true;
+  const go = (url?: string) => {
+    const to = url ? appUrlToCallback(url) : null;
+    if (to) location.assign(to);
+  };
+  void app.addListener("appUrlOpen", ({ url }) => go(url));
+  // 앱이 꺼져 있다가 로그인 끝 주소로 켜진 경우
+  void app
+    .getLaunchUrl()
+    .then((r) => go(r?.url))
+    .catch(() => undefined);
+}
+

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { appAuthRedirect } from "@/components/push/native";
 import { createClient } from "@/lib/supabase/client";
 
 type Provider = "kakao" | "google";
@@ -33,15 +34,30 @@ function GoogleLogo() {
 export function OAuthButtons({ next }: { next?: string }) {
   const [pending, setPending] = useState<Provider | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 로그인 창(크롬·카카오)에서 그냥 돌아오면(뒤로 가기·취소) "이동 중"을 풀어 다시 누를 수 있게(D-230)
+  useEffect(() => {
+    if (!pending) return;
+    const reset = () => document.visibilityState === "visible" && setPending(null);
+    const onShow = (e: PageTransitionEvent) => e.persisted && setPending(null);
+    const t = setTimeout(() => document.addEventListener("visibilitychange", reset), 500);
+    window.addEventListener("pageshow", onShow);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("visibilitychange", reset);
+      window.removeEventListener("pageshow", onShow);
+    };
+  }, [pending]);
 
   async function signIn(provider: Provider) {
     setPending(provider);
     setError(null);
     const callback = new URL("/auth/callback", window.location.origin);
     if (next) callback.searchParams.set("next", next);
+    // 안드로이드 설치 앱(D-230): 크롬에서 로그인하고 앱 주소로 돌아온다
+    const redirectTo = appAuthRedirect(next) ?? callback.toString();
     const { error } = await createClient().auth.signInWithOAuth({
       provider,
-      options: { redirectTo: callback.toString() },
+      options: { redirectTo },
     });
     if (error) {
       setError("로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.");

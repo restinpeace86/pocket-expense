@@ -1,9 +1,10 @@
 import { CHAT_THEME_KEYS, CHAT_THEME_STORAGE_KEY } from "@/lib/chat/theme";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { WebVitals } from "@/components/perf/web-vitals";
 import { KeyboardAware } from "@/components/ui/keyboard-aware";
+import { NativeAppBridge } from "@/components/push/native-app-bridge";
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TITLE, siteOrigin, verificationTags } from "@/lib/seo";
 import { THEME_KEYS, THEME_STORAGE_KEY } from "@/lib/theme";
 
@@ -41,6 +42,9 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "WORKON", statusBarStyle: "default" },
 };
 
+// 밝은 화면 전용(D-230): 휴대폰이 다크 모드여도 크롬·앱이 화면을 어둡게 칠하지 않게(우리 색 테마는 data-theme으로)
+export const viewport: Viewport = { colorScheme: "only light" };
+
 // 화면 색상(D-066): 이 브라우저에 저장된 값을 첫 화면을 그리기 전에 적용해 색이 바뀌며 깜빡이지 않게 한다.
 // 값이 없으면 기본(A · 딥 네이비). 계정에 저장된 값과 다르면 워크스페이스 헤더가 계정 값으로 맞춘다.
 // 채팅 색감(D-211)도 같은 방식
@@ -61,6 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <WebVitals />
+        <NativeAppBridge />
         {children}
         <KeyboardAware />
       </body>

@@ -22,6 +22,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- 크롬에서 로그인을 마치면 이 주소로 앱이 다시 열린다(D-230): kr.damounlab.app://auth/callback -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="kr.damounlab.app" android:host="auth" />
+            </intent-filter>
+
         </activity>
 
         <!-- 앱이 꺼져 있을 때 FCM이 띄우는 알림의 기본값(D-228) -->

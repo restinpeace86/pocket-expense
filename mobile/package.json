@@ -1,7 +1,7 @@
 {
   "name": "workon-android",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "WORKON 안드로이드 설치 앱 껍데기(D-228) — 운영 웹을 그대로 열고 알림만 FCM으로",
   "scripts": {
     "sync": "cap sync android",

@@ -39,3 +39,9 @@
 - 설치 파일을 올리기 전에는 `ANDROID_APK_READY = false`로 받기 버튼·안내 링크를 숨긴다(`src/lib/app-download.ts`). v1.0.0 올림(2026-11-06) → true.
 - 앱 껍데기: `mobile/`(Capacitor 8). 운영 주소를 연다 — 도메인을 바꾸면 `mobile/capacitor.config.json` server.url을 바꿔 앱을 다시 만들어야 한다.
 - 서명 키 `mobile/android/workon-release.jks` + `keystore.properties`는 저장소에 올리지 않는다. 잃어버리면 업데이트를 설치할 수 없다(사용자가 따로 보관).
+
+## 7. 로그인·화면 (D-230)
+- 앱에서 카카오·Google 로그인: 로그인 끝 주소 = `kr.damounlab.app://auth/callback`(앱 주소). 로그인은 휴대폰 크롬에서 하고(Google은 앱 안 화면 로그인 금지), 끝나면 앱이 다시 열려 그 코드를 우리 `/auth/callback`으로 넘겨 앱 안에서 로그인을 마친다. Supabase Authentication › Redirect URLs에 이 앱 주소가 있어야 한다.
+- 로그인 창에서 그냥 돌아오면(뒤로 가기·취소) 로그인 버튼이 다시 눌리게 돌아온다.
+- 밝은 화면 전용: 웹 `color-scheme: only light`(크롬 자동 다크 끔), 앱 테마 Light·흰 바탕·상단바 흰색.
+
