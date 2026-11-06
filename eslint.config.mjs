@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 안드로이드 설치 앱 껍데기(D-228) — 웹 빌드와 따로
+    "mobile/**",
   ]),
 ]);
 

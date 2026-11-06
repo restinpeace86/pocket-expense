@@ -4,6 +4,8 @@ import { Bell, BellOff, Info, Loader2, Smartphone } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { deletePushSubscriptionAction, getPushVibrateAction, savePushSubscriptionAction, sendTestPushAction, setPushVibrateAction } from "@/app/push/actions";
 import { useInstallPrompt } from "./install";
+import { ANDROID_APK_READY } from "@/lib/app-download";
+import { isNativeApp, nativePushOff, nativePushOn, nativePushState } from "./native";
 import { deleteOfficePushAction, saveOfficePushAction, testOfficePushAction } from "@/app/tax-office/push-actions";
 
 // 이 기기에서 알림 받기 (D-116): 마감 리마인더 · 결재 대기 · 공지. 무료 웹푸시.
@@ -38,9 +40,17 @@ export function usePushSubscription(office = false) {
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
+  // 안드로이드 설치 앱(D-228): 웹 알림 대신 앱 알림(FCM). 세무사무소 계정은 웹 알림 그대로
+  const app = !office && isNativeApp();
+
   useEffect(() => {
     let alive = true;
     (async () => {
+      if (!office && isNativeApp()) {
+        const s = await nativePushState();
+        if (alive) setState(s);
+        return;
+      }
       const blocked = detect();
       if (blocked) return alive && setState(blocked);
       const reg = await navigator.serviceWorker.getRegistration("/sw.js");
@@ -55,11 +65,20 @@ export function usePushSubscription(office = false) {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [office]);
 
   const turnOn = () =>
     start(async () => {
       setMsg(null);
+      if (app) {
+        const r = await nativePushOn();
+        if (r.ok) {
+          setState("on");
+          setMsg("알림을 켰어요. 시험 알림으로 확인해 보세요.");
+        } else if (r.error === "denied") setState("denied");
+        else setMsg(r.error);
+        return;
+      }
       if (!key) return setMsg("알림 서버 설정이 아직 안 돼 있어요.");
       const perm = await Notification.requestPermission();
       if (perm !== "granted") {
@@ -84,6 +103,12 @@ export function usePushSubscription(office = false) {
   const turnOff = () =>
     start(async () => {
       setMsg(null);
+      if (app) {
+        await nativePushOff();
+        setState("off");
+        setMsg("이 기기에서 알림을 껐어요.");
+        return;
+      }
       const reg = await navigator.serviceWorker.getRegistration("/sw.js");
       const sub = await reg?.pushManager.getSubscription();
       if (sub) {
@@ -102,11 +127,11 @@ export function usePushSubscription(office = false) {
       setMsg(r.ok ? "시험 알림을 보냈어요. 몇 초 안에 와요." : r.error);
     });
 
-  return { state, msg, pending, turnOn, turnOff, test, endpoint };
+  return { state, msg, pending, turnOn, turnOff, test, endpoint, app };
 }
 
 export function PushToggle({ office = false }: { office?: boolean } = {}) {
-  const { state, msg, pending, turnOn, turnOff, test, endpoint } = usePushSubscription(office);
+  const { state, msg, pending, turnOn, turnOff, test, endpoint, app } = usePushSubscription(office);
   const inst = useInstallPrompt();
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-4" aria-label="알림 받기">
@@ -138,7 +163,12 @@ export function PushToggle({ office = false }: { office?: boolean } = {}) {
             </button>
           </>
         )}
-        {state === "on" && !office && endpoint && <VibrateSwitch endpoint={endpoint} />}
+        {state === "on" && !office && !app && endpoint && <VibrateSwitch endpoint={endpoint} />}
+        {state === "on" && app && (
+          <p className="w-full border-t border-zinc-100 pt-2 text-xs leading-relaxed text-zinc-600">
+            채팅 알림은 길게 진동하고 소리가 나요. 바꾸려면 휴대폰 설정 › 애플리케이션 › WORKON › 알림 › <b>채팅</b>에서 진동 패턴·소리를 고르세요.
+          </p>
+        )}
         {inst.kind === "prompt" && !inst.installed && (
           <button
             type="button"
@@ -149,9 +179,24 @@ export function PushToggle({ office = false }: { office?: boolean } = {}) {
             홈 화면에 추가
           </button>
         )}
-        {inst.installed && <span className="text-sm text-green-700">✓ 홈 화면에 추가했어요. 아이콘으로 열어 주세요.</span>}
+        {inst.installed && !app && <span className="text-sm text-green-700">✓ 홈 화면에 추가했어요. 아이콘으로 열어 주세요.</span>}
+        {/* 안드로이드 설치 앱(D-228): 안드로이드 브라우저 = 받기, PC = 휴대폰으로 찍을 QR 화면 */}
+        {ANDROID_APK_READY && !office && !app && (inst.kind === "prompt" || inst.kind === "android-manual") && (
+          <a href="/download" className="inline-flex min-h-11 w-full items-center text-sm font-semibold text-brand-700 underline underline-offset-2">
+            알림이 더 확실한 안드로이드 설치 앱 받기 →
+          </a>
+        )}
+        {ANDROID_APK_READY && !office && inst.kind === "desktop" && (
+          <a href="/download" className="inline-flex min-h-11 items-center text-sm text-brand-700 underline underline-offset-2">
+            휴대폰 앱 받기(QR)
+          </a>
+        )}
         {state === "ios-install" && <p className="text-sm text-zinc-600">아이폰은 Safari 아래 [공유] → [홈 화면에 추가]로 연 앱에서 알림을 켤 수 있어요.</p>}
-        {state === "denied" && <p className="text-sm text-amber-700">이 브라우저에서 알림이 막혀 있어요. 브라우저(또는 휴대폰) 설정 › 알림에서 이 사이트를 허용해 주세요.</p>}
+        {state === "denied" && (
+          <p className="text-sm text-amber-700">
+            {app ? "알림이 막혀 있어요. 휴대폰 설정 › 애플리케이션 › WORKON › 알림에서 허용해 주세요." : "이 브라우저에서 알림이 막혀 있어요. 브라우저(또는 휴대폰) 설정 › 알림에서 이 사이트를 허용해 주세요."}
+          </p>
+        )}
         {state === "unsupported" && <p className="text-sm text-zinc-500">이 브라우저는 웹 알림을 지원하지 않아요.</p>}
       </div>
       {msg && (

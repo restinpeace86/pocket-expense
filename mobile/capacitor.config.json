@@ -1,0 +1,18 @@
+{
+  "appId": "kr.damounlab.app",
+  "appName": "WORKON",
+  "webDir": "www",
+  "server": {
+    "url": "https://pocket-expense-ruby.vercel.app",
+    "androidScheme": "https",
+    "errorPath": "index.html"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

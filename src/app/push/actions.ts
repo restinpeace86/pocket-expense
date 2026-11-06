@@ -59,3 +59,31 @@ export async function setPushVibrateAction(endpoint: string, on: boolean): Promi
   if (error || !data?.length) return { ok: false, error: "저장하지 못했어요. 알림을 다시 켜 주세요." };
   return { ok: true };
 }
+
+// ── 안드로이드 설치 앱 알림(FCM, D-228) — 이 기기 토큰 등록·삭제. 본인 것만(RLS)
+const FCM_TOKEN = /^[A-Za-z0-9_:\-.]{20,4096}$/;
+export async function saveAppTokenAction(token: string, appVersion?: string): Promise<Result> {
+  const m = await getMembership();
+  if (!m || m.status !== "approved") return { ok: false, error: "로그인한 멤버만 알림을 켤 수 있어요." };
+  const t = String(token ?? "");
+  if (!FCM_TOKEN.test(t)) return { ok: false, error: "알림 등록 정보가 올바르지 않아요." };
+  const admin = createAdminClient();
+  if (!admin) return { ok: false, error: "잠시 후 다시 시도해 주세요." };
+  // 이미 본인 것으로 있으면 그대로(앱을 열 때마다 부름)
+  const supabase = await createClient();
+  const { data: mine } = await supabase.from("push_app_tokens").select("id").eq("token", t).maybeSingle();
+  if (mine) return { ok: true };
+  // 같은 휴대폰을 다른 사람이 쓰던 경우(로그인 바꿈) 예전 것은 서버가 지우고 본인 것으로
+  await admin.from("push_app_tokens").delete().eq("token", t);
+  const { error } = await supabase.from("push_app_tokens").insert({ company_id: m.company_id, member_id: m.member_id, token: t, app_version: appVersion ? String(appVersion).slice(0, 40) : null });
+  if (error) return { ok: false, error: "알림을 켜지 못했어요. 잠시 후 다시 시도해 주세요." };
+  return { ok: true };
+}
+
+export async function deleteAppTokenAction(token: string): Promise<Result> {
+  const m = await getMembership();
+  if (!m) return { ok: false, error: "로그인이 필요해요." };
+  const supabase = await createClient();
+  await supabase.from("push_app_tokens").delete().eq("token", String(token ?? ""));
+  return { ok: true };
+}

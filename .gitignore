@@ -49,3 +49,6 @@ yarn-error.log*
 
 # responsive screenshots (scripts/check-responsive.mjs)
 /.responsive/
+
+# 안드로이드 설치 앱(D-228)
+/mobile/node_modules

@@ -2738,6 +2738,54 @@ export type Database = {
         }
         Relationships: []
       }
+      push_app_tokens: {
+        Row: {
+          app_version: string | null
+          company_id: string
+          created_at: string
+          id: string
+          last_sent_at: string | null
+          member_id: string
+          platform: string
+          token: string
+        }
+        Insert: {
+          app_version?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          last_sent_at?: string | null
+          member_id: string
+          platform?: string
+          token: string
+        }
+        Update: {
+          app_version?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          last_sent_at?: string | null
+          member_id?: string
+          platform?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_app_tokens_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_app_tokens_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       push_logs: {
         Row: {
           company_id: string | null

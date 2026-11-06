@@ -3,6 +3,8 @@
 import { Bell, Check, Loader2, Smartphone, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useInstallPrompt } from "./install";
+import { ANDROID_APK_READY } from "@/lib/app-download";
+import { initNativePush } from "./native";
 import { usePushSubscription } from "./push-toggle";
 
 // 알림 기본 켜기(D-213) + 홈 화면에 추가(D-219)
@@ -31,6 +33,9 @@ export function PushAutoPrompt() {
   useEffect(() => {
     on.current = turnOn;
   });
+
+  // 안드로이드 설치 앱(D-228): 앱 알림 연결(토큰 등록·알림 누르면 그 화면)
+  useEffect(() => initNativePush(), []);
 
   // 서비스 워커를 미리 등록해 둔다(홈 화면 추가·알림 준비 — 알림 권한은 묻지 않음)
   useEffect(() => {
@@ -123,6 +128,11 @@ export function PushAutoPrompt() {
               <p className="mt-1 text-sm leading-relaxed text-zinc-700">
                 주소창 오른쪽 <b>⋮ 메뉴</b>(삼성 인터넷은 아래 <b>≡</b>) → <b>[홈 화면에 추가]</b>. 이미 추가했다면 홈 화면 아이콘으로 열어 주세요.
               </p>
+            )}
+            {ANDROID_APK_READY && kind !== "ios" && (
+              <a href="/download" className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-brand-700 underline underline-offset-2">
+                알림이 더 확실한 안드로이드 설치 앱 받기 →
+              </a>
             )}
           </li>
           {pushStep && (

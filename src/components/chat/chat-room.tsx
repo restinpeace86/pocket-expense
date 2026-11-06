@@ -15,6 +15,7 @@ import { useChat } from "./chat-app";
 import { ChatOverlay } from "./overlay";
 import { MemberPicker } from "./member-picker";
 import { signedUrls } from "./signed-urls";
+import { closeNativeNotifications } from "@/components/push/native";
 
 type Detail = {
   id: string;
@@ -93,6 +94,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
       .then((reg) => reg?.getNotifications({ tag: `chat-${roomId}` }))
       .then((list) => list?.forEach((n) => n.close()))
       .catch(() => undefined);
+    closeNativeNotifications(`chat-${roomId}`); // 안드로이드 설치 앱 알림도(D-228)
   }, [roomId]);
 
   useEffect(() => {

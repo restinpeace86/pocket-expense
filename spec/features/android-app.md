@@ -21,7 +21,10 @@
 - PC: [내 정보] 알림 칸(또는 설치 안내)에 QR. 휴대폰 안드로이드: [앱 받기] 버튼.
 
 ## 4. 알림 보내기
-- 기존 웹푸시(`push_subscriptions`)는 그대로. 설치 앱 기기는 FCM 토큰을 따로 등록하고, 같은 알림을 FCM으로도 보낸다(같은 사람이 웹·앱 둘 다면 앱으로 받은 기기는 웹 알림 중복 방지 — 세부는 구현 전 확정).
+- 기존 웹푸시(`push_subscriptions`)는 그대로. 설치 앱 기기는 FCM 토큰을 `push_app_tokens`(migration 123)에 따로 등록하고, 같은 알림을 FCM으로도 보낸다(`src/lib/push/fcm.ts`, `server.ts` pushToMembers·pushToCompany·pushToAll).
+- 중복 방지: 설치 앱 토큰이 있는 사람은 **브라우저 정보가 안드로이드인 웹 구독**을 건너뛴다(같은 휴대폰의 크롬 알림). PC 웹 알림은 그대로 받는다.
+- 채널: urgency high(채팅·회의) = `chat`(중요도 높음·진동 0.5초×3·알림음), 나머지 = `general`. 채널은 앱(MainActivity)이 만들고, 사용자는 휴대폰 설정 › 애플리케이션 › WORKON › 알림에서 채널별로 바꿀 수 있다.
+- FCM이 토큰이 없어졌다고 하면(UNREGISTERED·잘못된 토큰) 그 토큰을 지운다.
 - 보안: FCM 서버 키(서비스 계정)는 Vercel 환경변수에만. 회사 분리(D-115 계열)는 기존 알림과 같다 — 받는 사람 선택은 지금 알림 로직 그대로.
 
 ## 5. 사용자가 할 일(구현 전 준비)
@@ -29,6 +32,9 @@
 - 이 PC에 Android Studio 설치(JDK·SDK 포함) — APK 빌드용.
 - APK 서명 키는 한 번 만들고 잃어버리지 않게 보관(업데이트 때 같은 키 필요).
 
-## 6. 미정(구현 전 확인)
-- 패키지 이름(예: `kr.damoun.workon`) — 서비스 이름 확정(WORKON 유지/꾸림 등) 뒤 정한다. 한 번 정하면 바꾸기 어렵다.
-- APK 보관 위치(Supabase Storage 공개 파일 또는 사이트 `/download`).
+## 6. 확정 (2026-11-06)
+- 패키지 이름 `kr.damounlab.app`(상호 기준 — 서비스 이름이 바뀌어도 그대로). 앱에 보이는 이름은 `WORKON`(바꿀 수 있음).
+- APK 보관: Supabase 공개 저장소 `app-downloads/android/workon.apk`(새 버전은 덮어씀). 안내 화면 `/download`(PC = QR, 휴대폰 = 받기·설치 순서).
+- 설치 파일을 올리기 전에는 `ANDROID_APK_READY = false`로 받기 버튼·안내 링크를 숨긴다(`src/lib/app-download.ts`).
+- 앱 껍데기: `mobile/`(Capacitor 8). 운영 주소를 연다 — 도메인을 바꾸면 `mobile/capacitor.config.json` server.url을 바꿔 앱을 다시 만들어야 한다.
+- 서명 키 `mobile/android/workon-release.jks` + `keystore.properties`는 저장소에 올리지 않는다. 잃어버리면 업데이트를 설치할 수 없다(사용자가 따로 보관).

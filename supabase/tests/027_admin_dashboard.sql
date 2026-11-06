@@ -29,6 +29,8 @@ insert into public.expense_items (claim_id, company_id, sort_order, category, tr
   ('a2720000-0000-0000-0000-000000000004', 'c2700000-0000-0000-0000-00000000000a', 1, 'meal', null, 'personal_card', '2026-09-20', 59200, 59200, 0, 1, '복리후생비');
 insert into public.notification_logs (company_id, template_code, status, payload, recipient_phone, provider) values ('c2700000-0000-0000-0000-00000000000a', 'APPROVAL_REQUEST', 'failed', '{}', '', 'log');
 
+-- 기한 초과(상신일 > 10월 마감 기한)는 고정 마감 달력(088) + now() 기준 상신일이라 날짜가 지나면 0 → 1로 바뀐다: 같은 규칙으로 기대값을 계산
+select set_config('t27.overdue', (case when private.claim_cutoff('2026-10') < ((now() - interval '3 days') at time zone 'Asia/Seoul')::date then 1 else 0 end)::text, true);
 select set_config('request.jwt.claims', '{"sub":"a2700000-0000-0000-0000-000000000001","role":"authenticated"}', true);
 set local role authenticated;
 do $$
@@ -39,7 +41,7 @@ begin
   if (r->'kpi'->>'pending_claims')::int <> 1 or (r->'kpi'->>'pending_oldest_days')::int <> 3 then raise exception 'FAIL pending %', r->'kpi'; end if;
   -- 미지급 사비: 승인 결의서의 개인카드 회사지원금 85,400 / 미수 납부: 법인카드 개인부담 3,000
   if (r->'kpi'->>'unpaid_payout')::int <> 85400 or (r->'kpi'->>'unpaid_payback')::int <> 3000 then raise exception 'FAIL settle %', r->'kpi'; end if;
-  if r->'todo' <> '{"pending_members": 1, "unmapped_items": 1, "settle_claims": 1, "failed_notifications": 1, "overdue_claims": 0}'::jsonb then raise exception 'FAIL todo %', r->'todo'; end if;
+  if r->'todo' <> jsonb_build_object('pending_members', 1, 'unmapped_items', 1, 'settle_claims', 1, 'failed_notifications', 1, 'overdue_claims', current_setting('t27.overdue')::int) then raise exception 'FAIL todo %', r->'todo'; end if;
   if r->'checklist' <> '{"approved_members": 2, "departments": 1, "policy_confirmed": true, "review_steps": 0}'::jsonb then raise exception 'FAIL checklist %', r->'checklist'; end if;
   if (r->'categories'->0->>'category') <> 'trip' or (r->'categories'->0->>'trip_type') <> 'own_car' or jsonb_array_length(r->'categories') <> 3 then raise exception 'FAIL categories %', r->'categories'; end if;
   if (r->'top_members'->0->>'name') <> '김직원' or (r->'top_members'->0->>'department') <> '영업팀' or (r->'top_members'->0->>'amount')::int <> 118400 then raise exception 'FAIL top %', r->'top_members'; end if;

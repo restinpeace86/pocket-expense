@@ -2,6 +2,7 @@ import "server-only";
 import webpush from "web-push";
 import { configuredSiteUrl } from "@/lib/site-url";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { fcmConfigured, sendFcm } from "./fcm";
 
 // 웹푸시 보내기 (D-116). 무료(VAPID) — 브라우저 회사(구글·애플·모질라)의 푸시 서버로 보낸다.
 // - 키: NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT(운영 주소). 없으면 보내지 않고 0을 돌려준다.
@@ -56,6 +57,50 @@ async function sendAll(admin: Admin, subs: Sub[], payload: PushPayload, table: S
   return { sent, failed, byMember };
 }
 
+// ── 안드로이드 설치 앱(FCM, D-228) ────────────────────────────────────────────
+type AppTok = { id: string; member_id: string; token: string };
+async function sendApp(admin: Admin, toks: AppTok[], payload: PushPayload): Promise<{ sent: number; failed: number; byMember: Map<string, number> }> {
+  const byMember = new Map<string, number>();
+  let sent = 0;
+  let failed = 0;
+  if (!toks.length || !fcmConfigured()) return { sent, failed, byMember };
+  const gone: string[] = [];
+  for (let i = 0; i < toks.length; i += 20) {
+    await Promise.all(
+      toks.slice(i, i + 20).map(async (t) => {
+        const r = await sendFcm(t.token, payload);
+        if (r === "ok") {
+          sent++;
+          byMember.set(t.member_id, (byMember.get(t.member_id) ?? 0) + 1);
+        } else {
+          failed++;
+          if (r === "gone") gone.push(t.id);
+        }
+      }),
+    );
+  }
+  if (gone.length) await admin.from("push_app_tokens").delete().in("id", gone);
+  const ok = toks.filter((t) => !gone.includes(t.id)).map((t) => t.id);
+  if (ok.length && sent) await admin.from("push_app_tokens").update({ last_sent_at: new Date().toISOString() }).in("id", ok);
+  return { sent, failed, byMember };
+}
+
+// 설치 앱이 있는 사람은 같은 휴대폰 크롬의 웹 알림을 건너뛴다(같은 알림 두 번 방지, D-228).
+// 웹 구독이 어느 기기 것인지는 브라우저 정보로만 알 수 있어 "안드로이드 브라우저" 구독을 뺀다(PC 웹 알림은 그대로)
+export function dropAndroidWeb<T extends { member_id: string; user_agent?: string | null }>(subs: T[], appMembers: Set<string>): T[] {
+  return subs.filter((s) => !(appMembers.has(s.member_id) && /Android/i.test(s.user_agent ?? "")));
+}
+
+async function sendBoth(admin: Admin, subs: (Sub & { user_agent?: string | null })[], toks: AppTok[], payload: PushPayload, appOf: AppTok[] = toks) {
+  const appMembers = new Set(fcmConfigured() ? appOf.map((t) => t.member_id) : []);
+  const web = pushConfigured() ? await sendAll(admin, dropAndroidWeb(subs, appMembers), payload) : { sent: 0, failed: 0, byMember: new Map<string, number>() };
+  const app = await sendApp(admin, toks, payload);
+  const byMember = new Map(web.byMember);
+  for (const [m, n] of app.byMember) byMember.set(m, (byMember.get(m) ?? 0) + n);
+  return { sent: web.sent + app.sent, failed: web.failed + app.failed, byMember };
+}
+const anyConfigured = () => pushConfigured() || fcmConfigured();
+
 // 특정 멤버들(같은 회사)에게. dedupe가 있으면 오늘 같은 알림을 이미 받은 멤버는 건너뛴다
 export async function pushToMembers(
   companyId: string,
@@ -64,7 +109,7 @@ export async function pushToMembers(
   dedupe?: { kind: "deadline" | "approval_pending" | "closing"; ref: string },
 ): Promise<{ members: number; sent: number; failed: number; reached: string[]; targets: string[] }> {
   const admin = createAdminClient();
-  if (!admin || !pushConfigured() || !memberIds.length) return { members: 0, sent: 0, failed: 0, reached: [], targets: [] };
+  if (!admin || !anyConfigured() || !memberIds.length) return { members: 0, sent: 0, failed: 0, reached: [], targets: [] };
   let targets = [...new Set(memberIds)];
   if (dedupe) {
     // 오늘 처음인 멤버만 남긴다(기록이 이미 있으면 건너뜀)
@@ -75,37 +120,61 @@ export async function pushToMembers(
     targets = (data ?? []).map((r) => r.member_id).filter((x): x is string => !!x);
   }
   if (!targets.length) return { members: 0, sent: 0, failed: 0, reached: [], targets: [] };
-  const { data: subs } = await admin.from("push_subscriptions").select(SUB_COLS).eq("company_id", companyId).in("member_id", targets);
-  const r = await sendAll(admin, (subs ?? []) as Sub[], payload);
+  const [{ data: subs }, { data: toks }] = await Promise.all([
+    admin.from("push_subscriptions").select(`${SUB_COLS}, user_agent`).eq("company_id", companyId).in("member_id", targets),
+    admin.from("push_app_tokens").select("id, member_id, token").eq("company_id", companyId).in("member_id", targets),
+  ]);
+  const r = await sendBoth(admin, (subs ?? []) as Sub[], (toks ?? []) as AppTok[], payload);
   return { members: r.byMember.size, sent: r.sent, failed: r.failed, reached: [...r.byMember.keys()], targets };
 }
 
 // 회사 전체(사내 공지) — 그 회사 구독만
 export async function pushToCompany(companyId: string, payload: PushPayload): Promise<{ sent: number; failed: number }> {
   const admin = createAdminClient();
-  if (!admin || !pushConfigured()) return { sent: 0, failed: 0 };
-  const { data: subs } = await admin.from("push_subscriptions").select(SUB_COLS).eq("company_id", companyId);
-  const r = await sendAll(admin, (subs ?? []) as Sub[], payload);
+  if (!admin || !anyConfigured()) return { sent: 0, failed: 0 };
+  const [{ data: subs }, { data: toks }] = await Promise.all([
+    admin.from("push_subscriptions").select(`${SUB_COLS}, user_agent`).eq("company_id", companyId),
+    admin.from("push_app_tokens").select("id, member_id, token").eq("company_id", companyId),
+  ]);
+  const r = await sendBoth(admin, (subs ?? []) as Sub[], (toks ?? []) as AppTok[], payload);
   return { sent: r.sent, failed: r.failed };
 }
 
 // 플랫폼 전체(앱 운영자 공지) — 모든 구독. url은 회사마다 다르므로 회사별로 나눠 보낸다
 export async function pushToAll(payload: Omit<PushPayload, "url">, urlFor: (companyId: string) => string): Promise<{ sent: number; failed: number }> {
   const admin = createAdminClient();
-  if (!admin || !pushConfigured()) return { sent: 0, failed: 0 };
+  if (!admin || !anyConfigured()) return { sent: 0, failed: 0 };
   let sent = 0;
   let failed = 0;
+  // 설치 앱 토큰(회사별) — 앱 있는 사람의 안드로이드 웹 구독은 sendBoth가 뺀다
+  const toksBy = new Map<string, AppTok[]>();
   for (let from = 0; ; from += 1000) {
-    const { data } = await admin.from("push_subscriptions").select(`${SUB_COLS}, company_id`).order("id").range(from, from + 999);
+    const { data } = await admin.from("push_app_tokens").select("id, member_id, token, company_id").order("id").range(from, from + 999);
+    if (!data?.length) break;
+    for (const t of data) toksBy.set(t.company_id, [...(toksBy.get(t.company_id) ?? []), t]);
+    if (data.length < 1000) break;
+  }
+  const done = new Set<string>();
+  for (let from = 0; ; from += 1000) {
+    const { data } = await admin.from("push_subscriptions").select(`${SUB_COLS}, user_agent, company_id`).order("id").range(from, from + 999);
     if (!data?.length) break;
     const byCompany = new Map<string, Sub[]>();
     for (const s of data) byCompany.set(s.company_id, [...(byCompany.get(s.company_id) ?? []), s as Sub]);
     for (const [cid, subs] of byCompany) {
-      const r = await sendAll(admin, subs, { ...payload, url: urlFor(cid) });
+      // 앱 토큰은 회사당 한 번만(웹 구독이 1000개 넘어 여러 번 나뉘어도)
+      const r = await sendBoth(admin, subs, done.has(cid) ? [] : (toksBy.get(cid) ?? []), { ...payload, url: urlFor(cid) }, toksBy.get(cid) ?? []);
+      done.add(cid);
       sent += r.sent;
       failed += r.failed;
     }
     if (data.length < 1000) break;
+  }
+  // 웹 구독은 없고 앱만 있는 회사
+  for (const [cid, toks] of toksBy) {
+    if (done.has(cid)) continue;
+    const r = await sendBoth(admin, [], toks, { ...payload, url: urlFor(cid) });
+    sent += r.sent;
+    failed += r.failed;
   }
   return { sent, failed };
 }

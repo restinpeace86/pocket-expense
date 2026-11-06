@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { isNativeApp } from "./native";
 
 // 홈 화면에 추가(D-219, spec/screens/notification-rule.md §0-2)
 // 웹사이트는 사용자 몰래 바탕화면 아이콘을 만들 수 없다(브라우저가 막음). 대신
@@ -17,7 +18,8 @@ export function isStandalone(): boolean {
 }
 function detect(): InstallKind {
   const w = window as W;
-  if (isStandalone()) return "standalone";
+  // 안드로이드 설치 앱(D-228) 안이면 이미 '앱' — 홈 화면 추가를 권하지 않는다
+  if (isStandalone() || isNativeApp()) return "standalone";
   const ua = navigator.userAgent;
   const ios = /iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
   if (ios) return "ios";
