@@ -6,7 +6,7 @@ import { monthCells, todayKst } from "@/lib/calendar/calendar";
 import { getCalendarDirectory, getCalendarEvents, getHolidayList, getMeetingRooms } from "@/lib/calendar/server";
 
 // 사내 캘린더(D-206): PC = 월 달력, 휴대폰 = 그 달 날짜별 목록(같은 데이터, 폭으로만 바뀜)
-// ?date=YYYY-MM-DD&event=… : 채팅 알림방의 [캘린더에서 보기]로 들어오면 그 달·그 일정을 연다
+// ?date=YYYY-MM-DD&event=… : 채팅 알림방의 [캘린더에서 보기]로 들어오면 그 달·그 일정을 연다 · ?rooms=날짜 : 회의실 예약 시트(D-234)
 export default function CalendarPage({ params, searchParams }: PageProps<"/workspace/[id]/calendar">) {
   return (
     <Suspense fallback={<div className="m-4 h-96 flex-1 animate-pulse rounded-2xl bg-zinc-100" />}>
@@ -23,6 +23,9 @@ async function Calendar({ params, searchParams }: Pick<PageProps<"/workspace/[id
   const date = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : null;
   const month = date ? date.slice(0, 7) : typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : today.slice(0, 7);
   const eventId = typeof sp.event === "string" && /^[0-9a-f-]{36}$/.test(sp.event) ? sp.event : null;
+  // ?rooms=YYYY-MM-DD(&room=회의실) — 회의실 예약을 캘린더 안에서 바로 연다(D-234, 예전 /calendar/rooms 주소·도우미 링크)
+  const roomsDate = typeof sp.rooms === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.rooms) ? sp.rooms : null;
+  const roomId = typeof sp.room === "string" && /^[0-9a-f-]{36}$/.test(sp.room) ? sp.room : null;
   const [directory, holidays, rooms] = await Promise.all([getCalendarDirectory(), getHolidayList(), getMeetingRooms()]);
   if (!directory) {
     return <p className="m-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">캘린더를 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.</p>;
@@ -47,6 +50,7 @@ async function Calendar({ params, searchParams }: Pick<PageProps<"/workspace/[id
       initialEvents={events}
       holidays={holidays}
       rooms={rooms}
+      initialRooms={roomsDate ? { date: roomsDate, room: roomId } : null}
     />
   );
 }

@@ -45,6 +45,7 @@ import {
 } from "@/lib/calendar/calendar";
 import { createClient } from "@/lib/supabase/client";
 import { deleteMeetingFile, MeetingFilesEdit, MeetingFilesView, uploadMeetingFiles } from "./meeting-files";
+import { RoomsPanel } from "./rooms-panel";
 
 // 사내 캘린더(D-206, spec/features/calendar.md)
 // - PC(md 이상) = 월 달력(월요일 시작), 휴대폰 = 그 달 날짜별 목록. 같은 데이터를 CSS로만 바꿔 보여 준다(local-open-spaces 파트너 월간 화면과 같은 방식)
@@ -63,6 +64,7 @@ type Props = {
   initialEvents: CalEvent[];
   holidays: Holiday[];
   rooms: MeetingRoom[]; // 회의실(D-207). 없으면 회의실 칸·[회의실 예약] 숨김
+  initialRooms?: { date: string; room: string | null } | null; // ?rooms=날짜(&room=) — 들어오면 회의실 예약을 바로 연다(D-234)
 };
 
 const TONE_TEXT = { holiday: "text-red-600", sun: "text-red-600", sat: "text-blue-600" } as const;
@@ -81,6 +83,7 @@ export function CalendarView(props: Props) {
   const [editing, setEditing] = useState<{ event?: CalEvent; date?: string; time?: string; roomId?: string } | null>(null);
   const [dayOpen, setDayOpen] = useState<string | null>(null);
   const [peopleOpen, setPeopleOpen] = useState(false);
+  const [roomsOpen, setRoomsOpen] = useState<{ date: string; room: string | null } | null>(props.rooms.length ? (props.initialRooms ?? null) : null);
 
   const hmap = useMemo(() => holidayMap(holidays), [holidays]);
   const holidayDays = useMemo(() => holidays.map((h) => h.day), [holidays]);
@@ -126,7 +129,9 @@ export function CalendarView(props: Props) {
     url.searchParams.set("month", month);
     url.searchParams.delete("date");
     url.searchParams.delete("event");
-    window.history.replaceState(null, "", url.toString());
+    url.searchParams.delete("rooms");
+    url.searchParams.delete("room");
+    window.history.replaceState(window.history.state, "", url.toString());
   }, [month]);
 
   // 고른 사람·마감일 보기는 DB에 기억(다른 기기에서도 같게) — 잠깐 모았다가 한 번
@@ -179,8 +184,12 @@ export function CalendarView(props: Props) {
   const nameOf = useMemo(() => new Map(directory.members.map((m) => [m.member_id, m.name])), [directory.members]);
   const othersCount = selected.filter((x) => x !== me).length;
 
-  // 회의실 예약 전용 화면(D-215) — 보고 있는 달이 이번 달이면 오늘, 아니면 그 달 1일
-  const roomsHref = `${ws}/calendar/rooms?date=${month === today.slice(0, 7) ? today : `${month}-01`}`;
+  // 회의실 예약(D-215 → D-234 캘린더 안 시트·창) — 보고 있는 달이 이번 달이면 오늘, 아니면 그 달 1일
+  // 회의실 창 화면은 미리 받아 둔다(처음 열 때 기다림 없게)
+  useEffect(() => {
+    if (rooms.length) void import("./room-board");
+  }, [rooms.length]);
+  const openRooms = () => setRoomsOpen({ date: month === today.slice(0, 7) ? today : `${month}-01`, room: null });
   const peopleButtonLabel = othersCount ? `사람 선택 (${selected.length})` : "사람 선택";
 
   return (
@@ -208,10 +217,10 @@ export function CalendarView(props: Props) {
             오늘
           </button>
           {rooms.length > 0 && (
-            <Link href={roomsHref} className="ml-2 hidden min-h-11 items-center gap-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium hover:bg-zinc-50 md:inline-flex">
+            <button type="button" onClick={openRooms} className="ml-2 hidden min-h-11 items-center gap-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium hover:bg-zinc-50 md:inline-flex">
               <DoorOpen className="size-4" />
               회의실 예약
-            </Link>
+            </button>
           )}
           <button type="button" onClick={() => setEditing({ date: undefined })} className="ml-2 hidden min-h-11 items-center gap-1 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 md:inline-flex">
             <Plus className="size-4" />
@@ -228,10 +237,10 @@ export function CalendarView(props: Props) {
           <ChevronDown className="size-4 text-zinc-500" />
         </button>
         {rooms.length > 0 && (
-          <Link href={roomsHref} className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium">
+          <button type="button" onClick={openRooms} className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium">
             <DoorOpen className="size-4" />
             회의실 예약
-          </Link>
+          </button>
         )}
         <DeadlineToggle checked={showDeadlines} onChange={toggleDeadlines} />
         {loading && <Loader2 className="ml-auto size-4 animate-spin text-zinc-500" aria-label="불러오는 중" />}
@@ -337,6 +346,20 @@ export function CalendarView(props: Props) {
         </Sheet>
       )}
 
+
+      {roomsOpen && (
+        <RoomsPanel
+          ws={ws}
+          admin={admin}
+          today={today}
+          date={roomsOpen.date}
+          room={roomsOpen.room}
+          directory={directory}
+          rooms={rooms}
+          onClose={() => setRoomsOpen(null)}
+          onBooked={() => void reload()}
+        />
+      )}
 
       {detail && (
         <EventDetail

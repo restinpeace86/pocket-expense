@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, DoorOpen, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, DoorOpen, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
@@ -38,9 +38,13 @@ type Props = {
   initialRoom: string | null;
   directory: CalDirectory;
   rooms: MeetingRoom[];
+  // D-234: 캘린더 안 시트·창으로 열 때 — 닫기 버튼, 주소는 건드리지 않음, 예약이 바뀌면 캘린더도 다시 불러오게 알림
+  embedded?: boolean;
+  onClose?: () => void;
+  onBooked?: () => void;
 };
 
-export function RoomBoard({ ws, admin, today, initialDate, initialRoom, directory, rooms }: Props) {
+export function RoomBoard({ ws, admin, today, initialDate, initialRoom, directory, rooms, embedded = false, onClose, onBooked }: Props) {
   const supabase = useMemo(() => createClient(), []);
   const me = directory.me;
   const nameOf = useMemo(() => new Map(directory.members.map((m) => [m.member_id, m.name])), [directory.members]);
@@ -74,11 +78,12 @@ export function RoomBoard({ ws, admin, today, initialDate, initialRoom, director
   }, []);
   // 주소에 날짜·회의실 기억(새로고침·뒤로 가기)
   useEffect(() => {
+    if (embedded) return;
     const url = new URL(window.location.href);
     url.searchParams.set("date", day);
     url.searchParams.set("room", room);
     window.history.replaceState(null, "", url.toString());
-  }, [day, room]);
+  }, [day, room, embedded]);
 
   const goDay = (d: string) => {
     setBookings(null);
@@ -93,6 +98,7 @@ export function RoomBoard({ ws, admin, today, initialDate, initialRoom, director
 
   const pick = (roomId: string, range: SlotRange) => setPicking({ roomId, range });
   const reopen = async (id: string | null) => {
+    onBooked?.();
     await load(day);
     if (!id) return setDetail(null);
     const { data } = await supabase.rpc("calendar_event", { p_id: id });
@@ -101,13 +107,20 @@ export function RoomBoard({ ws, admin, today, initialDate, initialRoom, director
   const roomBookings = (roomId: string) => list.filter((e) => e.room_id === roomId);
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-3 px-4 pb-32 pt-4 md:pb-10">
+    <main className={embedded ? "flex w-full flex-col gap-3 px-4 pb-6 pt-2 md:pt-4" : "mx-auto flex w-full max-w-7xl flex-1 flex-col gap-3 px-4 pb-32 pt-4 md:pb-10"}>
       <div className="flex flex-wrap items-center gap-2">
-        <Link href={`${ws}/calendar`} className="inline-flex size-11 items-center justify-center rounded-xl hover:bg-zinc-100" aria-label="캘린더로">
-          <ChevronLeft className="size-5" />
-        </Link>
+        {!embedded && (
+          <Link href={`${ws}/calendar`} className="inline-flex size-11 items-center justify-center rounded-xl hover:bg-zinc-100" aria-label="캘린더로">
+            <ChevronLeft className="size-5" />
+          </Link>
+        )}
         <h1 className="text-xl font-bold tracking-tight">회의실 예약</h1>
-        <div className="ml-auto flex items-center">
+        {embedded && onClose && (
+          <button type="button" onClick={onClose} aria-label="회의실 예약 닫기" className="ml-auto inline-flex size-11 items-center justify-center rounded-xl hover:bg-zinc-100 md:order-last md:ml-1">
+            <X className="size-5" />
+          </button>
+        )}
+        <div className={embedded ? "flex w-full items-center justify-center md:ml-auto md:w-auto" : "ml-auto flex items-center"}>
           <button type="button" onClick={() => goDay(addDays(day, -1))} aria-label="전날" className="inline-flex size-11 items-center justify-center rounded-xl hover:bg-zinc-100">
             <ChevronLeft className="size-5" />
           </button>

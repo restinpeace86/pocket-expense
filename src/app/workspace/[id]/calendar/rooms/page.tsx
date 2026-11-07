@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { RoomBoard } from "@/components/calendar/room-board";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { isAdminRole } from "@/lib/auth/paths";
 import { todayKst } from "@/lib/calendar/calendar";
@@ -8,9 +8,8 @@ import { getCalendarDirectory, getMeetingRooms } from "@/lib/calendar/server";
 
 export const metadata = { title: "회의실 예약 · WORKON" };
 
-// 회의실 예약(D-215, spec/features/calendar.md §13): 캘린더 탭 안의 전용 화면.
-// PC = 회의실별 가로 타임라인, 휴대폰 = 회의실 고르기 + 세로 시간 목록. 빈 칸을 누르거나 끌어(10분 칸) 고르면 예약 폼.
-// 예약 = 회의실을 붙인 캘린더 일정(D-207)이라 저장하면 참석자 캘린더에 바로 보인다
+// 회의실 예약 주소(D-215). D-234부터 예약은 캘린더 안 시트·창으로 연다 — 이 주소(도우미 답·예전 채팅 링크)는
+// 회의실이 있으면 캘린더(?rooms=날짜&room=)로 넘기고, 회의실이 없을 때만 안내를 보여 준다
 export default function RoomsPage({ params, searchParams }: PageProps<"/workspace/[id]/calendar/rooms">) {
   return (
     <Suspense fallback={<div className="m-4 h-96 flex-1 animate-pulse rounded-2xl bg-zinc-100" />}>
@@ -29,6 +28,7 @@ async function Rooms({ params, searchParams }: Pick<PageProps<"/workspace/[id]/c
   const date = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : today;
   const room = typeof sp.room === "string" && /^[0-9a-f-]{36}$/.test(sp.room) ? sp.room : null;
   const [directory, rooms] = await Promise.all([getCalendarDirectory(), getMeetingRooms()]);
+  if (directory && rooms.length) redirect(`${ws}/calendar?rooms=${date}${room ? `&room=${room}` : ""}`);
   if (!directory) {
     return <p className="m-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">회의실을 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.</p>;
   }
@@ -55,5 +55,5 @@ async function Rooms({ params, searchParams }: Pick<PageProps<"/workspace/[id]/c
       </main>
     );
   }
-  return <RoomBoard ws={ws} admin={admin} today={today} initialDate={date} initialRoom={room} directory={directory} rooms={rooms} />;
+  return null;
 }
