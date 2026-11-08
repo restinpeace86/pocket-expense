@@ -27,6 +27,7 @@
 - **설명글(반드시 표시)**: "퇴근은 그날 자정 전에 찍어야 해요. 자정 넘은 퇴근은 지원하지 않아요. 자정까지 퇴근을 안 찍으면 정규 퇴근 시각으로 자동 기록돼요(정정 신청으로 고칠 수 있어요)."
 - 시간차 허용 여부는 여기 두지 않고 [직원별 연차 일수] 화면에 둔다.
 - 설정을 바꾸면 **그 뒤 기록부터** 적용(이미 남은 기록·자동 퇴근은 바꾸지 않는다).
+- **설정 변경 이력(사용자 결정 2026-11-08)**: 저장할 때마다 이력 1행 — 바꾼 사람·바꾼 시각(서버)·바뀐 항목마다 이전 값→새 값. 지우거나 고칠 수 없다(관리자도). 근태 설정 아래 [변경 이력]에서 최신순으로 본다. 근태 켜기/끄기, 출근 단말 등록·이름 변경·해제도 이력에 남긴다. 데이터: `attendance_settings_history`(id, company_id, changed_by_member_id, changed_at, changes jsonb `{항목: [이전, 새]}`) — 쓰기는 서버 함수만, 읽기는 관리자.
 - 데이터: `attendance_settings`(company_id PK, work_start, work_end, daily_hours, work_days, missing_alert_minutes, leave_year_basis, under_five, updated_by, updated_at). 관리자만 쓰기, 회사 멤버 읽기.
 
 ## 2. 회사 QR (출근 단말)
