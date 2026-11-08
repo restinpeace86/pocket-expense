@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { joinAction, type FormState } from "@/app/onboarding/actions";
 import { buttonPrimary, inputClass } from "@/components/ui/page-shell";
+import { todayKst } from "@/lib/dates";
 import { Field, FormError } from "./field";
 import { ConsentSection } from "@/components/legal/consent-section";
 
@@ -52,6 +53,9 @@ export function JoinForm({
             </option>
           ))}
         </select>
+      </Field>
+      <Field label="입사일" required hint="이 회사에 처음 출근한 날이에요. 연차 계산에 써요. 가입한 뒤에는 관리자만 고칠 수 있어요">
+        <input name="hireDate" type="date" required max={todayKst()} min="1950-01-01" className={inputClass} />
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="직급" hint="선택">

@@ -1,6 +1,8 @@
 "use client";
 
-import { Clock, Loader2, MonitorSmartphone } from "lucide-react";
+import { CalendarCheck, ChevronRight, Clock, Loader2, MonitorSmartphone } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import {
   createPairCodeAction,
@@ -26,6 +28,7 @@ export function AttendanceAdmin({ view }: { view: AttendanceAdminView }) {
       <EnabledSwitch enabled={view.enabled} />
       {view.enabled ? (
         <>
+          <LeaveLink />
           <SettingsForm initial={view.settings} />
           <Terminals terminals={view.terminals} />
         </>
@@ -34,6 +37,23 @@ export function AttendanceAdmin({ view }: { view: AttendanceAdminView }) {
       )}
       <History rows={view.history} />
     </div>
+  );
+}
+
+// 직원별 연차(D-240): 설정 > 근태 안
+function LeaveLink() {
+  const pathname = usePathname();
+  return (
+    <Link href={`${pathname.replace(/\/$/, "")}/leave`} className={`${card} flex items-center gap-3 hover:bg-zinc-50`} data-leave-link>
+      <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+        <CalendarCheck className="size-5" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <b className="block">직원별 연차</b>
+        <span className="block text-sm text-zinc-600">근로기준법 기준 추천 일수를 보고 직원마다 연차를 확정해요. 입사일·시간차·소수점도 여기서 정해요.</span>
+      </span>
+      <ChevronRight className="size-5 shrink-0 text-zinc-400" aria-hidden />
+    </Link>
   );
 }
 
@@ -340,7 +360,7 @@ function TerminalRow({ t }: { t: AttendanceAdminView["terminals"][number] }) {
   );
 }
 
-const ACTION_LABEL: Record<string, string> = { enabled: "근태 켜기·끄기", settings: "근무 기준", terminal_add: "출근 단말", terminal_rename: "출근 단말", terminal_revoke: "출근 단말" };
+const ACTION_LABEL: Record<string, string> = { enabled: "근태 켜기·끄기", settings: "근무 기준", terminal_add: "출근 단말", terminal_rename: "출근 단말", terminal_revoke: "출근 단말", hire_date: "입사일", leave_grant: "연차" };
 
 function History({ rows }: { rows: AttendanceAdminView["history"] }) {
   return (
@@ -369,6 +389,7 @@ function History({ rows }: { rows: AttendanceAdminView["history"] }) {
                       </>
                     )}{" "}
                     {c.to !== null ? <b className="font-semibold">{c.to}</b> : <span className="text-zinc-500">(해제)</span>}
+                    {c.reason && <span className="block text-[13px] text-zinc-600">사유: {c.reason}</span>}
                   </span>
                 ))}
               </div>

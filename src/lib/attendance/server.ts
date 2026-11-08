@@ -2,6 +2,7 @@ import "server-only";
 import { createHmac } from "node:crypto";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import type { LeaveAdminData } from "./leave";
 import type { AttendanceSettings } from "./rules";
 
 // 근태(D-236) 서버 공통
@@ -28,7 +29,7 @@ export const getMyAttendanceToday = cache(async (): Promise<AttendanceToday | nu
 });
 
 export type AttendanceTerminal = { id: string; name: string; created_at: string; last_used_at: string | null; created_by: string | null };
-export type AttendanceHistoryRow = { id: number; at: string; member_name: string | null; action: string; changes: { label: string; from: string | null; to: string | null }[] };
+export type AttendanceHistoryRow = { id: number; at: string; member_name: string | null; action: string; changes: { label: string; from: string | null; to: string | null; reason?: string | null }[] };
 export type AttendanceAdminView = { enabled: boolean; settings: AttendanceSettings; terminals: AttendanceTerminal[]; history: AttendanceHistoryRow[] };
 
 export async function getAttendanceAdminView(): Promise<AttendanceAdminView> {
@@ -71,6 +72,21 @@ export async function getAttendanceRequestsAdmin(): Promise<{ pending: AdminRequ
   if (error || !data) throw new Error(error?.message ?? "attendance_requests_admin");
   return data as unknown as { pending: AdminRequest[]; done: AdminRequest[] };
 }
+
+// 직원별 연차(D-240)
+export async function getLeaveAdmin(year: number): Promise<LeaveAdminData> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("attendance_leave_admin", { p_year: year });
+  if (error || !data) throw new Error(error?.message ?? "attendance_leave_admin");
+  return data as unknown as LeaveAdminData;
+}
+// 근태 켠 회사에서 입사일이 비었는지(홈 안내 한 번)
+export const myHireDateMissing = cache(async (): Promise<boolean> => {
+  if (!(await attendanceEnabled())) return false;
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("my_hire_date");
+  return !error && !data;
+});
 
 export function clientIp(headers: Headers): string | null {
   return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || null;

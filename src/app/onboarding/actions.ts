@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { recordBusinessCheck } from "@/lib/business/record";
+import { todayKst } from "@/lib/dates";
 import { messageForDbError } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 
@@ -58,10 +59,14 @@ export async function joinAction(_prev: FormState, formData: FormData): Promise<
     p_optional_agreed: formData.get("optional") === "on",
   };
   if (!common.p_department_id) return { error: messageForDbError({ message: "INVALID_DEPARTMENT" }) };
+  // 입사일(D-240): 첫 출근한 날 — 연차 계산에 쓴다. 가입한 뒤에는 본인이 못 바꾸고 관리자가 사유를 적고 고친다
+  const hireDate = text(formData, "hireDate");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(hireDate) || hireDate > todayKst() || hireDate < "1950-01-01") return { error: "입사일(첫 출근한 날)을 넣어 주세요. 오늘 이후 날짜는 넣을 수 없어요." };
 
   if (token) {
     const { error } = await supabase.rpc("accept_invitation", { p_token: token, ...common });
     if (error) return { error: messageForDbError(error) };
+    await supabase.rpc("set_my_hire_date", { p_date: hireDate });
     const { data } = await supabase.rpc("my_membership");
     const companyId = (data as { company_id?: string } | null)?.company_id;
     redirect(companyId ? `/workspace/${companyId}/employee` : "/onboarding");
@@ -70,5 +75,6 @@ export async function joinAction(_prev: FormState, formData: FormData): Promise<
   if (!code) return { error: messageForDbError({ message: "INVALID_INVITE_CODE" }) };
   const { error } = await supabase.rpc("join_company", { p_code: code, ...common });
   if (error) return { error: messageForDbError(error) };
+  await supabase.rpc("set_my_hire_date", { p_date: hireDate });
   redirect("/onboarding/pending");
 }

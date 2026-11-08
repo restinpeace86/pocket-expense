@@ -494,6 +494,60 @@ export type Database = {
           },
         ]
       }
+      attendance_leave_grants: {
+        Row: {
+          company_id: string
+          confirmed_at: string
+          confirmed_by: string | null
+          confirmed_by_name: string | null
+          granted_days: number
+          member_id: string
+          period_end: string
+          period_start: string
+          reason: string | null
+          recommended_days: number | null
+        }
+        Insert: {
+          company_id: string
+          confirmed_at?: string
+          confirmed_by?: string | null
+          confirmed_by_name?: string | null
+          granted_days: number
+          member_id: string
+          period_end: string
+          period_start: string
+          reason?: string | null
+          recommended_days?: number | null
+        }
+        Update: {
+          company_id?: string
+          confirmed_at?: string
+          confirmed_by?: string | null
+          confirmed_by_name?: string | null
+          granted_days?: number
+          member_id?: string
+          period_end?: string
+          period_start?: string
+          reason?: string | null
+          recommended_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_leave_grants_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_leave_grants_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       attendance_pair_codes: {
         Row: {
           code_hash: string
@@ -620,6 +674,8 @@ export type Database = {
         Row: {
           company_id: string
           daily_hours: number
+          hourly_leave: boolean
+          leave_rounding: string
           leave_year_basis: string
           missing_alert_minutes: number
           under_five: boolean
@@ -632,6 +688,8 @@ export type Database = {
         Insert: {
           company_id: string
           daily_hours?: number
+          hourly_leave?: boolean
+          leave_rounding?: string
           leave_year_basis?: string
           missing_alert_minutes?: number
           under_five?: boolean
@@ -644,6 +702,8 @@ export type Database = {
         Update: {
           company_id?: string
           daily_hours?: number
+          hourly_leave?: boolean
+          leave_rounding?: string
           leave_year_basis?: string
           missing_alert_minutes?: number
           under_five?: boolean
@@ -2751,6 +2811,7 @@ export type Database = {
           email: string | null
           employee_number: string | null
           fuel_type: string | null
+          hire_date: string | null
           id: string
           joined_via: string
           last_reminded_at: string | null
@@ -2780,6 +2841,7 @@ export type Database = {
           email?: string | null
           employee_number?: string | null
           fuel_type?: string | null
+          hire_date?: string | null
           id?: string
           joined_via?: string
           last_reminded_at?: string | null
@@ -2809,6 +2871,7 @@ export type Database = {
           email?: string | null
           employee_number?: string | null
           fuel_type?: string | null
+          hire_date?: string | null
           id?: string
           joined_via?: string
           last_reminded_at?: string | null
@@ -3862,6 +3925,12 @@ export type Database = {
         Returns: string
       }
       attendance_admin_view: { Args: never; Returns: Json }
+      attendance_leave_admin: { Args: { p_year: number }; Returns: Json }
+      attendance_leave_confirm: { Args: { p_items: Json }; Returns: number }
+      attendance_leave_settings_save: {
+        Args: { p_hourly: boolean; p_rounding: string }
+        Returns: undefined
+      }
       attendance_log_attempt: {
         Args: {
           p_code: string
@@ -3871,6 +3940,10 @@ export type Database = {
           p_terminal: string
           p_ua: string
         }
+        Returns: undefined
+      }
+      attendance_member_hire_date_set: {
+        Args: { p_date: string; p_member: string; p_reason: string }
         Returns: undefined
       }
       attendance_pair_code_create: {
@@ -4187,6 +4260,7 @@ export type Database = {
       }
       my_employee_summary: { Args: never; Returns: Json }
       my_feature_enabled: { Args: { p_feature: string }; Returns: boolean }
+      my_hire_date: { Args: never; Returns: string }
       my_membership: { Args: never; Returns: Json }
       my_tax_office: { Args: never; Returns: Json }
       office_answer_tax_request: {
@@ -4355,6 +4429,7 @@ export type Database = {
         Returns: undefined
       }
       set_my_fuel_type: { Args: { p_fuel_type: string }; Returns: undefined }
+      set_my_hire_date: { Args: { p_date: string }; Returns: undefined }
       set_own_car_route: {
         Args: {
           p_end: Json

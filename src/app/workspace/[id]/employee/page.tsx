@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getRecentNotices } from "@/lib/push/notices";
-import { getMyAttendanceToday } from "@/lib/attendance/server";
+import { getMyAttendanceToday, myHireDateMissing } from "@/lib/attendance/server";
+import { HireDatePrompt } from "@/components/attendance/hire-date-prompt";
 import { NoticeStrip } from "@/components/push/notice-strip";
 import { EmployeeHub, hubTiles, type HubEvent } from "@/components/employee/employee-hub";
 import { requireWorkspace } from "@/lib/auth/guards";
@@ -33,7 +34,7 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
 
   const membership = await requireWorkspace(id);
   const today = todayKst();
-  const [summary, notices, inbox, calendar, attendance] = await Promise.all([getMySummary(), getRecentNotices(), getInboxBadge(membership), calendarEnabled(), getMyAttendanceToday()]);
+  const [summary, notices, inbox, calendar, attendance, hireMissing] = await Promise.all([getMySummary(), getRecentNotices(), getInboxBadge(membership), calendarEnabled(), getMyAttendanceToday(), myHireDateMissing()]);
   const [rooms, events] = calendar ? await Promise.all([getMeetingRooms(), getCalendarEvents(today, today, [membership.member_id])]) : [[], []];
   const todays: HubEvent[] | null = calendar
     ? eventsOnDay(events, today)
@@ -48,7 +49,14 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
       events={todays}
       pendingPayout={summary.pending_payout}
       rejectedCount={summary.rejected_count}
-      notices={notices.length ? <NoticeStrip notices={notices} /> : null}
+      notices={
+        hireMissing || notices.length ? (
+          <div className="flex flex-col gap-3">
+            {hireMissing && <HireDatePrompt />}
+            {notices.length > 0 && <NoticeStrip notices={notices} />}
+          </div>
+        ) : null
+      }
       attendance={attendance}
     />
   );

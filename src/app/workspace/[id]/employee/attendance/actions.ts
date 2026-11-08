@@ -24,3 +24,13 @@ export async function cancelAttendanceRequest(id: string): Promise<{ ok: boolean
   const { error } = await supabase.rpc("attendance_request_cancel", { p_id: id });
   return error ? { ok: false, error: requestErrorText(error.message) } : { ok: true };
 }
+
+// 입사일(D-240): 이미 가입한 직원이 근태 켠 회사 홈에서 한 번 입력. 그 뒤에는 관리자만 고친다
+export async function setMyHireDateAction(date: string): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_my_hire_date", { p_date: date });
+  if (!error) return { ok: true };
+  if (error.message.includes("INVALID_HIRE_DATE")) return { ok: false, error: "입사일을 확인해 주세요. 오늘 이후 날짜는 넣을 수 없어요." };
+  if (error.message.includes("ALREADY_SET")) return { ok: false, error: "이미 입사일이 있어요. 바꾸려면 관리자에게 요청해 주세요." };
+  return { ok: false, error: "저장하지 못했어요. 잠시 뒤 다시 해 주세요." };
+}
