@@ -173,6 +173,15 @@ begin
 end;
 $$;
 
+-- ⑥-2 퇴근 누락 알림 문구에 자동 기록 안내가 들어 있음(D-238)
+do $$
+begin
+  if (select prosrc from pg_proc where oid = 'private.attendance_tick()'::regprocedure) not like '%자정까지 안 찍으면 정규 퇴근 시각(%)으로 자동 기록돼요.%' then
+    raise exception 'FAIL [alert text]';
+  end if;
+end;
+$$;
+
 -- ⑦ 해제한 단말은 바로 무효 + 이력
 select public._t_as78('a7800000-0000-0000-0000-000000000001');
 set local role authenticated;

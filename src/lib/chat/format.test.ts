@@ -141,7 +141,17 @@ describe("noticeCard (D-224 앱 알림 카드)", () => {
         { label: null, value: "지급까지 기다려 주세요." },
       ],
     });
+    // 퇴근 누락 알림(D-238): 시각 속 ":"를 이름으로 잘못 나누지 않음
+    expect(noticeCard("퇴근을 아직 안 찍었어요\n자정까지 안 찍으면 정규 퇴근 시각(18:00)으로 자동 기록돼요.\n더 일하고 있다면 자정 전에 회사 QR로 퇴근을 찍어 주세요.\n출근: 08:57")).toEqual({
+      title: "퇴근을 아직 안 찍었어요",
+      rows: [
+        { label: null, value: "자정까지 안 찍으면 정규 퇴근 시각(18:00)으로 자동 기록돼요." },
+        { label: null, value: "더 일하고 있다면 자정 전에 회사 QR로 퇴근을 찍어 주세요." },
+        { label: "출근", value: "08:57" },
+      ],
+    });
     expect(assistantLinkLabel("/workspace/c/employee#notices")).toBe("공지 보기");
+    expect(assistantLinkLabel("/workspace/c/employee/attendance")).toBe("내 근태 보기");
     expect(assistantLinkLabel("/workspace/c/admin/export?month=2026-10")).toBe("세무 마감 열기");
     expect(assistantLinkLabel("/workspace/c/employee/claims/x")).toBe("결의서 열기");
   });

@@ -202,6 +202,7 @@ export function assistantLinkLabel(link: string): string {
   if (/^\/employee\/claims\/[^/]+/.test(p)) return "결의서 열기";
   if (p.startsWith("/employee/settlements") || p.startsWith("/admin/payouts")) return "정산 화면 열기";
   if (p.startsWith("/employee/profile")) return "내 정보 열기";
+  if (p.startsWith("/employee/attendance")) return "내 근태 보기";
   if (p.startsWith("/employee")) return "내 결의서 보기";
   if (p.startsWith("/admin/claims") || p.startsWith("/approvals")) return "결재하러 가기";
   if (p.startsWith("/chat")) return "채팅 목록 열기";
