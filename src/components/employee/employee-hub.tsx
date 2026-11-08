@@ -1,6 +1,8 @@
-import { CalendarDays, ChevronRight, DoorOpen, Inbox, ReceiptText, Wallet, type LucideIcon } from "lucide-react";
+import { CalendarDays, Check, ChevronRight, Clock, DoorOpen, Inbox, ReceiptText, Wallet, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { kstTime, stayLabel } from "@/lib/attendance/rules";
+import type { AttendanceToday } from "@/lib/attendance/server";
 import { formatWon } from "@/lib/format";
 
 // 직원 홈 = 허브 (worker-dashboard.md §0, D-235)
@@ -32,6 +34,7 @@ export function EmployeeHub({
   pendingPayout,
   rejectedCount,
   notices,
+  attendance = null,
 }: {
   ws: string;
   today: string;
@@ -40,6 +43,7 @@ export function EmployeeHub({
   pendingPayout: number;
   rejectedCount: number;
   notices: ReactNode; // 공지 없으면 null(카드 숨김)
+  attendance?: AttendanceToday | null; // null = 근태 꺼짐(D-236)
 }) {
   const row = "flex min-h-11 items-center gap-2 rounded-lg text-sm hover:bg-zinc-50";
   return (
@@ -66,7 +70,8 @@ export function EmployeeHub({
         </nav>
 
       <section aria-label="오늘 · 내 현황" className="md:col-start-2 md:row-span-2 md:row-start-1 rounded-2xl border border-zinc-200 bg-white px-4 py-2 shadow-sm md:px-5">
-        <h2 className="pb-1 pt-2 text-[15px] font-bold">{events ? `오늘 · ${todayTitle(today)}` : "내 현황"}</h2>
+        <h2 className="pb-1 pt-2 text-[15px] font-bold">{events || attendance ? `오늘 · ${todayTitle(today)}` : "내 현황"}</h2>
+        {attendance && <AttendanceLine a={attendance} />}
         {events &&
           (events.length === 0 ? (
             <Link href={`${ws}/calendar?date=${today}`} className={`${row} text-zinc-500`}>
@@ -105,5 +110,30 @@ export function EmployeeHub({
 
       {notices && <div className="md:col-start-1 md:row-start-2">{notices}</div>}
     </main>
+  );
+}
+
+// 오늘 출퇴근 한 줄(attendance.md §3-3): 출근 전 / 출근 · 퇴근 전 / 출근 · 퇴근
+function AttendanceLine({ a }: { a: AttendanceToday }) {
+  const on = !!a.in_at;
+  return (
+    <p className="flex min-h-11 items-center gap-2 text-sm" data-attendance={on ? (a.out_at ? "out" : "in") : "none"}>
+      <span className={`inline-flex size-6 shrink-0 items-center justify-center rounded-full ${on ? "bg-green-100 text-green-700" : "bg-zinc-100 text-zinc-500"}`}>
+        {on ? <Check className="size-3.5" strokeWidth={2.6} aria-hidden /> : <Clock className="size-3.5" aria-hidden />}
+      </span>
+      {!on ? (
+        <span>
+          <b className="font-semibold">아직 출근 전</b> <span className="text-zinc-500">· 가운데 버튼으로 QR을 찍으세요</span>
+        </span>
+      ) : (
+        <span>
+          <b className="font-semibold">출근 {kstTime(a.in_at!)}</b>
+          <span className="text-zinc-500">
+            {a.out_at ? ` · 퇴근 ${kstTime(a.out_at)}${a.out_method === "auto" ? "(자동)" : ""} · ${stayLabel(a.in_at!, a.out_at)}` : " · 퇴근 전"}
+            {a.holiday ? " · 휴일" : ""}
+          </span>
+        </span>
+      )}
+    </p>
   );
 }

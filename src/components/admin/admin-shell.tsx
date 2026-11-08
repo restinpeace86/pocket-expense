@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, Building2, CalendarDays, Car, ChartBar, ChevronDown, CreditCard, DoorOpen, FileDown, FileText, HardDrive, Landmark, LayoutDashboard, Menu, MessageCircle, ReceiptText, Repeat, Route, Settings, SlidersHorizontal, Users, Wallet, X, type LucideIcon } from "lucide-react";
+import { Banknote, Building2, CalendarDays, Clock, Car, ChartBar, ChevronDown, CreditCard, DoorOpen, FileDown, FileText, HardDrive, Landmark, LayoutDashboard, Menu, MessageCircle, ReceiptText, Repeat, Route, Settings, SlidersHorizontal, Users, Wallet, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -29,6 +29,8 @@ const SETTINGS_NAV: NavItem[] = [
   { href: "/vehicles", label: "회사차량", icon: Car, ready: true },
   // 캘린더 켜기·끄기 + 회의실(D-207·D-208): 꺼져 있어도 늘 보여야 관리자가 켤 수 있다
   { href: "/calendar-settings", label: "캘린더·회의실", icon: DoorOpen, ready: true },
+  // 근태 켜기·근무 기준·출근 단말·변경 이력(D-236): 꺼져 있어도 늘 보여야 관리자가 켤 수 있다
+  { href: "/attendance-settings", label: "근태", icon: Clock, ready: true },
   // 채팅 저장 공간·보관 기간(D-212): 메신저가 켜진 회사만
   // 사진·파일 보관(D-212 → D-218): 채팅 사진·파일 + 회의 자료 — 메신저 스위치와 관계없이
   { href: "/chat-settings", label: "파일 보관", icon: HardDrive, ready: true },

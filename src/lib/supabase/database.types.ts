@@ -354,6 +354,272 @@ export type Database = {
           },
         ]
       }
+      attendance_attempts: {
+        Row: {
+          at: string
+          code: string
+          company_id: string | null
+          id: number
+          ip: string | null
+          member_id: string | null
+          terminal_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          at?: string
+          code: string
+          company_id?: string | null
+          id?: never
+          ip?: string | null
+          member_id?: string | null
+          terminal_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          at?: string
+          code?: string
+          company_id?: string | null
+          id?: never
+          ip?: string | null
+          member_id?: string | null
+          terminal_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      attendance_days: {
+        Row: {
+          alert_minutes: number
+          alerted_at: string | null
+          company_id: string
+          created_at: string
+          holiday: boolean
+          in_at: string
+          in_terminal_id: string | null
+          member_id: string
+          out_at: string | null
+          out_method: string | null
+          out_terminal_id: string | null
+          sched_end: string
+          work_date: string
+        }
+        Insert: {
+          alert_minutes: number
+          alerted_at?: string | null
+          company_id: string
+          created_at?: string
+          holiday?: boolean
+          in_at: string
+          in_terminal_id?: string | null
+          member_id: string
+          out_at?: string | null
+          out_method?: string | null
+          out_terminal_id?: string | null
+          sched_end: string
+          work_date: string
+        }
+        Update: {
+          alert_minutes?: number
+          alerted_at?: string | null
+          company_id?: string
+          created_at?: string
+          holiday?: boolean
+          in_at?: string
+          in_terminal_id?: string | null
+          member_id?: string
+          out_at?: string | null
+          out_method?: string | null
+          out_terminal_id?: string | null
+          sched_end?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_days_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_days_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      attendance_history: {
+        Row: {
+          action: string
+          at: string
+          changes: Json
+          company_id: string
+          id: number
+          member_id: string | null
+          member_name: string | null
+        }
+        Insert: {
+          action: string
+          at?: string
+          changes: Json
+          company_id: string
+          id?: never
+          member_id?: string | null
+          member_name?: string | null
+        }
+        Update: {
+          action?: string
+          at?: string
+          changes?: Json
+          company_id?: string
+          id?: never
+          member_id?: string | null
+          member_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_pair_codes: {
+        Row: {
+          code_hash: string
+          company_id: string
+          created_at: string
+          created_by_member_id: string | null
+          expires_at: string
+          id: string
+          name: string
+          terminal_id: string | null
+          used_at: string | null
+        }
+        Insert: {
+          code_hash: string
+          company_id: string
+          created_at?: string
+          created_by_member_id?: string | null
+          expires_at: string
+          id?: string
+          name: string
+          terminal_id?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          code_hash?: string
+          company_id?: string
+          created_at?: string
+          created_by_member_id?: string | null
+          expires_at?: string
+          id?: string
+          name?: string
+          terminal_id?: string | null
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_pair_codes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_settings: {
+        Row: {
+          company_id: string
+          daily_hours: number
+          leave_year_basis: string
+          missing_alert_minutes: number
+          under_five: boolean
+          updated_at: string
+          updated_by_member_id: string | null
+          work_days: number[]
+          work_end: string
+          work_start: string
+        }
+        Insert: {
+          company_id: string
+          daily_hours?: number
+          leave_year_basis?: string
+          missing_alert_minutes?: number
+          under_five?: boolean
+          updated_at?: string
+          updated_by_member_id?: string | null
+          work_days?: number[]
+          work_end?: string
+          work_start?: string
+        }
+        Update: {
+          company_id?: string
+          daily_hours?: number
+          leave_year_basis?: string
+          missing_alert_minutes?: number
+          under_five?: boolean
+          updated_at?: string
+          updated_by_member_id?: string | null
+          work_days?: number[]
+          work_end?: string
+          work_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_terminals: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by_member_id: string | null
+          id: string
+          key_hash: string
+          last_used_at: string | null
+          name: string
+          revoked_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by_member_id?: string | null
+          id?: string
+          key_hash: string
+          last_used_at?: string | null
+          name: string
+          revoked_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by_member_id?: string | null
+          id?: string
+          key_hash?: string
+          last_used_at?: string | null
+          name?: string
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_terminals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billing_addons: {
         Row: {
           code: string
@@ -3511,6 +3777,43 @@ export type Database = {
         Args: { p_item_id: string; p_which: string }
         Returns: string
       }
+      attendance_admin_view: { Args: never; Returns: Json }
+      attendance_log_attempt: {
+        Args: {
+          p_code: string
+          p_company: string
+          p_ip: string
+          p_member: string
+          p_terminal: string
+          p_ua: string
+        }
+        Returns: undefined
+      }
+      attendance_pair_code_create: {
+        Args: { p_code_hash: string; p_name: string }
+        Returns: string
+      }
+      attendance_punch: {
+        Args: {
+          p_company: string
+          p_confirm_out: boolean
+          p_member: string
+          p_terminal: string
+        }
+        Returns: Json
+      }
+      attendance_set_enabled: { Args: { p_enabled: boolean }; Returns: boolean }
+      attendance_settings_save: { Args: { p: Json }; Returns: Json }
+      attendance_terminal_auth: { Args: { p_key_hash: string }; Returns: Json }
+      attendance_terminal_pair: {
+        Args: { p_code_hash: string; p_ip: string; p_key_hash: string }
+        Returns: Json
+      }
+      attendance_terminal_rename: {
+        Args: { p_id: string; p_name: string }
+        Returns: undefined
+      }
+      attendance_terminal_revoke: { Args: { p_id: string }; Returns: undefined }
       business_verify_mode: { Args: never; Returns: string }
       calendar_busy: {
         Args: { p_ends: string; p_exclude?: string; p_starts: string }
@@ -3768,6 +4071,7 @@ export type Database = {
         Returns: Json
       }
       move_item_to_new_claim: { Args: { p_item_id: string }; Returns: Json }
+      my_attendance_today: { Args: never; Returns: Json }
       my_company_tax_office: { Args: never; Returns: Json }
       my_company_tax_office_code: { Args: never; Returns: string }
       my_company_tax_templates: {

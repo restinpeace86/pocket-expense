@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getRecentNotices } from "@/lib/push/notices";
+import { getMyAttendanceToday } from "@/lib/attendance/server";
 import { NoticeStrip } from "@/components/push/notice-strip";
 import { EmployeeHub, hubTiles, type HubEvent } from "@/components/employee/employee-hub";
 import { requireWorkspace } from "@/lib/auth/guards";
@@ -32,7 +33,7 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
 
   const membership = await requireWorkspace(id);
   const today = todayKst();
-  const [summary, notices, inbox, calendar] = await Promise.all([getMySummary(), getRecentNotices(), getInboxBadge(membership), calendarEnabled()]);
+  const [summary, notices, inbox, calendar, attendance] = await Promise.all([getMySummary(), getRecentNotices(), getInboxBadge(membership), calendarEnabled(), getMyAttendanceToday()]);
   const [rooms, events] = calendar ? await Promise.all([getMeetingRooms(), getCalendarEvents(today, today, [membership.member_id])]) : [[], []];
   const todays: HubEvent[] | null = calendar
     ? eventsOnDay(events, today)
@@ -48,6 +49,7 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
       pendingPayout={summary.pending_payout}
       rejectedCount={summary.rejected_count}
       notices={notices.length ? <NoticeStrip notices={notices} /> : null}
+      attendance={attendance}
     />
   );
 }

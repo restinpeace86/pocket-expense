@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Home, Loader2, MessageCircle, Plus, UserRound, type LucideIcon } from "lucide-react";
+import { CalendarDays, Home, Loader2, MessageCircle, Plus, ScanLine, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
@@ -55,12 +55,14 @@ export function EmployeeTabBar({
   pathname,
   chatUnread,
   calendar = false,
+  attendance = false,
   fixed = false,
 }: {
   ws: string;
   pathname: string;
   chatUnread?: number | null;
   calendar?: boolean; // [캘린더] 탭(D-209): 회사 캘린더 스위치가 켜졌을 때만
+  attendance?: boolean; // 근태 켠 회사(D-236): 가운데 버튼 = [QR 출퇴근]
   fixed?: boolean;
 }) {
   const left: Tab[] = [
@@ -88,12 +90,22 @@ export function EmployeeTabBar({
     <nav aria-label="직원 메뉴" className={`kb-hide ${fixed ? "fixed inset-x-0 bottom-0 z-30" : "shrink-0"} border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)]`}>
       <ul className="mx-auto grid h-16 max-w-md" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
         {left.map(tab)}
-        <li>
-          <NewClaimButton />
-        </li>
+        <li>{attendance ? <QrButton href={`${ws}/employee/attend`} /> : <NewClaimButton />}</li>
         {right.map(tab)}
       </ul>
     </nav>
+  );
+}
+
+// 근태 켠 회사의 가운데 [QR 출퇴근](attendance.md §3-1): 앱 안 카메라로
+function QrButton({ href }: { href: string }) {
+  return (
+    <Link href={href} className="relative flex h-full flex-col items-center justify-end pb-1.5">
+      <span className="absolute -top-5 inline-flex size-14 items-center justify-center rounded-full border-4 border-white bg-brand-600 text-white shadow-[0_4px_12px_rgba(79,70,229,0.35)]">
+        <ScanLine className="size-7" strokeWidth={2} aria-hidden />
+      </span>
+      <span className="text-xs font-semibold text-brand-700">QR 출퇴근</span>
+    </Link>
   );
 }
 

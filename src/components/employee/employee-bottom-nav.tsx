@@ -15,11 +15,13 @@ export function EmployeeBottomNav({
   serverMode,
   chat,
   calendar,
+  attendance,
 }: {
   membership: Membership;
   serverMode: "admin" | "employee";
   chat: number | null;
   calendar: boolean; // 캘린더 스위치(D-209: 직원은 하단 [캘린더] 탭으로 들어간다)
+  attendance: boolean; // 근태 스위치(D-236: 가운데 [QR 출퇴근])
 }) {
   const pathname = usePathname();
   const mode = useViewMode(membership.company_id, isAdminRole(membership.role), serverMode);
@@ -31,7 +33,7 @@ export function EmployeeBottomNav({
   if (mode !== "employee" || where === "none" || popup) return null;
   return (
     <div className={where === "pc" ? "hidden md:block" : undefined}>
-      <EmployeeTabBar ws={ws} pathname={pathname} chatUnread={chatUnread} calendar={calendar} fixed />
+      <EmployeeTabBar ws={ws} pathname={pathname} chatUnread={chatUnread} calendar={calendar} attendance={attendance} fixed />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { EmployeeBottomNav } from "@/components/employee/employee-bottom-nav";
 import { PushAutoPrompt } from "@/components/push/push-auto-prompt";
 import { getMembership } from "@/lib/auth/session";
 import { viewMode } from "@/lib/auth/view-mode";
+import { attendanceEnabled } from "@/lib/attendance/server";
 import { calendarEnabled } from "@/lib/calendar/server";
 import { chatUnreadTotal } from "@/lib/chat/server";
 
@@ -24,10 +25,10 @@ async function NavSlot({ params }: { params: LayoutProps<"/workspace/[id]">["par
   const { id } = await params;
   const membership = await getMembership();
   if (!membership || membership.status !== "approved" || membership.company_id !== id) return null;
-  const [serverMode, chat, calendar] = await Promise.all([viewMode(membership), chatUnreadTotal(), calendarEnabled()]);
+  const [serverMode, chat, calendar, attendance] = await Promise.all([viewMode(membership), chatUnreadTotal(), calendarEnabled(), attendanceEnabled()]);
   return (
     <>
-      <EmployeeBottomNav membership={membership} serverMode={serverMode} chat={chat} calendar={calendar} />
+      <EmployeeBottomNav membership={membership} serverMode={serverMode} chat={chat} calendar={calendar} attendance={attendance} />
       {/* 알림 기본 켜기 안내(D-213): 관리자·직원 모두 */}
       <PushAutoPrompt />
     </>
