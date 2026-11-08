@@ -55,6 +55,11 @@ export function MonthView({
   summary,
   monthEnd,
   flash,
+  readOnly = false,
+  title = "근태",
+  backHref,
+  backLabel = "홈으로",
+  monthPrefix,
 }: {
   base: string;
   month: string;
@@ -64,7 +69,14 @@ export function MonthView({
   summary: MonthSummary;
   monthEnd: string | null;
   flash: string | null;
+  // 관리자가 직원 월 근태를 볼 때(D-242): 신청·취소 버튼 없이 보기만
+  readOnly?: boolean;
+  title?: string;
+  backHref?: string;
+  backLabel?: string;
+  monthPrefix?: string; // 달 이동 주소 앞부분(서버에서 넘김 — 함수는 못 넘김)
 }) {
+  const mHref = (m: string) => `${monthPrefix ?? `${base}/attendance?month=`}${m}`;
   // 날짜만 기억하고 목록에서 꺼낸다(취소 뒤 목록이 새로 오면 열린 날도 새 값)
   const [openDate, setOpenDate] = useState<string | null>(null);
   const open = openDate ? (rows.find((r) => r.date === openDate) ?? null) : null;
@@ -79,17 +91,17 @@ export function MonthView({
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-3 px-4 pb-28 pt-3 md:max-w-3xl md:px-6 md:pt-6">
       <div className="flex flex-wrap items-center gap-1">
-        <Link href={base} aria-label="홈으로" className="flex size-10 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100">
+        <Link href={backHref ?? base} aria-label={backLabel} className="flex size-10 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100">
           <ChevronLeft className="size-6" />
         </Link>
-        <h1 className="text-xl font-bold md:text-2xl">근태</h1>
+        <h1 className="min-w-0 truncate text-xl font-bold md:text-2xl">{title}</h1>
         <div className="ml-auto flex items-center">
-          <Link href={`${base}/attendance?month=${prev}`} aria-label="이전 달" className="flex size-11 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100">
+          <Link href={mHref(prev)} aria-label="이전 달" className="flex size-11 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100">
             <ChevronLeft className="size-5" />
           </Link>
           <b className="min-w-28 text-center text-[17px]">{monthLabel(month)}</b>
           {next ? (
-            <Link href={`${base}/attendance?month=${next}`} aria-label="다음 달" className="flex size-11 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100">
+            <Link href={mHref(next)} aria-label="다음 달" className="flex size-11 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100">
               <ChevronRight className="size-5" />
             </Link>
           ) : (
@@ -106,7 +118,7 @@ export function MonthView({
           {FLASH[flash]}
         </p>
       )}
-      {monthEnd && (
+      {monthEnd && !readOnly && (
         <p className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-3 text-sm leading-relaxed text-amber-950" data-month-end>
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-700" aria-hidden />
           <span>
@@ -168,14 +180,14 @@ export function MonthView({
           })}
         </ul>
       )}
-      <p className="text-xs leading-relaxed text-zinc-600">기록 없는 휴일은 목록에 나오지 않아요. 휴일 근무는 QR로 찍은 날만 상신할 수 있어요. 정정 신청은 이번 달 기록만 할 수 있어요.</p>
+      <p className="text-xs leading-relaxed text-zinc-600">기록 없는 휴일은 목록에 나오지 않아요.{readOnly ? " 관리자 보기라 신청·취소는 할 수 없어요." : " 휴일 근무는 QR로 찍은 날만 상신할 수 있어요. 정정 신청은 이번 달 기록만 할 수 있어요."}</p>
 
-      {open && <DaySheet row={open} base={base} onClose={() => setOpen(null)} />}
+      {open && <DaySheet row={open} base={base} readOnly={readOnly} onClose={() => setOpen(null)} />}
     </main>
   );
 }
 
-function DaySheet({ row, base, onClose }: { row: MonthRow; base: string; onClose: () => void }) {
+function DaySheet({ row, base, readOnly, onClose }: { row: MonthRow; base: string; readOnly: boolean; onClose: () => void }) {
   const router = useRouter();
   const [busy, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -215,14 +227,14 @@ function DaySheet({ row, base, onClose }: { row: MonthRow; base: string; onClose
             <dt className="text-zinc-600">출근</dt>
             <dd>
               <b>{row.inTime}</b>
-              <span className="text-zinc-600"> · {r.in_method === "correction" ? "정정" : (r.in_terminal ?? "")}</span>
+              {(r.in_method === "correction" || r.in_terminal) && <span className="text-zinc-600"> · {r.in_method === "correction" ? "정정" : r.in_terminal}</span>}
             </dd>
             <dt className="text-zinc-600">퇴근</dt>
             <dd>
               {row.outTime ? (
                 <>
                   <b>{row.outTime}</b>
-                  <span className="text-zinc-600"> · {outVia(r.out_method) ?? r.out_terminal ?? ""}</span>
+                  {(outVia(r.out_method) ?? r.out_terminal) && <span className="text-zinc-600"> · {outVia(r.out_method) ?? r.out_terminal}</span>}
                   {r.out_method === "auto" && <span className="block text-[13px] text-orange-800">자정까지 안 찍어 정규 퇴근 시각({r.sched_end})으로 자동 기록됐어요</span>}
                 </>
               ) : (
@@ -275,10 +287,12 @@ function DaySheet({ row, base, onClose }: { row: MonthRow; base: string; onClose
             <span className="block">
               {row.pending.kind === "holiday" ? "한 일" : "사유"}: {row.pending.reason}
             </span>
-            <button type="button" disabled={busy} onClick={() => cancel(row.pending!.id)} className="mt-2 flex h-10 items-center gap-1.5 rounded-lg border border-amber-400 bg-white px-3 text-sm font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-70">
-              {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
-              신청 취소
-            </button>
+            {!readOnly && (
+              <button type="button" disabled={busy} onClick={() => cancel(row.pending!.id)} className="mt-2 flex h-10 items-center gap-1.5 rounded-lg border border-amber-400 bg-white px-3 text-sm font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-70">
+                {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                신청 취소
+              </button>
+            )}
           </section>
         )}
 
@@ -296,7 +310,7 @@ function DaySheet({ row, base, onClose }: { row: MonthRow; base: string; onClose
           </p>
         )}
 
-        {row.canHoliday ? (
+        {readOnly ? null : row.canHoliday ? (
           <>
             <p className="mt-4 rounded-xl bg-red-50 px-3.5 py-3 text-[13px] leading-relaxed text-red-900">휴일 출근은 상신 → 관리자 승인이 되어야 근무한 날로 인정돼요. 시각이 다르면 상신할 때 함께 고칠 수 있어요.</p>
             <Link href={requestHref("holiday")} className="mt-3 flex h-12 w-full items-center justify-center rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700">

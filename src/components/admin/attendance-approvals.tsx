@@ -1,7 +1,6 @@
 "use client";
 
 import { Loader2, X } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { decideAttendanceRequest } from "@/app/workspace/[id]/admin/attendance/actions";
@@ -44,14 +43,14 @@ function Change({ r }: { r: AdminRequest }) {
 }
 
 export function AttendanceApprovals({
-  settingsHref,
+  tab,
   pending,
   done,
   leavesPending = [],
   leavesDone = [],
   dailyHours = 8,
 }: {
-  settingsHref: string;
+  tab: "pending" | "done"; // 탭은 페이지가 그린다(D-242: 오늘 출근 · 승인 대기 · 처리 끝)
   pending: AdminRequest[];
   done: AdminRequest[];
   leavesPending?: Leave[];
@@ -59,7 +58,6 @@ export function AttendanceApprovals({
   dailyHours?: number;
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<"pending" | "done">("pending");
   const [rejecting, setRejecting] = useState<AdminRequest | null>(null);
   const [reason, setReason] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -86,24 +84,9 @@ export function AttendanceApprovals({
     });
 
   const list = tab === "pending" ? pending : done;
-  const tabCls = (on: boolean) => `-mb-px border-b-2 px-3.5 py-2.5 text-[15px] ${on ? "border-brand-600 font-bold text-brand-700" : "border-transparent text-zinc-600 hover:text-zinc-900"}`;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <div role="tablist" aria-label="근태 신청" className="flex flex-1 gap-1 border-b border-zinc-200">
-          <button type="button" role="tab" aria-selected={tab === "pending"} onClick={() => setTab("pending")} className={tabCls(tab === "pending")} data-tab="pending">
-            승인 대기 {pending.length + leavesPending.length}
-          </button>
-          <button type="button" role="tab" aria-selected={tab === "done"} onClick={() => setTab("done")} className={tabCls(tab === "done")} data-tab="done">
-            처리 끝 <span className="text-xs">(최근 3개월)</span>
-          </button>
-        </div>
-        <Link href={settingsHref} className="inline-flex h-10 items-center rounded-xl border border-zinc-300 bg-white px-3.5 text-sm text-zinc-800 hover:bg-zinc-50">
-          근태 설정
-        </Link>
-      </div>
-
       <LeaveApprovals items={tab === "pending" ? leavesPending : leavesDone} dailyHours={dailyHours} done={tab === "done"} />
       {(tab === "pending" ? leavesPending : leavesDone).length > 0 && list.length > 0 && <h2 className="-mb-2 text-[15px] font-bold">정정 · 휴일 근무</h2>}
       {list.length === 0 ? (

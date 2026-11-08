@@ -11,6 +11,9 @@ import { getDashboard } from "@/lib/admin/dashboard-query";
 import { getCompanySummary } from "@/lib/admin/queries";
 import { currentMonthKst, todayKst } from "@/lib/dates";
 import { requireWorkspace } from "@/lib/auth/guards";
+import { AttendanceHomeCard } from "@/components/admin/attendance-home-card";
+import { attendancePendingCount } from "@/lib/attendance/server";
+import type { DayAdminData } from "@/lib/attendance/today";
 
 export const metadata = { title: "관리자 · WORKON" };
 
@@ -32,7 +35,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
   const membership = await requireWorkspace(id, { admin: true });
   const supabase = await createClient();
   const weekAgo = daysAgoIso(7);
-  const [{ company }, credit, dashboard, notices, { count: titleChanges }, { count: openRequests }, { data: office }, { count: closedMonths }] = await Promise.all([
+  const [{ company }, credit, dashboard, notices, { count: titleChanges }, { count: openRequests }, { data: office }, { count: closedMonths }, attendancePending] = await Promise.all([
     getCompanySummary(membership.company_id),
     getCreditStatus(membership.company_id),
     getDashboard(currentMonthKst()),
@@ -44,7 +47,12 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
     supabase.rpc("my_company_tax_office"),
     // 첫 세무 마감을 했는지(후기 요청 시점, D-201)
     supabase.from("monthly_closings").select("company_id", { count: "exact", head: true }).eq("status", "closed"),
+    // 근태 켠 회사만(D-242): null이면 근태 꺼짐
+    attendancePendingCount(),
   ]);
+  // 오늘 출근 카드(D-242)
+  const attendanceDay =
+    attendancePending === null ? null : ((await supabase.rpc("attendance_day_admin", { p_date: todayKst() })).data as unknown as DayAdminData | null);
   // 후기 요청(D-201): 첫 마감을 마쳤거나 무료 기간이 3일 안으로 남았을 때, 아직 후기를 안 남긴 회사만
   const trialSoon = !!credit?.trialEndsOn && Date.parse(credit.trialEndsOn) - Date.parse(todayKst()) <= 3 * 86400000;
   // 무료 종료일이 없는 회사 = 예외 회사(우리 회사, D-202) → 기간 끝 없음·후기 요청 안 함(자기 후기 방지)
@@ -84,6 +92,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
           <span className="shrink-0 font-semibold">이력 보기 →</span>
         </Link>
       )}
+      {attendanceDay && <AttendanceHomeCard data={attendanceDay} pending={attendancePending ?? 0} href={`/workspace/${membership.company_id}/admin/attendance`} />}
       <AdminHomeView
       adminName={membership.name}
       companyName={company.name}

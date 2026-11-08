@@ -4168,6 +4168,7 @@ export type Database = {
         Returns: string
       }
       attendance_admin_view: { Args: never; Returns: Json }
+      attendance_day_admin: { Args: { p_date: string }; Returns: Json }
       attendance_leave_admin: { Args: { p_year: number }; Returns: Json }
       attendance_leave_cancel: {
         Args: { p_id: string; p_reason: string }
@@ -4219,6 +4220,10 @@ export type Database = {
       attendance_member_hire_date_set: {
         Args: { p_date: string; p_member: string; p_reason: string }
         Returns: undefined
+      }
+      attendance_member_month: {
+        Args: { p_member: string; p_month: string }
+        Returns: Json
       }
       attendance_pair_code_create: {
         Args: { p_code_hash: string; p_name: string }

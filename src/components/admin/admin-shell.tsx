@@ -30,7 +30,7 @@ const SETTINGS_NAV: NavItem[] = [
   // 캘린더 켜기·끄기 + 회의실(D-207·D-208): 꺼져 있어도 늘 보여야 관리자가 켤 수 있다
   { href: "/calendar-settings", label: "캘린더·회의실", icon: DoorOpen, ready: true },
   // 근태 켜기·근무 기준·출근 단말·변경 이력(D-236): 꺼져 있어도 늘 보여야 관리자가 켤 수 있다
-  { href: "/attendance-settings", label: "근태", icon: Clock, ready: true },
+  { href: "/attendance-settings", label: "근태 설정", icon: Clock, ready: true },
   // 채팅 저장 공간·보관 기간(D-212): 메신저가 켜진 회사만
   // 사진·파일 보관(D-212 → D-218): 채팅 사진·파일 + 회의 자료 — 메신저 스위치와 관계없이
   { href: "/chat-settings", label: "파일 보관", icon: HardDrive, ready: true },
@@ -97,17 +97,17 @@ function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback
       {NAV.slice(1, 2).map((item) => (
         <NavLink key={item.label} item={item} base={base} pathname={pathname} onNavigate={onNavigate} />
       ))}
-      {/* 근태 승인(D-239): 근태 켠 회사만. 숫자 = 내가 처리할 수 있는 승인 대기 */}
+      {/* 근태(D-239 → D-242: 오늘 출근 · 승인 대기 · 처리 끝): 근태 켠 회사만. 숫자 = 내가 처리할 수 있는 승인 대기 */}
       {attendance !== null && (
         <Link
           href={`${base}/attendance`}
           onClick={onNavigate}
-          aria-current={pathname === `${base}/attendance` ? "page" : undefined}
-          className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm ${pathname === `${base}/attendance` ? "bg-sidebar-active font-semibold text-sidebar-active-fg" : "text-sidebar-fg hover:bg-sidebar-hover"}`}
+          aria-current={pathname.startsWith(`${base}/attendance`) && !pathname.startsWith(`${base}/attendance-settings`) ? "page" : undefined}
+          className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm ${pathname.startsWith(`${base}/attendance`) && !pathname.startsWith(`${base}/attendance-settings`) ? "bg-sidebar-active font-semibold text-sidebar-active-fg" : "text-sidebar-fg hover:bg-sidebar-hover"}`}
           data-nav="attendance-approvals"
         >
           <ClipboardCheck className="size-5 shrink-0" />
-          <span className="flex-1">근태 승인</span>
+          <span className="flex-1">근태</span>
           {attendance > 0 && (
             <span className="min-w-5 rounded-full bg-red-600 px-1.5 text-center text-[11px] font-semibold leading-5 text-white" aria-label={`승인 대기 ${attendance}건`}>
               {attendance > 99 ? "99+" : attendance}
