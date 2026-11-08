@@ -18,6 +18,7 @@
 - tsc / npm run test 67파일 369개 / DB test 083_attendance_today(+079·080·082) / build
 - E2E: e2e-today(신규) ALL_OK, e2e-vacation·e2e-leave·e2e-hub ALL_OK, leftovers []
 - e2e-attendance는 한국 시간 06시 전이라 스스로 건너뜀(QR 운영 시간) — 승인 탭 흐름은 e2e-vacation으로 확인
+- 2026-11-09 21:44 KST 운영에서 e2e-attendance 다시 실행: 탭이 링크로 바뀐 것(처리 끝 이동 대기)·처리할 건이 없으면 오늘 출근부터 열리는 것(승인 대기 탭 직접 열기)에 맞게 테스트를 고친 뒤 ALL_OK, leftovers []
 - 스크린숏: home-1280, today-1280, today-390, member-1280
 
 ## 특이 사항
