@@ -10,11 +10,13 @@ import { formatWon } from "@/lib/format";
 export type HubTile = { key: string; href: string; label: string; icon: LucideIcon; badge?: number };
 export type HubEvent = { id: string; time: string; title: string; place: string | null; href: string };
 
-export function hubTiles(ws: string, o: { inbox: { waiting: number } | null; rooms: boolean; today: string }): HubTile[] {
+export function hubTiles(ws: string, o: { inbox: { waiting: number } | null; rooms: boolean; today: string; attendance?: boolean }): HubTile[] {
   return [
     { key: "claims", href: `${ws}/employee/claims`, label: "지출결의", icon: ReceiptText },
     { key: "settlements", href: `${ws}/employee/settlements`, label: "정산", icon: Wallet },
     ...(o.inbox ? [{ key: "approvals", href: `${ws}/approvals`, label: "결재함", icon: Inbox, badge: o.inbox.waiting }] : []),
+    // 근태 켠 회사(D-237): [근태] = 월 근태 현황. [휴가]는 휴가 기능(⑦) 때
+    ...(o.attendance ? [{ key: "attendance", href: `${ws}/employee/attendance`, label: "근태", icon: Clock }] : []),
     ...(o.rooms ? [{ key: "rooms", href: `${ws}/calendar?rooms=${o.today}`, label: "회의실", icon: DoorOpen }] : []),
   ];
 }

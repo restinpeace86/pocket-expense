@@ -4071,6 +4071,7 @@ export type Database = {
         Returns: Json
       }
       move_item_to_new_claim: { Args: { p_item_id: string }; Returns: Json }
+      my_attendance_month: { Args: { p_month: string }; Returns: Json }
       my_attendance_today: { Args: never; Returns: Json }
       my_company_tax_office: { Args: never; Returns: Json }
       my_company_tax_office_code: { Args: never; Returns: string }

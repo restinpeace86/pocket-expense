@@ -44,7 +44,7 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
     <EmployeeHub
       ws={ws}
       today={today}
-      tiles={hubTiles(ws, { inbox, rooms: rooms.length > 0, today })}
+      tiles={hubTiles(ws, { inbox, rooms: rooms.length > 0, today, attendance: attendance !== null })}
       events={todays}
       pendingPayout={summary.pending_payout}
       rejectedCount={summary.rejected_count}
