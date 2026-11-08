@@ -4,6 +4,7 @@ import { Check, Info, Loader2, LogOut, RotateCw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { punchAction, type PunchResult } from "@/app/attend/actions";
+import { kstDate } from "@/lib/attendance/request";
 import { kstTime, stayLabel } from "@/lib/attendance/rules";
 
 // QR 출퇴근 결과 화면(spec/features/attendance.md §3-3·§3-5): 출근 / 퇴근 확인 / 퇴근 / 이미 퇴근 / 실패
@@ -87,11 +88,22 @@ export function ScanResult({ token, home, camera }: { token: string; home: strin
       <>
         {day(result.holiday)}
         <p className="mt-5 w-full rounded-xl bg-zinc-100 px-4 py-3.5 text-sm leading-relaxed text-zinc-700">
-          {result.holiday ? "휴일 기록은 남았어요. 관리자가 휴일 근무를 승인해야 근무한 날로 인정돼요." : "퇴근 시각이 다르면 정정 신청으로 고칠 수 있어요."}
+          {result.holiday ? "휴일 기록은 남았어요. 휴일 근무 상신 → 관리자 승인이 되어야 근무한 날로 인정돼요. 나중에 [근태]에서 그날을 눌러 올려도 돼요." : "퇴근 시각이 다르면 [근태]에서 정정 신청으로 고칠 수 있어요."}
         </p>
       </>
     );
-    actions = <Link href={home} className={primary}>홈으로</Link>;
+    actions = result.holiday ? (
+      <>
+        <Link href={`${home}/attendance/request?date=${kstDate(result.inAt)}&kind=holiday`} className={primary}>
+          휴일 근무 상신
+        </Link>
+        <Link href={home} className={secondary}>
+          나중에 · 홈으로
+        </Link>
+      </>
+    ) : (
+      <Link href={home} className={primary}>홈으로</Link>
+    );
   } else if (result.kind === "already") {
     icon = <Info className="size-12 text-zinc-600" aria-hidden />;
     title = "오늘은 이미 퇴근했어요";
@@ -103,7 +115,16 @@ export function ScanResult({ token, home, camera }: { token: string; home: strin
       </>
     );
     extra = <p className="mt-5 w-full rounded-xl bg-zinc-100 px-4 py-3.5 text-sm leading-relaxed text-zinc-700">실수로 일찍 찍었거나 퇴근 후 더 일했다면 정정 신청을 올려 주세요. 관리자가 승인하면 고쳐져요.</p>;
-    actions = <Link href={home} className={primary}>홈으로</Link>;
+    actions = (
+      <>
+        <Link href={`${home}/attendance/request?date=${kstDate(result.inAt)}&kind=${result.holiday ? "holiday" : "correction"}`} className={primary}>
+          {result.holiday ? "휴일 근무 상신" : "정정 신청"}
+        </Link>
+        <Link href={home} className={secondary}>
+          홈으로
+        </Link>
+      </>
+    );
   } else {
     const e = ERRORS[result.code] ?? ERRORS.FAILED;
     icon = <RotateCw className="size-12 text-orange-700" aria-hidden />;

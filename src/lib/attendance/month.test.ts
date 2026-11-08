@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMonth, minutesLabel, shiftMonth, type MonthData } from "./month";
+import { buildMonth, minutesLabel, monthEndNotice, shiftMonth, type AttendanceRequest, type MonthData } from "./month";
 
 // 2026-11-15 = 일요일, 11-14 = 토요일
 const base: MonthData = {
@@ -34,8 +34,8 @@ describe("월 근태 현황", () => {
     expect(rows.find((r) => r.date === "2026-11-09")).toBeUndefined(); // since 전
     expect(rows.find((r) => r.date === "2026-11-10")?.kind).toBe("none");
   });
-  it("요약", () => {
-    expect(summary).toEqual({ worked: 4, holidayWorked: 1, minutes: 555 + 537 + 338, auto: 1, missing: 6 });
+  it("요약 — 승인 전 휴일 출근은 세지 않음(D-239)", () => {
+    expect(summary).toEqual({ worked: 3, holidayWorked: 0, holidayWaiting: 1, minutes: 555 + 537, auto: 1, missing: 6, pending: 0, rejected: 0 });
     expect(rows[0].stay).toBe("지금 9시간 8분째");
   });
   it("공휴일은 근무일이 아님 + 빨간 날", () => {
@@ -51,6 +51,50 @@ describe("월 근태 현황", () => {
   it("지난달은 말일부터", () => {
     const r = buildMonth({ ...base, month: "2026-10", since: "2026-10-01", days: [] });
     expect(r.rows[0].date).toBe("2026-10-30"); // 10/31 토
+  });
+  it("휴일 근무 인정되면 출근한 날·머문 시간에 셈", () => {
+    const days = base.days.map((d) => (d.work_date === "2026-11-15" ? { ...d, holiday_approved: true } : d));
+    const r = buildMonth({ ...base, days });
+    expect(r.summary).toMatchObject({ worked: 4, holidayWorked: 1, holidayWaiting: 0, minutes: 555 + 537 + 338 });
+    expect(r.rows.find((x) => x.date === "2026-11-15")?.badge).toBe("holidayApproved");
+  });
+  it("신청 상태 표시와 신청 가능 여부(이번 달만, 대기 1건)", () => {
+    const req = (o: Partial<AttendanceRequest>): AttendanceRequest => ({
+      id: Math.random().toString(), work_date: "2026-11-18", kind: "correction", new_in: "09:03", new_out: "20:30", reason: "더 일함", before: {},
+      status: "pending", self_approved: false, decided_by_name: null, decided_at: null, reject_reason: null, created_at: "2026-11-19T00:00:00Z", ...o,
+    });
+    const r = buildMonth({
+      ...base,
+      request_from: "2026-11-10",
+      requests: [
+        req({}),
+        req({ work_date: "2026-11-17", status: "rejected", reject_reason: "연차로", created_at: "2026-11-18T00:00:00Z" }),
+        req({ work_date: "2026-11-19", status: "approved", created_at: "2026-11-19T01:00:00Z" }),
+        req({ work_date: "2026-11-15", kind: "holiday", created_at: "2026-11-16T00:00:00Z" }),
+      ],
+    });
+    const row = (d: string) => r.rows.find((x) => x.date === d)!;
+    expect(row("2026-11-18")).toMatchObject({ badge: "pending", canCorrect: false });
+    expect(row("2026-11-17")).toMatchObject({ badge: "rejected", canCorrect: true });
+    expect(row("2026-11-17").lastRejected?.reject_reason).toBe("연차로");
+    expect(row("2026-11-19")).toMatchObject({ badge: "corrected", canCorrect: true });
+    expect(row("2026-11-19").changes).toHaveLength(1);
+    expect(row("2026-11-15")).toMatchObject({ badge: "holidayPending", canHoliday: false, canCorrect: false });
+    expect(row("2026-11-10")).toMatchObject({ badge: "none", canCorrect: true });
+    expect(r.summary).toMatchObject({ pending: 2, rejected: 1 });
+  });
+  it("승인 전 휴일은 상신만, 신청 시작일 전·지난 달은 불가", () => {
+    const r = buildMonth({ ...base, request_from: "2026-11-16" });
+    expect(r.rows.find((x) => x.date === "2026-11-15")).toMatchObject({ badge: "holiday", canHoliday: false, canCorrect: false });
+    const r2 = buildMonth({ ...base, request_from: "2026-11-10" });
+    expect(r2.rows.find((x) => x.date === "2026-11-15")).toMatchObject({ canHoliday: true, canCorrect: false });
+    const old = buildMonth({ ...base, month: "2026-10", since: "2026-10-01", request_from: "2026-11-01", days: [] });
+    expect(old.rows.every((x) => !x.canCorrect && x.pastMonth)).toBe(true);
+  });
+  it("말일 안내: 마지막 3일", () => {
+    expect(monthEndNotice("2026-11-27")).toBeNull();
+    expect(monthEndNotice("2026-11-28")).toBe("11/30 (월)");
+    expect(monthEndNotice("2026-02-26")).toBe("2/28 (토)");
   });
   it("도우미", () => {
     expect(shiftMonth("2026-01", -1)).toBe("2025-12");

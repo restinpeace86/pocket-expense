@@ -394,7 +394,9 @@ export type Database = {
           company_id: string
           created_at: string
           holiday: boolean
+          holiday_approved_at: string | null
           in_at: string
+          in_method: string
           in_terminal_id: string | null
           member_id: string
           out_at: string | null
@@ -409,7 +411,9 @@ export type Database = {
           company_id: string
           created_at?: string
           holiday?: boolean
+          holiday_approved_at?: string | null
           in_at: string
+          in_method?: string
           in_terminal_id?: string | null
           member_id: string
           out_at?: string | null
@@ -424,7 +428,9 @@ export type Database = {
           company_id?: string
           created_at?: string
           holiday?: boolean
+          holiday_approved_at?: string | null
           in_at?: string
+          in_method?: string
           in_terminal_id?: string | null
           member_id?: string
           out_at?: string | null
@@ -529,6 +535,84 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_requests: {
+        Row: {
+          before: Json
+          company_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decided_by_name: string | null
+          id: string
+          kind: string
+          member_id: string
+          member_name: string
+          member_role: string
+          new_in: string
+          new_out: string
+          reason: string
+          reject_reason: string | null
+          self_approved: boolean
+          status: string
+          work_date: string
+        }
+        Insert: {
+          before: Json
+          company_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decided_by_name?: string | null
+          id?: string
+          kind: string
+          member_id: string
+          member_name: string
+          member_role: string
+          new_in: string
+          new_out: string
+          reason: string
+          reject_reason?: string | null
+          self_approved?: boolean
+          status?: string
+          work_date: string
+        }
+        Update: {
+          before?: Json
+          company_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decided_by_name?: string | null
+          id?: string
+          kind?: string
+          member_id?: string
+          member_name?: string
+          member_role?: string
+          new_in?: string
+          new_out?: string
+          reason?: string
+          reject_reason?: string | null
+          self_approved?: boolean
+          status?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_requests_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
           },
         ]
       }
@@ -3793,6 +3877,7 @@ export type Database = {
         Args: { p_code_hash: string; p_name: string }
         Returns: string
       }
+      attendance_pending_count: { Args: never; Returns: number }
       attendance_punch: {
         Args: {
           p_company: string
@@ -3802,6 +3887,22 @@ export type Database = {
         }
         Returns: Json
       }
+      attendance_request_cancel: { Args: { p_id: string }; Returns: undefined }
+      attendance_request_create: {
+        Args: {
+          p_date: string
+          p_in: string
+          p_kind: string
+          p_out: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      attendance_request_decide: {
+        Args: { p_approve: boolean; p_id: string; p_reason: string }
+        Returns: Json
+      }
+      attendance_requests_admin: { Args: never; Returns: Json }
       attendance_set_enabled: { Args: { p_enabled: boolean }; Returns: boolean }
       attendance_settings_save: { Args: { p: Json }; Returns: Json }
       attendance_terminal_auth: { Args: { p_key_hash: string }; Returns: Json }

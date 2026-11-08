@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { requireWorkspace } from "@/lib/auth/guards";
+import { attendancePendingCount } from "@/lib/attendance/server";
 import { calendarEnabled } from "@/lib/calendar/server";
 import { chatUnreadTotal } from "@/lib/chat/server";
 
@@ -16,9 +17,9 @@ export default function AdminLayout({ children, params }: LayoutProps<"/workspac
 async function Guarded({ params, children }: { params: LayoutProps<"/workspace/[id]/admin">["params"]; children: React.ReactNode }) {
   const { id } = await params;
   const membership = await requireWorkspace(id, { admin: true });
-  const [chat, calendar] = await Promise.all([chatUnreadTotal(), calendarEnabled()]);
+  const [chat, calendar, attendance] = await Promise.all([chatUnreadTotal(), calendarEnabled(), attendancePendingCount()]);
   return (
-    <AdminShell membership={membership} chat={chat} calendar={calendar}>
+    <AdminShell membership={membership} chat={chat} calendar={calendar} attendance={attendance}>
       {children}
     </AdminShell>
   );

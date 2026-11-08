@@ -21,7 +21,7 @@ async function handle(request: NextRequest) {
   for (const d of due) {
     const [first, ...rest] = (d.body ?? "").split("\n");
     const r = await pushToMembers(d.company_id, [d.member_id], {
-      title: `${first.startsWith("퇴근") ? "⏰" : "📅"} ${first || "알림"}`, // 퇴근 누락 알림(D-238)은 ⏰
+      title: `${/퇴근|정정 신청|휴일 근무/.test(first) ? "⏰" : "📅"} ${first || "알림"}`, // 근태 알림(D-238 퇴근 누락·D-239 정정/휴일 근무)은 ⏰
       body: rest.join(" · "),
       url: d.link ?? `/workspace/${d.company_id}/chat/${d.room_id}`,
       tag: `notice-${d.id}`,

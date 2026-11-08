@@ -38,6 +38,40 @@ export async function getAttendanceAdminView(): Promise<AttendanceAdminView> {
   return data as unknown as AttendanceAdminView;
 }
 
+// 관리자 메뉴 [근태 승인] 숫자(D-239): 근태 꺼짐이면 null(메뉴 숨김), 켜짐이면 내가 처리할 수 있는 대기 건수
+export const attendancePendingCount = cache(async (): Promise<number | null> => {
+  if (!(await attendanceEnabled())) return null;
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("attendance_pending_count");
+  return typeof data === "number" ? data : 0;
+});
+
+export type AdminRequest = {
+  id: string;
+  member_name: string;
+  member_role: "employee" | "admin" | "super_admin";
+  work_date: string;
+  kind: "correction" | "holiday";
+  new_in: string;
+  new_out: string;
+  reason: string;
+  before: { in_at?: string; out_at?: string | null; out_method?: string | null };
+  status: "pending" | "approved" | "rejected";
+  self_approved: boolean;
+  decided_by_name: string | null;
+  decided_at: string | null;
+  reject_reason: string | null;
+  created_at: string;
+  mine: boolean;
+  can_decide: boolean;
+};
+export async function getAttendanceRequestsAdmin(): Promise<{ pending: AdminRequest[]; done: AdminRequest[] }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("attendance_requests_admin");
+  if (error || !data) throw new Error(error?.message ?? "attendance_requests_admin");
+  return data as unknown as { pending: AdminRequest[]; done: AdminRequest[] };
+}
+
 export function clientIp(headers: Headers): string | null {
   return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || null;
 }

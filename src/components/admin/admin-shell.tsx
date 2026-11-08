@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, Building2, CalendarDays, Clock, Car, ChartBar, ChevronDown, CreditCard, DoorOpen, FileDown, FileText, HardDrive, Landmark, LayoutDashboard, Menu, MessageCircle, ReceiptText, Repeat, Route, Settings, SlidersHorizontal, Users, Wallet, X, type LucideIcon } from "lucide-react";
+import { Banknote, Building2, CalendarDays, ClipboardCheck, Clock, Car, ChartBar, ChevronDown, CreditCard, DoorOpen, FileDown, FileText, HardDrive, Landmark, LayoutDashboard, Menu, MessageCircle, ReceiptText, Repeat, Route, Settings, SlidersHorizontal, Users, Wallet, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -72,7 +72,7 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
 
 // settingsOpen: 휴대폰 메뉴(서랍)에서는 설정 하위 메뉴를 펼친 채로 연다(개선사항 1-1) — 화면 이름이 바로 보이게
 // feedback: 관리자 1:1 문의 주소 — 휴대폰 서랍 메뉴에서만 넘긴다(PC는 오른쪽 아래 떠 있는 버튼, 7차 개선사항 3)
-function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, calendar = false, chat = false }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; calendar?: boolean; chat?: boolean }) {
+function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, calendar = false, chat = false, attendance = null }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; calendar?: boolean; chat?: boolean; attendance?: number | null }) {
   const realPath = usePathname();
   const pathname = previewPath ? `${base}${previewPath}` : realPath;
   const settingsNav = SETTINGS_NAV.filter((i) => !i.chatOnly || chat);
@@ -94,7 +94,28 @@ function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback
           캘린더
         </Link>
       )}
-      {NAV.slice(1).map((item) => (
+      {NAV.slice(1, 2).map((item) => (
+        <NavLink key={item.label} item={item} base={base} pathname={pathname} onNavigate={onNavigate} />
+      ))}
+      {/* 근태 승인(D-239): 근태 켠 회사만. 숫자 = 내가 처리할 수 있는 승인 대기 */}
+      {attendance !== null && (
+        <Link
+          href={`${base}/attendance`}
+          onClick={onNavigate}
+          aria-current={pathname === `${base}/attendance` ? "page" : undefined}
+          className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm ${pathname === `${base}/attendance` ? "bg-sidebar-active font-semibold text-sidebar-active-fg" : "text-sidebar-fg hover:bg-sidebar-hover"}`}
+          data-nav="attendance-approvals"
+        >
+          <ClipboardCheck className="size-5 shrink-0" />
+          <span className="flex-1">근태 승인</span>
+          {attendance > 0 && (
+            <span className="min-w-5 rounded-full bg-red-600 px-1.5 text-center text-[11px] font-semibold leading-5 text-white" aria-label={`승인 대기 ${attendance}건`}>
+              {attendance > 99 ? "99+" : attendance}
+            </span>
+          )}
+        </Link>
+      )}
+      {NAV.slice(2).map((item) => (
         <NavLink key={item.label} item={item} base={base} pathname={pathname} onNavigate={onNavigate} />
       ))}
       <details className="group mt-3 border-t border-sidebar-border pt-3" open={settingsOpen || settingsActive || undefined}>
@@ -146,6 +167,7 @@ export function AdminShell({
   previewPath,
   chat,
   calendar = false,
+  attendance = null,
 }: {
   membership: Membership;
   children: ReactNode;
@@ -153,6 +175,7 @@ export function AdminShell({
   previewPath?: string;
   chat?: number | null; // 사내 메신저 안 읽은 수(꺼져 있으면 null, D-203)
   calendar?: boolean; // 사내 캘린더 메뉴(회사 스위치, D-206)
+  attendance?: number | null; // 근태 승인 대기 수(근태 꺼짐이면 null, D-239)
 }) {
   const base = `/workspace/${membership.company_id}/admin`;
   const chatUnread = useChatUnread(chat, membership.member_id);
@@ -164,7 +187,7 @@ export function AdminShell({
         <p className="px-6 pb-3 pt-5">
           <Brand />
         </p>
-        <NavList base={base} previewPath={previewPath} calendar={calendar} chat={chat != null} />
+        <NavList base={base} previewPath={previewPath} calendar={calendar} chat={chat != null} attendance={attendance} />
       </aside>
 
       {open && (
@@ -177,7 +200,7 @@ export function AdminShell({
                 <X className="size-5" />
               </button>
             </div>
-            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} calendar={calendar} chat={chat != null} />
+            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} calendar={calendar} chat={chat != null} attendance={attendance} />
             <div className="mt-auto sm:hidden">
               <ThemeOptionsInline />
             </div>
