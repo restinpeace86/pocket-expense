@@ -103,6 +103,9 @@ describe("월 근태 현황", () => {
     expect(r.rows.find((x) => x.date === "2026-11-17")?.leave?.text).toBe("휴가 · 연차");
     expect(r.rows.find((x) => x.date === "2026-11-19")?.leave?.text).toContain("14:00부터 4시간");
     expect(r.summary).toMatchObject({ missing: 4, leaveDays: 2 });
+    // 앞날 휴가는 '빼고 셌어요' 안내에 넣지 않는다(시나리오에서 찾은 문제)
+    const future = buildMonth({ ...base, leaves: [{ id: "f", type_name: "연차", unit: "day", start_date: "2026-11-23", end_date: "2026-11-24", start_time: null, hours: null }] });
+    expect(future.summary.leaveDays).toBe(0);
   });
   it("말일 안내: 마지막 3일", () => {
     expect(monthEndNotice("2026-11-27")).toBeNull();

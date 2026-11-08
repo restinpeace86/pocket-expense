@@ -118,7 +118,8 @@ export function buildMonth(data: MonthData, now: Date = new Date()): { rows: Mon
       const isWork = data.work_days.includes(isoDow(d)) && !holidays.has(d);
       if (l.unit === "day" && isWork) {
         leaveOn.set(d, { name: l.type_name, text: `휴가 · ${l.type_name}`, full: true });
-        summary.leaveDays++;
+        // "기록 없는 근무일에서 뺐다"는 안내용이라 오늘까지만 센다(앞날 휴가는 목록에도 없음)
+        if (d <= data.today) summary.leaveDays++;
       } else if (l.unit === "hour") leaveOn.set(d, { name: l.type_name, text: `휴가 ${l.start_time}부터 ${l.hours}시간 · ${l.type_name}`, full: false });
     }
   }
