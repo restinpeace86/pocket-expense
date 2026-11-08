@@ -41,9 +41,9 @@ function openPath(t: OpenTarget, ws: string, who: Who): string {
     case "rooms":
       return `${ws}/calendar/rooms`;
     case "claims":
-      return `${ws}/employee`;
+      return `${ws}/employee/claims`;
     case "new_claim":
-      return `${ws}/employee`;
+      return `${ws}/employee/claims`;
     case "approvals":
       return admin ? `${ws}/admin/claims` : `${ws}/approvals`;
     case "settlements":
@@ -175,7 +175,7 @@ export async function answer(text: string, who: Who): Promise<AssistantReply> {
       if (error) return { body: "결의서를 불러오지 못했어요. 잠시 뒤 다시 물어봐 주세요.", link: null };
       const rows = data ?? [];
       const what = intent.filter === "draft" ? "작성 중(임시저장) 결의서" : intent.filter === "rejected" ? "반려된 결의서" : "아직 올리지 않았거나 반려된 결의서";
-      const listLink = intent.filter === "open" ? `${ws}/employee` : `${ws}/employee?status=${intent.filter}`;
+      const listLink = intent.filter === "open" ? `${ws}/employee/claims` : `${ws}/employee/claims?status=${intent.filter}`;
       if (!rows.length) return { body: `${what}는 없어요. 👍`, link: null };
       const lines = rows.slice(0, 5).map((c) => `· ${c.status === "rejected" ? "[반려] " : "[작성 중] "}${c.title?.trim() || "제목 없음"} · ${formatWon(c.total_amount ?? 0)}${c.status === "rejected" && c.rejection_reason ? ` — ${c.rejection_reason.slice(0, 40)}` : ""}`);
       const link = rows.length === 1 ? `${ws}/employee/claims/${rows[0].id}/edit` : listLink;

@@ -56,7 +56,7 @@ describe("미제출자 독촉 (REMINDER)", () => {
     const m = reminder({ companyId: "c1", companyName: "포켓컴퍼니", pending: 2 });
     expect(m.template).toBe("REMINDER");
     expect(m.text).toBe("[WORKON] 지출결의서 제출 안내\n\n포켓컴퍼니에서 보내 드리는 안내입니다.\n아직 제출하지 않은 지출결의서가 2건 있습니다(작성 중·반려).\n\n확인 후 상신해 주세요.");
-    expect(m.buttonPath).toBe("/workspace/c1/employee");
+    expect(m.buttonPath).toBe("/workspace/c1/employee/claims");
   });
 });
 

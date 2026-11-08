@@ -10,13 +10,11 @@ import { isAdminRole, type Membership } from "@/lib/auth/paths";
 export function CalendarShell({
   membership,
   serverMode,
-  inbox,
   chat,
   children,
 }: {
   membership: Membership;
   serverMode: "admin" | "employee";
-  inbox: { waiting: number } | null;
   chat: number | null;
   children: ReactNode;
 }) {
@@ -26,7 +24,7 @@ export function CalendarShell({
       {children}
     </AdminShell>
   ) : (
-    <EmployeeShell membership={membership} inbox={inbox} chat={chat}>
+    <EmployeeShell membership={membership} chat={chat}>
       {children}
     </EmployeeShell>
   );

@@ -111,7 +111,7 @@ export function invite(p: { companyName: string; name: string; token: string }):
 }
 
 export function reminder(p: { companyId: string; companyName: string; pending: number }): BuiltMessage {
-  return renderAlimtalk("REMINDER", { 회사명: p.companyName, 건수: String(p.pending) }, `/workspace/${p.companyId}/employee`);
+  return renderAlimtalk("REMINDER", { 회사명: p.companyName, 건수: String(p.pending) }, `/workspace/${p.companyId}/employee/claims`);
 }
 
 export function approvalCompleted(p: { companyId: string; claimId: string; name: string; title: string; total: number; payout: number; merchant: string }): BuiltMessage {
@@ -152,7 +152,7 @@ export function recurringReady(p: { companyId: string; claimId: string | null; s
       template: "RECURRING_READY",
       text: `${p.serviceName} ${p.periodLabel} 구독료(약 ${won}원) 결제일이에요. 개인카드로 결제했다면 결제 내역(영수증·카드 결제 알림)을 찍어 지출결의서를 상신해 주세요.`,
       buttonLabel: "결의서 올리기",
-      buttonPath: `/workspace/${p.companyId}/employee`,
+      buttonPath: `/workspace/${p.companyId}/employee/claims`,
     };
   }
   return {

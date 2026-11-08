@@ -1,4 +1,5 @@
 import { ArrowLeftRight } from "lucide-react";
+import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ThemeSwitcher, ThemeSync } from "@/components/workspace/theme-switcher";
 import { ModeSwitchLink, ViewModeMark } from "@/components/workspace/view-mode-mark";
@@ -11,10 +12,11 @@ export function WorkspaceHeader({ membership, mode }: { membership: Membership; 
   return (
     <header className="flex items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-3">
       {isAdminRole(membership.role) && <ViewModeMark companyId={membership.company_id} mode={mode} />}
-      <div className="min-w-0">
+      {/* 회사명을 누르면 지금 모드의 홈(D-235) */}
+      <Link href={mode === "admin" ? `${base}/admin` : `${base}/employee`} aria-label={`${membership.company_name} 홈`} className="-my-1 min-w-0 rounded-lg py-1 hover:opacity-80">
         <p className="truncate text-xs text-zinc-500">{mode === "admin" ? "관리자 모드" : "직원 모드"}</p>
         <p className="truncate font-semibold">{membership.company_name}</p>
-      </div>
+      </Link>
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         {isAdminRole(membership.role) && (
           <ModeSwitchLink

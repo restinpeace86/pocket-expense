@@ -1,0 +1,109 @@
+import { CalendarDays, ChevronRight, DoorOpen, Inbox, ReceiptText, Wallet, type LucideIcon } from "lucide-react";
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { formatWon } from "@/lib/format";
+
+// 직원 홈 = 허브 (worker-dashboard.md §0, D-235)
+// 메뉴 칸(맨 위 고정, 아이콘+이름, 처리할 것만 배지) → 오늘 · 내 현황(상태는 여기 한 곳) → 공지(있을 때만)
+export type HubTile = { key: string; href: string; label: string; icon: LucideIcon; badge?: number };
+export type HubEvent = { id: string; time: string; title: string; place: string | null; href: string };
+
+export function hubTiles(ws: string, o: { inbox: { waiting: number } | null; rooms: boolean; today: string }): HubTile[] {
+  return [
+    { key: "claims", href: `${ws}/employee/claims`, label: "지출결의", icon: ReceiptText },
+    { key: "settlements", href: `${ws}/employee/settlements`, label: "정산", icon: Wallet },
+    ...(o.inbox ? [{ key: "approvals", href: `${ws}/approvals`, label: "결재함", icon: Inbox, badge: o.inbox.waiting }] : []),
+    ...(o.rooms ? [{ key: "rooms", href: `${ws}/calendar?rooms=${o.today}`, label: "회의실", icon: DoorOpen }] : []),
+  ];
+}
+
+const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
+export function todayTitle(today: string): string {
+  const [y, m, d] = today.split("-").map(Number);
+  const w = WEEK[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return `${m}월 ${d}일 (${w})`;
+}
+
+export function EmployeeHub({
+  ws,
+  today,
+  tiles,
+  events,
+  pendingPayout,
+  rejectedCount,
+  notices,
+}: {
+  ws: string;
+  today: string;
+  tiles: HubTile[];
+  events: HubEvent[] | null; // null = 캘린더 꺼짐 → 일정 줄 없음
+  pendingPayout: number;
+  rejectedCount: number;
+  notices: ReactNode; // 공지 없으면 null(카드 숨김)
+}) {
+  const row = "flex min-h-11 items-center gap-2 rounded-lg text-sm hover:bg-zinc-50";
+  return (
+    <main className="mx-auto grid w-full max-w-md gap-4 px-4 pb-10 pt-4 md:max-w-5xl md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:items-start md:gap-5 md:px-6 md:pt-7">
+      <h1 className="sr-only">홈</h1>
+        <nav aria-label="홈 메뉴" className="grid grid-cols-3 gap-2.5 md:col-start-1 md:row-start-1 md:gap-3">
+          {tiles.map(({ key, href, label, icon: Icon, badge }) => (
+            <Link
+              key={key}
+              href={href}
+              data-tile={key}
+              className="relative flex h-[5.25rem] flex-col items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white text-sm font-medium text-zinc-800 shadow-sm hover:border-brand-300 active:bg-zinc-50 md:h-26 md:text-[15px]"
+            >
+              <Icon className="size-7 text-brand-600" strokeWidth={1.8} aria-hidden />
+              {label}
+              {!!badge && (
+                <span className="absolute right-[calc(50%-2.25rem)] top-2.5 min-w-5 rounded-full bg-red-600 px-1 text-center text-[11px] font-semibold leading-5 text-white">
+                  {badge > 99 ? "99+" : badge}
+                  <span className="sr-only">건 대기</span>
+                </span>
+              )}
+            </Link>
+          ))}
+        </nav>
+
+      <section aria-label="오늘 · 내 현황" className="md:col-start-2 md:row-span-2 md:row-start-1 rounded-2xl border border-zinc-200 bg-white px-4 py-2 shadow-sm md:px-5">
+        <h2 className="pb-1 pt-2 text-[15px] font-bold">{events ? `오늘 · ${todayTitle(today)}` : "내 현황"}</h2>
+        {events &&
+          (events.length === 0 ? (
+            <Link href={`${ws}/calendar?date=${today}`} className={`${row} text-zinc-500`}>
+              <CalendarDays className="size-4 shrink-0 text-zinc-400" aria-hidden />
+              <span className="flex-1">오늘 잡힌 일정이 없어요</span>
+              <ChevronRight className="size-4 shrink-0 text-zinc-400" aria-hidden />
+            </Link>
+          ) : (
+            events.map((e) => (
+              <Link key={e.id} href={e.href} className={row}>
+                <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
+                  <CalendarDays className="size-3.5" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1 truncate">
+                  <b className="font-semibold">{e.time}</b> {e.title}
+                  {e.place && <span className="text-zinc-500"> · {e.place}</span>}
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-zinc-400" aria-hidden />
+              </Link>
+            ))
+          ))}
+        {events && <div className="my-1.5 h-px bg-zinc-100" />}
+        <Link href={`${ws}/employee/settlements`} className={`${row} text-zinc-700`}>
+          <span className="flex-1">사비 정산 대기금</span>
+          <b className="text-[15px] font-bold text-zinc-900">{formatWon(pendingPayout)}</b>
+          <ChevronRight className="size-4 shrink-0 text-zinc-400" aria-hidden />
+        </Link>
+        {rejectedCount > 0 && (
+          <Link href={`${ws}/employee/claims?status=rejected`} className={`${row} text-zinc-700`}>
+            <span className="flex-1">반려된 결의서</span>
+            <b className="text-[15px] font-bold text-red-700">{rejectedCount}건</b>
+            <ChevronRight className="size-4 shrink-0 text-zinc-400" aria-hidden />
+          </Link>
+        )}
+      </section>
+
+      {notices && <div className="md:col-start-1 md:row-start-2">{notices}</div>}
+    </main>
+  );
+}

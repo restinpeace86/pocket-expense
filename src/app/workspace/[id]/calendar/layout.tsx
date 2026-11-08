@@ -4,7 +4,6 @@ import { CalendarShell } from "@/components/calendar/calendar-shell";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { viewMode } from "@/lib/auth/view-mode";
 import { calendarEnabled } from "@/lib/calendar/server";
-import { getInboxBadge } from "@/lib/claims/inbox";
 import { chatUnreadTotal } from "@/lib/chat/server";
 
 export const metadata = { title: "캘린더 · WORKON" };
@@ -23,9 +22,9 @@ async function Guarded({ params, children }: { params: LayoutProps<"/workspace/[
   const { id } = await params;
   const membership = await requireWorkspace(id);
   if (!(await calendarEnabled())) notFound();
-  const [serverMode, inbox, chat] = await Promise.all([viewMode(membership), getInboxBadge(membership), chatUnreadTotal()]);
+  const [serverMode, chat] = await Promise.all([viewMode(membership), chatUnreadTotal()]);
   return (
-    <CalendarShell membership={membership} serverMode={serverMode} inbox={inbox} chat={chat}>
+    <CalendarShell membership={membership} serverMode={serverMode} chat={chat}>
       {children}
     </CalendarShell>
   );

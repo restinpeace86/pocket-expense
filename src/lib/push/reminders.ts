@@ -22,10 +22,10 @@ export async function runPushReminders(today?: string): Promise<{ deadline: numb
       t.days_left === 0
         ? `오늘(${md(t.deadline)})까지 작성 중인 결의서 ${t.open_claims}건을 상신해 주세요.`
         : `이번 달 지출 정산 마감이 ${t.days_left}일 남았어요(${md(t.deadline)}까지). 작성 중인 결의서 ${t.open_claims}건을 상신해 주세요.`;
-    const r = await pushToMembers(t.company_id, [t.member_id], { title, body, url: `/workspace/${t.company_id}/employee`, tag: "deadline" }, { kind: "deadline", ref: `${t.deadline}:${t.days_left}` });
+    const r = await pushToMembers(t.company_id, [t.member_id], { title, body, url: `/workspace/${t.company_id}/employee/claims`, tag: "deadline" }, { kind: "deadline", ref: `${t.deadline}:${t.days_left}` });
     deadline += r.sent;
     // 오늘 처음인 사람만(같은 알림 하루 한 번) 채팅 카드도(D-224)
-    await postNoticeCards(admin, t.company_id, r.targets, { title, lines: [body], url: `/workspace/${t.company_id}/employee` }).catch(() => 0);
+    await postNoticeCards(admin, t.company_id, r.targets, { title, lines: [body], url: `/workspace/${t.company_id}/employee/claims` }).catch(() => 0);
   }
 
   const { data: ap } = await admin.rpc("push_approval_targets", {});

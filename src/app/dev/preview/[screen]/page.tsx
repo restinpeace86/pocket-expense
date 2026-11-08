@@ -14,7 +14,8 @@ import { AdminShell, type ShellTheme } from "@/components/admin/admin-shell";
 import { TestimonialsView } from "@/components/landing/testimonials";
 import { CorporateCardsHeading, CorporateCardsView } from "@/components/admin/corporate-cards-view";
 import { CompanySettingsForm } from "@/components/admin/company-settings-form";
-import { EmployeeHomeView } from "@/components/employee/employee-home-view";
+import { ClaimsListView } from "@/components/employee/claims-list-view";
+import { EmployeeHub, hubTiles } from "@/components/employee/employee-hub";
 import { EmployeeShell } from "@/components/employee/employee-shell";
 import { ClaimEditor } from "@/components/employee/claim-editor";
 import { ProfileForm } from "@/components/employee/profile-form";
@@ -375,21 +376,35 @@ async function Preview({
         </div>
       );
     case "employee-home":
+      // 직원 홈 = 허브(D-235)
+      return (
+        <EmployeeShell membership={SAMPLE_MEMBERSHIP} theme={theme} previewPath="/employee">
+          <EmployeeHub
+            ws="#"
+            today="2026-11-09"
+            tiles={hubTiles("#", { inbox: { waiting: 2 }, rooms: true, today: "2026-11-09" })}
+            events={[{ id: "e1", time: "14:00~15:00", title: "주간회의", place: "3층 회의실", href: "#" }]}
+            pendingPayout={142000}
+            rejectedCount={1}
+            notices={<NoticeStrip notices={SAMPLE_NOTICES} />}
+          />
+        </EmployeeShell>
+      );
+    case "employee-claims":
     case "employee-home-empty":
     case "employee-home-blocked":
     case "employee-home-rejected":
+      // [지출결의] 목록(D-235, 예전 홈 목록)
       return (
-        <EmployeeShell membership={screen === "employee-home" ? SAMPLE_MEMBERSHIP : EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee">
-          <EmployeeHomeView
-            name={screen === "employee-home" ? "김대표" : "김개발"}
+        <EmployeeShell membership={screen === "employee-claims" ? SAMPLE_MEMBERSHIP : EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/employee/claims">
+          <ClaimsListView
             base="#"
             month="2026-10"
             thisMonth="2026-10"
             filter="all"
-            summary={{ pending_payout: screen === "employee-home" ? 142000 : 0, rejected_count: screen === "employee-home" ? 1 : 0, credits_left: screen === "employee-home-blocked" ? 0 : 80 }}
-            notices={screen === "employee-home" ? <NoticeStrip notices={SAMPLE_NOTICES} /> : undefined}
+            summary={{ pending_payout: screen === "employee-claims" ? 142000 : 0, rejected_count: screen === "employee-claims" ? 1 : 0, credits_left: screen === "employee-home-blocked" ? 0 : 80 }}
             creditsBlocked={screen === "employee-home-blocked"}
-            initial={{ items: screen === "employee-home" ? SAMPLE_CLAIMS : [], nextCursor: screen === "employee-home" ? "x" : null }}
+            initial={{ items: screen === "employee-claims" ? SAMPLE_CLAIMS : [], nextCursor: screen === "employee-claims" ? "x" : null }}
             initialSheet={screen === "employee-home-rejected" ? SAMPLE_CLAIMS[3] : undefined}
           />
         </EmployeeShell>
@@ -651,7 +666,7 @@ async function Preview({
       );
     case "approvals-inbox":
       return (
-        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/approvals" inbox={{ waiting: 2 }}>
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/approvals">
           <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 pb-6 pt-5 md:max-w-2xl">
             <h1 className="text-xl font-bold tracking-tight">결재함</h1>
             <AdminClaimList rows={SAMPLE_ADMIN_ROWS.map((r) => ({ ...r, reviewing: null }))} tab="pending" base="#" />
@@ -660,7 +675,7 @@ async function Preview({
       );
     case "approval-reviewer":
       return (
-        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/approvals/cl1" inbox={{ waiting: 2 }}>
+        <EmployeeShell membership={EMPLOYEE_MEMBERSHIP} theme={theme} previewPath="/approvals/cl1">
           <main className="mx-auto flex w-full max-w-md flex-col px-4 pt-3 md:max-w-3xl">
             <AdminClaimDetail
               detail={{ ...SAMPLE_DETAIL_CLAIM, pendingStep: { ...SAMPLE_DETAIL_CLAIM.pendingStep!, step_kind: "review", approver_member_id: "m" } }}

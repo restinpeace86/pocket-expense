@@ -13,7 +13,7 @@ import { formatWon } from "@/lib/format";
 import { guardAction } from "@/lib/action-guard";
 import { measureAction } from "@/lib/perf/client";
 
-// 화면 E-01 직원 메인 (spec/screens/worker-dashboard.md)
+// [지출결의] 화면: 내 결의서 목록 (spec/screens/worker-dashboard.md §4, D-235 — 예전 직원 홈에서 옮김)
 const CATEGORY_ICON: Record<ExpenseCategory, string> = { meal: "🍚", trip: "🧳", meeting: "🤝", purchase: "📦", team_dinner: "🍻", condolence: "💐", seminar: "🎤", books: "📚", training: "🎓", company_car: "🚙", saas: "💻" };
 
 function dot(d: string) {
@@ -143,8 +143,7 @@ function RejectedSheet({ claim, base, onClose }: { claim: MyClaimRow; base: stri
   );
 }
 
-export function EmployeeHomeView({
-  name,
+export function ClaimsListView({
   base,
   month,
   thisMonth,
@@ -153,9 +152,7 @@ export function EmployeeHomeView({
   creditsBlocked,
   initial,
   initialSheet,
-  notices,
 }: {
-  name: string;
   base: string;
   month: string;
   thisMonth: string;
@@ -164,7 +161,6 @@ export function EmployeeHomeView({
   creditsBlocked: boolean; // 회사 무료 사용량을 다 썼고 이벤트도 꺼져 있음 (D-046, D-054)
   initial: { items: MyClaimRow[]; nextCursor: string | null };
   initialSheet?: MyClaimRow; // 미리보기 전용: 반려 사유 시트를 연 상태로 그린다
-  notices?: React.ReactNode; // 공지(D-116) — 서버에서 그려 넘긴다
 }) {
   const [items, setItems] = useState(initial.items);
   const [cursor, setCursor] = useState(initial.nextCursor);
@@ -190,7 +186,7 @@ export function EmployeeHomeView({
     if (m !== thisMonth) p.set("month", m);
     if (f !== "all") p.set("status", f);
     const s = p.toString();
-    return s ? `${base}?${s}` : base;
+    return s ? `${base}/claims?${s}` : `${base}/claims`;
   };
   const [y, mm] = month.split("-");
 
@@ -211,16 +207,14 @@ export function EmployeeHomeView({
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 pb-28 pt-5">
-      <h1 className="text-xl font-bold tracking-tight">안녕하세요, {name}님 👋</h1>
-      {notices}
+      <div className="-ml-2 flex items-center gap-1">
+        <Link href={base} aria-label="홈으로" className="inline-flex size-11 items-center justify-center rounded-xl hover:bg-zinc-100">
+          <ChevronLeft className="size-5" />
+        </Link>
+        <h1 className="text-xl font-bold tracking-tight">지출결의</h1>
+      </div>
 
-      <section className="rounded-2xl bg-brand-600 p-5 text-white shadow-sm">
-        <p className="text-sm text-white/85">사비 정산 대기금</p>
-        <p className="mt-1 text-3xl font-bold tracking-tight">{formatWon(summary.pending_payout)}</p>
-        <p className="mt-1 text-xs text-white/80">승인됐지만 아직 입금되지 않은 내 돈이에요.</p>
-      </section>
-
-      {summary.rejected_count > 0 && (
+      {summary.rejected_count > 0 && filter !== "rejected" && (
         <Link href={q(month, "rejected")} className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
           <AlertCircle className="size-5 shrink-0" />
           <span className="flex-1">반려된 결의서 {summary.rejected_count}건 — 수정이 필요해요</span>

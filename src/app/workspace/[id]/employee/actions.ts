@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { getMembership } from "@/lib/auth/session";
-import { getMyClaims } from "@/lib/employee/queries";
+import { creditEventEnabled } from "@/lib/credits";
+import { getMyClaims, getMySummary } from "@/lib/employee/queries";
 import { filterStatuses, parseMonth } from "@/lib/expense/status";
 import { messageForDbError } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +12,8 @@ import { createClient } from "@/lib/supabase/server";
 export async function createDraftClaimAction(): Promise<{ error: string } | never> {
   const membership = await getMembership();
   if (!membership || membership.status !== "approved") return { error: messageForDbError({ message: "NOT_A_MEMBER" }) };
+  // 회사 무료 사용량을 다 썼고 이벤트도 꺼져 있으면 만들지 않는다(D-046·D-054) — 하단 가운데 버튼은 어느 화면에서든 눌리므로 여기서 확인(D-235)
+  if (!creditEventEnabled() && (await getMySummary()).credits_left <= 0) return { error: "회사 무료 사용량을 모두 사용했습니다. 관리자에게 문의하세요." };
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("expense_claims")
