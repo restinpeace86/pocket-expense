@@ -494,6 +494,66 @@ export type Database = {
           },
         ]
       }
+      attendance_leave_files: {
+        Row: {
+          company_id: string
+          consented_at: string
+          created_at: string
+          delete_after: string
+          id: string
+          leave_id: string
+          member_id: string
+          mime: string
+          name: string
+          path: string
+          purged_at: string | null
+          size: number
+        }
+        Insert: {
+          company_id: string
+          consented_at: string
+          created_at?: string
+          delete_after: string
+          id?: string
+          leave_id: string
+          member_id: string
+          mime: string
+          name: string
+          path: string
+          purged_at?: string | null
+          size: number
+        }
+        Update: {
+          company_id?: string
+          consented_at?: string
+          created_at?: string
+          delete_after?: string
+          id?: string
+          leave_id?: string
+          member_id?: string
+          mime?: string
+          name?: string
+          path?: string
+          purged_at?: string | null
+          size?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_leave_files_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_leave_files_leave_id_fkey"
+            columns: ["leave_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_leaves"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_leave_grants: {
         Row: {
           company_id: string
@@ -544,6 +604,186 @@ export type Database = {
             columns: ["member_id", "company_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      attendance_leave_types: {
+        Row: {
+          allow_hours: boolean
+          builtin_key: string | null
+          company_id: string
+          created_at: string
+          deducts: boolean
+          enabled: boolean
+          id: string
+          law_ref: string | null
+          name: string
+          paid: string
+          proof: string
+          proof_locked: boolean
+          sort: number
+        }
+        Insert: {
+          allow_hours?: boolean
+          builtin_key?: string | null
+          company_id: string
+          created_at?: string
+          deducts?: boolean
+          enabled?: boolean
+          id?: string
+          law_ref?: string | null
+          name: string
+          paid?: string
+          proof?: string
+          proof_locked?: boolean
+          sort?: number
+        }
+        Update: {
+          allow_hours?: boolean
+          builtin_key?: string | null
+          company_id?: string
+          created_at?: string
+          deducts?: boolean
+          enabled?: boolean
+          id?: string
+          law_ref?: string | null
+          name?: string
+          paid?: string
+          proof?: string
+          proof_locked?: boolean
+          sort?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_leave_types_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_leaves: {
+        Row: {
+          cancel_decided_at: string | null
+          cancel_decided_by_name: string | null
+          cancel_reason: string | null
+          cancel_reject_reason: string | null
+          cancel_requested_at: string | null
+          cancel_status: string | null
+          company_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decided_by_name: string | null
+          deduct_days: number
+          deducts: boolean
+          end_date: string
+          hours: number | null
+          id: string
+          member_id: string
+          member_name: string
+          member_role: string
+          period_start: string | null
+          proof: string
+          reason: string | null
+          reject_reason: string | null
+          self_approved: boolean
+          start_date: string
+          start_time: string | null
+          status: string
+          type_id: string
+          type_name: string
+          unit: string
+          workdays: number
+        }
+        Insert: {
+          cancel_decided_at?: string | null
+          cancel_decided_by_name?: string | null
+          cancel_reason?: string | null
+          cancel_reject_reason?: string | null
+          cancel_requested_at?: string | null
+          cancel_status?: string | null
+          company_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decided_by_name?: string | null
+          deduct_days?: number
+          deducts: boolean
+          end_date: string
+          hours?: number | null
+          id?: string
+          member_id: string
+          member_name: string
+          member_role: string
+          period_start?: string | null
+          proof: string
+          reason?: string | null
+          reject_reason?: string | null
+          self_approved?: boolean
+          start_date: string
+          start_time?: string | null
+          status?: string
+          type_id: string
+          type_name: string
+          unit: string
+          workdays: number
+        }
+        Update: {
+          cancel_decided_at?: string | null
+          cancel_decided_by_name?: string | null
+          cancel_reason?: string | null
+          cancel_reject_reason?: string | null
+          cancel_requested_at?: string | null
+          cancel_status?: string | null
+          company_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decided_by_name?: string | null
+          deduct_days?: number
+          deducts?: boolean
+          end_date?: string
+          hours?: number | null
+          id?: string
+          member_id?: string
+          member_name?: string
+          member_role?: string
+          period_start?: string | null
+          proof?: string
+          reason?: string | null
+          reject_reason?: string | null
+          self_approved?: boolean
+          start_date?: string
+          start_time?: string | null
+          status?: string
+          type_id?: string
+          type_name?: string
+          unit?: string
+          workdays?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_leaves_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_leaves_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "attendance_leaves_type_id_company_id_fkey"
+            columns: ["type_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_leave_types"
             referencedColumns: ["id", "company_id"]
           },
         ]
@@ -676,6 +916,7 @@ export type Database = {
           daily_hours: number
           hourly_leave: boolean
           leave_rounding: string
+          leave_shortage: string
           leave_year_basis: string
           missing_alert_minutes: number
           under_five: boolean
@@ -690,6 +931,7 @@ export type Database = {
           daily_hours?: number
           hourly_leave?: boolean
           leave_rounding?: string
+          leave_shortage?: string
           leave_year_basis?: string
           missing_alert_minutes?: number
           under_five?: boolean
@@ -704,6 +946,7 @@ export type Database = {
           daily_hours?: number
           hourly_leave?: boolean
           leave_rounding?: string
+          leave_shortage?: string
           leave_year_basis?: string
           missing_alert_minutes?: number
           under_five?: boolean
@@ -3926,11 +4169,42 @@ export type Database = {
       }
       attendance_admin_view: { Args: never; Returns: Json }
       attendance_leave_admin: { Args: { p_year: number }; Returns: Json }
+      attendance_leave_cancel: {
+        Args: { p_id: string; p_reason: string }
+        Returns: string
+      }
       attendance_leave_confirm: { Args: { p_items: Json }; Returns: number }
+      attendance_leave_create: { Args: { p: Json }; Returns: Json }
+      attendance_leave_decide: {
+        Args: { p_approve: boolean; p_id: string; p_reason: string }
+        Returns: Json
+      }
+      attendance_leave_file_add: {
+        Args: {
+          p_consent: boolean
+          p_leave: string
+          p_mime: string
+          p_name: string
+          p_path: string
+          p_size: number
+        }
+        Returns: Json
+      }
+      attendance_leave_file_remove: {
+        Args: { p_file: string }
+        Returns: string
+      }
       attendance_leave_settings_save: {
         Args: { p_hourly: boolean; p_rounding: string }
         Returns: undefined
       }
+      attendance_leave_shortage_save: {
+        Args: { p_mode: string }
+        Returns: undefined
+      }
+      attendance_leave_type_save: { Args: { p: Json }; Returns: string }
+      attendance_leave_types_list: { Args: never; Returns: Json }
+      attendance_leaves_admin: { Args: never; Returns: Json }
       attendance_log_attempt: {
         Args: {
           p_code: string
@@ -4009,6 +4283,10 @@ export type Database = {
       }
       calendar_event_file_delete: { Args: { p_id: string }; Returns: string }
       calendar_events_range: {
+        Args: { p_from: string; p_members: string[]; p_to: string }
+        Returns: Json
+      }
+      calendar_leaves_range: {
         Args: { p_from: string; p_members: string[]; p_to: string }
         Returns: Json
       }
@@ -4214,6 +4492,14 @@ export type Database = {
         }
         Returns: string
       }
+      leave_files_due: {
+        Args: { p_limit?: number }
+        Returns: {
+          id: string
+          path: string
+        }[]
+      }
+      leave_files_mark_purged: { Args: { p_ids: string[] }; Returns: number }
       leave_tax_office: { Args: never; Returns: undefined }
       log_tax_export: {
         Args: {
@@ -4263,6 +4549,7 @@ export type Database = {
       my_hire_date: { Args: never; Returns: string }
       my_membership: { Args: never; Returns: Json }
       my_tax_office: { Args: never; Returns: Json }
+      my_vacation: { Args: { p_year: number }; Returns: Json }
       office_answer_tax_request: {
         Args: { p_answer: string; p_id: string }
         Returns: undefined

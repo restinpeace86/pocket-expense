@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClock, Check, ChevronDown, ChevronLeft, ChevronRight, DoorOpen, Loader2, MapPin, Plus, Receipt, Search, Users, X } from "lucide-react";
+import { AlarmClock, Check, TreePalm, ChevronDown, ChevronLeft, ChevronRight, DoorOpen, Loader2, MapPin, Plus, Receipt, Search, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { createClaimFromEventAction } from "@/app/workspace/[id]/calendar/actions";
@@ -77,6 +77,8 @@ export function CalendarView(props: Props) {
   const [selected, setSelected] = useState<string[]>(props.initialSelected);
   const [showDeadlines, setShowDeadlines] = useState(props.initialShowDeadlines);
   const [events, setEvents] = useState<CalEvent[]>(props.initialEvents);
+  // 승인된 휴가(D-241): 다른 직원에게는 "휴가"만, 관리자·본인은 종류까지(DB 함수가 정함). 근태 꺼진 회사는 빈 목록
+  const [leaves, setLeaves] = useState<Deadline[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<CalEvent | null>(null);
@@ -93,10 +95,27 @@ export function CalendarView(props: Props) {
   const deadlines = useMemo(() => (showDeadlines ? deadlinesBetween(from, to, holidayDays, admin) : []), [showDeadlines, from, to, holidayDays, admin]);
   const deadlinesByDay = useMemo(() => {
     const m = new Map<string, Deadline[]>();
-    for (const d of deadlines) m.set(d.date, [...(m.get(d.date) ?? []), d]);
+    for (const d of [...leaves, ...deadlines]) m.set(d.date, [...(m.get(d.date) ?? []), d]);
     return m;
-  }, [deadlines]);
-  const deadlineHref = (d: Deadline) => (d.kind === "tax" ? `${ws}/admin/export` : admin ? `${ws}/admin/claims` : `${ws}/employee/settlements`);
+  }, [deadlines, leaves]);
+  const deadlineHref = (d: Deadline) => (d.kind === "leave" ? (admin ? `${ws}/admin/attendance` : `${ws}/employee/vacation`) : d.kind === "tax" ? `${ws}/admin/export` : admin ? `${ws}/admin/claims` : `${ws}/employee/settlements`);
+  const loadLeaves = useCallback(
+    async (f: string, t: string, ids: string[]) => {
+      const { data } = await supabase.rpc("calendar_leaves_range", { p_from: f, p_to: t, p_members: ids });
+      const rows = (data as unknown as { name: string; label: string; start_date: string; end_date: string; unit: string; start_time: string | null; hours: number | null }[] | null) ?? [];
+      const out: Deadline[] = [];
+      for (const l of rows) {
+        for (let d = l.start_date; d <= l.end_date && d <= t; d = new Date(Date.parse(`${d}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10)) {
+          if (d >= f) out.push({ date: d, kind: "leave", label: `${l.name} ${l.label}`, sub: l.unit === "hour" ? `${l.start_time}부터 ${l.hours}시간` : "종일" });
+        }
+      }
+      setLeaves(out);
+    },
+    [supabase],
+  );
+  useEffect(() => {
+    void loadLeaves(from, to, selected);
+  }, [from, to, selected, loadLeaves]);
 
   // 달·고른 사람이 바뀌면 다시 불러온다(늦게 온 옛 응답은 버림)
   const req = useRef(0);
@@ -497,15 +516,18 @@ function PeoplePanel({ directory, selected, onChange }: { directory: CalDirector
 
 // ── 마감일 한 줄(굵게, 눈에 띄게) ─────────────────────────────────────────────
 function DeadlineChip({ d, href, compact = false }: { d: Deadline; href: string; compact?: boolean }) {
+  const leave = d.kind === "leave";
+  const Icon = leave ? TreePalm : AlarmClock;
   return (
     <Link
       href={href}
-      className={`flex items-center gap-1 rounded-md border-2 border-orange-400 bg-orange-50 font-extrabold text-orange-800 hover:bg-orange-100 ${compact ? "px-1 py-0.5 text-[11px]" : "min-h-11 px-2.5 py-1.5 text-sm"}`}
+      data-cal-leave={leave ? "" : undefined}
+      className={`flex items-center gap-1 rounded-md ${leave ? "border border-teal-300 bg-teal-50 font-semibold text-teal-900 hover:bg-teal-100" : "border-2 border-orange-400 bg-orange-50 font-extrabold text-orange-800 hover:bg-orange-100"} ${compact ? "px-1 py-0.5 text-[11px]" : "min-h-11 px-2.5 py-1.5 text-sm"}`}
     >
-      <AlarmClock className={compact ? "size-3 shrink-0" : "size-4 shrink-0"} />
+      <Icon className={compact ? "size-3 shrink-0" : "size-4 shrink-0"} />
       <span className="min-w-0 truncate">
         {d.label}
-        {!compact && <span className="ml-1.5 font-semibold text-orange-700">· {d.sub}</span>}
+        {!compact && <span className={`ml-1.5 font-semibold ${leave ? "text-teal-700" : "text-orange-700"}`}>· {d.sub}</span>}
       </span>
     </Link>
   );

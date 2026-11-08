@@ -9,6 +9,8 @@ import { dayLabel, minutesLabel } from "@/lib/attendance/month";
 import { changeLines, minutesBetween, REASON_MAX } from "@/lib/attendance/request";
 import { kstTime } from "@/lib/attendance/rules";
 import type { AdminRequest } from "@/lib/attendance/server";
+import type { Leave } from "@/lib/attendance/vacation";
+import { LeaveApprovals } from "./leave-approvals";
 
 // 근태 승인(spec/features/attendance.md §6-3, D-239): 승인 대기 · 처리 끝(최근 3개월). 반려는 사유 필수
 function whenLabel(iso: string): string {
@@ -41,7 +43,21 @@ function Change({ r }: { r: AdminRequest }) {
   );
 }
 
-export function AttendanceApprovals({ settingsHref, pending, done }: { settingsHref: string; pending: AdminRequest[]; done: AdminRequest[] }) {
+export function AttendanceApprovals({
+  settingsHref,
+  pending,
+  done,
+  leavesPending = [],
+  leavesDone = [],
+  dailyHours = 8,
+}: {
+  settingsHref: string;
+  pending: AdminRequest[];
+  done: AdminRequest[];
+  leavesPending?: Leave[];
+  leavesDone?: Leave[];
+  dailyHours?: number;
+}) {
   const router = useRouter();
   const [tab, setTab] = useState<"pending" | "done">("pending");
   const [rejecting, setRejecting] = useState<AdminRequest | null>(null);
@@ -77,7 +93,7 @@ export function AttendanceApprovals({ settingsHref, pending, done }: { settingsH
       <div className="flex flex-wrap items-center gap-2">
         <div role="tablist" aria-label="근태 신청" className="flex flex-1 gap-1 border-b border-zinc-200">
           <button type="button" role="tab" aria-selected={tab === "pending"} onClick={() => setTab("pending")} className={tabCls(tab === "pending")} data-tab="pending">
-            승인 대기 {pending.length}
+            승인 대기 {pending.length + leavesPending.length}
           </button>
           <button type="button" role="tab" aria-selected={tab === "done"} onClick={() => setTab("done")} className={tabCls(tab === "done")} data-tab="done">
             처리 끝 <span className="text-xs">(최근 3개월)</span>
@@ -88,8 +104,12 @@ export function AttendanceApprovals({ settingsHref, pending, done }: { settingsH
         </Link>
       </div>
 
+      <LeaveApprovals items={tab === "pending" ? leavesPending : leavesDone} dailyHours={dailyHours} done={tab === "done"} />
+      {(tab === "pending" ? leavesPending : leavesDone).length > 0 && list.length > 0 && <h2 className="-mb-2 text-[15px] font-bold">정정 · 휴일 근무</h2>}
       {list.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">{tab === "pending" ? "승인을 기다리는 신청이 없어요." : "최근 3개월 동안 처리한 신청이 없어요."}</p>
+        (tab === "pending" ? leavesPending : leavesDone).length === 0 && (
+          <p className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">{tab === "pending" ? "승인을 기다리는 신청이 없어요." : "최근 3개월 동안 처리한 신청이 없어요."}</p>
+        )
       ) : (
         <ul aria-label={tab === "pending" ? "승인 대기" : "처리 끝"} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
           {list.map((r) => (

@@ -24,6 +24,7 @@ const BADGE: Record<RowBadge, { text: string; cls: string } | undefined> = {
   holidayRejected: { text: "휴일 · 반려", cls: "bg-zinc-200 text-zinc-800" },
   rejected: { text: "반려", cls: "bg-zinc-200 text-zinc-800" },
   corrected: { text: "정정됨", cls: "bg-indigo-100 text-indigo-800" },
+  leave: { text: "휴가", cls: "bg-teal-100 text-teal-800" },
 };
 const tone = { weekday: "text-zinc-900", sat: "text-blue-700", red: "text-red-700" } as const;
 const FLASH: Record<string, string> = {
@@ -33,6 +34,7 @@ const FLASH: Record<string, string> = {
 };
 
 function subLine(r: MonthRow): string | null {
+  if (r.leave && r.kind !== "leave") return r.leave.text;
   if (r.pending) return r.pending.kind === "holiday" ? "휴일 근무 상신 · 승인 대기" : `${changeLines(r.pending).map((l) => `${l.label} ${l.to}`).join(" · ")}(으)로 신청`;
   if (r.lastRejected) return "반려 사유 보기";
   if (r.canHoliday) return "눌러서 휴일 근무 상신";
@@ -130,6 +132,7 @@ export function MonthView({
         <div>
           <p className="text-xs text-zinc-600">기록 없는 근무일</p>
           <b className="text-lg text-zinc-600">{summary.missing}일</b>
+          {summary.leaveDays > 0 && <span className="ml-1 text-xs text-teal-800">휴가 {summary.leaveDays}일은 빼고 셌어요</span>}
         </div>
       </section>
       {(summary.pending > 0 || summary.rejected > 0 || summary.holidayWaiting > 0) && (
@@ -152,7 +155,7 @@ export function MonthView({
                   <span className={`w-[4.25rem] shrink-0 text-sm font-semibold ${tone[r.dayTone]}`}>{r.label}</span>
                   <span className="min-w-0 flex-1">
                     <span className={`block text-sm ${r.inTime ? "text-zinc-900" : "text-zinc-500"}`}>
-                      {r.inTime ? `${r.inTime} – ${r.outTime ?? "퇴근 전"}` : r.kind === "before" ? "아직 출근 전" : "출퇴근 기록 없음"}
+                      {r.inTime ? `${r.inTime} – ${r.outTime ?? "퇴근 전"}` : r.kind === "leave" ? (r.leave?.text ?? "휴가") : r.kind === "before" ? "아직 출근 전" : "출퇴근 기록 없음"}
                     </span>
                     {r.stay && <span className="block text-xs text-zinc-600">{r.stay}</span>}
                     {sub && <span className="block truncate text-xs text-indigo-700">{sub}</span>}
@@ -234,7 +237,7 @@ function DaySheet({ row, base, onClose }: { row: MonthRow; base: string; onClose
             <dd>{r.holiday ? `휴일${row.holidayName ? ` (${row.holidayName})` : ""}${r.holiday_approved ? " · 근무 인정" : " · 승인 전"}` : "근무일"}</dd>
           </dl>
         ) : (
-          <p className="mt-3 text-[15px] text-zinc-700">{row.kind === "before" ? "오늘은 아직 출근 기록이 없어요." : "이 근무일에는 출퇴근 기록이 없어요."}</p>
+          <p className="mt-3 text-[15px] text-zinc-700">{row.kind === "leave" ? `승인된 휴가예요 (${row.leave?.name}).` : row.kind === "before" ? "오늘은 아직 출근 기록이 없어요." : "이 근무일에는 출퇴근 기록이 없어요."}</p>
         )}
 
         {row.changes.length > 0 && (

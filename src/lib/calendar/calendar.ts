@@ -35,7 +35,7 @@ export type CalDirectory = {
   prefs: { member_ids: string[]; show_deadlines: boolean } | null;
 };
 export type Holiday = { day: string; name: string };
-export type Deadline = { date: string; kind: "claim" | "tax"; label: string; sub: string };
+export type Deadline = { date: string; kind: "claim" | "tax" | "leave"; label: string; sub: string }; // leave = 승인된 휴가(D-241)
 
 export const KIND_LABEL: Record<CalKind, string> = { meeting: "회의", outside: "외근", trip: "출장", other: "기타" };
 export const WEEKDAY_HEADERS = ["월", "화", "수", "목", "금", "토", "일"];

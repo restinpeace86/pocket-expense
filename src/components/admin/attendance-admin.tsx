@@ -40,17 +40,27 @@ export function AttendanceAdmin({ view }: { view: AttendanceAdminView }) {
   );
 }
 
-// 직원별 연차(D-240): 설정 > 근태 안
+// 직원별 연차(D-240) · 휴가 종류(D-241): 설정 > 근태 안
 function LeaveLink() {
   const pathname = usePathname();
+  const base = pathname.replace(/\/$/, "");
   return (
-    <Link href={`${pathname.replace(/\/$/, "")}/leave`} className={`${card} flex items-center gap-3 hover:bg-zinc-50`} data-leave-link>
+    <div className="grid gap-3 md:grid-cols-2">
+      <LinkCard href={`${base}/leave`} title="직원별 연차" body="근로기준법 기준 추천 일수를 보고 직원마다 연차를 확정해요. 입사일·시간차·소수점도 여기서 정해요." data="leave" />
+      <LinkCard href={`${base}/vacation-types`} title="휴가 종류" body="연차 말고 경조사·병가·법정 휴가 중 우리 회사에서 쓸 것을 켜고, 연차가 모자랄 때 어떻게 할지 정해요." data="vacation-types" />
+    </div>
+  );
+}
+
+function LinkCard({ href, title, body, data }: { href: string; title: string; body: string; data: string }) {
+  return (
+    <Link href={href} className={`${card} flex items-center gap-3 hover:bg-zinc-50`} data-leave-link={data === "leave" ? "" : undefined} data-link={data}>
       <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
         <CalendarCheck className="size-5" />
       </span>
       <span className="min-w-0 flex-1">
-        <b className="block">직원별 연차</b>
-        <span className="block text-sm text-zinc-600">근로기준법 기준 추천 일수를 보고 직원마다 연차를 확정해요. 입사일·시간차·소수점도 여기서 정해요.</span>
+        <b className="block">{title}</b>
+        <span className="block text-sm text-zinc-600">{body}</span>
       </span>
       <ChevronRight className="size-5 shrink-0 text-zinc-400" aria-hidden />
     </Link>

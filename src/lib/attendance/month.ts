@@ -29,6 +29,7 @@ export type AttendanceRequest = {
   reject_reason: string | null;
   created_at: string;
 };
+export type MonthLeave = { id: string; type_name: string; unit: "day" | "hour"; start_date: string; end_date: string; start_time: string | null; hours: number | null };
 export type MonthData = {
   month: string;
   today: string;
@@ -38,9 +39,10 @@ export type MonthData = {
   holidays: { day: string; name: string }[];
   days: MonthDay[];
   requests?: AttendanceRequest[];
+  leaves?: MonthLeave[]; // 승인된 휴가(D-241)
 };
 
-export type RowKind = "plain" | "auto" | "holiday" | "open" | "noout" | "none" | "before";
+export type RowKind = "plain" | "auto" | "holiday" | "open" | "noout" | "none" | "before" | "leave";
 // 목록 표시: 신청 상태가 있으면 그것을 먼저
 export type RowBadge = RowKind | "pending" | "holidayPending" | "holidayApproved" | "holidayRejected" | "rejected" | "corrected";
 export type MonthRow = {
@@ -60,8 +62,9 @@ export type MonthRow = {
   canCorrect: boolean;
   canHoliday: boolean;
   pastMonth: boolean; // 이번 달이 아니라 정정할 수 없음
+  leave: { name: string; text: string } | null; // 그날 승인된 휴가(종일·시간)
 };
-export type MonthSummary = { worked: number; holidayWorked: number; holidayWaiting: number; minutes: number; auto: number; missing: number; pending: number; rejected: number };
+export type MonthSummary = { worked: number; holidayWorked: number; holidayWaiting: number; minutes: number; auto: number; missing: number; pending: number; rejected: number; leaveDays: number };
 
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -106,7 +109,19 @@ export function buildMonth(data: MonthData, now: Date = new Date()): { rows: Mon
     reqs.set(r.work_date, [...(reqs.get(r.work_date) ?? []), r]);
   }
   const rows: MonthRow[] = [];
-  const summary: MonthSummary = { worked: 0, holidayWorked: 0, holidayWaiting: 0, minutes: 0, auto: 0, missing: 0, pending: 0, rejected: 0 };
+  const summary: MonthSummary = { worked: 0, holidayWorked: 0, holidayWaiting: 0, minutes: 0, auto: 0, missing: 0, pending: 0, rejected: 0, leaveDays: 0 };
+  // 승인된 휴가: 날짜 → 표시(종일 휴가는 근무일만, 시간 휴가는 그날)
+  const leaveOn = new Map<string, { name: string; text: string; full: boolean }>();
+  for (const l of data.leaves ?? []) {
+    for (let d = l.start_date; d <= l.end_date; d = addDays(d, 1)) {
+      if (d < start || d >= next) continue;
+      const isWork = data.work_days.includes(isoDow(d)) && !holidays.has(d);
+      if (l.unit === "day" && isWork) {
+        leaveOn.set(d, { name: l.type_name, text: `휴가 · ${l.type_name}`, full: true });
+        summary.leaveDays++;
+      } else if (l.unit === "hour") leaveOn.set(d, { name: l.type_name, text: `휴가 ${l.start_time}부터 ${l.hours}시간 · ${l.type_name}`, full: false });
+    }
+  }
 
   for (let date = last; date >= start; date = addDays(date, -1)) {
     const dow = isoDow(date);
@@ -163,7 +178,12 @@ export function buildMonth(data: MonthData, now: Date = new Date()): { rows: Mon
         canCorrect: inRange && !pending && !holidayOpen,
         canHoliday: inRange && !pending && holidayOpen && !!rec.out_at,
         pastMonth,
+        leave: leaveOn.get(date) ?? null,
       });
+    } else if (workday && leaveOn.get(date)?.full) {
+      // 종일 휴가: 기록 없음으로 세지 않는다
+      const lv = leaveOn.get(date)!;
+      rows.push({ date, label, dayTone, holidayName, kind: "leave", badge: "leave", inTime: null, outTime: null, stay: null, record: null, pending, lastRejected, changes, canCorrect: false, canHoliday: false, pastMonth, leave: lv });
     } else if (workday && date >= data.since) {
       if (date !== data.today) summary.missing++;
       const kind: RowKind = date === data.today ? "before" : "none";
@@ -184,6 +204,7 @@ export function buildMonth(data: MonthData, now: Date = new Date()): { rows: Mon
         canCorrect: inRange && !pending,
         canHoliday: false,
         pastMonth,
+        leave: leaveOn.get(date) ?? null,
       });
     }
   }

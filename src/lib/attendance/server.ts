@@ -3,6 +3,7 @@ import { createHmac } from "node:crypto";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { LeaveAdminData } from "./leave";
+import type { Leave, VacationData } from "./vacation";
 import type { AttendanceSettings } from "./rules";
 
 // 근태(D-236) 서버 공통
@@ -87,6 +88,28 @@ export const myHireDateMissing = cache(async (): Promise<boolean> => {
   const { data, error } = await supabase.rpc("my_hire_date");
   return !error && !data;
 });
+
+// 휴가(D-241)
+export async function getMyVacation(year: number): Promise<VacationData> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("my_vacation", { p_year: year });
+  if (error || !data) throw new Error(error?.message ?? "my_vacation");
+  return data as unknown as VacationData;
+}
+export type LeaveTypeRow = { id: string; builtin_key: string | null; name: string; law_ref: string | null; deducts: boolean; paid: "paid" | "unpaid" | "partial"; allow_hours: boolean; proof: "none" | "optional" | "required"; proof_locked: boolean; enabled: boolean; sort: number };
+export type LeaveTypesAdmin = { types: LeaveTypeRow[]; shortage: "block" | "borrow"; hourly_leave: boolean; under_five: boolean; used: string[] };
+export async function getLeaveTypesAdmin(): Promise<LeaveTypesAdmin> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("attendance_leave_types_list");
+  if (error || !data) throw new Error(error?.message ?? "attendance_leave_types_list");
+  return data as unknown as LeaveTypesAdmin;
+}
+export async function getLeavesAdmin(): Promise<{ pending: Leave[]; done: Leave[] }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("attendance_leaves_admin");
+  if (error || !data) throw new Error(error?.message ?? "attendance_leaves_admin");
+  return data as unknown as { pending: Leave[]; done: Leave[] };
+}
 
 export function clientIp(headers: Headers): string | null {
   return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || null;

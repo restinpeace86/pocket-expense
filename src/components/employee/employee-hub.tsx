@@ -1,4 +1,4 @@
-import { CalendarDays, Check, ChevronRight, Clock, DoorOpen, Inbox, ReceiptText, Wallet, type LucideIcon } from "lucide-react";
+import { CalendarDays, Check, ChevronRight, Clock, DoorOpen, Inbox, ReceiptText, TreePalm, Wallet, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { kstTime, stayLabel } from "@/lib/attendance/rules";
@@ -15,8 +15,13 @@ export function hubTiles(ws: string, o: { inbox: { waiting: number } | null; roo
     { key: "claims", href: `${ws}/employee/claims`, label: "지출결의", icon: ReceiptText },
     { key: "settlements", href: `${ws}/employee/settlements`, label: "정산", icon: Wallet },
     ...(o.inbox ? [{ key: "approvals", href: `${ws}/approvals`, label: "결재함", icon: Inbox, badge: o.inbox.waiting }] : []),
-    // 근태 켠 회사(D-237): [근태] = 월 근태 현황. [휴가]는 휴가 기능(⑦) 때
-    ...(o.attendance ? [{ key: "attendance", href: `${ws}/employee/attendance`, label: "근태", icon: Clock }] : []),
+    // 근태 켠 회사(D-237): [근태] = 월 근태 현황, [휴가] = 남은 연차·휴가 신청(D-241)
+    ...(o.attendance
+      ? [
+          { key: "attendance", href: `${ws}/employee/attendance`, label: "근태", icon: Clock },
+          { key: "vacation", href: `${ws}/employee/vacation`, label: "휴가", icon: TreePalm },
+        ]
+      : []),
     ...(o.rooms ? [{ key: "rooms", href: `${ws}/calendar?rooms=${o.today}`, label: "회의실", icon: DoorOpen }] : []),
   ];
 }

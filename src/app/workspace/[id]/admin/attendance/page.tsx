@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { AttendanceApprovals } from "@/components/admin/attendance-approvals";
 import { AttendanceApprovalGuide } from "@/components/admin/attendance-guide";
 import { SectionHeading } from "@/components/ui/help";
-import { attendanceEnabled, getAttendanceRequestsAdmin } from "@/lib/attendance/server";
+import { attendanceEnabled, getAttendanceAdminView, getAttendanceRequestsAdmin, getLeavesAdmin } from "@/lib/attendance/server";
 import { requireWorkspace } from "@/lib/auth/guards";
 
 export const metadata = { title: "근태 승인 · WORKON" };
@@ -15,7 +15,7 @@ export default function AttendanceApprovalsPage({ params }: PageProps<"/workspac
       <SectionHeading
         as="h1"
         title="근태 승인"
-        summary="직원의 정정 신청과 휴일 근무 상신을 승인하거나 반려해요. 원래 기록은 지워지지 않아요."
+        summary="직원의 정정 신청·휴일 근무 상신·휴가 신청을 승인하거나 반려해요. 원래 기록은 지워지지 않아요."
         helpId="admin.attendance-approvals"
         helpLabel="승인하면 이렇게 돼요 (예시 화면)"
         help={<AttendanceApprovalGuide />}
@@ -31,6 +31,15 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/at
   const { id } = await params;
   await requireWorkspace(id, { admin: true });
   if (!(await attendanceEnabled())) notFound();
-  const data = await getAttendanceRequestsAdmin();
-  return <AttendanceApprovals settingsHref={`/workspace/${id}/admin/attendance-settings`} pending={data.pending} done={data.done} />;
+  const [data, leaves, settings] = await Promise.all([getAttendanceRequestsAdmin(), getLeavesAdmin(), getAttendanceAdminView()]);
+  return (
+    <AttendanceApprovals
+      settingsHref={`/workspace/${id}/admin/attendance-settings`}
+      pending={data.pending}
+      done={data.done}
+      leavesPending={leaves.pending}
+      leavesDone={leaves.done}
+      dailyHours={settings.settings.daily_hours}
+    />
+  );
 }

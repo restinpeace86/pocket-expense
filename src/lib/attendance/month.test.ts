@@ -35,7 +35,7 @@ describe("월 근태 현황", () => {
     expect(rows.find((r) => r.date === "2026-11-10")?.kind).toBe("none");
   });
   it("요약 — 승인 전 휴일 출근은 세지 않음(D-239)", () => {
-    expect(summary).toEqual({ worked: 3, holidayWorked: 0, holidayWaiting: 1, minutes: 555 + 537, auto: 1, missing: 6, pending: 0, rejected: 0 });
+    expect(summary).toEqual({ worked: 3, holidayWorked: 0, holidayWaiting: 1, minutes: 555 + 537, auto: 1, missing: 6, pending: 0, rejected: 0, leaveDays: 0 });
     expect(rows[0].stay).toBe("지금 9시간 8분째");
   });
   it("공휴일은 근무일이 아님 + 빨간 날", () => {
@@ -90,6 +90,19 @@ describe("월 근태 현황", () => {
     expect(r2.rows.find((x) => x.date === "2026-11-15")).toMatchObject({ canHoliday: true, canCorrect: false });
     const old = buildMonth({ ...base, month: "2026-10", since: "2026-10-01", request_from: "2026-11-01", days: [] });
     expect(old.rows.every((x) => !x.canCorrect && x.pastMonth)).toBe(true);
+  });
+  it("승인된 종일 휴가는 '휴가'(기록 없음에서 빠짐), 시간 휴가는 그날 표시", () => {
+    const r = buildMonth({
+      ...base,
+      leaves: [
+        { id: "l1", type_name: "연차", unit: "day", start_date: "2026-11-16", end_date: "2026-11-17", start_time: null, hours: null },
+        { id: "l2", type_name: "연차", unit: "hour", start_date: "2026-11-19", end_date: "2026-11-19", start_time: "14:00", hours: 4 },
+      ],
+    });
+    expect(r.rows.find((x) => x.date === "2026-11-17")).toMatchObject({ kind: "leave", badge: "leave" });
+    expect(r.rows.find((x) => x.date === "2026-11-17")?.leave?.text).toBe("휴가 · 연차");
+    expect(r.rows.find((x) => x.date === "2026-11-19")?.leave?.text).toContain("14:00부터 4시간");
+    expect(r.summary).toMatchObject({ missing: 4, leaveDays: 2 });
   });
   it("말일 안내: 마지막 3일", () => {
     expect(monthEndNotice("2026-11-27")).toBeNull();
