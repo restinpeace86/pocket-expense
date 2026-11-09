@@ -1,12 +1,12 @@
 "use client";
 
-import { AlarmClock, ArrowDown, ArrowLeft, Bell, Copy, Download, FileText, ImageOff, ImagePlus, ListChecks, Loader2, LogOut, MapPin, Menu, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
+import { AlarmClock, ArrowDown, ArrowLeft, Bell, CheckCheck, Copy, Download, FileText, ImageOff, ImagePlus, ListChecks, Loader2, LogOut, MapPin, Menu, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { pushChatMessageAction } from "@/app/workspace/[id]/chat/actions";
 import { isAdminRole } from "@/lib/auth/paths";
-import { assistantLinkLabel, buildRows, noticeCard, CHAT_BODY_MAX, CHAT_FILE_MAX, displayName, fileSizeLabel, mergeMessages, roomTitle, timeLabel, unreadCountFor, type ChatKind, type ChatMember, type ChatMessage, meetingNoticeCard } from "@/lib/chat/format";
+import { assistantLinkLabel, buildRows, noticeCard, CHAT_BODY_MAX, CHAT_FILE_MAX, displayName, fileSizeLabel, mergeMessages, previewText, READ_LIST_KINDS, readersFor, roomTitle, timeLabel, unreadCountFor, type ChatKind, type ChatMember, type ChatMessage, meetingNoticeCard } from "@/lib/chat/format";
 import { formatWon } from "@/lib/format";
 import { processChatImage } from "@/lib/receipts/image";
 import { LogoMark } from "@/components/brand/logo";
@@ -47,6 +47,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [viewer, setViewer] = useState<ChatMessage | null>(null);
   const [menuFor, setMenuFor] = useState<ChatMessage | null>(null);
+  const [readsFor, setReadsFor] = useState<ChatMessage | null>(null); // 읽음 확인(D-244)
   const [panel, setPanel] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [newBelow, setNewBelow] = useState(0);
@@ -388,6 +389,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
 
   const title = detail ? roomTitle({ ...detail, claim_title: detail.claim?.title }, me) : "";
   const assistant = detail?.kind === "assistant";
+  const readList = !!detail && READ_LIST_KINDS.includes(detail.kind); // 단체방·결의서 방만 읽은 사람 목록
   const count = detail && detail.kind !== "direct" && detail.kind !== "notice" && !assistant ? detail.members.length : null;
   const ask = (q: string) => {
     atBottom.current = true;
@@ -513,7 +515,14 @@ export function ChatRoom({ roomId }: { roomId: string }) {
           const meta = (
             <span className={`flex shrink-0 flex-col justify-end pb-0.5 text-[11px] leading-tight ${row.mine ? "items-end" : "items-start"}`}>
               {m.pending === "sending" && <Loader2 className="size-3 animate-spin text-zinc-600" />}
-              {unread > 0 && <span data-unread className="text-[13px] font-extrabold leading-none text-[var(--chat-unread)] [text-shadow:var(--chat-unread-shadow)]">{unread}</span>}
+              {unread > 0 &&
+                (readList ? (
+                  <button type="button" data-unread onClick={() => setReadsFor(m)} aria-label={`안 읽은 사람 ${unread}명 보기`} className="-m-1.5 p-1.5 text-[13px] font-extrabold leading-none text-[var(--chat-unread)] [text-shadow:var(--chat-unread-shadow)] hover:underline">
+                    {unread}
+                  </button>
+                ) : (
+                  <span data-unread className="text-[13px] font-extrabold leading-none text-[var(--chat-unread)] [text-shadow:var(--chat-unread-shadow)]">{unread}</span>
+                ))}
               {row.showTime && !m.pending && <span className="whitespace-nowrap text-[var(--chat-meta)]">{timeLabel(m.created_at)}</span>}
             </span>
           );
@@ -640,6 +649,20 @@ export function ChatRoom({ roomId }: { roomId: string }) {
                 복사
               </button>
             )}
+            {readList && (
+              <button
+                type="button"
+                onClick={() => {
+                  setReadsFor(menuFor);
+                  setMenuFor(null);
+                }}
+                className="flex min-h-12 w-full items-center gap-3 px-4 text-left hover:bg-zinc-50"
+                data-read-check
+              >
+                <CheckCheck className="size-4" />
+                읽음 확인
+              </button>
+            )}
             {menuFor.sender_member_id === me && (
               <button type="button" onClick={() => void deleteMessage(menuFor)} className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-red-700 hover:bg-zinc-50">
                 <Trash2 className="size-4" />
@@ -653,6 +676,8 @@ export function ChatRoom({ roomId }: { roomId: string }) {
         </div>
         </ChatOverlay>
       )}
+
+      {readsFor && detail && <ReadSheet msg={readsFor} members={detail.members} onClose={() => setReadsFor(null)} />}
 
       {viewer && (
         <ChatOverlay>
@@ -883,3 +908,55 @@ function NoticeBubble({ body, link }: { body: string | null; link: string | null
   );
 }
 
+
+// 읽음 확인(D-244): 단체방·결의서 방에서 이 글을 읽은 사람·안 읽은 사람. 읽음이 오면 바로 바뀐다(members가 실시간으로 갱신)
+function ReadSheet({ msg, members, onClose }: { msg: ChatMessage; members: ChatMember[]; onClose: () => void }) {
+  const { read, unread } = readersFor(msg, members);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const list = (title: string, people: ChatMember[], attr: string) => (
+    <section aria-label={title} {...{ [attr]: "" }}>
+      <h3 className="px-4 pb-1 pt-3 text-[13px] font-bold text-zinc-600">
+        {title} <span className="text-zinc-900">{people.length}명</span>
+      </h3>
+      {people.length === 0 ? (
+        <p className="px-4 pb-2 text-sm text-zinc-500">없어요</p>
+      ) : (
+        <ul>
+          {people.map((p) => (
+            <li key={p.member_id} className="flex min-h-12 items-center gap-3 px-4 py-1.5">
+              <Avatar id={p.member_id} name={p.name} size="sm" />
+              <span className="text-[15px]">{displayName(p)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+  return (
+    <ChatOverlay>
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 md:items-center" onClick={onClose} role="dialog" aria-modal aria-labelledby="read-sheet-title">
+        <div className="flex max-h-[80dvh] w-full max-w-sm flex-col overflow-hidden rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-3">
+            <h2 id="read-sheet-title" className="text-base font-bold">
+              읽음 확인
+            </h2>
+            <button type="button" onClick={onClose} aria-label="닫기" className="ml-auto inline-flex size-10 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100">
+              <X className="size-5" />
+            </button>
+          </div>
+          <p className="truncate border-b border-zinc-100 bg-zinc-50 px-4 py-2 text-sm text-zinc-700">
+            {timeLabel(msg.created_at)} · {previewText(msg) || "메시지"}
+          </p>
+          <div className="min-h-0 flex-1 overflow-y-auto pb-2">
+            {list("안 읽음", unread, "data-unread-list")}
+            {list("읽음", read, "data-read-list")}
+          </div>
+        </div>
+      </div>
+    </ChatOverlay>
+  );
+}

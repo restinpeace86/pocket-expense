@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assistantLinkLabel, buildRows, noticeCard, bytesLabel, meetingNoticeCard, oneLine, dateLabel, listTimeLabel, mergeMessages, previewText, roomTitle, timeLabel, unreadCountFor, type ChatMessage } from "./format";
+import { assistantLinkLabel, buildRows, noticeCard, bytesLabel, meetingNoticeCard, oneLine, dateLabel, listTimeLabel, mergeMessages, previewText, roomTitle, timeLabel, unreadCountFor, readersFor, type ChatMessage } from "./format";
 
 const msg = (id: string, sender: string | null, at: string, extra: Partial<ChatMessage> = {}): ChatMessage => ({
   id,
@@ -160,3 +160,23 @@ describe("noticeCard (D-224 앱 알림 카드)", () => {
   });
 });
 
+
+describe("readersFor (D-244 읽음 확인)", () => {
+  const msg = { sender_member_id: "a", created_at: "2026-11-10T03:00:00Z" };
+  const mem = (member_id: string, name: string, last_read_at: string, joined_at = "2026-11-01T00:00:00Z") => ({ member_id, name, status: "active", last_read_at, joined_at });
+  const members = [
+    mem("a", "가보냄", "2026-11-10T03:00:00Z"),
+    mem("b", "하읽음", "2026-11-10T03:05:00Z"),
+    mem("c", "나안읽", "2026-11-10T02:00:00Z"),
+    mem("d", "다읽음", "2026-11-10T03:00:00Z"),
+    mem("e", "라늦게", "2026-11-10T04:00:00Z", "2026-11-10T04:00:00Z"),
+  ];
+  it("보낸 사람·글 뒤에 들어온 사람은 빼고 이름 순으로 나눔", () => {
+    const r = readersFor(msg, members);
+    expect(r.read.map((m) => m.name)).toEqual(["다읽음", "하읽음"]);
+    expect(r.unread.map((m) => m.name)).toEqual(["나안읽"]);
+  });
+  it("안 읽은 사람 수는 말풍선 숫자와 같음", () => {
+    expect(readersFor(msg, members).unread.length).toBe(unreadCountFor({ ...msg, kind: "text" }, members));
+  });
+});

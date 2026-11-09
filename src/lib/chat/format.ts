@@ -66,6 +66,24 @@ export function unreadCountFor(msg: Pick<ChatMessage, "sender_member_id" | "crea
   return members.filter((m) => m.member_id !== msg.sender_member_id && Date.parse(m.last_read_at) < at).length;
 }
 
+// 읽음 확인(D-244): 단체방·결의서 방에서 이 글을 읽은 사람·안 읽은 사람(말풍선 옆 숫자와 같은 기준).
+// 보낸 사람과 이 글 뒤에 들어온 사람은 어느 쪽에도 넣지 않는다. 이름 순
+export function readersFor(
+  msg: Pick<ChatMessage, "sender_member_id" | "created_at">,
+  members: Pick<ChatMember, "member_id" | "name" | "status" | "last_read_at" | "joined_at">[],
+): { read: typeof members; unread: typeof members } {
+  const at = Date.parse(msg.created_at);
+  const read: typeof members = [];
+  const unread: typeof members = [];
+  for (const m of members) {
+    if (m.member_id === msg.sender_member_id || Date.parse(m.joined_at) > at) continue;
+    (Date.parse(m.last_read_at) < at ? unread : read).push(m);
+  }
+  const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name, "ko");
+  return { read: read.sort(byName), unread: unread.sort(byName) };
+}
+export const READ_LIST_KINDS: readonly ChatKind[] = ["group", "claim"];
+
 // "오후 3:05"
 export function timeLabel(iso: string): string {
   const d = kst(iso);
