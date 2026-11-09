@@ -313,6 +313,10 @@
 - [x] 8-85 회의실 예약을 캘린더 안 바텀시트(휴대폰)·창(PC)으로 (2026-11-07, D-234)
 - [x] 8-86 직원 홈 = 허브 개편(메뉴 칸·오늘 · 내 현황·공지 카드, [지출결의] 목록 화면 분리, 하단 바 가운데 [+ 결의서 쓰기]) (2026-11-08, D-235, `implementation/2026-11-08_employee-hub.md`)
 - [ ] 8-87 (후보·미결) 회사 주변 버스 정류장 노선·도착 정보 — 사용자 아이디어 기록만(2026-11-08). 회사 위치 저장·공공데이터 API 키·범위 결정 전 구현하지 말 것
+  - **2026-11-09 스킵(구현 안 함)** — 사용자가 `implementation/todo_improvement.md` [개선사항 1](버스 도착 정보)로 범위를 줬지만 홀드 조건 둘이 아직 안 풀림:
+    1) **API 키 미등록**: PUBLIC_DATA_API_KEY로 `ws.bus.go.kr/api/rest/arrive/getArrInfoByRouteList`·`getArrInfoByRouteAllList`·`stationinfo/getStationByUid`·`getRouteByStation` 호출 → HTTP 401 "유효하지 않은 서비스키입니다: 등록되지 않은 서비스키"(서울시 버스도착정보 활용 신청 미승인 또는 승인 후 반영 전)
+    2) **회사 위치 없음**: companies에 주소·좌표 칸이 없음 → "등록된 위치 반경 50m"를 계산할 기준이 없음(입력 방법 결정 필요)
+  - 함께 확인 요청할 것: getArrInfoByRouteList는 정류장×노선마다 1번이라 "1정류장 = 하루 480번" 계산과 다름(정류장 한 번에 전 노선 = 정류소정보조회 getStationByUid) · 이 API는 서울시 버스만 · 반경 50m는 정류장이 없는 회사가 많을 수 있음 · 화면 위치·알림 방식
 - [x] 8-88 근태 ④ 월 근태 현황(직원 [근태] 메뉴 칸 — 월 이동·날짜별 출퇴근·자동/휴일/누락 표시) (2026-11-08, D-237, `implementation/2026-11-08_attendance-month.md`). 사용자 "정확히는 애매" — 써 보고 다시 다듬을 수 있음
 - [x] 8-88a 퇴근 누락 알림 문구에 "자정까지 안 찍으면 정규 퇴근 시각으로 자동 기록" 안내 필수 + [내 근태 보기] 링크 (2026-11-08, D-238, `implementation/2026-11-08_attendance-alert-text.md`)
 - [x] 8-89 근태 ⑤ 정정 신청·휴일 근무 상신 → 관리자 승인 (2026-11-08, D-239, attendance.md §6, `implementation/2026-11-08_attendance-requests.md`)
