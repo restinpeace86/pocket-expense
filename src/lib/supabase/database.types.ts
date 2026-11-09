@@ -1060,6 +1060,7 @@ export type Database = {
           recommended_size: string | null
           sort_order: number
           updated_at: string
+          vault_storage_mb: number | null
         }
         Insert: {
           annual_price?: number | null
@@ -1077,6 +1078,7 @@ export type Database = {
           recommended_size?: string | null
           sort_order?: number
           updated_at?: string
+          vault_storage_mb?: number | null
         }
         Update: {
           annual_price?: number | null
@@ -1094,6 +1096,7 @@ export type Database = {
           recommended_size?: string | null
           sort_order?: number
           updated_at?: string
+          vault_storage_mb?: number | null
         }
         Relationships: []
       }
@@ -4243,6 +4246,75 @@ export type Database = {
           },
         ]
       }
+      vault_files: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          kind: string
+          mime: string | null
+          name: string
+          owner_member_id: string
+          path: string
+          scope: string
+          scope_changed_at: string | null
+          size: number
+          source_message_id: string | null
+          source_room_id: string | null
+          thumb_path: string | null
+          thumb_size: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          mime?: string | null
+          name: string
+          owner_member_id: string
+          path: string
+          scope?: string
+          scope_changed_at?: string | null
+          size: number
+          source_message_id?: string | null
+          source_room_id?: string | null
+          thumb_path?: string | null
+          thumb_size?: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          mime?: string | null
+          name?: string
+          owner_member_id?: string
+          path?: string
+          scope?: string
+          scope_changed_at?: string | null
+          size?: number
+          source_message_id?: string | null
+          source_room_id?: string | null
+          thumb_path?: string | null
+          thumb_size?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_files_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_files_owner_member_id_company_id_fkey"
+            columns: ["owner_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -4990,6 +5062,7 @@ export type Database = {
         Args: { p_id: string; p_resolved: boolean }
         Returns: undefined
       }
+      storage_total_bytes: { Args: never; Returns: number }
       submit_claim: {
         Args: { p_claim_id: string }
         Returns: Database["public"]["Enums"]["claim_status"]
@@ -5136,6 +5209,27 @@ export type Database = {
         }
         Returns: undefined
       }
+      vault_add: {
+        Args: {
+          p_member: string
+          p_message: string
+          p_path: string
+          p_scope: string
+          p_thumb_path: string
+          p_thumb_size: number
+        }
+        Returns: string
+      }
+      vault_delete: { Args: { p_id: string }; Returns: Json }
+      vault_files_remove: { Args: { p_ids: string[] }; Returns: number }
+      vault_keep_check: { Args: { p_message: string }; Returns: Json }
+      vault_leaver_files_due: { Args: never; Returns: Json }
+      vault_member_usage: { Args: never; Returns: Json }
+      vault_set_scope: {
+        Args: { p_id: string; p_scope: string }
+        Returns: undefined
+      }
+      vault_status: { Args: never; Returns: Json }
     }
     Enums: {
       announcement_scope: "platform" | "company"

@@ -184,6 +184,7 @@ export function fileSizeLabel(bytes: number | null): string {
 // 저장 공간 표시(D-212 관리자 [채팅]): 1GB 미만은 MB 정수, 이상은 GB 소수 한 자리 — "320MB" / "1GB" / "1.2GB"
 export function bytesLabel(bytes: number): string {
   const mb = 1024 * 1024;
+  if (bytes > 0 && bytes < mb / 2) return "1MB 미만"; // 조금이라도 쓰면 0MB로 보이지 않게(D-245)
   if (bytes < 1024 * mb) return `${Math.max(0, Math.round(bytes / mb))}MB`;
   return `${Math.round((bytes / (1024 * mb)) * 10) / 10}GB`;
 }

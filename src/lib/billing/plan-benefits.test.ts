@@ -24,6 +24,10 @@ describe("플랜 혜택", () => {
     expect(starter.map((b) => b.label)).toEqual(["영수증 올리는 직원 최대 10명", "AI 영수증 읽기 월 150장", "사내 채팅 사진·파일 저장 1GB", "모든 기능 포함"]);
     expect(starter[2].sub).toBe("사진·파일 보관 30·60·90일 중 선택");
   });
+  it("영구 보관 한도가 있으면 채팅 줄 다음(D-245)", () => {
+    const starter = planBenefits({ monthly_price: 29000, monthly_receipts: 150, max_members: 10, chat_storage_mb: 1024, vault_storage_mb: 1024 });
+    expect(starter[3]).toEqual({ label: "파일 영구 보관 1GB", sub: "채팅 파일 중 [영구 보관]한 것은 지울 때까지" });
+  });
   it("공통 기능은 지금 있는 기능만(7개), 요금 기준 7줄(D-199·D-201)", () => {
     expect(COMMON_FEATURES).toHaveLength(7);
     expect(PRICING_RULES).toHaveLength(7);

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClock, ArrowDown, ArrowLeft, Bell, CheckCheck, Copy, Download, FileText, ImageOff, ImagePlus, ListChecks, Loader2, LogOut, MapPin, Menu, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
+import { AlarmClock, Archive, ArrowDown, ArrowLeft, Bell, CheckCheck, Copy, Download, FileText, ImageOff, ImagePlus, ListChecks, Loader2, LogOut, MapPin, Menu, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -13,6 +13,7 @@ import { LogoMark } from "@/components/brand/logo";
 import { Avatar } from "./avatar";
 import { useChat } from "./chat-app";
 import { ChatOverlay } from "./overlay";
+import { KeepSheet } from "@/components/vault/keep-sheet";
 import { MemberPicker } from "./member-picker";
 import { signedUrls } from "./signed-urls";
 import { closeNativeNotifications } from "@/components/push/native";
@@ -48,6 +49,8 @@ export function ChatRoom({ roomId }: { roomId: string }) {
   const [viewer, setViewer] = useState<ChatMessage | null>(null);
   const [menuFor, setMenuFor] = useState<ChatMessage | null>(null);
   const [readsFor, setReadsFor] = useState<ChatMessage | null>(null); // 읽음 확인(D-244)
+  const [keepFor, setKeepFor] = useState<ChatMessage | null>(null); // 영구 보관(D-245)
+  const [kept, setKept] = useState<Set<string>>(() => new Set()); // 이 방에서 보관된 메시지(내 것 + 회사 공유)
   const [panel, setPanel] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [newBelow, setNewBelow] = useState(0);
@@ -68,6 +71,15 @@ export function ChatRoom({ roomId }: { roomId: string }) {
     const { data, error } = await supabase.rpc("chat_room_detail", { p_room: roomId });
     if (error || !data) return setMissing(true);
     setDetail(data as unknown as Detail);
+  }, [supabase, roomId]);
+
+  // 보관된 메시지 표시(D-245): 내가 볼 수 있는 보관 파일(내 나만 보기 + 회사 공유) 중 이 방 것
+  useEffect(() => {
+    void supabase
+      .from("vault_files")
+      .select("source_message_id")
+      .eq("source_room_id", roomId)
+      .then(({ data }) => data && setKept(new Set(data.map((d) => d.source_message_id).filter((x): x is string => !!x))));
   }, [supabase, roomId]);
 
   const markRead = useCallback(() => {
@@ -523,6 +535,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
                 ) : (
                   <span data-unread className="text-[13px] font-extrabold leading-none text-[var(--chat-unread)] [text-shadow:var(--chat-unread-shadow)]">{unread}</span>
                 ))}
+              {kept.has(m.id) && <span data-kept className="whitespace-nowrap text-[11px] font-semibold text-[var(--chat-meta)]">보관됨</span>}
               {row.showTime && !m.pending && <span className="whitespace-nowrap text-[var(--chat-meta)]">{timeLabel(m.created_at)}</span>}
             </span>
           );
@@ -649,6 +662,30 @@ export function ChatRoom({ roomId }: { roomId: string }) {
                 복사
               </button>
             )}
+            {(menuFor.kind === "image" || menuFor.kind === "file") && menuFor.attachment_path && !menuFor.expired && !menuFor.deleted && (
+              kept.has(menuFor.id) ? (
+                <Link href={`${ws}/employee/vault`} className="flex min-h-12 w-full items-center gap-3 px-4 text-left hover:bg-zinc-50" data-open-vault>
+                  <Archive className="size-4" />
+                  보관됨 · 파일 보관함에서 보기
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setKeepFor(menuFor);
+                    setMenuFor(null);
+                  }}
+                  className="flex min-h-12 w-full items-start gap-3 px-4 py-2.5 text-left font-semibold text-brand-800 hover:bg-brand-50"
+                  data-keep
+                >
+                  <Archive className="mt-0.5 size-4" />
+                  <span>
+                    영구 보관
+                    <span className="block text-xs font-normal text-zinc-600">보관 기간이 지나도 지워지지 않게 [파일 보관함]에 남겨요</span>
+                  </span>
+                </button>
+              )
+            )}
             {readList && (
               <button
                 type="button"
@@ -678,6 +715,28 @@ export function ChatRoom({ roomId }: { roomId: string }) {
       )}
 
       {readsFor && detail && <ReadSheet msg={readsFor} members={detail.members} onClose={() => setReadsFor(null)} />}
+      {keepFor && (
+        <ChatOverlay>
+          <KeepSheet
+            supabase={supabase}
+            ws={ws}
+            msg={{
+              id: keepFor.id,
+              kind: keepFor.kind === "image" ? "image" : "file",
+              name: keepFor.attachment_name ?? (keepFor.kind === "image" ? "사진" : "파일"),
+              size: keepFor.attachment_size ?? 0,
+              from: `${detail ? roomTitle(detail, me) : "채팅"} · ${displayName(keepFor.sender_member_id ? membersById.get(keepFor.sender_member_id) : undefined, keepFor.sender_name ?? "알 수 없음")}`,
+            }}
+            onClose={() => setKeepFor(null)}
+            onKept={(scope) => {
+              const id = keepFor.id;
+              setKept((k) => new Set(k).add(id));
+              setKeepFor(null);
+              setNotice(scope === "private" ? "나만 보기로 보관했어요. [파일 보관함]에서 볼 수 있어요." : "회사에 공유해 보관했어요. [파일 보관함]에서 볼 수 있어요.");
+            }}
+          />
+        </ChatOverlay>
+      )}
 
       {viewer && (
         <ChatOverlay>

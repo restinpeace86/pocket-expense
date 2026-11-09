@@ -94,6 +94,7 @@ describe("카톡처럼 묶기", () => {
 describe("bytesLabel (D-212 저장 공간)", () => {
   it("1GB 미만은 MB, 이상은 GB", () => {
     expect(bytesLabel(0)).toBe("0MB");
+    expect(bytesLabel(15_000)).toBe("1MB 미만");
     expect(bytesLabel(320 * 1024 * 1024)).toBe("320MB");
     expect(bytesLabel(1024 ** 3)).toBe("1GB");
     expect(bytesLabel(1.25 * 1024 ** 3)).toBe("1.3GB");

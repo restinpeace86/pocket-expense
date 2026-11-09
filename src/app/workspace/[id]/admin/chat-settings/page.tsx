@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { ChatRetention, type RetentionStatus } from "@/components/admin/chat-retention";
+import { VaultUsageCard, type VaultUsage } from "@/components/admin/vault-usage";
 import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
@@ -24,8 +25,7 @@ export default function ChatSettingsPage({ params }: PageProps<"/workspace/[id]/
               <b>기준일</b>: 채팅은 보낸 날, 회의 자료는 회의가 끝난 날(미리 올린 자료가 회의 전에 지워지지 않게)부터 세요. 영수증·증빙(결의서 첨부)은 세무 보관 대상이라 지우지 않아요.
             </p>
             <p>
-              <b>보관 기간을 짧게</b> 하면 오래된 파일이 먼저 지워져 같은 저장 공간으로 더 많이 주고받을 수 있어요. 오래 남겨야 하는 자료(계약서·증빙 원본)는 채팅에만
-              두지 말고 결의서 등에 따로 보관해 주세요.
+              <b>보관 기간을 짧게</b> 하면 오래된 파일이 먼저 지워져 같은 저장 공간으로 더 많이 주고받을 수 있어요. 오래 남겨야 하는 자료(계약서 등)는 채팅에서 길게 누르거나 오른쪽 클릭 → <b>[영구 보관]</b>하면 [파일 보관함]에 지울 때까지 남아요(영구 보관함은 공간이 따로예요). 증빙 원본은 결의서에 첨부해 주세요.
             </p>
             <p>채팅 색감은 사람마다 채팅 목록 위 팔레트 버튼이나 [내 정보]에서 고를 수 있어요.</p>
           </>
@@ -42,7 +42,12 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/ch
   const { id } = await params;
   await requireWorkspace(id, { admin: true });
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("chat_retention_status");
+  const [{ data, error }, vault] = await Promise.all([supabase.rpc("chat_retention_status"), supabase.rpc("vault_member_usage")]);
   if (error || !data) throw new Error("채팅 저장 공간을 불러오지 못했어요.");
-  return <ChatRetention status={data as unknown as RetentionStatus} />;
+  return (
+    <div className="flex flex-col gap-4">
+      <ChatRetention status={data as unknown as RetentionStatus} />
+      {vault.data && <VaultUsageCard usage={vault.data as unknown as VaultUsage} />}
+    </div>
+  );
 }

@@ -18,6 +18,9 @@ describe("hubTiles", () => {
     expect(t[3].href).toBe("/w/employee/vacation");
     // 주변 버스(D-243)는 맨 끝
     expect(hubTiles("/w", { inbox: null, rooms: true, today: "2026-11-09", attendance: true, bus: true }).map((x) => x.key).at(-1)).toBe("bus");
+    // 파일 보관함(D-245): 채팅 쓰는 회사, 주변 버스 바로 앞
+    expect(hubTiles("/w", { inbox: null, rooms: false, today: "2026-11-09", vault: true, bus: true }).map((x) => x.key).slice(-2)).toEqual(["vault", "bus"]);
+    expect(hubTiles("/w", { inbox: null, rooms: false, today: "2026-11-09" }).some((x) => x.key === "vault")).toBe(false);
     expect(t[2].href).toBe("/w/employee/attendance");
   });
   it("캘린더·채팅은 하단 바에 있으므로 메뉴 칸에 없다", () => {

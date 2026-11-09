@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { getRecentNotices } from "@/lib/push/notices";
 import { getMyAttendanceToday, myHireDateMissing } from "@/lib/attendance/server";
 import { getCompanyNearby } from "@/lib/bus/server";
+import { chatEnabled } from "@/lib/chat/server";
 import { HireDatePrompt } from "@/components/attendance/hire-date-prompt";
 import { NoticeStrip } from "@/components/push/notice-strip";
 import { EmployeeHub, hubTiles, type HubEvent } from "@/components/employee/employee-hub";
@@ -35,7 +36,7 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
 
   const membership = await requireWorkspace(id);
   const today = todayKst();
-  const [summary, notices, inbox, calendar, attendance, hireMissing, nearby] = await Promise.all([getMySummary(), getRecentNotices(), getInboxBadge(membership), calendarEnabled(), getMyAttendanceToday(), myHireDateMissing(), getCompanyNearby()]);
+  const [summary, notices, inbox, calendar, attendance, hireMissing, nearby, chat] = await Promise.all([getMySummary(), getRecentNotices(), getInboxBadge(membership), calendarEnabled(), getMyAttendanceToday(), myHireDateMissing(), getCompanyNearby(), chatEnabled()]);
   const [rooms, events] = calendar ? await Promise.all([getMeetingRooms(), getCalendarEvents(today, today, [membership.member_id])]) : [[], []];
   const todays: HubEvent[] | null = calendar
     ? eventsOnDay(events, today)
@@ -46,7 +47,7 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
     <EmployeeHub
       ws={ws}
       today={today}
-      tiles={hubTiles(ws, { inbox, rooms: rooms.length > 0, today, attendance: attendance !== null, bus: !!nearby?.seoul })}
+      tiles={hubTiles(ws, { inbox, rooms: rooms.length > 0, today, attendance: attendance !== null, bus: !!nearby?.seoul, vault: chat })}
       events={todays}
       pendingPayout={summary.pending_payout}
       rejectedCount={summary.rejected_count}
