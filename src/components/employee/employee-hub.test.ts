@@ -16,6 +16,8 @@ describe("hubTiles", () => {
     const t = hubTiles("/w", { inbox: null, rooms: false, today: "2026-11-09", attendance: true });
     expect(t.map((x) => x.key)).toEqual(["claims", "settlements", "attendance", "vacation"]);
     expect(t[3].href).toBe("/w/employee/vacation");
+    // 주변 버스(D-243)는 맨 끝
+    expect(hubTiles("/w", { inbox: null, rooms: true, today: "2026-11-09", attendance: true, bus: true }).map((x) => x.key).at(-1)).toBe("bus");
     expect(t[2].href).toBe("/w/employee/attendance");
   });
   it("캘린더·채팅은 하단 바에 있으므로 메뉴 칸에 없다", () => {

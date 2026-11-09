@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { PushToggle } from "@/components/push/push-toggle";
 import { Suspense } from "react";
 import { CompanySettingsForm } from "@/components/admin/company-settings-form";
+import { CompanyLocationCard } from "@/components/admin/company-location-card";
+import { getCompanyNearby } from "@/lib/bus/server";
 import { getCompanySettings } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { currentMonthKst } from "@/lib/dates";
@@ -25,12 +27,13 @@ export default function SettingsPage({ params }: PageProps<"/workspace/[id]/admi
 async function Settings({ params }: { params: PageProps<"/workspace/[id]/admin/settings">["params"] }) {
   const { id } = await params;
   const membership = await requireWorkspace(id, { admin: true });
-  const [settings, holidays] = await Promise.all([getCompanySettings(membership.company_id), getHolidays()]);
+  const [settings, holidays, location] = await Promise.all([getCompanySettings(membership.company_id), getHolidays(), getCompanyNearby()]);
   const month = currentMonthKst();
   if (!settings) notFound();
   return (
     <>
       <PushToggle />
+      <CompanyLocationCard current={location} />
       <CompanySettingsForm settings={settings} closing={{ month, claimCutoff: claimCutoff(month, holidays), taxDue: taxCloseDue(month, holidays) }} />
     </>
   );

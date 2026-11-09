@@ -1097,6 +1097,129 @@ export type Database = {
         }
         Relationships: []
       }
+      bus_alerts: {
+        Row: {
+          ars_id: string
+          company_id: string
+          created_at: string
+          expires_at: string
+          last_veh: string | null
+          member_id: string
+          route_id: string
+          route_no: string
+          sent10: boolean
+          sent5: boolean
+          station_name: string
+        }
+        Insert: {
+          ars_id: string
+          company_id: string
+          created_at?: string
+          expires_at: string
+          last_veh?: string | null
+          member_id: string
+          route_id: string
+          route_no: string
+          sent10?: boolean
+          sent5?: boolean
+          station_name: string
+        }
+        Update: {
+          ars_id?: string
+          company_id?: string
+          created_at?: string
+          expires_at?: string
+          last_veh?: string | null
+          member_id?: string
+          route_id?: string
+          route_no?: string
+          sent10?: boolean
+          sent5?: boolean
+          station_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_alerts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bus_alerts_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      bus_api_calls: {
+        Row: {
+          count: number
+          day: string
+        }
+        Insert: {
+          count?: number
+          day: string
+        }
+        Update: {
+          count?: number
+          day?: string
+        }
+        Relationships: []
+      }
+      bus_arrivals: {
+        Row: {
+          ars_id: string
+          fetched_at: string
+          routes: Json
+          station_name: string | null
+        }
+        Insert: {
+          ars_id: string
+          fetched_at?: string
+          routes: Json
+          station_name?: string | null
+        }
+        Update: {
+          ars_id?: string
+          fetched_at?: string
+          routes?: Json
+          station_name?: string | null
+        }
+        Relationships: []
+      }
+      bus_stops: {
+        Row: {
+          ars_id: string
+          lat: number
+          lng: number
+          name: string
+          region: string
+          st_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ars_id: string
+          lat: number
+          lng: number
+          name: string
+          region?: string
+          st_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ars_id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          region?: string
+          st_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       business_verifications: {
         Row: {
           auth_user_id: string
@@ -1913,6 +2036,85 @@ export type Database = {
             foreignKeyName: "company_features_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_location_history: {
+        Row: {
+          at: string
+          company_id: string
+          from_address: string | null
+          id: number
+          member_name: string | null
+          to_address: string
+        }
+        Insert: {
+          at?: string
+          company_id: string
+          from_address?: string | null
+          id?: never
+          member_name?: string | null
+          to_address: string
+        }
+        Update: {
+          at?: string
+          company_id?: string
+          from_address?: string | null
+          id?: never
+          member_name?: string | null
+          to_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_location_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_locations: {
+        Row: {
+          address: string
+          company_id: string
+          found_address: string | null
+          lat: number
+          lng: number
+          region: string
+          updated_at: string
+          updated_by: string | null
+          updated_by_name: string | null
+        }
+        Insert: {
+          address: string
+          company_id: string
+          found_address?: string | null
+          lat: number
+          lng: number
+          region: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+        }
+        Update: {
+          address?: string
+          company_id?: string
+          found_address?: string | null
+          lat?: number
+          lng?: number
+          region?: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_locations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -4267,6 +4469,36 @@ export type Database = {
         Returns: undefined
       }
       attendance_terminal_revoke: { Args: { p_id: string }; Returns: undefined }
+      bus_alert_notify: {
+        Args: {
+          p_body: string
+          p_kind: string
+          p_member: string
+          p_veh: string
+        }
+        Returns: boolean
+      }
+      bus_alert_off: { Args: never; Returns: undefined }
+      bus_alert_set: {
+        Args: {
+          p_ars: string
+          p_route_id: string
+          p_route_no: string
+          p_station_name: string
+        }
+        Returns: Json
+      }
+      bus_alert_track: {
+        Args: { p_member: string; p_veh: string }
+        Returns: undefined
+      }
+      bus_alerts_cleanup: { Args: never; Returns: number }
+      bus_api_take: { Args: { p_n?: number }; Returns: boolean }
+      bus_arrivals_put: {
+        Args: { p_ars: string; p_routes: Json; p_station: string }
+        Returns: undefined
+      }
+      bus_company_nearby: { Args: never; Returns: Json }
       business_verify_mode: { Args: never; Returns: string }
       calendar_busy: {
         Args: { p_ends: string; p_exclude?: string; p_starts: string }
@@ -4392,6 +4624,16 @@ export type Database = {
       close_tax_office: { Args: { p_confirm_name: string }; Returns: string[] }
       closing_admin_targets: { Args: { p_today?: string }; Returns: Json }
       closing_calendar: { Args: { p_month: string }; Returns: Json }
+      company_location_save: {
+        Args: {
+          p_address: string
+          p_found: string
+          p_lat: number
+          p_lng: number
+          p_region: string
+        }
+        Returns: Json
+      }
       company_set_tax_request_status: {
         Args: { p_id: string; p_resolved: boolean }
         Returns: undefined
