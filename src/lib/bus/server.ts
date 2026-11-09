@@ -44,7 +44,7 @@ export async function geocodeAddress(address: string): Promise<{ found: string; 
 
 // 서울시 정류소정보조회 — 실패하면 이유를 돌려준다(키 문제·한도·응답 이상)
 export async function fetchStation(admin: Admin, arsId: string): Promise<{ ok: true; station_name: string | null; routes: BusRoute[] } | { ok: false; error: string }> {
-  const key = process.env.PUBLIC_DATA_API_KEY;
+  const key = process.env.DATA_GO_KR_API_KEY;
   if (!key) return { ok: false, error: "NO_KEY" };
   const { data: allowed } = await admin.rpc("bus_api_take", { p_n: 1 });
   if (allowed === false) return { ok: false, error: "DAILY_LIMIT" };

@@ -317,7 +317,7 @@
   - [x] 8-87b 서버: getStationByUid 가져오기·남은 시간 계산·알림 판단 + 단위 테스트, 예약 작업(1분)
   - [x] 8-87c 화면: 관리자 회사 위치·직원 [주변 버스]·정류장·알림 받기/끄기
   - [x] 8-87d 검증(tsc·test·DB·build·E2E 실제 API)·기록·배포 — `implementation/2026-11-09_bus.md`
-  - [ ] 8-87e 운영 Vercel에 `PUBLIC_DATA_API_KEY`·`SEOUL_OPEN_DATA_KEY` 넣기(사용자) → 운영 E2E 도착 정보 다시 확인
+  - [ ] 8-87e 운영 Vercel에 `DATA_GO_KR_API_KEY`(이전 이름 PUBLIC_DATA_API_KEY — Vercel이 PUBLIC_ 이름은 Sensitive로 못 넣게 해 바꿈)·`SEOUL_OPEN_DATA_KEY` 넣기(사용자) → 운영 E2E 도착 정보 다시 확인
   - (이전 기록) 회사 주변 버스 정류장 노선·도착 정보 — 사용자 아이디어 기록만(2026-11-08). 회사 위치 저장·공공데이터 API 키·범위 결정 전 구현하지 말 것
   - **2026-11-09 스킵(구현 안 함)** — 사용자가 `implementation/todo_improvement.md` [개선사항 1](버스 도착 정보)로 범위를 줬지만 홀드 조건 둘이 아직 안 풀림:
     1) **API 키 미등록**: PUBLIC_DATA_API_KEY로 `ws.bus.go.kr/api/rest/arrive/getArrInfoByRouteList`·`getArrInfoByRouteAllList`·`stationinfo/getStationByUid`·`getRouteByStation` 호출 → HTTP 401 "유효하지 않은 서비스키입니다: 등록되지 않은 서비스키"(서울시 버스도착정보 활용 신청 미승인 또는 승인 후 반영 전)
