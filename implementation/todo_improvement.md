@@ -4,6 +4,13 @@
   - 가져오는 주기는 3분이 적당해보임 (일일한도 10000번 요청 한도 - 1개정류장 기준 480번 , 최대 21개 정류장 가능해보임 - 일일 요청한도 상향하는게 나아보임)
   - 실시간 가져온 시간 기준으로 1분뒤는 1분 차감, 2분뒤는 2분 차감, 3분뒤는 새로운 api 시간 보여주는 것이 적당해보임
   - 시간정보에 대하여 실제 도착시간과의 1~3분정도의 차이는 발생할 수 있다는 안내문구 필수로 어디까지나 참고용임을 알수 있도록
+  - https://www.data.go.kr/data/15067528/fileData.do 공공데이터포탈의 전국_버스정류장 위치정보는 파일로 다운받아서. db에 넣을것
+  - 기본적으로 getArrInfoByRouteList 해당 정보로 데이터 보여주도록.
+  - getArrInfoByRouteAllList 이거는 하나의 버스에 대하여 전체 노선 정보인거 같은데... 이건 사용자가 알림이라던가 뭔가 선택했을경우? 만 가져와서 보여주는걸로 하고자함.
+  - 즉, 회사 주변 정류장에 대하여 버스들이 언제 도착하는지에 대하여 실시간(약 3분간격)에 대하여 데이터 가져와서 보여주면서, 여기에 대하여 특정 버스에 대하여만 더 상세하게 알림받고 싶다하면, 해당 정보만 좀더 실시간적으로 ? 예를들어 5000번버스에 대하여서 getArrInfoByRouteList이게 5분이하 도착일 경우 해당 getArrInfoByRouteAllList
+    endpoint로해서 1분마다 가져와서 좀더 실시간 정보 ? 보여주기 ? 각각의 endpoint에 대하여 하루 최대 10000번의 요청으로 걸려있으니 이렇게 분산하는것 나쁘지 않아보임.
+  - 상기에 대하여 1분마다 가져와서 좀더 실시간 알람주는건 알림 걸고나서 30분동안만 지속? 
+    
 
 **실시간 버스 도착정보 API 정보**: 
 
@@ -32,6 +39,7 @@ API 서비스
 	데이터 갱신주기	매 10초
 
 
+--- 
 
 버스도착정보조회 서비스	getArrInfoByRouteList	정류소노선별도착예정정보목록조회
 http://ws.bus.go.kr/api/rest/arrive/getArrInfoByRouteList
@@ -52,6 +60,7 @@ stId	정류소 고유 ID	9	1	112000001	정류소 고유 ID
 busRouteId	노선 ID	9	1	100100118	노선 ID
 ord	정류소 순번	10	1	18	정류소 순번
 resultType	응답유형	4	0	json	응답유형 [xml, json]
+
 ② 응답 메시지 명세
 항목명(영문)	항목명(국문)	항목크기	항목구분	샘플데이터	항목설명
 ServiceResult	조회 결과		1		조회 결과
@@ -174,4 +183,24 @@ goal2	두번째 도착예정 버스의 종점 도착예정시간(초)	10	1	11256
 arrmsg1	첫번째 도착예정 버스의 도착정보메시지	128	1	5분57초후[2번째 전]	첫번째 도착예정 버스의 도착정보메시지
 arrmsg2	두번째 도착예정 버스의 도착정보메시지	128	1	15분46초후[9번째 전]	두번째 도착예정 버스의 도착정보메시지
 deTourAt	우회여부	2	1	00	해당노선 우회여부(00: 정상, 11: 우회)
+
+---
+
+버스도착정보조회 서비스	getArrInfoByRouteAllList	경유노선전체정류소별도착예정정보목록조회
+http://ws.bus.go.kr/api/rest/arrive/getArrInfoByRouteAllList
+
+(1) getArrInfoByRouteAllList 상세기능 명세
+상세기능 정보	상세기능 번호	1	상세기능 유형	조회
+	상세기능명	getArrInfoByRouteAllList
+	상세기능 설명	경유노선 전체 정류소 도착예정정보를 조회한다
+노선ID에 해당하는 전체 정류소 도착예정정보 목록을 조회한다.
+	Call Back URL	http://ws.bus.go.kr/api/rest/arrive/getArrInfoByRouteAll
+	최대 메시지 사이즈	3MB
+	평균 응답 시간	100ms	초당 최대 트랜잭션	30TPS
+	
+① 요청 메시지 명세
+항목명(영문)	항목명(국문)	항목크기	항목구분	샘플데이터	항목설명
+serviceKey	인증키		1		인증키
+busRouteId	노선 ID	9	1	100100118	노선 ID
+resultType	응답유형	4	0	json	응답유형 [xml, json]
 
