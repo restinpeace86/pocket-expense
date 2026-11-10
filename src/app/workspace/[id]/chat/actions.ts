@@ -18,6 +18,8 @@ type PushInfo = {
   message_kind: "text" | "image" | "file";
   body: string | null;
   recipients: string[];
+  thread_id?: string | null; // 서브 대화 글(D-246): 받는 사람 = 그 서브 대화 참여자
+  thread_title?: string | null;
 };
 
 // 방금 보낸 메시지를 받는 사람들에게 웹푸시(D-203). 같은 메시지는 한 번만(DB가 pushed_at으로 막음).
@@ -30,7 +32,13 @@ export async function pushChatMessageAction(messageId: string): Promise<unknown 
   if (info?.kind === "assistant") return answerInAssistantRoom(messageId, info);
   if (!info || !info.recipients?.length) return null;
   const text = info.message_kind === "image" ? "사진을 보냈어요." : info.message_kind === "file" ? "파일을 보냈어요." : (info.body ?? "");
-  const title = info.kind === "direct" ? info.sender_name : info.kind === "claim" ? `📄 ${info.room_title ?? "소명서 대화"}` : (info.room_title ?? "그룹 채팅");
+  const roomLabel = info.kind === "direct" ? info.sender_name : info.kind === "claim" ? `📄 ${info.room_title ?? "소명서 대화"}` : (info.room_title ?? "그룹 채팅");
+  if (info.thread_id) {
+    // 서브 대화 글: 제목 = "방 › 서브 대화 제목", 누르면 그 서브 대화가 열린 방
+    await pushToMembers(info.company_id, info.recipients, { title: oneLine(`${roomLabel} › ${info.thread_title ?? "서브 대화"}`), body: oneLine(`${info.sender_name}: ${text}`), url: `/workspace/${info.company_id}/chat/${info.room_id}?thread=${info.thread_id}`, tag: `chat-thread-${info.thread_id}`, urgency: "high" });
+    return null;
+  }
+  const title = roomLabel;
   // 알림 한 장 = 제목(1:1은 보낸 사람, 단체방은 방 이름) + 내용 한 줄(길면 …) — D-214
   const body = oneLine(info.kind === "direct" ? text : `${info.sender_name}: ${text}`);
   await pushToMembers(info.company_id, info.recipients, { title, body, url: `/workspace/${info.company_id}/chat/${info.room_id}`, tag: `chat-${info.room_id}`, urgency: "high" });

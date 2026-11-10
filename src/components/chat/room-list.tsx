@@ -11,6 +11,7 @@ import { LogoMark } from "@/components/brand/logo";
 import { RoomAvatar } from "./avatar";
 import { useChat } from "./chat-app";
 import { ChatThemeButton } from "./chat-theme";
+import { MyThreadsRow } from "./my-threads";
 import { openChatPopup, useChatPopup } from "./popup";
 import { MemberPicker } from "./member-picker";
 
@@ -101,6 +102,8 @@ export function RoomList({ base }: { base: string }) {
         </label>
       </div>
       <NotifyBar />
+      {/* 내 서브 대화(D-246): 검색 중이 아니면 맨 위 */}
+      {!q.trim() && <MyThreadsRow base={base} />}
       <ul className="min-h-0 flex-1 overflow-y-auto" aria-label="채팅방 목록">
         {rooms === null && !error && [0, 1, 2].map((i) => <li key={i} className="mx-3 my-2 h-14 animate-pulse rounded-xl bg-zinc-100" />)}
         {error && (

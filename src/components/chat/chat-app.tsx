@@ -103,7 +103,7 @@ export function ChatApp({
         style={vp ? { height: vp.height, transform: `translateY(${vp.top}px)` } : undefined}
       >
         <div className="flex min-h-0 flex-1">
-          <aside className={`${inRoom ? "hidden md:flex" : "flex"} min-h-0 w-full flex-col border-r border-zinc-200 md:w-80 lg:w-96`}>
+          <aside data-chat-list className={`${inRoom ? "hidden md:flex" : "flex"} min-h-0 w-full flex-col border-r border-zinc-200 md:w-80 lg:w-96`}>
             <RoomList base={base} />
           </aside>
           <section className={`${inRoom ? "flex" : "hidden md:flex"} min-h-0 min-w-0 flex-1 flex-col`}>{children}</section>

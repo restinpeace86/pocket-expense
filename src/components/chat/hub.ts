@@ -1,6 +1,7 @@
 "use client";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import type { ChatMessage, ChatThread } from "@/lib/chat/format";
 import { createClient } from "@/lib/supabase/client";
 
 // 사내 메신저 실시간 연결 하나(D-203): 내 비공개 주제 'chat:{member_id}'를 한 번만 구독하고,
@@ -10,6 +11,8 @@ export type ChatEvent =
   | { event: "message" | "message_update"; payload: Record<string, unknown> }
   | { event: "read"; payload: { room_id: string; member_id: string; last_read_at: string } }
   | { event: "room"; payload: { room_id: string; left?: string } }
+  | { event: "thread"; payload: { room_id: string; thread: ChatThread } } // 서브 대화 만들기·종결·다시 열기(D-246)
+  | { event: "thread_message"; payload: { room_id: string; thread: ChatThread; message: ChatMessage; participants: string[]; insert: boolean } } // 서브 대화 글
   | { event: "reconnect"; payload: Record<string, never> };
 type Listener = (e: ChatEvent) => void;
 
@@ -35,7 +38,7 @@ async function open(h: Hub) {
   await supabase.realtime.setAuth();
   if (hub !== h) return;
   const ch = supabase.channel(`chat:${h.memberId}`, { config: { private: true } });
-  for (const ev of ["message", "message_update", "read", "room"] as const) {
+  for (const ev of ["message", "message_update", "read", "room", "thread", "thread_message"] as const) {
     ch.on("broadcast", { event: ev }, ({ payload }) => emit({ event: ev, payload } as ChatEvent));
   }
   ch.subscribe((status) => {

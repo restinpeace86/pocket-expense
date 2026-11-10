@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { roomTitle, type ChatKind, type ChatRoomSummary } from "@/lib/chat/format";
 import { alertText, pushToast, PULSE_GAP_MS, shouldAlert, TOAST_MS, VISUAL_ALERT_EVENT, type AlertMessage, type AlertToast } from "@/lib/chat/visual-alert";
+import { OPEN_THREAD_EVENT } from "@/lib/chat/threads";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "./avatar";
 import { subscribeChat } from "./hub";
@@ -58,6 +59,24 @@ export function ChatVisualAlert({ memberId, companyId, initialOn }: { memberId: 
         rooms.current.delete(e.payload.room_id); // 이름이 바뀌었을 수 있음
         return;
       }
+      // 서브 대화 글(D-246): 내가 참여자일 때만, 그 서브 대화를 열어 보고 있으면 안 띄움
+      if (e.event === "thread_message") {
+        const p = e.payload;
+        if (!p.insert || !p.participants.includes(memberId) || seen.current.has(p.message.id)) return;
+        seen.current.add(p.message.id);
+        const viewing = path.current === `${ws}/chat/${p.room_id}` && document.body.dataset.openThread === p.thread.id;
+        const ok = !viewing && shouldAlert(p.message as unknown as AlertMessage, { meId: memberId, ws, pathname: "", enabled: on.current, wide: window.matchMedia("(min-width: 768px)").matches, visible: document.visibilityState === "visible" });
+        if (!ok) return;
+        void roomInfo(p.room_id).then((info) => {
+          const at = Date.now();
+          setToasts((l) => pushToast(l, { roomId: p.room_id, threadId: p.thread.id, sender: p.message.sender_name, room: `${info?.title ?? "채팅"} › ${p.thread.title}`, text: alertText(p.message as unknown as AlertMessage, null), at }));
+          if (at - lastPulse.current > PULSE_GAP_MS) {
+            lastPulse.current = at;
+            setPulse(at);
+          }
+        });
+        return;
+      }
       if (e.event !== "message") return;
       const msg = e.payload as unknown as AlertMessage;
       if (!msg?.id || seen.current.has(msg.id)) return;
@@ -91,7 +110,13 @@ export function ChatVisualAlert({ memberId, companyId, initialOn }: { memberId: 
     });
   }, [memberId, ws, popup, roomInfo]);
 
-  const close = useCallback((roomId: string) => setToasts((l) => l.filter((t) => t.roomId !== roomId)), []);
+  const close = useCallback((key: string) => setToasts((l) => l.filter((t) => t.key !== key)), []);
+  const go = (t: AlertToast) => {
+    close(t.key);
+    if (!t.threadId) return router.push(`${ws}/chat/${t.roomId}`);
+    router.push(`${ws}/chat/${t.roomId}?thread=${t.threadId}`);
+    window.dispatchEvent(new CustomEvent(OPEN_THREAD_EVENT, { detail: { roomId: t.roomId, threadId: t.threadId } }));
+  };
 
   if (popup) return null;
   return (
@@ -104,7 +129,7 @@ export function ChatVisualAlert({ memberId, companyId, initialOn }: { memberId: 
         data-visual-toasts
       >
         {toasts.map((t) => (
-          <Toast key={t.key} t={t} onOpen={() => (close(t.roomId), router.push(`${ws}/chat/${t.roomId}`))} onClose={() => close(t.roomId)} />
+          <Toast key={t.key} t={t} onOpen={() => go(t)} onClose={() => close(t.key)} />
         ))}
       </div>
     </>
@@ -137,6 +162,7 @@ function Toast({ t, onOpen, onClose }: { t: AlertToast; onOpen: () => void; onCl
         start();
       }}
       data-visual-toast={t.roomId}
+      data-visual-thread={t.threadId ?? undefined}
     >
       <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-start gap-2.5 rounded-2xl py-3 pl-3.5 text-left hover:bg-zinc-50">
         <Avatar name={t.sender ?? t.room} id={t.roomId} size="sm" />

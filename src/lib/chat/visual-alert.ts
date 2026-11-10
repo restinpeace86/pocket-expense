@@ -17,7 +17,7 @@ export type AlertMessage = {
   attachment_name?: string | null;
 };
 
-export type AlertToast = { key: string; roomId: string; sender: string | null; room: string; text: string; count: number; at: number };
+export type AlertToast = { key: string; roomId: string; threadId?: string | null; sender: string | null; room: string; text: string; count: number; at: number }; // threadId: 서브 대화 글(D-246)
 
 // 띄울지: 켜짐 · PC 폭 · 화면이 보임 · 내가 보낸 게 아님 · 안내 줄 아님 · 그 방을 보고 있지 않음
 export function shouldAlert(
@@ -41,8 +41,9 @@ export function alertText(msg: AlertMessage, roomKind: ChatKind | null): string 
 
 // 같은 방은 한 장으로 합치고(+n, 맨 위로), 최대 3장(오래된 것부터 뺌)
 export function pushToast(list: AlertToast[], t: Omit<AlertToast, "count" | "key">): AlertToast[] {
-  const same = list.find((x) => x.roomId === t.roomId);
-  const next: AlertToast = same ? { ...same, ...t, count: same.count + 1 } : { ...t, count: 1, key: t.roomId };
-  const rest = list.filter((x) => x.roomId !== t.roomId);
+  const key = t.threadId ? `${t.roomId}:${t.threadId}` : t.roomId;
+  const same = list.find((x) => x.key === key);
+  const next: AlertToast = same ? { ...same, ...t, count: same.count + 1 } : { ...t, count: 1, key };
+  const rest = list.filter((x) => x.key !== key);
   return [...rest, next].slice(-TOAST_MAX);
 }

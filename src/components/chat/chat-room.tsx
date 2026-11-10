@@ -1,12 +1,14 @@
 "use client";
 
-import { AlarmClock, Archive, ArrowDown, ArrowLeft, Bell, CheckCheck, Copy, Download, FileText, ImageOff, ImagePlus, ListChecks, Loader2, LogOut, MapPin, Menu, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
+import { AlarmClock, Archive, ArrowDown, ArrowLeft, Bell, CheckCheck, ChevronLeft, Copy, Download, FileText, ImageOff, ImagePlus, ListChecks, Loader2, Lock, LogOut, MapPin, Menu, MessagesSquare, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { pushChatMessageAction } from "@/app/workspace/[id]/chat/actions";
 import { isAdminRole } from "@/lib/auth/paths";
-import { assistantLinkLabel, buildRows, noticeCard, CHAT_BODY_MAX, CHAT_FILE_MAX, displayName, fileSizeLabel, mergeMessages, previewText, READ_LIST_KINDS, readersFor, roomTitle, timeLabel, unreadCountFor, type ChatKind, type ChatMember, type ChatMessage, meetingNoticeCard } from "@/lib/chat/format";
+import { assistantLinkLabel, buildRows, noticeCard, CHAT_BODY_MAX, CHAT_FILE_MAX, displayName, fileSizeLabel, mergeMessages, previewText, READ_LIST_KINDS, readersFor, roomTitle, timeLabel, unreadCountFor, type ChatKind, type ChatMember, type ChatMessage, type ChatThread, meetingNoticeCard } from "@/lib/chat/format";
+import { applyThreadMessage, canStartThread, OPEN_THREAD_EVENT, THREAD_KINDS, THREAD_READ_EVENT } from "@/lib/chat/threads";
+import { ThreadCard, ThreadCloseSheet, ThreadCreateSheet, ThreadList } from "./thread-ui";
 import { formatWon } from "@/lib/format";
 import { processChatImage } from "@/lib/receipts/image";
 import { LogoMark } from "@/components/brand/logo";
@@ -33,8 +35,19 @@ const PAGE = 50;
 
 // 대화방(카톡 대화창): 날짜 구분선, 내 말풍선은 오른쪽 노랑, 상대는 왼쪽 흰색 + 이름·프로필,
 // 말풍선 옆 숫자 = 아직 안 읽은 사람 수, 같은 사람·같은 분은 묶어서 시각을 마지막에만
-export function ChatRoom({ roomId }: { roomId: string }) {
+// thread: 서브 대화 모드(D-246) — 같은 대화창을 서브 대화 글만 보이게(서랍·시트 안)
+type ThreadMode = { id: string; onBack: () => void; onClose: () => void };
+type ThreadDetail = ChatThread & { root: ChatMessage | null; can_manage: boolean };
+type ThreadUi = { mode: "list" } | { mode: "thread"; id: string };
+
+export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMode }) {
   const { membership, supabase, useEvents } = useChat();
+  const tid = thread?.id ?? null;
+  const [tinfo, setTinfo] = useState<ThreadDetail | null>(null); // 서브 대화 모드: 제목·상태·원래 메시지
+  const [threadUi, setThreadUi] = useState<ThreadUi | null>(null); // 메인 모드: 오른쪽 서랍(휴대폰은 시트)
+  const [creating, setCreating] = useState<ChatMessage | null>(null);
+  const [closing, setClosing] = useState(false);
+  const [openCount, setOpenCount] = useState(0);
   const me = membership.member_id;
   const ws = `/workspace/${membership.company_id}`;
   const router = useRouter();
@@ -71,7 +84,24 @@ export function ChatRoom({ roomId }: { roomId: string }) {
     const { data, error } = await supabase.rpc("chat_room_detail", { p_room: roomId });
     if (error || !data) return setMissing(true);
     setDetail(data as unknown as Detail);
-  }, [supabase, roomId]);
+    if (tid) {
+      const { data: t, error: te } = await supabase.rpc("chat_thread_detail", { p_thread: tid });
+      if (te || !t) return setMissing(true);
+      setTinfo(t as unknown as ThreadDetail);
+    }
+  }, [supabase, roomId, tid]);
+  // 메시지 쪽: 메인 = 방 글(서브 대화 글 빼고), 서브 대화 모드 = 그 서브 대화 글
+  const page = useCallback(
+    (args: { p_before?: string; p_after?: string; p_limit: number }) =>
+      tid ? supabase.rpc("chat_thread_messages", { p_thread: tid, ...args }) : supabase.rpc("chat_messages_page", { p_room: roomId, ...args }),
+    [supabase, roomId, tid],
+  );
+  // 머리글 [서브 대화 n] = 진행 중 개수
+  const loadThreadCount = useCallback(async () => {
+    if (tid) return;
+    const { data } = await supabase.rpc("chat_thread_list", { p_room: roomId });
+    setOpenCount(((data as unknown as ChatThread[]) ?? []).filter((t) => t.status === "open").length);
+  }, [supabase, roomId, tid]);
 
   // 보관된 메시지 표시(D-245): 내가 볼 수 있는 보관 파일(내 나만 보기 + 회사 공유) 중 이 방 것
   useEffect(() => {
@@ -85,19 +115,21 @@ export function ChatRoom({ roomId }: { roomId: string }) {
   const markRead = useCallback(() => {
     if (readTimer.current) clearTimeout(readTimer.current);
     readTimer.current = setTimeout(() => {
-      if (document.visibilityState === "visible") void supabase.rpc("chat_mark_read", { p_room: roomId }).then(() => undefined); // 빌더는 then을 불러야 요청이 나간다
+      if (document.visibilityState !== "visible") return;
+      if (tid) void supabase.rpc("chat_thread_mark_read", { p_thread: tid }).then(() => window.dispatchEvent(new CustomEvent(THREAD_READ_EVENT, { detail: tid })));
+      else void supabase.rpc("chat_mark_read", { p_room: roomId }).then(() => undefined); // 빌더는 then을 불러야 요청이 나간다
     }, 300);
-  }, [supabase, roomId]);
+  }, [supabase, roomId, tid]);
 
   const loadLatest = useCallback(async () => {
-    const { data, error } = await supabase.rpc("chat_messages_page", { p_room: roomId, p_limit: PAGE });
+    const { data, error } = await page({ p_limit: PAGE });
     if (error) return setMissing(true);
     const list = ((data as unknown as ChatMessage[]) ?? []).reverse();
     setMessages((m) => mergeMessages(m, list));
     setHasMore(list.length === PAGE);
     setLoaded(true);
     markRead();
-  }, [supabase, roomId, markRead]);
+  }, [page, markRead]);
 
   // 방에 들어오면 이 방 알림(상단 배너)을 치운다 — 카톡처럼(D-214)
   useEffect(() => {
@@ -111,25 +143,81 @@ export function ChatRoom({ roomId }: { roomId: string }) {
   }, [roomId]);
 
   useEffect(() => {
-    void Promise.resolve().then(() => Promise.all([loadDetail(), loadLatest()]));
+    void Promise.resolve().then(() => Promise.all([loadDetail(), loadLatest(), loadThreadCount()]));
     return () => {
       if (readTimer.current) clearTimeout(readTimer.current);
     };
-  }, [loadDetail, loadLatest]);
+  }, [loadDetail, loadLatest, loadThreadCount]);
+
+  // 메인 모드: 주소 ?thread= 또는 토스트·[내 서브 대화]에서 서브 대화 열기
+  useEffect(() => {
+    if (tid) return;
+    const fromUrl = new URLSearchParams(window.location.search).get("thread");
+    if (fromUrl) void Promise.resolve().then(() => setThreadUi({ mode: "thread", id: fromUrl }));
+    const onOpen = (e: Event) => {
+      const d = (e as CustomEvent<{ roomId: string; threadId: string }>).detail;
+      if (d?.roomId === roomId) setThreadUi({ mode: "thread", id: d.threadId });
+    };
+    window.addEventListener(OPEN_THREAD_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_THREAD_EVENT, onOpen);
+  }, [tid, roomId]);
+  // 서브 대화를 열면 그 카드의 새 글 숫자를 지움(읽음은 서브 대화 쪽이 저장)
+  useEffect(() => {
+    if (tid || threadUi?.mode !== "thread") return;
+    const id = threadUi.id;
+    void Promise.resolve().then(() => setMessages((list) => list.map((m) => (m.thread?.id === id && m.thread.new ? { ...m, thread: { ...m.thread, new: 0 } } : m))));
+  }, [tid, threadUi, loaded]);
+  // 열린 서브 대화를 화면 밖(시각 알림)에 알림 + 좁은 PC에서 채팅 목록 접기
+  useEffect(() => {
+    if (tid) return;
+    const open = threadUi?.mode === "thread" ? threadUi.id : threadUi ? "list" : null;
+    if (open) document.body.dataset.openThread = open;
+    else delete document.body.dataset.openThread;
+    return () => {
+      delete document.body.dataset.openThread;
+    };
+  }, [tid, threadUi]);
 
   // 다시 연결되면 마지막 메시지 이후를 채운다(빠진 메시지 방지)
   const fillGap = useCallback(async () => {
     const last = [...messages].reverse().find((m) => !m.pending);
-    const { data } = await supabase.rpc("chat_messages_page", { p_room: roomId, p_after: last?.created_at, p_limit: 100 });
+    const { data } = await page({ p_after: last?.created_at, p_limit: 100 });
     const list = ((data as unknown as ChatMessage[]) ?? []).reverse();
     if (list.length) setMessages((m) => mergeMessages(m, list));
     void loadDetail();
+    void loadThreadCount();
     markRead();
-  }, [messages, supabase, roomId, loadDetail, markRead]);
+  }, [messages, page, loadDetail, loadThreadCount, markRead]);
 
   useEvents((e) => {
     if (e.event === "reconnect") return void fillGap();
     if (e.payload.room_id !== roomId) return;
+    if (e.event === "thread" || e.event === "thread_message") {
+      const th = e.payload.thread;
+      if (tid) {
+        if (th.id !== tid) return;
+        setTinfo((t) => (t ? { ...t, ...th, root: t.root, can_manage: t.can_manage, new: 0 } : t));
+        if (e.event === "thread_message") {
+          setMessages((list) => mergeMessages(list, [e.payload.message]));
+          if (e.payload.message.sender_member_id !== me) markRead();
+        }
+        return;
+      }
+      // 메인: 원래 메시지 카드 갱신
+      const viewing = threadUi?.mode === "thread" && threadUi.id === th.id;
+      setMessages((list) =>
+        list.map((m) => {
+          if (m.id !== th.root_message_id) return m;
+          if (e.event === "thread_message") {
+            return { ...m, thread: applyThreadMessage(m.thread, th, { me, participants: e.payload.participants, senderId: e.payload.message.sender_member_id, insert: e.payload.insert, viewing }) };
+          }
+          return { ...m, thread: { ...th, mine: m.thread?.mine ?? (th.created_by === me || m.sender_member_id === me), new: m.thread?.new ?? 0 } };
+        }),
+      );
+      if (e.event === "thread") void loadThreadCount();
+      return;
+    }
+    if (tid) return; // 서브 대화 모드는 메인 글을 받지 않음
     if (e.event === "message" || e.event === "message_update") {
       const m = e.payload as unknown as ChatMessage;
       setMessages((list) => mergeMessages(list, [m]));
@@ -153,7 +241,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
     if (!first || loadingOlder) return;
     setLoadingOlder(true);
     prependFrom.current = scroller.current?.scrollHeight ?? null;
-    const { data } = await supabase.rpc("chat_messages_page", { p_room: roomId, p_before: first.created_at, p_limit: PAGE });
+    const { data } = await page({ p_before: first.created_at, p_limit: PAGE });
     const list = ((data as unknown as ChatMessage[]) ?? []).reverse();
     setMessages((m) => mergeMessages(m, list));
     setHasMore(list.length === PAGE);
@@ -240,7 +328,13 @@ export function ChatRoom({ roomId }: { roomId: string }) {
       p_kind: msg.kind,
       p_body: msg.kind === "text" ? (msg.body ?? "") : undefined,
       p_attachment: attachment as never,
+      p_thread: tid ?? undefined,
     });
+    if (error?.message?.includes("THREAD_CLOSED")) {
+      setMessages((m) => mergeMessages(m, [{ ...msg, pending: "failed" }]));
+      void loadDetail();
+      return setNotice("종결된 대화라 보내지 못했어요. [다시 열기] 뒤에 다시 보내 주세요.");
+    }
     if (error?.message?.includes("STORAGE_FULL")) {
       // 회사 채팅 저장 공간이 다 참(D-204) → 올린 파일은 지우고 안내
       if (uploaded.length) void supabase.storage.from(BUCKET).remove(uploaded);
@@ -418,8 +512,39 @@ export function ChatRoom({ roomId }: { roomId: string }) {
   const rows = buildRows(messages, me);
   const touch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
+  const threadsOn = !tid && !!detail && THREAD_KINDS.includes(detail.kind);
+  const openThread = (id: string) => setThreadUi({ mode: "thread", id });
+  const tClosed = tinfo?.status === "closed";
+  const reopen = async () => {
+    if (!tid) return;
+    const { data, error } = await supabase.rpc("chat_thread_reopen", { p_thread: tid });
+    if (error || !data) return setNotice("다시 열지 못했어요.");
+    setTinfo((t) => (t ? { ...t, ...(data as unknown as ChatThread) } : t));
+  };
+
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col bg-[var(--chat-bg)]">
+    <div className="flex min-h-0 min-w-0 flex-1">
+    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--chat-bg)]">
+      {tid && thread ? (
+        <header className="flex h-14 shrink-0 items-center gap-1 border-b border-zinc-200 bg-white px-1" data-thread-head>
+          <button type="button" onClick={thread.onBack} className="inline-flex h-11 shrink-0 items-center gap-0.5 rounded-xl px-2 text-sm text-zinc-700 hover:bg-zinc-100">
+            <ChevronLeft className="size-5" aria-hidden />
+            목록
+          </button>
+          <span className="min-w-0 flex-1 px-1">
+            <b className="block truncate text-[15px] text-zinc-900">{tinfo?.title ?? "서브 대화"}</b>
+            <span className="block truncate text-xs text-zinc-600">서브 대화 · {tinfo ? (tClosed ? "종결" : `진행 중 · ${tinfo.people_count}명`) : "불러오는 중"}</span>
+          </span>
+          {tinfo?.can_manage && !tClosed && (
+            <button type="button" onClick={() => setClosing(true)} className="h-9 shrink-0 rounded-lg border border-zinc-300 px-2.5 text-[13px] font-semibold hover:bg-zinc-50" data-thread-close>
+              종결하기
+            </button>
+          )}
+          <button type="button" onClick={thread.onClose} aria-label="서브 대화 닫기" className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-zinc-600 hover:bg-zinc-100">
+            <X className="size-5" />
+          </button>
+        </header>
+      ) : (
       <header className="flex h-14 shrink-0 items-center gap-1 border-b border-[var(--chat-head-border)] bg-[var(--chat-head)] px-2">
         <Link href={`${ws}/chat`} aria-label="채팅 목록" className="inline-flex size-11 items-center justify-center rounded-xl text-zinc-800 hover:bg-black/5 md:hidden">
           <ArrowLeft className="size-5" />
@@ -429,13 +554,27 @@ export function ChatRoom({ roomId }: { roomId: string }) {
           {count !== null && <span className="ml-1.5 font-normal text-zinc-600">{count}</span>}
         </h2>
         {assistant && <span className="shrink-0 px-1 text-xs text-zinc-600">조회·화면 이동 · 하루 30번</span>}
+        {threadsOn && (
+          <button
+            type="button"
+            onClick={() => setThreadUi((u) => (u ? null : { mode: "list" }))}
+            aria-expanded={!!threadUi}
+            className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-2.5 text-[13px] font-semibold ${threadUi ? "border-brand-600 bg-brand-50 text-brand-800" : "border-brand-200 bg-white text-brand-800 hover:bg-brand-50"}`}
+            data-thread-open-list
+          >
+            <MessagesSquare className="size-4" aria-hidden />
+            <span className="hidden sm:inline">서브 대화</span>
+            {openCount > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-[11px] text-white">{openCount}</span>}
+          </button>
+        )}
         {detail?.kind !== "notice" && !assistant && (
           <button type="button" onClick={() => setPanel(true)} aria-label="채팅방 메뉴" className="inline-flex size-11 items-center justify-center rounded-xl text-zinc-800 hover:bg-black/5">
             <Menu className="size-5" />
           </button>
         )}
       </header>
-      {detail?.claim && claimHref && (
+      )}
+      {!tid && detail?.claim && claimHref && (
         <Link href={claimHref} className="mx-3 mb-1 flex shrink-0 items-center gap-2 rounded-xl bg-white/90 px-3 py-2 text-sm shadow-sm hover:bg-white">
           <FileText className="size-4 shrink-0 text-brand-700" />
           <span className="min-w-0 flex-1 truncate">
@@ -459,7 +598,15 @@ export function ChatRoom({ roomId }: { roomId: string }) {
             <Loader2 className="size-6 animate-spin text-zinc-600" />
           </div>
         )}
-        {loaded && !messages.length && !assistant && <p className="py-10 text-center text-sm text-zinc-700">첫 메시지를 보내 보세요.</p>}
+        {tid && tinfo?.root && (
+          <div className="mt-3 rounded-xl bg-white/80 px-3 py-2.5 text-[13.5px] leading-relaxed text-zinc-900" data-thread-root>
+            <b className="block text-xs text-zinc-600">
+              원래 메시지 · {tinfo.root.sender_name ?? "알 수 없음"} · {timeLabel(tinfo.root.created_at)}
+            </b>
+            <p className="line-clamp-4 whitespace-pre-line break-words">{previewText(tinfo.root)}</p>
+          </div>
+        )}
+        {loaded && !messages.length && !assistant && <p className="py-10 text-center text-sm text-zinc-700">{tid ? "이 건에 대한 이야기를 시작해 보세요." : "첫 메시지를 보내 보세요."}</p>}
         {loaded && assistant && (
           <div className="mx-auto mt-4 flex max-w-sm flex-col items-center gap-3 rounded-2xl bg-white/90 p-4 text-center shadow-sm" aria-label="도우미 안내">
             <LogoMark className="size-12" />
@@ -521,7 +668,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
               </div>
             );
           const m = row.msg;
-          const unread = m.pending ? 0 : unreadCountFor(m, detail?.members ?? []);
+          const unread = m.pending || tid ? 0 : unreadCountFor(m, detail?.members ?? []);
           const sender = m.sender_member_id ? membersById.get(m.sender_member_id) : undefined;
           const name = sender ? displayName(sender) : (m.sender_name ?? "알 수 없음");
           const meta = (
@@ -559,6 +706,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
                   {meta}
                   {bubble}
                 </div>
+                {!tid && m.thread && <ThreadCard t={m.thread} onOpen={() => openThread(m.thread!.id)} />}
                 {m.pending === "failed" && (
                   <span className="mt-1 flex gap-2 text-xs">
                     <span className="text-red-700">보내지 못했어요</span>
@@ -600,7 +748,22 @@ export function ChatRoom({ roomId }: { roomId: string }) {
         </div>
       )}
 
-      {detail?.kind === "notice" ? (
+      {tid && tClosed ? (
+        <div className="shrink-0 border-t border-zinc-200 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]" data-thread-closed>
+          <p className="flex items-center gap-1.5 text-[13.5px] font-bold text-zinc-800">
+            <Lock className="size-4" aria-hidden />
+            종결된 대화예요{tinfo?.closed_by_name ? ` · ${tinfo.closed_by_name}` : ""}
+          </p>
+          {tinfo?.summary && <p className="mt-2 rounded-lg bg-zinc-100 px-2.5 py-1.5 text-[13px] text-zinc-800">요약 · {tinfo.summary}</p>}
+          {tinfo?.can_manage ? (
+            <button type="button" onClick={() => void reopen()} className="mt-2.5 flex h-11 w-full items-center justify-center rounded-xl border border-brand-300 font-semibold text-brand-800 hover:bg-brand-50" data-thread-reopen>
+              다시 열기
+            </button>
+          ) : (
+            <p className="mt-2 text-xs text-zinc-600">기록으로 볼 수 있어요. 다시 열기는 만든 사람·관리자가 할 수 있어요.</p>
+          )}
+        </div>
+      ) : detail?.kind === "notice" ? (
         <p className="shrink-0 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] text-center text-sm text-zinc-600">회의 10분 전·결재 완료·공지 같은 알림이 카드로 오는 방이에요. 답장은 보낼 수 없어요.</p>
       ) : (
       <form
@@ -634,7 +797,7 @@ export function ChatRoom({ roomId }: { roomId: string }) {
             }
           }}
           rows={1}
-          placeholder={assistant ? "예) 내일 회의실 빈 시간" : "메시지 입력"}
+          placeholder={assistant ? "예) 내일 회의실 빈 시간" : tid ? "서브 대화에 쓰기" : "메시지 입력"}
           aria-label="메시지 입력"
           className="max-h-32 min-h-11 flex-1 resize-none rounded-xl bg-zinc-100 px-3 py-2.5 text-base leading-6 outline-none [field-sizing:content] md:text-sm md:leading-6"
         />
@@ -686,7 +849,38 @@ export function ChatRoom({ roomId }: { roomId: string }) {
                 </button>
               )
             )}
-            {readList && (
+            {!tid && menuFor.thread && (
+              <button
+                type="button"
+                onClick={() => {
+                  openThread(menuFor.thread!.id);
+                  setMenuFor(null);
+                }}
+                className="flex min-h-12 w-full items-center gap-3 px-4 text-left font-semibold text-brand-800 hover:bg-brand-50"
+                data-thread-view
+              >
+                <MessagesSquare className="size-4" />
+                서브 대화 보기
+              </button>
+            )}
+            {!tid && canStartThread(menuFor, detail?.kind) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCreating(menuFor);
+                  setMenuFor(null);
+                }}
+                className="flex min-h-12 w-full items-start gap-3 px-4 py-2.5 text-left font-semibold text-brand-800 hover:bg-brand-50"
+                data-thread-start
+              >
+                <MessagesSquare className="mt-0.5 size-4" />
+                <span>
+                  서브 대화 만들기
+                  <span className="block text-xs font-normal text-zinc-600">이 건만 따로 이야기해요(메인에는 카드만)</span>
+                </span>
+              </button>
+            )}
+            {readList && !tid && (
               <button
                 type="button"
                 onClick={() => {
@@ -809,6 +1003,41 @@ export function ChatRoom({ roomId }: { roomId: string }) {
       )}
 
       {inviting && detail && <MemberPicker mode="invite" exclude={detail.members.map((x) => x.member_id)} onClose={() => setInviting(false)} onConfirm={(ids) => invite(ids)} />}
+      {creating && (
+        <ThreadCreateSheet
+          roomId={roomId}
+          root={creating}
+          onClose={() => setCreating(null)}
+          onCreated={(t) => {
+            const rootId = creating.id;
+            setMessages((list) => list.map((m) => (m.id === rootId ? { ...m, thread: { ...t, mine: true } } : m)));
+            setCreating(null);
+            openThread(t.id);
+            void loadThreadCount();
+          }}
+        />
+      )}
+      {closing && tinfo && (
+        <ThreadCloseSheet
+          thread={tinfo}
+          onClose={() => setClosing(false)}
+          onClosed={(t) => {
+            setTinfo((x) => (x ? { ...x, ...t } : x));
+            setClosing(false);
+          }}
+        />
+      )}
+    </div>
+    {threadUi && !tid && (
+      // PC: 오른쪽 서랍(메인과 함께 실시간) / 휴대폰: 아래에서 올라오는 전체 화면 시트. 열리는 서브 대화는 한 번에 하나
+      <aside className="fixed inset-0 z-40 flex flex-col bg-white md:static md:z-auto md:w-[380px] md:shrink-0 md:border-l md:border-zinc-300 md:shadow-[-6px_0_18px_rgba(0,0,0,0.06)]" aria-label="서브 대화" data-thread-drawer>
+        {threadUi.mode === "list" ? (
+          <ThreadList roomId={roomId} roomLabel={title} onPick={(id) => openThread(id)} onClose={() => setThreadUi(null)} />
+        ) : (
+          <ChatRoom key={threadUi.id} roomId={roomId} thread={{ id: threadUi.id, onBack: () => setThreadUi({ mode: "list" }), onClose: () => setThreadUi(null) }} />
+        )}
+      </aside>
+    )}
     </div>
   );
 }

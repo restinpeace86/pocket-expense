@@ -1667,6 +1667,7 @@ export type Database = {
           pushed_at: string | null
           room_id: string
           sender_member_id: string | null
+          thread_id: string | null
           width: number | null
         }
         Insert: {
@@ -1688,6 +1689,7 @@ export type Database = {
           pushed_at?: string | null
           room_id: string
           sender_member_id?: string | null
+          thread_id?: string | null
           width?: number | null
         }
         Update: {
@@ -1709,6 +1711,7 @@ export type Database = {
           pushed_at?: string | null
           room_id?: string
           sender_member_id?: string | null
+          thread_id?: string | null
           width?: number | null
         }
         Relationships: [
@@ -1724,6 +1727,13 @@ export type Database = {
             columns: ["sender_member_id", "company_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "chat_messages_thread_fk"
+            columns: ["thread_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
             referencedColumns: ["id", "company_id"]
           },
         ]
@@ -1803,6 +1813,122 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      chat_thread_reads: {
+        Row: {
+          company_id: string
+          last_read_at: string
+          member_id: string
+          participant: boolean
+          thread_id: string
+        }
+        Insert: {
+          company_id: string
+          last_read_at?: string
+          member_id: string
+          participant?: boolean
+          thread_id: string
+        }
+        Update: {
+          company_id?: string
+          last_read_at?: string
+          member_id?: string
+          participant?: boolean
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_thread_reads_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "chat_thread_reads_thread_id_company_id_fkey"
+            columns: ["thread_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      chat_threads: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          last_message_at: string | null
+          message_count: number
+          room_id: string
+          root_message_id: string
+          status: string
+          summary: string | null
+          title: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_message_at?: string | null
+          message_count?: number
+          room_id: string
+          root_message_id: string
+          status?: string
+          summary?: string | null
+          title: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_message_at?: string | null
+          message_count?: number
+          room_id?: string
+          root_message_id?: string
+          status?: string
+          summary?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_threads_closed_by_company_id_fkey"
+            columns: ["closed_by", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "chat_threads_created_by_company_id_fkey"
+            columns: ["created_by", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "chat_threads_room_id_company_id_fkey"
+            columns: ["room_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "chat_threads_root_message_id_fkey"
+            columns: ["root_message_id"]
+            isOneToOne: true
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4727,6 +4853,8 @@ export type Database = {
         }
         Returns: Json
       }
+      chat_my_threads: { Args: never; Returns: Json }
+      chat_my_threads_new: { Args: never; Returns: number }
       chat_notice_push_due: { Args: never; Returns: Json }
       chat_open_claim: { Args: { p_claim: string }; Returns: string }
       chat_open_direct: { Args: { p_member: string }; Returns: string }
@@ -4753,11 +4881,33 @@ export type Database = {
           p_id: string
           p_kind: string
           p_room: string
+          p_thread?: string
         }
         Returns: Json
       }
       chat_set_attachment_days: { Args: { p_days: number }; Returns: number }
       chat_storage_status: { Args: never; Returns: Json }
+      chat_thread_close: {
+        Args: { p_summary: string; p_thread: string }
+        Returns: Json
+      }
+      chat_thread_detail: { Args: { p_thread: string }; Returns: Json }
+      chat_thread_list: { Args: { p_room: string }; Returns: Json }
+      chat_thread_mark_read: { Args: { p_thread: string }; Returns: undefined }
+      chat_thread_messages: {
+        Args: {
+          p_after?: string
+          p_before?: string
+          p_limit?: number
+          p_thread: string
+        }
+        Returns: Json
+      }
+      chat_thread_open: {
+        Args: { p_root: string; p_title: string }
+        Returns: Json
+      }
+      chat_thread_reopen: { Args: { p_thread: string }; Returns: Json }
       chat_unread_total: { Args: never; Returns: number }
       check_claim_for_submit: { Args: { p_claim_id: string }; Returns: Json }
       claim_duplicate_receipts: { Args: { p_claim_id: string }; Returns: Json }

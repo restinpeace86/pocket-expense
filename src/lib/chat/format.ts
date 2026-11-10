@@ -23,6 +23,29 @@ export type ChatMessage = {
   // 화면 전용: 보내는 중·실패(낙관적 표시), 올리기 전 미리보기
   pending?: "sending" | "failed";
   localUrl?: string;
+  thread_id?: string | null; // 서브 대화 글이면 그 서브 대화(D-246)
+  thread?: ChatThread | null; // 이 글로 만든 서브 대화(메인 카드)
+};
+// 서브 대화(D-246, migration 137 chat_thread_json)
+export type ChatThread = {
+  id: string;
+  room_id: string;
+  root_message_id: string;
+  title: string;
+  status: "open" | "closed";
+  summary: string | null;
+  created_by: string | null;
+  created_by_name: string | null;
+  closed_by_name: string | null;
+  closed_at: string | null;
+  message_count: number;
+  last_message_at: string;
+  created_at: string;
+  people: { member_id: string; name: string }[];
+  people_count: number;
+  mine: boolean;
+  new: number;
+  root_sender_name?: string | null;
 };
 export type ChatRoomSummary = {
   id: string;

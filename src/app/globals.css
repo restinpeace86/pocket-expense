@@ -351,3 +351,8 @@ html[data-chat-theme="cool"] {
   .workon-edge-pulse { display: none; }
   .workon-toast-in { animation: none; }
 }
+
+/* 서브 대화 서랍(D-246): 좁은 PC(1180px 미만)에서 서랍을 열면 왼쪽 채팅 목록을 접어 메인 + 서랍이 들어가게 */
+@media (min-width: 768px) and (max-width: 1179px) {
+  body[data-open-thread] [data-chat-list] { display: none; }
+}
