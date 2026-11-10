@@ -235,6 +235,7 @@ export function AdminShell({
       {ADMIN_FEEDBACK_URL && (
         <a
           href={ADMIN_FEEDBACK_URL}
+          data-kakao-fab
           target="_blank"
           rel="noopener noreferrer"
           className="fixed bottom-6 right-6 z-50 hidden min-h-12 items-center gap-2 rounded-full bg-[#FEE500] px-5 text-sm font-semibold text-[#191919] shadow-lg ring-1 ring-black/5 transition hover:brightness-95 md:inline-flex [body:has(.kb-hide.fixed)_&]:bottom-28"

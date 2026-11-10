@@ -1,6 +1,7 @@
 "use client";
 
 import { ChatThemeCard } from "@/components/chat/chat-theme";
+import { VisualAlertToggle } from "@/components/chat/visual-alert-toggle";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -171,6 +172,7 @@ export function ProfileForm({ profile, chat = false }: { profile: MyProfile; cha
 
       <ThemeOptionsCard />
       {chat && <ChatThemeCard />}
+      {chat && <VisualAlertToggle />}
 
       {/* 로그아웃은 그 자체가 form이라 위 form 밖에 둔다(form 안에 form을 넣을 수 없음) */}
       <section className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-sm">

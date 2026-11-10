@@ -25,3 +25,13 @@ export async function saveChatThemeAction(key: string): Promise<{ error: string 
   const { error } = await supabase.from("members").update({ chat_theme: key }).eq("auth_user_id", uid);
   return { error: error ? "SAVE_FAILED" : null };
 }
+
+// PC 무소음 시각 알림 켜기/끄기 (D-246, migration 136). 본인 행만(컬럼 권한 chat_visual_alert)
+export async function saveVisualAlertAction(on: boolean): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  const uid = claims?.claims?.sub as string | undefined;
+  if (!uid) return { error: "NOT_AUTHENTICATED" };
+  const { error } = await supabase.from("members").update({ chat_visual_alert: on === true }).eq("auth_user_id", uid);
+  return { error: error ? "SAVE_FAILED" : null };
+}

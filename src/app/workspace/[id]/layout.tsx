@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ChatVisualAlert } from "@/components/chat/visual-alert";
 import { EmployeeBottomNav } from "@/components/employee/employee-bottom-nav";
 import { PushAutoPrompt } from "@/components/push/push-auto-prompt";
 import { getMembership } from "@/lib/auth/session";
@@ -29,6 +30,8 @@ async function NavSlot({ params }: { params: LayoutProps<"/workspace/[id]">["par
   return (
     <>
       <EmployeeBottomNav membership={membership} serverMode={serverMode} chat={chat} calendar={calendar} attendance={attendance} />
+      {/* PC 무소음 시각 알림(D-246): 메신저가 켜진 회사, 관리자·직원 모두 */}
+      {chat !== null && <ChatVisualAlert memberId={membership.member_id} companyId={membership.company_id} initialOn={membership.chat_visual_alert !== false} />}
       {/* 알림 기본 켜기 안내(D-213): 관리자·직원 모두 */}
       <PushAutoPrompt />
     </>

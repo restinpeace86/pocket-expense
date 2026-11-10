@@ -3325,6 +3325,7 @@ export type Database = {
           approved_at: string | null
           auth_user_id: string
           chat_theme: string | null
+          chat_visual_alert: boolean
           company_id: string
           created_at: string
           department_id: string | null
@@ -3355,6 +3356,7 @@ export type Database = {
           approved_at?: string | null
           auth_user_id: string
           chat_theme?: string | null
+          chat_visual_alert?: boolean
           company_id: string
           created_at?: string
           department_id?: string | null
@@ -3385,6 +3387,7 @@ export type Database = {
           approved_at?: string | null
           auth_user_id?: string
           chat_theme?: string | null
+          chat_visual_alert?: boolean
           company_id?: string
           created_at?: string
           department_id?: string | null

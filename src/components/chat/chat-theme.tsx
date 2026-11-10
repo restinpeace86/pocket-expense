@@ -4,6 +4,7 @@ import { Check, Palette } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { saveChatThemeAction } from "@/app/workspace/theme-actions";
 import { CHAT_THEME_STORAGE_KEY, CHAT_THEMES, DEFAULT_CHAT_THEME, isChatThemeKey, type ChatThemeKey } from "@/lib/chat/theme";
+import { VisualAlertToggle } from "./visual-alert-toggle";
 
 // 채팅 색감(D-211): 화면 색상(D-066)처럼 계정에 저장(어느 기기에서나 같은 색) + 이 브라우저에도 저장해
 // 첫 화면을 그리기 전에 app/layout.tsx 스크립트가 바로 적용한다(깜빡임 방지). 고르는 곳: [내 정보] 카드, 채팅 목록 위 팔레트
@@ -165,6 +166,9 @@ export function ChatThemeButton() {
           >
             <p className="pb-2 text-xs text-zinc-500">채팅 색감 (내 계정에 저장돼요)</p>
             <Options onPick={() => setOpen(false)} />
+            <div className="mt-3">
+              <VisualAlertToggle compact />
+            </div>
           </div>
         </>
       )}

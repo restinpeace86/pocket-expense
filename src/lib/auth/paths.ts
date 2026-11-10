@@ -12,6 +12,7 @@ export type Membership = {
   status: MemberStatus;
   ui_theme?: string | null; // 화면 색상 (D-066)
   chat_theme?: string | null; // 채팅 색감 (D-211)
+  chat_visual_alert?: boolean; // PC 무소음 시각 알림 (D-246, 기본 켜짐)
 };
 
 // 외부 사이트로 튕기는 오픈 리다이렉트를 막는다: 같은 사이트의 절대 경로만 허용
