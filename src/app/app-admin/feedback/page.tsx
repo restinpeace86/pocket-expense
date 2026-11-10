@@ -8,7 +8,7 @@ import { FEEDBACK_CATEGORY, FEEDBACK_STATUS_LABEL, userAgentSummary, type Feedba
 
 export const metadata = { title: "의견 · WORKON 운영자" };
 
-// 의견 보내기 (D-246): 직원·관리자가 보낸 버그 신고·기능 요청. 버그는 24시간 안에 확인(안내 문구 약속)
+// 의견 보내기 (D-246): 직원·관리자가 보낸 버그 신고·기능 개선. 버그는 24시간 안에 확인(안내 문구 약속)
 export default function FeedbackPage({ searchParams }: PageProps<"/app-admin/feedback">) {
   return (
     <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-zinc-100" />}>
@@ -49,7 +49,7 @@ async function Content({ searchParams }: Pick<PageProps<"/app-admin/feedback">, 
     <>
       <h1 className="text-2xl font-bold">의견</h1>
       <p className="-mt-4 break-keep text-sm text-zinc-600">
-        직원·관리자가 머리글 [의견 보내기]로 보낸 버그 신고·기능 요청이에요. 버그 신고는 <b>24시간 안에 확인</b>한다고 안내하고 있어요. 회사 관리자는 이 목록을 보지 않아요.
+        직원·관리자가 머리글 [의견 보내기]로 보낸 버그 신고·기능 개선이에요. 버그 신고는 <b>24시간 안에 확인</b>한다고 안내하고 있어요. 회사 관리자는 이 목록을 보지 않아요.
       </p>
       <nav aria-label="거르기" className="flex flex-wrap gap-2">
         <Link href={href(null, st)} className={chip(!cat)}>

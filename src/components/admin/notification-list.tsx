@@ -65,7 +65,7 @@ export function NotificationList({ rows, devMode, failedOnly, base }: { rows: No
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium">{TEMPLATE_LABEL[r.template_code] ?? r.template_code}</span>
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${r.status === "sent" ? "bg-green-100 text-green-700" : r.status === "failed" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
-                    {r.status === "sent" ? (r.provider === "log" ? "기록됨 (개발 모드)" : "발송됨") : r.status === "failed" ? "실패" : "보내는 중"}
+                    {r.status === "sent" ? (r.provider === "log" ? "기록됨 (개발 모드)" : r.provider === "webpush" ? "앱 알림 + 채팅으로 보냄" : r.provider === "chat" ? "채팅 [알림]방으로 보냄" : "발송됨") : r.status === "failed" ? "실패" : "보내는 중"}
                   </span>
                   <span className="text-zinc-700">
                     → {r.recipient_name ?? "비회원"} {r.recipient_phone && `(${maskPhone(r.recipient_phone)})`}

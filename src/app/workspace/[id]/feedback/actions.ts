@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const SHOT_LIMIT = 5 * 1024 * 1024;
 
-// 의견 보내기(D-246): 운영자에게 버그 신고·기능 요청. 회사·보낸 사람은 로그인에서, 하루 5건(회사)은 DB 함수가 다시 확인
+// 의견 보내기(D-246): 운영자에게 버그 신고·기능 개선. 회사·보낸 사람은 로그인에서, 하루 5건(회사)은 DB 함수가 다시 확인
 export async function submitFeedbackAction(formData: FormData): Promise<{ ok: true } | { ok: false; error: string; login?: boolean }> {
   const m = await getMembership();
   if (!m) return { ok: false, error: "로그인이 풀렸어요. 다시 로그인한 뒤 보내 주세요.", login: true };

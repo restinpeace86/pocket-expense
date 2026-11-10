@@ -22,9 +22,11 @@ export const CHANNEL: Record<TemplateCode, Channel> = {
 };
 
 // pushed: 이 사람이 앱 알림을 하나라도 받았는지
-export function needsAlimtalk(code: TemplateCode, pushed: boolean): boolean {
+// alimtalkOn: 회사가 카카오 알림톡 추가 서비스를 켰는지(D-247, company_features 'alimtalk' — 기본 꺼짐).
+// 꺼져 있으면 핵심 알림도 앱 안(앱 알림 + 채팅 [알림]방 카드)으로만 간다. 초대는 받는 사람이 아직 회원이 아니라 그대로 알림톡
+export function needsAlimtalk(code: TemplateCode, pushed: boolean, alimtalkOn = false): boolean {
   const c = CHANNEL[code];
-  return c === "alimtalk" || (c === "fallback" && !pushed);
+  return c === "alimtalk" || (c === "fallback" && alimtalkOn && !pushed);
 }
 
 const PUSH_TITLE: Partial<Record<TemplateCode, string>> = {

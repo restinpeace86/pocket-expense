@@ -30,7 +30,7 @@ describe("의견 보내기 (D-246)", () => {
     expect(t).not.toContain("둘째 줄");
   });
 
-  it("안내 문구: 버그는 24시간 안에 확인, 기능 요청은 WORKON", () => {
+  it("안내 문구: 버그는 24시간 안에 확인, 기능 개선은 WORKON", () => {
     expect(FEEDBACK_DONE.bug.paragraphs.join(" ")).toContain("24시간 안에 확인");
     expect(FEEDBACK_DONE.feature.paragraphs.join(" ")).toContain("WORKON");
     expect(FEEDBACK_DONE.feature.paragraphs.join(" ")).not.toContain("모아온");

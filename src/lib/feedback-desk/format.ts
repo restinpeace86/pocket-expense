@@ -1,4 +1,4 @@
-// 의견 보내기(버그 신고 · 기능 요청, D-246, spec/features/improvement-2026-11.md §C) — 화면·서버 공통
+// 의견 보내기(버그 신고 · 기능 개선, D-246, spec/features/improvement-2026-11.md §C) — 화면·서버 공통
 export type FeedbackCategory = "bug" | "feature";
 export type FeedbackStatus = "pending" | "reviewing" | "resolved";
 
@@ -13,7 +13,7 @@ export const FEEDBACK_PLACEHOLDER = "불편하신 점이나 제안할 아이디�
 
 export const FEEDBACK_CATEGORY: Record<FeedbackCategory, { emoji: string; label: string; sub: string }> = {
   bug: { emoji: "🐛", label: "버그 신고", sub: "안 되거나 이상해요" },
-  feature: { emoji: "💡", label: "기능 요청", sub: "이런 게 있으면 좋겠어요" },
+  feature: { emoji: "💡", label: "기능 개선", sub: "이렇게 바뀌면 좋겠어요" },
 };
 
 export const FEEDBACK_STATUS_LABEL: Record<FeedbackStatus, string> = { pending: "접수", reviewing: "검토 중", resolved: "해결" };
@@ -22,20 +22,20 @@ export const FEEDBACK_STATUS_LABEL: Record<FeedbackStatus, string> = { pending: 
 export const FEEDBACK_DONE: Record<FeedbackCategory, { title: string; paragraphs: string[] }> = {
   bug: {
     title: "소중한 제보 감사합니다!",
-    paragraphs: ["확인 후 가장 빠르게 수정할게요.", "제보해 주신 내용은 24시간 안에 확인해요."],
+    paragraphs: ["확인 후 최대한 빨리 처리할게요.", "제보해 주신 내용은 24시간 안에 확인해요."],
   },
   feature: {
     title: "소중한 아이디어 감사드립니다! 💡",
     paragraphs: [
-      "보내주신 기능은 추후 업데이트에 적극적으로 반영하도록 하겠습니다.",
-      "다만, 해당 기능이 저희 서비스의 전체 뼈대와 실무 프로세스에 부합하는지 면밀히 검토하는 과정이 필요하여, 검토를 거쳐 우리 서비스에 가장 적합한 형태로 다듬어 선보이는 데 다소 시간이 소요될 수 있는 점 너른 양해 부탁드립니다.",
+      "보내주신 개선 의견은 긍정적으로 검토해 추후 업데이트에 적극적으로 반영하도록 하겠습니다.",
+      "다만, 해당 내용이 저희 서비스의 전체 뼈대와 실무 프로세스에 부합하는지 면밀히 검토하는 과정이 필요하여, 검토를 거쳐 우리 서비스에 가장 적합한 형태로 다듬어 선보이는 데 다소 시간이 소요될 수 있는 점 너른 양해 부탁드립니다.",
       "앞으로도 직원 여러분의 업무를 더 편안하게 만들어 드릴 수 있도록 꾸준히 발전하는 WORKON이 되겠습니다. 고맙습니다!",
     ],
   },
 };
 
 export const FEEDBACK_ERROR = {
-  category: "버그 신고와 기능 요청 중 하나를 골라 주세요.",
+  category: "버그 신고와 기능 개선 중 하나를 골라 주세요.",
   short: `내용을 ${FEEDBACK_MIN}자 이상 적어 주세요.`,
   long: `내용은 ${FEEDBACK_MAX.toLocaleString("ko-KR")}자까지 적을 수 있어요.`,
   shotType: "캡처는 사진(JPG·PNG·WEBP)만 붙일 수 있어요.",

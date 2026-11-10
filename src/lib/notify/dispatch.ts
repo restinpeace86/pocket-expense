@@ -65,16 +65,20 @@ async function notifyMembers(
     const r = await pushToMembers(p.companyId, ids, p.push ?? pushOf(p.message, p.claimId ? `claim-${p.claimId}` : p.message.template));
     reached = new Set(r.reached);
   }
-  // 앱 알림만인 알림(결재 완료·정산 지급·정기 결제 등) → 채팅 [알림]방에도 카드(D-224). 핵심 알림(알림톡·fallback)은 넣지 않는다
-  if (channel === "push" && ids.length) {
+  // 회원에게 가는 알림은 모두 채팅 [알림]방에도 카드(D-224 → D-247: 결재 요청·반려·독촉·세무 자료 요청 같은 핵심 알림도 앱 안으로)
+  if (channel !== "alimtalk" && ids.length) {
     await postNoticeCards(admin, p.companyId, ids, p.push ? { title: p.push.title, lines: [p.push.body], url: p.push.url } : cardOf(p.message)).catch(() => 0);
   }
+  // 카카오 알림톡 추가 서비스(D-247): 회사가 켰을 때만 '앱 알림을 못 받은 사람'에게
+  const alimtalkOn = channel === "fallback" ? await alimtalkEnabled(admin, p.companyId) : false;
   let alimtalk = 0;
   for (const r of p.recipients) {
-    if (needsAlimtalk(p.message.template, reached.has(r.id))) {
+    if (needsAlimtalk(p.message.template, reached.has(r.id), alimtalkOn)) {
       await deliver(admin, { companyId: p.companyId, claimId: p.claimId, memberId: r.id, phone: r.phone, message: p.message });
       alimtalk++;
     } else if (channel === "fallback") {
+      // 앱 안으로 간 핵심 알림 기록(독촉 하루 1회 판정·[알림 이력]): 기기 알림이 닿았으면 webpush, 아니면 채팅 [알림]방 카드만(chat)
+      const via = reached.has(r.id) ? "webpush" : "chat";
       const now = new Date().toISOString();
       await admin.from("notification_logs").insert({
         company_id: p.companyId,
@@ -82,14 +86,19 @@ async function notifyMembers(
         recipient_member_id: r.id,
         recipient_phone: "",
         template_code: p.message.template,
-        payload: { text: p.message.text, channel: "webpush" },
+        payload: { text: p.message.text, channel: via },
         status: "sent",
         sent_at: now,
-        provider: "webpush",
+        provider: via,
       });
     }
   }
   return { pushed: reached.size, alimtalk };
+}
+
+async function alimtalkEnabled(admin: Admin, companyId: string): Promise<boolean> {
+  const { data } = await admin.from("company_features").select("enabled").eq("company_id", companyId).eq("feature", "alimtalk").maybeSingle();
+  return data?.enabled === true;
 }
 
 async function loadClaim(admin: Admin, companyId: string, claimId: string) {

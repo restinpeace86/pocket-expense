@@ -10,7 +10,9 @@ describe("알림 길 나누기 (D-213)", () => {
   it("결재 요청·반려·독촉·자료 요청은 앱 알림을 못 받았을 때만 알림톡", () => {
     for (const c of ["APPROVAL_REQUEST", "APPROVAL_REJECTED", "REMINDER", "TAX_REQUEST"] as const) {
       expect(needsAlimtalk(c, true)).toBe(false);
-      expect(needsAlimtalk(c, false)).toBe(true);
+      expect(needsAlimtalk(c, false)).toBe(false); // 카카오 추가 서비스 꺼짐(기본) → 앱 안만(D-247)
+      expect(needsAlimtalk(c, false, true)).toBe(true);
+      expect(needsAlimtalk(c, true, true)).toBe(false);
     }
   });
   it("승인 완료·지급 완료·정기 결제·월말 마감·세무 마감은 앱 알림만", () => {

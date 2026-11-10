@@ -22,7 +22,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const DRAFT_KEY = "workon-feedback-draft";
 
-// 의견 보내기(D-246, spec/features/improvement-2026-11.md §C): 머리글 아이콘 → 버그 신고 / 기능 요청 → 운영자에게
+// 의견 보내기(D-246, spec/features/improvement-2026-11.md §C): 머리글 아이콘 → 버그 신고 / 기능 개선 → 운영자에게
 // variant: icon = 머리글 아이콘, row = 관리자 휴대폰 메뉴(서랍) 안 한 줄(머리글이 좁아 회사 이름이 가려지지 않게)
 export function FeedbackButton({
   variant = "icon",
@@ -43,14 +43,14 @@ export function FeedbackButton({
         >
           <MessageSquareWarning className="size-5" aria-hidden />
           의견 보내기{" "}
-          <span className="text-xs opacity-75">버그 신고 · 기능 요청</span>
+          <span className="text-xs opacity-75">버그 신고 · 기능 개선</span>
         </button>
       ) : (
         <button
           type="button"
           onClick={() => setOpen(true)}
           aria-label="의견 보내기"
-          title="의견 보내기 (버그 신고 · 기능 요청)"
+          title="의견 보내기 (버그 신고 · 기능 개선)"
           className={`size-11 items-center justify-center rounded-xl border border-zinc-300 text-zinc-700 hover:bg-zinc-50 ${className || "inline-flex"}`}
           data-feedback-open
         >
