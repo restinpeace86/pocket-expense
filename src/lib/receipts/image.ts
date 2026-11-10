@@ -88,3 +88,16 @@ export async function processChatImage(file: File): Promise<{ original: Blob; th
     bitmap.close();
   }
 }
+
+// 의견 보내기 버그 캡처(D-246): 글자가 읽히게 긴 변 1920px JPEG. 서버 동작 요청(1MB) 안에 들도록 크면 한 번 더 줄인다
+export async function processFeedbackShot(file: Blob, maxBytes: number): Promise<Blob> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  try {
+    let out = await render(bitmap, 1920, "image/jpeg", 0.82);
+    if (out.size > maxBytes) out = await render(bitmap, 1440, "image/jpeg", 0.7);
+    if (out.size > maxBytes) out = await render(bitmap, 1100, "image/jpeg", 0.6);
+    return out;
+  } finally {
+    bitmap.close();
+  }
+}

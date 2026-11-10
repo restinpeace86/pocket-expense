@@ -2904,6 +2904,78 @@ export type Database = {
           },
         ]
       }
+      feedback_logs: {
+        Row: {
+          app_version: string | null
+          category: string
+          company_id: string
+          content: string
+          created_at: string
+          id: string
+          member_id: string
+          operator_note: string | null
+          page_url: string | null
+          reporter_name: string | null
+          resolved_at: string | null
+          shot_path: string | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+          viewport: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          category: string
+          company_id: string
+          content: string
+          created_at?: string
+          id?: string
+          member_id: string
+          operator_note?: string | null
+          page_url?: string | null
+          reporter_name?: string | null
+          resolved_at?: string | null
+          shot_path?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          viewport?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          category?: string
+          company_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+          operator_note?: string | null
+          page_url?: string | null
+          reporter_name?: string | null
+          resolved_at?: string | null
+          shot_path?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          viewport?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_logs_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       feedback_surveys: {
         Row: {
           company_id: string
@@ -4771,6 +4843,27 @@ export type Database = {
         Args: { p_item_id: string; p_which: string }
         Returns: string
       }
+      feedback_due: {
+        Args: never
+        Returns: {
+          id: string
+          shot_path: string
+        }[]
+      }
+      feedback_submit: {
+        Args: {
+          p_app_version: string
+          p_category: string
+          p_content: string
+          p_id: string
+          p_page_url: string
+          p_shot_path: string
+          p_user_agent: string
+          p_viewport: string
+        }
+        Returns: string
+      }
+      feedback_today_count: { Args: never; Returns: number }
       generate_recurring_claims: { Args: { p_today?: string }; Returns: Json }
       get_invitation_detail: { Args: { p_token: string }; Returns: Json }
       get_invitation_public: { Args: { p_token: string }; Returns: Json }

@@ -1,6 +1,7 @@
 import { ArrowLeftRight } from "lucide-react";
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { FeedbackButton } from "@/components/feedback/feedback-button";
 import { ThemeSwitcher, ThemeSync } from "@/components/workspace/theme-switcher";
 import { ModeSwitchLink, ViewModeMark } from "@/components/workspace/view-mode-mark";
 import { isAdminRole, type Membership } from "@/lib/auth/paths";
@@ -38,6 +39,8 @@ export function WorkspaceHeader({ membership, mode }: { membership: Membership; 
         ) : (
           <ThemeSync saved={membership.ui_theme} />
         )}
+        {/* 의견 보내기(D-246): 직원·관리자 모두, 운영자에게 */}
+        <FeedbackButton className={mode === "admin" && isAdminRole(membership.role) ? "hidden sm:inline-flex" : "inline-flex"} />
         <SignOutButton />
       </div>
     </header>

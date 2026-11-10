@@ -7,6 +7,7 @@ import { useState, type ReactNode } from "react";
 import { ThemeOptionsInline } from "@/components/workspace/theme-switcher";
 import type { ThemeKey } from "@/lib/theme";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
+import { FeedbackButton } from "@/components/feedback/feedback-button";
 import type { Membership } from "@/lib/auth/paths";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 import { useChatUnread } from "@/components/chat/use-chat-unread";
@@ -202,6 +203,9 @@ export function AdminShell({
             </div>
             <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} calendar={calendar} chat={chat != null} attendance={attendance} />
             <div className="mt-auto sm:hidden">
+              <div className="px-2 pb-1">
+                <FeedbackButton variant="row" />
+              </div>
               <ThemeOptionsInline />
             </div>
           </div>

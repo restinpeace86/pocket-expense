@@ -68,6 +68,8 @@ const MESSAGES: Record<string, string> = {
   INVALID_MONTH: "마감할 달을 다시 골라 주세요. (이번 달까지만 마감할 수 있어요)",
   INVALID_FORMAT_REQUEST: "양식 파일을 등록하지 못했어요. 파일을 다시 골라 주세요.",
   FORMAT_REQUEST_LIMIT: "양식 파일은 회사당 20개까지 등록할 수 있어요. 운영팀에 문의해 주세요.",
+  INVALID_FEEDBACK: "의견을 보내지 못했어요. 구분을 고르고 내용을 5자 이상 적어 주세요.",
+  FEEDBACK_LIMIT: "오늘은 회사 의견을 5건까지 보낼 수 있어요. 내일 다시 보내 주세요.",
   NOTHING_TO_CLOSE: "이 달에 마감할 승인된 지출이 없어요.",
   NOT_CLOSED: "마감 완료된 달이 아니에요. 화면을 새로고침해 주세요.",
   INVALID_REOPEN_REASON: "마감 해제 사유를 1~200자로 적어 주세요.",
