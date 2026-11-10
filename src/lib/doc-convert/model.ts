@@ -27,7 +27,8 @@ const int = (n: unknown, min: number, max: number) => Math.min(max, Math.max(min
 const text = (s: unknown) => (typeof s === "string" ? s.replace(/\r/g, "").replace(/[ \t]+\n/g, "\n").trim().slice(0, MAX_CELL) : "");
 
 // HTML 표 배치와 같은 방식: 이미 위에서 내려온 합친 칸 자리는 건너뛰며 왼쪽부터 채운다
-export function sheetFromAi(page: AiPage, name: string): Sheet | null {
+// onCell: 회사 양식 읽기(8-104 B)가 값 칸 표시(slot)를 받아 가는 자리 — 칸이 놓인 격자 위치와 AI 칸
+export function sheetFromAi(page: AiPage, name: string, onCell?: (r: number, c: number, ac: AiCell) => void): Sheet | null {
   const rows = (page.rows ?? []).slice(0, MAX_ROWS);
   if (!rows.length) return null;
   const taken: boolean[][] = [];
@@ -46,6 +47,7 @@ export function sheetFromAi(page: AiPage, name: string): Sheet | null {
         for (let j = c; j < c + cs; j++) taken[i][j] = true;
       }
       const al = ac.align === "center" ? "c" : ac.align === "right" ? "r" : undefined;
+      onCell?.(r, c, ac);
       placed.push({ r, c, rs, cs, cell: { t: text(ac.text), ...(ac.bold ? { b: true } : {}), ...(al ? { al } : {}), ...(ac.shaded ? { bg: true } : {}) } });
       c += cs;
       cols = Math.max(cols, c);

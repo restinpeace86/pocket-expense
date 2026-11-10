@@ -6,7 +6,7 @@ const PRIMARY_MODEL = process.env.GEMINI_DOC_MODEL || process.env.GEMINI_FORM_MO
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
 const TIMEOUT_MS = 60_000;
 
-const CELL = {
+export const CELL = {
   type: "object",
   properties: {
     text: { type: "string" },
@@ -37,7 +37,7 @@ const RESPONSE_SCHEMA = {
   required: ["pages"],
 };
 
-const PROMPT = `회사 업무 서류(신청서·결의서·명세서·견적서 등)의 사진 또는 PDF입니다. 쪽마다 서류 전체를 "엑셀 시트 한 장"으로 옮길 수 있게 표 구조로 읽어 JSON으로 주세요.
+export const PROMPT = `회사 업무 서류(신청서·결의서·명세서·견적서 등)의 사진 또는 PDF입니다. 쪽마다 서류 전체를 "엑셀 시트 한 장"으로 옮길 수 있게 표 구조로 읽어 JSON으로 주세요.
 - pages: 쪽마다 하나(PDF는 쪽 순서대로, 사진은 1개)
 - rows: 위에서 아래로 한 줄씩. 표 밖의 제목·문장·날짜·서명 줄도 한 행(전체 너비로 합친 칸 하나)으로 넣으세요
 - cells: 왼쪽부터. HTML 표처럼 col_span(가로로 합친 칸 수)·row_span(세로로 합친 칸 수)을 쓰세요. 위 행에서 row_span으로 내려온 자리는 그 행 cells에 다시 넣지 마세요
@@ -63,13 +63,13 @@ async function callOnce(model: string, apiKey: string, body: unknown): Promise<A
   return Array.isArray(parsed.pages) ? parsed.pages : [];
 }
 
-// 실패하면 null(키 미설정 포함) → 크레딧을 돌려주고 "표를 찾지 못했어요"
-export async function readTablesWithGemini(file: { data: ArrayBuffer; mimeType: string }): Promise<AiPage[] | null> {
+// 사진·PDF + 지시문 + 응답 스키마(pages 배열) → 쪽 목록. 회사 양식 읽기(company-forms/gemini.ts)도 같이 쓴다
+export async function readPagesWithGemini(file: { data: ArrayBuffer; mimeType: string }, prompt: string, schema: unknown): Promise<AiPage[] | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
   const body = {
-    contents: [{ parts: [{ inline_data: { mime_type: file.mimeType, data: Buffer.from(file.data).toString("base64") } }, { text: PROMPT }] }],
-    generationConfig: { responseMimeType: "application/json", responseSchema: RESPONSE_SCHEMA, temperature: 0 },
+    contents: [{ parts: [{ inline_data: { mime_type: file.mimeType, data: Buffer.from(file.data).toString("base64") } }, { text: prompt }] }],
+    generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0 },
   };
   for (const model of [PRIMARY_MODEL, FALLBACK_MODEL]) {
     try {
@@ -79,4 +79,9 @@ export async function readTablesWithGemini(file: { data: ArrayBuffer; mimeType: 
     }
   }
   return null;
+}
+
+// 실패하면 null(키 미설정 포함) → 크레딧을 돌려주고 "표를 찾지 못했어요"
+export async function readTablesWithGemini(file: { data: ArrayBuffer; mimeType: string }): Promise<AiPage[] | null> {
+  return readPagesWithGemini(file, PROMPT, RESPONSE_SCHEMA);
 }

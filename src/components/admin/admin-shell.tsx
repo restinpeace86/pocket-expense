@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, Building2, CalendarDays, ClipboardCheck, Clock, Car, ChartBar, ChevronDown, CreditCard, DoorOpen, FileDown, FileText, HardDrive, Landmark, LayoutDashboard, Menu, MessageCircle, ReceiptText, Repeat, Route, Settings, SlidersHorizontal, Users, Wallet, X, type LucideIcon } from "lucide-react";
+import { Banknote, Building2, CalendarDays, ClipboardCheck, Clock, Car, ChartBar, ChevronDown, CreditCard, DoorOpen, FileDown, FileStack, FileText, HardDrive, Landmark, LayoutDashboard, Menu, MessageCircle, ReceiptText, Repeat, Route, Settings, SlidersHorizontal, Users, Wallet, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -37,6 +37,8 @@ const SETTINGS_NAV: NavItem[] = [
   { href: "/chat-settings", label: "파일 보관", icon: HardDrive, ready: true },
   { href: "/recurring", label: "정기 결제", icon: Repeat, ready: true },
   { href: "/form-template", label: "지출결의서 양식", icon: FileText, ready: true },
+  // 회사 양식(8-104 B): 휴가신청서·결재 문서를 회사 모양으로 — 등록은 PC에서
+  { href: "/company-forms", label: "회사 양식", icon: FileStack, ready: true },
   { href: "/departments", label: "부서", icon: Building2, ready: true },
   { href: "/approval-lines", label: "사전 검토 결재라인", icon: Route, ready: true },
   { href: "/tax-office", label: "세무사무소", icon: Landmark, ready: true },

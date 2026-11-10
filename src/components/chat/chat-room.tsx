@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClock, Archive, ArrowDown, ArrowLeft, Bell, CheckCheck, ChevronLeft, Copy, Download, FileSpreadsheet, FileText, ImageOff, ImagePlus, ListChecks, Loader2, Lock, LogOut, MapPin, Menu, MessagesSquare, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
+import { AlarmClock, Archive, ArrowDown, ArrowLeft, Bell, CheckCheck, ChevronLeft, Copy, Download, FileSpreadsheet, FileStack, FileText, ImageOff, ImagePlus, ListChecks, Loader2, Lock, LogOut, MapPin, Menu, MessagesSquare, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -17,6 +17,7 @@ import { useChat } from "./chat-app";
 import { ChatOverlay } from "./overlay";
 import { KeepSheet } from "@/components/vault/keep-sheet";
 import { ConvertSheet } from "@/components/doc-convert/convert-sheet";
+import { ChatFormSheet } from "@/components/company-forms/chat-form-sheet";
 import { convertChatFileAction } from "@/app/workspace/[id]/employee/convert/actions";
 import { isConvertible } from "@/lib/doc-convert/model";
 import { MemberPicker } from "./member-picker";
@@ -67,6 +68,7 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
   const [readsFor, setReadsFor] = useState<ChatMessage | null>(null); // 읽음 확인(D-244)
   const [keepFor, setKeepFor] = useState<ChatMessage | null>(null); // 영구 보관(D-245)
   const [convertFor, setConvertFor] = useState<ChatMessage | null>(null); // 서류 → 엑셀(8-104)
+  const [formFor, setFormFor] = useState<ChatMessage | null>(null); // 회사 양식으로 등록(8-104 B, 관리자만)
   const [kept, setKept] = useState<Set<string>>(() => new Set()); // 이 방에서 보관된 메시지(내 것 + 회사 공유)
   const [panel, setPanel] = useState(false);
   const [inviting, setInviting] = useState(false);
@@ -870,6 +872,23 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
                 </span>
               </button>
             )}
+            {isAdminRole(membership.role) && (menuFor.kind === "image" || menuFor.kind === "file") && menuFor.attachment_path && !menuFor.expired && !menuFor.deleted && isConvertible(menuFor.attachment_mime) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFormFor(menuFor);
+                  setMenuFor(null);
+                }}
+                className="flex min-h-12 w-full items-start gap-3 px-4 py-2.5 text-left font-semibold text-brand-800 hover:bg-brand-50"
+                data-form-register
+              >
+                <FileStack className="mt-0.5 size-4" />
+                <span>
+                  회사 양식으로 등록
+                  <span className="block text-xs font-normal text-zinc-600">관리자만 · 이 서류 모양으로 휴가신청서 등을 출력(PC에서)</span>
+                </span>
+              </button>
+            )}
             {!tid && menuFor.thread && (
               <button
                 type="button"
@@ -962,6 +981,12 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
             run={() => convertChatFileAction(convertFor.id)}
             onClose={() => setConvertFor(null)}
           />
+        </ChatOverlay>
+      )}
+
+      {formFor && (
+        <ChatOverlay>
+          <ChatFormSheet ws={ws} companyId={membership.company_id} me={membership.member_id} message={{ id: formFor.id, name: formFor.attachment_name ?? (formFor.kind === "image" ? "사진" : "파일") }} onClose={() => setFormFor(null)} />
         </ChatOverlay>
       )}
 

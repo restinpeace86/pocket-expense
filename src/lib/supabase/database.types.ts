@@ -1049,6 +1049,7 @@ export type Database = {
           chat_storage_mb: number | null
           code: string
           created_at: string
+          form_slots: number
           id: string
           is_featured: boolean
           is_purchasable: boolean
@@ -1067,6 +1068,7 @@ export type Database = {
           chat_storage_mb?: number | null
           code: string
           created_at?: string
+          form_slots?: number
           id?: string
           is_featured?: boolean
           is_purchasable?: boolean
@@ -1085,6 +1087,7 @@ export type Database = {
           chat_storage_mb?: number | null
           code?: string
           created_at?: string
+          form_slots?: number
           id?: string
           is_featured?: boolean
           is_purchasable?: boolean
@@ -2022,6 +2025,7 @@ export type Database = {
           claim_deadline_type: Database["public"]["Enums"]["claim_deadline_type"]
           created_at: string
           event_bonus_acknowledged_at: string | null
+          extra_form_slots: number
           first_purchase_at: string | null
           fuel_enabled: boolean
           fuel_rate_mode: string
@@ -2052,6 +2056,7 @@ export type Database = {
           claim_deadline_type?: Database["public"]["Enums"]["claim_deadline_type"]
           created_at?: string
           event_bonus_acknowledged_at?: string | null
+          extra_form_slots?: number
           first_purchase_at?: string | null
           fuel_enabled?: boolean
           fuel_rate_mode?: string
@@ -2082,6 +2087,7 @@ export type Database = {
           claim_deadline_type?: Database["public"]["Enums"]["claim_deadline_type"]
           created_at?: string
           event_bonus_acknowledged_at?: string | null
+          extra_form_slots?: number
           first_purchase_at?: string | null
           fuel_enabled?: boolean
           fuel_rate_mode?: string
@@ -2167,6 +2173,84 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_forms: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          fields: Json
+          group_id: string
+          id: string
+          kind: string | null
+          mime: string
+          name: string
+          published_at: string | null
+          reads: number
+          sheets: Json | null
+          source_name: string | null
+          source_path: string
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          fields?: Json
+          group_id: string
+          id: string
+          kind?: string | null
+          mime: string
+          name: string
+          published_at?: string | null
+          reads?: number
+          sheets?: Json | null
+          source_name?: string | null
+          source_path: string
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          fields?: Json
+          group_id?: string
+          id?: string
+          kind?: string | null
+          mime?: string
+          name?: string
+          published_at?: string | null
+          reads?: number
+          sheets?: Json | null
+          source_name?: string | null
+          source_path?: string
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_forms_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_forms_created_by_company_id_fkey"
+            columns: ["created_by", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
           },
         ]
       }
@@ -3233,6 +3317,51 @@ export type Database = {
           },
           {
             foreignKeyName: "feedback_surveys_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      form_slot_requests: {
+        Row: {
+          company_id: string
+          created_at: string
+          done_at: string | null
+          id: string
+          member_id: string | null
+          requested_by_name: string | null
+          status: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          member_id?: string | null
+          requested_by_name?: string | null
+          status?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          member_id?: string | null
+          requested_by_name?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_slot_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_slot_requests_member_id_company_id_fkey"
             columns: ["member_id", "company_id"]
             isOneToOne: false
             referencedRelation: "members"
@@ -4993,6 +5122,35 @@ export type Database = {
       close_tax_office: { Args: { p_confirm_name: string }; Returns: string[] }
       closing_admin_targets: { Args: { p_today?: string }; Returns: Json }
       closing_calendar: { Args: { p_month: string }; Returns: Json }
+      company_form_check: { Args: { p_message: string }; Returns: Json }
+      company_form_delete: { Args: { p_id: string }; Returns: string }
+      company_form_due: { Args: never; Returns: Json }
+      company_form_edit: { Args: { p_group: string }; Returns: string }
+      company_form_publish: { Args: { p_id: string }; Returns: Json }
+      company_form_read_begin: {
+        Args: { p_id: string; p_kind: string }
+        Returns: Json
+      }
+      company_form_read_done: {
+        Args: { p_fields: Json; p_id: string; p_name: string; p_sheets: Json }
+        Returns: undefined
+      }
+      company_form_save: {
+        Args: { p_fields: Json; p_id: string; p_name: string; p_sheets: Json }
+        Returns: undefined
+      }
+      company_form_slots: { Args: never; Returns: Json }
+      company_form_start: {
+        Args: {
+          p_group: string
+          p_id: string
+          p_mime: string
+          p_name: string
+          p_path: string
+          p_source_name: string
+        }
+        Returns: Json
+      }
       company_location_save: {
         Args: {
           p_address: string
@@ -5118,6 +5276,11 @@ export type Database = {
         Returns: string
       }
       feedback_today_count: { Args: never; Returns: number }
+      form_slot_grant: {
+        Args: { p_add: number; p_company: string }
+        Returns: number
+      }
+      form_slot_request: { Args: never; Returns: undefined }
       generate_recurring_claims: { Args: { p_today?: string }; Returns: Json }
       get_invitation_detail: { Args: { p_token: string }; Returns: Json }
       get_invitation_public: { Args: { p_token: string }; Returns: Json }

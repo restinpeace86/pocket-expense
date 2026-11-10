@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { confirmConversionAction, deleteConversionAction, saveConversionAction } from "@/app/workspace/[id]/employee/convert/actions";
-import { addRowBelow, anchorOf, baseName, cellAddress, coverMap, deleteRow, draftDaysLeft, mergeAt, setCellText, type DocModel, type Sheet } from "@/lib/doc-convert/model";
+import { addRowBelow, baseName, cellAddress, deleteRow, draftDaysLeft, mergeAt, type DocModel, type Sheet } from "@/lib/doc-convert/model";
+import { useSheetGrid } from "./use-sheet-grid";
 import { createClient } from "@/lib/supabase/client";
 
 export type Conversion = {
@@ -20,8 +21,6 @@ export type Conversion = {
   sheets: DocModel;
 };
 
-const ROW_PX = 30;
-
 // 서류 → 엑셀 결과 보기·고치기(8-104 A③·A④). PC: 왼쪽 원본, 오른쪽 엑셀 같은 표(글자 고치기·행 추가/삭제·되돌리기) / 휴대폰: 미리보기 + 받기 + 확정
 export function ConvertEditor({ ws, conv, mine, canDelete, ownerName }: { ws: string; conv: Conversion; mine: boolean; canDelete: boolean; ownerName: string }) {
   const router = useRouter();
@@ -29,15 +28,11 @@ export function ConvertEditor({ ws, conv, mine, canDelete, ownerName }: { ws: st
   const [doc, setDoc] = useState<DocModel>(conv.sheets);
   const [history, setHistory] = useState<DocModel[]>([]);
   const [tab, setTab] = useState(0);
-  const [sel, setSel] = useState({ r: 0, c: 0 });
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState("");
   const [save, setSave] = useState<"saved" | "saving" | "error">("saved");
   const [busy, setBusy] = useState<"pdf" | "xlsx" | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [src, setSrc] = useState<string | null>(null);
-  const input = useRef<HTMLTextAreaElement>(null);
   const pending = useRef<DocModel | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sheet = doc.sheets[Math.min(tab, doc.sheets.length - 1)];
@@ -102,75 +97,7 @@ export function ConvertEditor({ ws, conv, mine, canDelete, ownerName }: { ws: st
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
 
-  const R = sheet.cells.length;
-  const C = sheet.cols.length;
-  const covered = useMemo(() => coverMap(sheet), [sheet]);
-  const cur = sheet.cells[sel.r]?.[sel.c] ?? { t: "" };
-  const select = (r: number, c: number) => {
-    const a = anchorOf(sheet, Math.max(0, Math.min(R - 1, r)), Math.max(0, Math.min(C - 1, c)));
-    setSel(a);
-    setEditing(false);
-    setValue("");
-  };
-  useEffect(() => {
-    if (sel.r >= R || sel.c >= C) setSel(anchorOf(sheet, Math.min(sel.r, R - 1), Math.min(sel.c, C - 1)));
-  }, [R, C, sel, sheet]);
-  useEffect(() => {
-    if (editable) input.current?.focus({ preventScroll: true });
-  }, [sel, tab, editable]);
-
-  const commit = () => {
-    if (editing && value !== cur.t) updateSheet((s) => setCellText(s, sel.r, sel.c, value));
-    setEditing(false);
-    setValue("");
-  };
-  const move = (dr: number, dc: number) => {
-    const g = mergeAt(sheet, sel.r, sel.c);
-    const r = dr > 0 ? sel.r + (g?.rs ?? 1) : sel.r + dr;
-    const c = dc > 0 ? sel.c + (g?.cs ?? 1) : sel.c + dc;
-    select(r, c);
-  };
-  const onKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.nativeEvent.isComposing) return;
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
-      e.preventDefault();
-      if (!editing) undo();
-      return;
-    }
-    if (editing) {
-      if (e.key === "Enter" && !e.shiftKey && !e.altKey) {
-        e.preventDefault();
-        commit();
-        move(1, 0);
-      } else if (e.key === "Enter" && e.altKey) {
-        e.preventDefault();
-        setValue((v) => v + "\n");
-      } else if (e.key === "Tab") {
-        e.preventDefault();
-        commit();
-        move(0, e.shiftKey ? -1 : 1);
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        setEditing(false);
-        setValue("");
-      }
-      return;
-    }
-    const k = e.key;
-    if (k === "ArrowDown") (e.preventDefault(), move(1, 0));
-    else if (k === "ArrowUp") (e.preventDefault(), move(-1, 0));
-    else if (k === "ArrowRight") (e.preventDefault(), move(0, 1));
-    else if (k === "ArrowLeft") (e.preventDefault(), move(0, -1));
-    else if (k === "Tab") (e.preventDefault(), move(0, e.shiftKey ? -1 : 1));
-    else if (k === "Enter" || k === "F2") {
-      e.preventDefault();
-      setEditing(true);
-      setValue(cur.t);
-    } else if (k === "Delete" || k === "Backspace") {
-      e.preventDefault();
-      if (cur.t) updateSheet((s) => setCellText(s, sel.r, sel.c, ""));
-    }
-  };
+  const { sel, setSel, editing, value, cur, commit, renderTable, R } = useSheetGrid({ sheet, editable, onChange: updateSheet, onUndo: undo });
 
   const download = async (kind: "pdf" | "xlsx") => {
     commit();
@@ -215,85 +142,6 @@ export function ConvertEditor({ ws, conv, mine, canDelete, ownerName }: { ws: st
         확정 · {conv.scope === "company" ? "회사 공유" : "나만 보기"}
       </span>
     );
-
-  // 표 그리기(PC 편집 / 휴대폰 미리보기 공용)
-  const table = (editable: boolean) => (
-    <table className="w-full table-fixed border-collapse bg-white text-[13px] leading-snug text-zinc-900" style={{ minWidth: Math.max(480, C * 56) }} data-sheet-table>
-      <colgroup>
-        {editable && <col style={{ width: 34 }} />}
-        {sheet.cols.map((w, i) => (
-          <col key={i} style={{ width: `${w}%` }} />
-        ))}
-      </colgroup>
-      {editable && (
-        <thead>
-          <tr>
-            <th className="h-6 border border-zinc-200 bg-zinc-50" />
-            {sheet.cols.map((_, c) => (
-              <th key={c} className={`h-6 border border-zinc-200 text-[11px] font-medium ${c === sel.c ? "bg-brand-100 text-brand-900" : "bg-zinc-50 text-zinc-500"}`}>
-                {cellAddress(0, c).replace(/\d+$/, "")}
-              </th>
-            ))}
-          </tr>
-        </thead>
-      )}
-      <tbody>
-        {sheet.cells.map((row, r) => (
-          <tr key={r} style={{ height: ROW_PX * (sheet.heights[r] ?? 1) }}>
-            {editable && <th className={`border border-zinc-200 text-[11px] font-medium ${r === sel.r ? "bg-brand-100 text-brand-900" : "bg-zinc-50 text-zinc-500"}`}>{r + 1}</th>}
-            {row.map((cell, c) => {
-              if (covered.has(`${r}:${c}`)) return null;
-              const g = mergeAt(sheet, r, c);
-              const on = editable && sel.r === r && sel.c === c;
-              return (
-                <td
-                  key={c}
-                  rowSpan={g?.rs}
-                  colSpan={g?.cs}
-                  onMouseDown={
-                    editable && !on
-                      ? (e) => {
-                          e.preventDefault(); // 기본 동작(포커스를 body로)이 새 칸 입력창 포커스를 빼앗지 않게
-                          commit();
-                          select(r, c);
-                        }
-                      : undefined
-                  }
-                  onDoubleClick={
-                    editable
-                      ? () => {
-                          setEditing(true);
-                          setValue(cell.t);
-                        }
-                      : undefined
-                  }
-                  className={`relative whitespace-pre-wrap break-words border border-zinc-700 px-1.5 py-1 align-middle ${cell.bg ? "bg-zinc-100" : ""} ${cell.b ? "font-bold" : ""} ${cell.al === "c" ? "text-center" : cell.al === "r" ? "text-right" : ""} ${on ? "outline outline-2 -outline-offset-2 outline-brand-600" : ""} ${editable ? "cursor-cell" : ""}`}
-                  data-cell={cellAddress(r, c)}
-                >
-                  {cell.t}
-                  {on && (
-                    <textarea
-                      ref={input}
-                      value={editing ? value : ""}
-                      onChange={(e) => {
-                        if (!editing) setEditing(true);
-                        setValue(e.target.value);
-                      }}
-                      onKeyDown={onKey}
-                      onBlur={() => editing && commit()}
-                      aria-label={`${cellAddress(r, c)} 칸 고치기`}
-                      className={`absolute inset-0 z-10 h-full min-h-full w-full resize-none border-0 px-1.5 py-1 text-[13px] leading-snug outline outline-2 -outline-offset-2 outline-brand-600 ${editing ? "bg-white" : "bg-transparent text-transparent caret-transparent"}`}
-                      data-cell-input
-                    />
-                  )}
-                </td>
-              );
-            })}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
 
   const tabs = doc.sheets.length > 1 && (
     <div role="tablist" aria-label="쪽" className="flex gap-1 overflow-x-auto">
@@ -399,7 +247,7 @@ export function ConvertEditor({ ws, conv, mine, canDelete, ownerName }: { ws: st
           ) : (
             <p className="border-b border-zinc-100 px-3 py-2 text-[13px] text-zinc-600">회사에 공유된 변환이에요. 고치기는 만든 사람만 할 수 있어요.</p>
           )}
-          <div className="min-h-0 flex-1 overflow-auto p-3">{table(editable)}</div>
+          <div className="min-h-0 flex-1 overflow-auto p-3">{renderTable({ editable })}</div>
           <div className="flex items-center gap-2 border-t border-zinc-100 px-3 py-2">{tabs}</div>
         </section>
       </div>
@@ -414,7 +262,7 @@ export function ConvertEditor({ ws, conv, mine, canDelete, ownerName }: { ws: st
       <div className="flex flex-1 flex-col gap-3 p-3 pb-28 md:hidden">
         {tabs}
         <div className="overflow-auto rounded-2xl border border-zinc-200 bg-white p-2" data-mobile-preview>
-          {table(false)}
+          {renderTable({ editable: false })}
         </div>
         <p className="text-[12.5px] leading-relaxed text-zinc-600">← 옆으로 밀어서 보기 · 고치기는 PC에서 할 수 있어요. AI가 만든 표라 숫자·글자를 꼭 확인해 주세요.</p>
         <div className="mt-auto flex flex-col gap-2 border-t border-zinc-200 pt-3 pb-[env(safe-area-inset-bottom)]">

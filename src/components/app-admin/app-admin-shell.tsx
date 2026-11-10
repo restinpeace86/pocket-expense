@@ -17,6 +17,7 @@ export function AppAdminShell({ children }: { children: ReactNode }) {
             <Link href="/app-admin/announcements" className="text-zinc-300 hover:text-white">전체 공지</Link>
             <Link href="/app-admin/reviews" className="text-zinc-300 hover:text-white">후기</Link>
             <Link href="/app-admin/format-requests" className="text-zinc-300 hover:text-white">양식 접수</Link>
+            <Link href="/app-admin/form-slots" className="text-zinc-300 hover:text-white">양식 칸 신청</Link>
             <Link href="/app-admin/feedback" className="text-zinc-300 hover:text-white">의견</Link>
             <Link href="/app-admin/referrals" className="text-zinc-300 hover:text-white">추천</Link>
             <Link href="/app-admin/notifications" className="text-zinc-300 hover:text-white">알림 이력</Link>
