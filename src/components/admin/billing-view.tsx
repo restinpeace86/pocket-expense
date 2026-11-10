@@ -30,7 +30,7 @@ function UsageCard({ s, preview, today }: { s: CreditStatus; preview: boolean; t
           : "첫 월말 마감(세무사무소 전달)까지 모든 기능을 써 보세요. 결제 정보는 필요 없어요."}
       </p>
       <p className="mt-3 text-sm text-zinc-700">
-        올린 영수증 <b className="tabular-nums">{s.used.toLocaleString("ko-KR")}장</b>
+        쓴 크레딧(영수증·서류 변환) <b className="tabular-nums">{s.used.toLocaleString("ko-KR")}</b>
         <span className="text-zinc-500"> · 무료 기간 안전 상한 {s.granted.toLocaleString("ko-KR")}장</span>
       </p>
       {empty ? (

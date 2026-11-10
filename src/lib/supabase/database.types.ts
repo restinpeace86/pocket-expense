@@ -2487,6 +2487,7 @@ export type Database = {
           id: string
           item_id: string | null
           member_id: string | null
+          note: string | null
           reason: string
         }
         Insert: {
@@ -2496,6 +2497,7 @@ export type Database = {
           id?: string
           item_id?: string | null
           member_id?: string | null
+          note?: string | null
           reason: string
         }
         Update: {
@@ -2505,6 +2507,7 @@ export type Database = {
           id?: string
           item_id?: string | null
           member_id?: string | null
+          note?: string | null
           reason?: string
         }
         Relationships: [
@@ -2563,6 +2566,75 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      doc_conversions: {
+        Row: {
+          company_id: string
+          confirmed_at: string | null
+          created_at: string
+          credits: number
+          id: string
+          member_id: string
+          mime: string
+          name: string
+          pages: number
+          scope: string
+          sheets: Json | null
+          source_message_id: string | null
+          source_path: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          confirmed_at?: string | null
+          created_at?: string
+          credits?: number
+          id: string
+          member_id: string
+          mime: string
+          name: string
+          pages: number
+          scope?: string
+          sheets?: Json | null
+          source_message_id?: string | null
+          source_path: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          confirmed_at?: string | null
+          created_at?: string
+          credits?: number
+          id?: string
+          member_id?: string
+          mime?: string
+          name?: string
+          pages?: number
+          scope?: string
+          sheets?: Json | null
+          source_message_id?: string | null
+          source_path?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doc_conversions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doc_conversions_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
           },
         ]
       }
@@ -4987,6 +5059,7 @@ export type Database = {
         }
         Returns: string
       }
+      credit_usage: { Args: { p_month: string }; Returns: Json }
       deactivate_member: { Args: { p_member_id: string }; Returns: undefined }
       delete_hometax_upload: { Args: { p_id: string }; Returns: string }
       delete_hometax_upload_office: { Args: { p_id: string }; Returns: string }
@@ -4995,6 +5068,34 @@ export type Database = {
       detach_odometer_photo: {
         Args: { p_item_id: string; p_which: string }
         Returns: string
+      }
+      doc_convert_begin: {
+        Args: {
+          p_id: string
+          p_member: string
+          p_message: string
+          p_mime: string
+          p_name: string
+          p_pages: number
+          p_path: string
+        }
+        Returns: Json
+      }
+      doc_convert_check: { Args: { p_message: string }; Returns: Json }
+      doc_convert_confirm: {
+        Args: { p_id: string; p_scope: string }
+        Returns: undefined
+      }
+      doc_convert_delete: { Args: { p_id: string }; Returns: string }
+      doc_convert_due: { Args: never; Returns: Json }
+      doc_convert_fail: { Args: { p_id: string }; Returns: string }
+      doc_convert_ready: {
+        Args: { p_id: string; p_sheets: Json }
+        Returns: undefined
+      }
+      doc_convert_save: {
+        Args: { p_id: string; p_sheets: Json }
+        Returns: undefined
       }
       feedback_due: {
         Args: never

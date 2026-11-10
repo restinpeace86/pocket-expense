@@ -19,7 +19,7 @@ const LABEL_BG = rgb(0.95, 0.95, 0.96);
 const BORDER = rgb(0.7, 0.7, 0.73);
 type Color = ReturnType<typeof rgb>;
 
-type FontSet = { fonts: PDFFont[]; index: Map<string, number> };
+export type FontSet = { fonts: PDFFont[]; index: Map<string, number> };
 export type PdfImage = { kind: "jpg" | "png" | "pdf"; data: Uint8Array };
 
 async function fetchFont(chars: string, weight: 400 | 700): Promise<Uint8Array> {
@@ -28,7 +28,7 @@ async function fetchFont(chars: string, weight: 400 | 700): Promise<Uint8Array> 
   return new Uint8Array(await res.arrayBuffer());
 }
 
-async function loadFontSet(pdf: PDFDocument, text: string, weight: 400 | 700): Promise<FontSet> {
+export async function loadFontSet(pdf: PDFDocument, text: string, weight: 400 | 700): Promise<FontSet> {
   const chars = [...new Set([...text].filter((c) => c.trim()))];
   const chunks: string[][] = [];
   for (let i = 0; i < chars.length; i += 400) chunks.push(chars.slice(i, i + 400));
@@ -52,9 +52,9 @@ function runs(text: string, set: FontSet): { font: PDFFont; text: string }[] {
   }
   return out;
 }
-const widthOf = (text: string, size: number, set: FontSet) => runs(text, set).reduce((s, r) => s + r.font.widthOfTextAtSize(r.text, size), 0);
+export const widthOf = (text: string, size: number, set: FontSet) => runs(text, set).reduce((s, r) => s + r.font.widthOfTextAtSize(r.text, size), 0);
 
-function draw(page: PDFPage, text: string, x: number, y: number, size: number, set: FontSet, color = INK) {
+export function draw(page: PDFPage, text: string, x: number, y: number, size: number, set: FontSet, color = INK) {
   let cx = x;
   for (const r of runs(text, set)) {
     page.drawText(r.text, { x: cx, y, size, font: r.font, color });
@@ -63,7 +63,7 @@ function draw(page: PDFPage, text: string, x: number, y: number, size: number, s
 }
 
 // 글자 단위로 줄바꿈(한글은 띄어쓰기가 없어도 끊는다)
-function wrap(text: string, maxW: number, size: number, set: FontSet): string[] {
+export function wrap(text: string, maxW: number, size: number, set: FontSet): string[] {
   const lines: string[] = [];
   let line = "";
   for (const ch of text) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClock, Archive, ArrowDown, ArrowLeft, Bell, CheckCheck, ChevronLeft, Copy, Download, FileText, ImageOff, ImagePlus, ListChecks, Loader2, Lock, LogOut, MapPin, Menu, MessagesSquare, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
+import { AlarmClock, Archive, ArrowDown, ArrowLeft, Bell, CheckCheck, ChevronLeft, Copy, Download, FileSpreadsheet, FileText, ImageOff, ImagePlus, ListChecks, Loader2, Lock, LogOut, MapPin, Menu, MessagesSquare, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -16,6 +16,9 @@ import { Avatar } from "./avatar";
 import { useChat } from "./chat-app";
 import { ChatOverlay } from "./overlay";
 import { KeepSheet } from "@/components/vault/keep-sheet";
+import { ConvertSheet } from "@/components/doc-convert/convert-sheet";
+import { convertChatFileAction } from "@/app/workspace/[id]/employee/convert/actions";
+import { isConvertible } from "@/lib/doc-convert/model";
 import { MemberPicker } from "./member-picker";
 import { signedUrls } from "./signed-urls";
 import { closeNativeNotifications } from "@/components/push/native";
@@ -63,6 +66,7 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
   const [menuFor, setMenuFor] = useState<ChatMessage | null>(null);
   const [readsFor, setReadsFor] = useState<ChatMessage | null>(null); // 읽음 확인(D-244)
   const [keepFor, setKeepFor] = useState<ChatMessage | null>(null); // 영구 보관(D-245)
+  const [convertFor, setConvertFor] = useState<ChatMessage | null>(null); // 서류 → 엑셀(8-104)
   const [kept, setKept] = useState<Set<string>>(() => new Set()); // 이 방에서 보관된 메시지(내 것 + 회사 공유)
   const [panel, setPanel] = useState(false);
   const [inviting, setInviting] = useState(false);
@@ -849,6 +853,23 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
                 </button>
               )
             )}
+            {(menuFor.kind === "image" || menuFor.kind === "file") && menuFor.attachment_path && !menuFor.expired && !menuFor.deleted && isConvertible(menuFor.attachment_mime) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setConvertFor(menuFor);
+                  setMenuFor(null);
+                }}
+                className="flex min-h-12 w-full items-start gap-3 px-4 py-2.5 text-left font-semibold text-brand-800 hover:bg-brand-50"
+                data-convert
+              >
+                <FileSpreadsheet className="mt-0.5 size-4" />
+                <span>
+                  엑셀로 변환
+                  <span className="block text-xs font-normal text-zinc-600">표 모양 그대로 엑셀로 · 앱에서 보고 고치기</span>
+                </span>
+              </button>
+            )}
             {!tid && menuFor.thread && (
               <button
                 type="button"
@@ -928,6 +949,18 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
               setKeepFor(null);
               setNotice(scope === "private" ? "나만 보기로 보관했어요. [파일 보관함]에서 볼 수 있어요." : "회사에 공유해 보관했어요. [파일 보관함]에서 볼 수 있어요.");
             }}
+          />
+        </ChatOverlay>
+      )}
+
+      {convertFor && (
+        <ChatOverlay>
+          <ConvertSheet
+            ws={ws}
+            name={convertFor.attachment_name ?? (convertFor.kind === "image" ? "사진" : "파일")}
+            from={`${detail ? roomTitle(detail, me) : "채팅"} · ${displayName(convertFor.sender_member_id ? membersById.get(convertFor.sender_member_id) : undefined, convertFor.sender_name ?? "알 수 없음")}`}
+            run={() => convertChatFileAction(convertFor.id)}
+            onClose={() => setConvertFor(null)}
           />
         </ChatOverlay>
       )}

@@ -1,4 +1,4 @@
-import { Archive, Bus, CalendarDays, Check, ChevronRight, Clock, DoorOpen, Inbox, ReceiptText, TreePalm, Wallet, type LucideIcon } from "lucide-react";
+import { Archive, Bus, CalendarDays, Check, ChevronRight, Clock, DoorOpen, FileSpreadsheet, Inbox, ReceiptText, TreePalm, Wallet, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { kstTime, stayLabel } from "@/lib/attendance/rules";
@@ -23,6 +23,8 @@ export function hubTiles(ws: string, o: { inbox: { waiting: number } | null; roo
         ]
       : []),
     ...(o.rooms ? [{ key: "rooms", href: `${ws}/calendar?rooms=${o.today}`, label: "회의실", icon: DoorOpen }] : []),
+    // 서류 → 엑셀(8-104 A): 종이·PDF 서류를 표 그대로 엑셀로
+    { key: "convert", href: `${ws}/employee/convert`, label: "서류 → 엑셀", icon: FileSpreadsheet },
     // 파일 보관함(D-245): 채팅을 쓰는 회사
     ...(o.vault ? [{ key: "vault", href: `${ws}/employee/vault`, label: "파일 보관함", icon: Archive }] : []),
     // 주변 버스(D-243): 회사 위치가 서울일 때 메뉴 맨 끝
