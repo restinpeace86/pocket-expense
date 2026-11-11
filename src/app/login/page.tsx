@@ -8,7 +8,7 @@ import { isTaxOfficeUser } from "@/lib/tax-office/queries";
 import { getCurrentUserId, getMembership } from "@/lib/auth/session";
 import { StackedLogo } from "@/components/brand/logo";
 
-export const metadata = { title: "로그인 · WORKON" };
+export const metadata = { title: "로그인 · Moa-on" };
 
 const ERRORS: Record<string, string> = {
   missing_code: "로그인 정보가 없어요. 다시 시도해 주세요.",
@@ -20,7 +20,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
     <PageShell>
       <div className="flex flex-col gap-2 pt-8 text-center">
         <StackedLogo className="mx-auto mb-2 text-[2.6rem]" />
-        <h1 className="text-2xl font-bold tracking-tight">WORKON 시작하기</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Moa-on 시작하기</h1>
         <p className="text-zinc-600">경비·결재부터 사내 채팅·캘린더까지, 작은 회사 업무를 한곳에서</p>
       </div>
       <Card>

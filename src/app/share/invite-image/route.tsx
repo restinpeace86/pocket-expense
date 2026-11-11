@@ -7,7 +7,7 @@ export function GET() {
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #4f46e5 0%, #312e81 100%)", color: "white", fontFamily: "sans-serif" }}>
         <div style={{ width: 120, height: 120, borderRadius: 28, background: "white", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 74, height: 43, borderRadius: 999, background: "#4f46e5", display: "flex", alignItems: "center", justifyContent: "flex-end", padding: 6 }}><div style={{ width: 31, height: 31, borderRadius: 999, background: "white" }} /></div></div>
-        <div style={{ marginTop: 28, fontSize: 56, fontWeight: 800, letterSpacing: -1 }}>WORKON</div>
+        <div style={{ marginTop: 28, fontSize: 56, fontWeight: 800, letterSpacing: -1 }}>Moa-on</div>
         <div style={{ marginTop: 10, fontSize: 28, opacity: 0.85 }}>Receipts in, expense reports done.</div>
       </div>
     ),

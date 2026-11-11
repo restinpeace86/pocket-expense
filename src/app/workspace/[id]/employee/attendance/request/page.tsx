@@ -5,7 +5,7 @@ import { buildMonth, type MonthData } from "@/lib/attendance/month";
 import { attendanceEnabled } from "@/lib/attendance/server";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "정정 신청 · WORKON" };
+export const metadata = { title: "정정 신청 · Moa-on" };
 
 // 정정 신청 · 휴일 근무 상신 쓰기(spec/features/attendance.md §6, D-239). ?date=YYYY-MM-DD&kind=correction|holiday
 export default function AttendanceRequestPage({ params, searchParams }: PageProps<"/workspace/[id]/employee/attendance/request">) {

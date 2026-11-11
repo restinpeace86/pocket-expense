@@ -7,7 +7,7 @@ import { destinationAfterLogin } from "@/lib/auth/paths";
 import { getCurrentUserId, getMembership } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "회사 초대 · WORKON" };
+export const metadata = { title: "회사 초대 · Moa-on" };
 
 // 공용 초대 링크/QR 진입 (spec/features/auth-onboarding.md §3.1)
 export default function InviteLinkPage({ params }: PageProps<"/join/[inviteCode]">) {

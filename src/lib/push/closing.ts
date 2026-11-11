@@ -55,7 +55,7 @@ export async function runClosingReminders(today?: string): Promise<{ targets: nu
       pushed += r.sent;
     }
     // 채팅 [알림]방 카드(D-224) — 앱 알림을 못 받는 기기여도 채팅에서 보인다
-    await postNoticeCards(admin, t.company_id, [t.member_id], { title, lines: msg.text.split("\n").map((l) => l.replace(/^\[WORKON\]\s*/, "").trim()).filter(Boolean), url: msg.buttonPath }).catch(() => 0);
+    await postNoticeCards(admin, t.company_id, [t.member_id], { title, lines: msg.text.split("\n").map((l) => l.replace(/^\[Moa-on\]\s*/, "").trim()).filter(Boolean), url: msg.buttonPath }).catch(() => 0);
   }
   return { targets: rows.length, pushed, alimtalk };
 }

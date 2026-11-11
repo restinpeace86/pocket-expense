@@ -44,7 +44,7 @@ async function installQrImage(url: string, companyName: string): Promise<string>
   g.fillRect(0, 0, c.width, 12);
   g.textAlign = "center";
   g.fillStyle = "#1e1b4b";
-  fit("WORKON 앱 설치 안내", 800, 40, 84);
+  fit("Moa-on 앱 설치 안내", 800, 40, 84);
   g.fillStyle = "#3f3f46";
   fit(`${companyName} 직원용`, 700, 26, 128);
   g.fillStyle = "#52525b";

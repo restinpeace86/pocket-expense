@@ -30,15 +30,15 @@ export function OfficeIntro({
       <div className="flex flex-col gap-2 pt-8">
         <p className="flex items-center gap-1.5 text-sm font-medium text-brand-700">
           <Landmark className="size-4" aria-hidden />
-          WORKON 세무사무소
+          Moa-on 세무사무소
         </p>
         <h1 className="text-balance break-keep text-2xl font-bold tracking-tight">
           {companyName ? `${companyName}의 세무 자료가 정리돼 있어요` : "고객사 지출 자료를 정리된 채로 받으세요"}
         </h1>
         <p className="break-keep text-zinc-600">
           {companyName
-            ? `${agentName ? `${agentName}님, ` : ""}고객사 ${companyName}이(가) WORKON으로 지출·증빙을 관리하고, ${officeName ?? "세무사무소"}을(를) 세무대행 사무소로 지정했어요. 아래 버튼으로 시작하면 바로 이 고객사와 연결돼요.`
-            : "고객사가 WORKON으로 영수증·지출결의서를 관리하면, 세무사무소는 승인된 자료를 매달 한곳에서 받아요."}
+            ? `${agentName ? `${agentName}님, ` : ""}고객사 ${companyName}이(가) Moa-on으로 지출·증빙을 관리하고, ${officeName ?? "세무사무소"}을(를) 세무대행 사무소로 지정했어요. 아래 버튼으로 시작하면 바로 이 고객사와 연결돼요.`
+            : "고객사가 Moa-on으로 영수증·지출결의서를 관리하면, 세무사무소는 승인된 자료를 매달 한곳에서 받아요."}
         </p>
         {invalid && (
           <p role="alert" className="break-keep rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">

@@ -6,7 +6,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { chatEnabled } from "@/lib/chat/server";
 import { getMyProfile } from "@/lib/employee/profile";
 
-export const metadata = { title: "내 정보 · WORKON" };
+export const metadata = { title: "내 정보 · Moa-on" };
 
 // 직원 [내 정보] (employee-mobile.md ⑤)
 export default function ProfilePage({ params }: PageProps<"/workspace/[id]/employee/profile">) {

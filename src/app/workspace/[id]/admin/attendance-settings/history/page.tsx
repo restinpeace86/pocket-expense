@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { SectionHeading } from "@/components/ui/help";
 import { AttendancePart } from "../part";
 
-export const metadata = { title: "변경 이력 · WORKON" };
+export const metadata = { title: "변경 이력 · Moa-on" };
 
 // 설정 › 근태 정책 › 변경 이력(D-251)
 export default function Page({ params }: PageProps<"/workspace/[id]/admin/attendance-settings/history">) {

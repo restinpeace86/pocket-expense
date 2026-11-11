@@ -6,7 +6,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { validDoc } from "@/lib/doc-convert/model";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "서류 → 엑셀 · WORKON" };
+export const metadata = { title: "서류 → 엑셀 · Moa-on" };
 
 // 변환 결과 보기·고치기(8-104 A③·A④, spec/features/company-forms.md §A)
 export default function ConvertPage({ params }: PageProps<"/workspace/[id]/employee/convert/[cid]">) {

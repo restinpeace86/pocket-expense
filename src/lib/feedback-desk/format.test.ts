@@ -25,14 +25,14 @@ describe("의견 보내기 (D-246)", () => {
 
   it("운영자 알림은 첫 줄 60자", () => {
     const t = feedbackNotifyText("예시 회사", "김대리", "bug", `${"가".repeat(70)}\n둘째 줄`, true);
-    expect(t).toContain("🐛 [WORKON] 버그 신고: 예시 회사 · 김대리 · 캡처 있음");
+    expect(t).toContain("🐛 [Moa-on] 버그 신고: 예시 회사 · 김대리 · 캡처 있음");
     expect(t).toContain(`${"가".repeat(60)}…`);
     expect(t).not.toContain("둘째 줄");
   });
 
-  it("안내 문구: 버그는 24시간 안에 확인, 기능 개선은 WORKON", () => {
+  it("안내 문구: 버그는 24시간 안에 확인, 기능 개선은 Moa-on", () => {
     expect(FEEDBACK_DONE.bug.paragraphs.join(" ")).toContain("24시간 안에 확인");
-    expect(FEEDBACK_DONE.feature.paragraphs.join(" ")).toContain("WORKON");
+    expect(FEEDBACK_DONE.feature.paragraphs.join(" ")).toContain("Moa-on");
     expect(FEEDBACK_DONE.feature.paragraphs.join(" ")).not.toContain("모아온");
   });
 });

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 // 출근 단말 화면(spec/features/attendance.md §2-2, D-236) — 로그인 없이 이 기기에 저장된 단말 열쇠로만 동작
 // 열쇠 없음 → 연결 코드 입력 / 있음 → 몇 초마다 서버에서 지금 칸 QR을 받아 그림(30초마다 바뀜)
-const KEY = "workon-attend-terminal";
+const KEY = "workon-attend-terminal"; // 저장 키는 예전 이름 그대로(바꾸면 연결된 출근 단말이 풀림, D-251)
 const POLL_MS = 3000;
 
 type Info =

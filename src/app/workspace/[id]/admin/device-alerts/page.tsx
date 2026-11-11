@@ -5,7 +5,7 @@ import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { chatEnabled } from "@/lib/chat/server";
 
-export const metadata = { title: "이 기기 알림 · WORKON" };
+export const metadata = { title: "이 기기 알림 · Moa-on" };
 
 // 이 기기 알림(D-116 → D-251): 사람·기기마다 정하는 것이라 회사 설정 밖. 직원은 [내 정보]에 같은 칸이 있다
 export default function DeviceAlertsPage({ params }: PageProps<"/workspace/[id]/admin/device-alerts">) {

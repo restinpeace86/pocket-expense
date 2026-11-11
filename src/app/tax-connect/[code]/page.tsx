@@ -8,7 +8,7 @@ import { messageForDbError } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTaxOffice } from "@/lib/tax-office/queries";
 
-export const metadata = { title: "고객사 연결 · WORKON 세무사무소", robots: { index: false, follow: false } };
+export const metadata = { title: "고객사 연결 · Moa-on 세무사무소", robots: { index: false, follow: false } };
 
 // 고객사 연결 링크 처리 (D-173): 로그인 → 사무소가 없으면 등록과 함께 연결 / 사무소 관리자면 바로 연결 / 소속 세무사면 안내
 export default function TaxConnectPage({ params }: PageProps<"/tax-connect/[code]">) {

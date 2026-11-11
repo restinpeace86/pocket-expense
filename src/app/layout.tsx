@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// 검색·공유 메타데이터(7차 개선사항 6, D-129). 화면별 제목은 각 page의 metadata.title("… · WORKON")이 덮어쓴다.
+// 검색·공유 메타데이터(7차 개선사항 6, D-129). 화면별 제목은 각 page의 metadata.title("… · Moa-on")이 덮어쓴다.
 // 공유 이미지는 app/opengraph-image.tsx, 사이트맵·robots는 app/sitemap.ts·robots.ts
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   verification: verificationTags(),
   // 홈 화면에 추가했을 때 아이콘·이름(아이폰 웹 알림은 홈 화면 앱에서만, D-116)
   icons: { apple: "/icons/180" },
-  appleWebApp: { capable: true, title: "WORKON", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Moa-on", statusBarStyle: "default" },
 };
 
 // 밝은 화면 전용(D-230): 휴대폰이 다크 모드여도 크롬·앱이 화면을 어둡게 칠하지 않게(우리 색 테마는 data-theme으로)

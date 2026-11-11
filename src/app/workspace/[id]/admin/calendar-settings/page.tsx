@@ -5,7 +5,7 @@ import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { calendarEnabled, getMeetingRooms } from "@/lib/calendar/server";
 
-export const metadata = { title: "회의실 · WORKON" };
+export const metadata = { title: "회의실 · Moa-on" };
 
 // 설정 › 회사 자산 › 회의실(D-207 → D-251). 캘린더 켜기·끄기는 설정 › 기능 사용
 export default function CalendarSettingsPage({ params }: PageProps<"/workspace/[id]/admin/calendar-settings">) {

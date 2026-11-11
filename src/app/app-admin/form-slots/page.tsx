@@ -4,7 +4,7 @@ import { FormSlotButtons } from "@/components/app-admin/form-slot-buttons";
 import { requireAppAdmin } from "@/lib/app-admin/guard";
 import { formatDateTimeKst } from "@/lib/claims/format";
 
-export const metadata = { title: "양식 칸 신청 · WORKON 운영자" };
+export const metadata = { title: "양식 칸 신청 · Moa-on 운영자" };
 
 // 회사 양식 칸 추가 신청(8-104 B-4): 결제가 꺼진 동안 회사 관리자의 [추가 신청]을 받아 칸을 늘려 준다(나중에 1장 2만 원 한 번 결제로)
 export default function FormSlotsPage() {

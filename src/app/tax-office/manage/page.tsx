@@ -6,7 +6,7 @@ import { PushToggle } from "@/components/push/push-toggle";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTaxOffice, getTaxOfficeClients, isActiveMember } from "@/lib/tax-office/queries";
 
-export const metadata = { title: "사무소 관리 · WORKON 세무사무소" };
+export const metadata = { title: "사무소 관리 · Moa-on 세무사무소" };
 
 // 사무소 관리 (D-149, D-152): 관리자 = 초대·구성원(이용 중지·사무소 관리자 바꾸기)·세무사무소 삭제 / 세무사 = 내 사무소(탈퇴)
 export default function TaxOfficeManagePage() {

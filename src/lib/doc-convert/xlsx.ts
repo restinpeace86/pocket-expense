@@ -6,7 +6,7 @@ import type { DocModel } from "./model";
 const BORDER = { style: "thin" as const, color: { argb: "FF3F3F46" } };
 export async function buildDocWorkbook(doc: DocModel): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "WORKON";
+  wb.creator = "Moa-on";
   const used = new Set<string>();
   for (const s of doc.sheets) {
     let name = (s.name || "시트").replace(/[\\/?*[\]:]/g, " ").slice(0, 28);

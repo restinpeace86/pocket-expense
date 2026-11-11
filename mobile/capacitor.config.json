@@ -1,6 +1,6 @@
 {
   "appId": "kr.damounlab.app",
-  "appName": "WORKON",
+  "appName": "Moa-on",
   "webDir": "www",
   "server": {
     "url": "https://pocket-expense-ruby.vercel.app",

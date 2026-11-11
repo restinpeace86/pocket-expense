@@ -1,4 +1,4 @@
-// WORKON 웹푸시 서비스 워커 (D-116 · D-214) — 알림 보여 주기 + 누르면 그 화면 열기
+// Moa-on 웹푸시 서비스 워커 (D-116 · D-214) — 알림 보여 주기 + 누르면 그 화면 열기
 // - 브라우저 창을 닫았거나 다른 앱을 보고 있어도, 브라우저 회사 푸시 서버가 이 워커를 깨워 알림을 띄운다(상단 배너·잠금화면).
 // - 진동: 기기 설정 [알림 올 때 소리·진동]이 켜져 있으면 길게 세 번(D-227) — 휴대폰이 무음이면 OS가 알아서 울리지 않는다.
 //   끄면 소리·진동 없이 배너만(silent). 안드로이드 8 이상은 진동 모양을 휴대폰의 사이트 알림 설정이 정하기도 한다.
@@ -13,9 +13,9 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "WORKON", body: event.data ? event.data.text() : "" };
+    data = { title: "Moa-on", body: event.data ? event.data.text() : "" };
   }
-  const title = data.title || "WORKON";
+  const title = data.title || "Moa-on";
   const chat = !!(data.tag && String(data.tag).startsWith("chat-"));
   const loud = data.vibrate !== false;
   event.waitUntil(

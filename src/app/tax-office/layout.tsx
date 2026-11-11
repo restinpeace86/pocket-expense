@@ -8,7 +8,7 @@ import { requireLogin } from "@/lib/auth/guards";
 import { getMyTaxOffice, getTaxOfficeClients } from "@/lib/tax-office/queries";
 
 // 세무사무소 워크스페이스 (D-149): 회사 멤버와 별개. 구성원이 아니면 사무소 등록·합류 화면
-export const metadata: Metadata = { title: "세무사무소 · WORKON", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "세무사무소 · Moa-on", robots: { index: false, follow: false } };
 
 export default function TaxOfficeLayout({ children }: LayoutProps<"/tax-office">) {
   return (

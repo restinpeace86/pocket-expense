@@ -8,7 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
 
-// WORKON 안드로이드 설치 앱(D-228). 화면은 운영 웹을 그대로 연다(capacitor.config.json server.url).
+// Moa-on 안드로이드 설치 앱(D-228). 화면은 운영 웹을 그대로 연다(capacitor.config.json server.url).
 // 이 앱이 하는 일: 알림 채널 만들기 — 채널 이름은 서버(src/lib/push/fcm.ts fcmChannel)와 같아야 한다.
 //  - chat: 채팅·회의 알림. 중요도 높음(화면 위에 크게), 길게 세 번 진동, 기본 알림음
 //  - general: 그 밖의 알림(결재 완료·정산 등). 보통 중요도

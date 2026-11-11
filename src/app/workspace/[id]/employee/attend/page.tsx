@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { QrCamera } from "@/components/attendance/qr-camera";
 import { attendanceEnabled } from "@/lib/attendance/server";
 
-export const metadata = { title: "QR 출퇴근 · WORKON" };
+export const metadata = { title: "QR 출퇴근 · Moa-on" };
 
 // 앱 안 QR 스캐너(spec/features/attendance.md §3-1, D-236). 근태가 꺼진 회사는 404
 export default function AttendCameraPage({ params }: PageProps<"/workspace/[id]/employee/attend">) {

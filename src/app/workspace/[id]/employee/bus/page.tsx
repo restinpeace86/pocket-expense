@@ -5,7 +5,7 @@ import { getCompanyNearby } from "@/lib/bus/server";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "주변 버스 · WORKON" };
+export const metadata = { title: "주변 버스 · Moa-on" };
 
 // 주변 버스(D-243): 회사 200m 안 정류장(가까운 순 5곳, 없으면 500m 3곳). 회사 위치가 서울이 아니거나 없으면 404
 export default function BusPage({ params }: PageProps<"/workspace/[id]/employee/bus">) {

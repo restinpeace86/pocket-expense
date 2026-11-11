@@ -121,7 +121,7 @@ export function ChatVisualAlert({ memberId, companyId, initialOn }: { memberId: 
   if (popup) return null;
   return (
     <>
-      {pulse > 0 && <div key={pulse} aria-hidden className="workon-edge-pulse pointer-events-none fixed inset-0 z-[69] hidden md:block" onAnimationEnd={() => setPulse(0)} data-visual-pulse />}
+      {pulse > 0 && <div key={pulse} aria-hidden className="moaon-edge-pulse pointer-events-none fixed inset-0 z-[69] hidden md:block" onAnimationEnd={() => setPulse(0)} data-visual-pulse />}
       <div
         role="status"
         aria-live="polite"
@@ -152,7 +152,7 @@ function Toast({ t, onOpen, onClose }: { t: AlertToast; onOpen: () => void; onCl
   }, [start, t.at]);
   return (
     <div
-      className="workon-toast-in pointer-events-auto flex items-start gap-1 rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-[0_10px_30px_rgba(0,0,0,0.14)]"
+      className="moaon-toast-in pointer-events-auto flex items-start gap-1 rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-[0_10px_30px_rgba(0,0,0,0.14)]"
       onMouseEnter={() => {
         hovered.current = true;
         if (timer.current) clearTimeout(timer.current);

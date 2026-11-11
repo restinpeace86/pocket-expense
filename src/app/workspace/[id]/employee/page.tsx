@@ -14,7 +14,7 @@ import { getInboxBadge } from "@/lib/claims/inbox";
 import { todayKst } from "@/lib/dates";
 import { getMySummary } from "@/lib/employee/queries";
 
-export const metadata = { title: "홈 · WORKON" };
+export const metadata = { title: "홈 · Moa-on" };
 
 // 화면 E-01 직원 홈 = 허브 (spec/screens/worker-dashboard.md §0, D-235)
 export default function EmployeeHomePage({ params, searchParams }: PageProps<"/workspace/[id]/employee">) {

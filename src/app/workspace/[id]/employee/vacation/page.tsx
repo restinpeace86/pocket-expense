@@ -5,7 +5,7 @@ import { attendanceEnabled, getMyVacation } from "@/lib/attendance/server";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { todayKst } from "@/lib/dates";
 
-export const metadata = { title: "휴가 · WORKON" };
+export const metadata = { title: "휴가 · Moa-on" };
 
 // 직원 [휴가](D-241, spec/features/attendance.md §8-2). 근태 꺼진 회사는 404
 export default function VacationPage({ params, searchParams }: PageProps<"/workspace/[id]/employee/vacation">) {

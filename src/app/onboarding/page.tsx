@@ -6,7 +6,7 @@ import { buttonPrimary, buttonSecondary, Card, PageShell } from "@/components/ui
 import { requireNoMembership } from "@/lib/auth/guards";
 import { isTaxOfficeUser } from "@/lib/tax-office/queries";
 
-export const metadata = { title: "시작하기 · WORKON" };
+export const metadata = { title: "시작하기 · Moa-on" };
 
 export default function OnboardingPage() {
   return (

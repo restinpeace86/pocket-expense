@@ -15,7 +15,7 @@ import { AttendanceHomeCard } from "@/components/admin/attendance-home-card";
 import { attendancePendingCount } from "@/lib/attendance/server";
 import type { DayAdminData } from "@/lib/attendance/today";
 
-export const metadata = { title: "관리자 · WORKON" };
+export const metadata = { title: "관리자 · Moa-on" };
 
 export default function AdminHomePage({ params }: PageProps<"/workspace/[id]/admin">) {
   return (

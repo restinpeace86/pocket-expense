@@ -331,25 +331,25 @@ html[data-chat-theme="cool"] {
 }
 
 /* PC 무소음 시각 알림(D-246): 가장자리 파란빛 짧게 2번(약 1초). 움직임 줄이기면 화면에서 아예 그리지 않음 */
-@keyframes workon-edge-pulse {
+@keyframes moaon-edge-pulse {
   0% { opacity: 0; }
   25% { opacity: 1; }
   50% { opacity: 0; }
   75% { opacity: 1; }
   100% { opacity: 0; }
 }
-.workon-edge-pulse {
+.moaon-edge-pulse {
   box-shadow: inset 0 0 90px 24px rgb(59 130 246 / 0.45);
-  animation: workon-edge-pulse 1s ease-in-out 1 forwards;
+  animation: moaon-edge-pulse 1s ease-in-out 1 forwards;
 }
-@keyframes workon-toast-in {
+@keyframes moaon-toast-in {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.workon-toast-in { animation: workon-toast-in 0.2s ease-out; }
+.moaon-toast-in { animation: moaon-toast-in 0.2s ease-out; }
 @media (prefers-reduced-motion: reduce) {
-  .workon-edge-pulse { display: none; }
-  .workon-toast-in { animation: none; }
+  .moaon-edge-pulse { display: none; }
+  .moaon-toast-in { animation: none; }
 }
 
 /* 서브 대화 서랍(D-246): 좁은 PC(1180px 미만)에서 서랍을 열면 왼쪽 채팅 목록을 접어 메인 + 서랍이 들어가게 */

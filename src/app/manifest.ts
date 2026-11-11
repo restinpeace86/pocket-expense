@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 // 홈 화면에 추가(PWA) — 아이폰은 홈 화면에 추가한 앱에서만 웹 알림을 받을 수 있다 (D-116)
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "WORKON",
-    short_name: "WORKON",
+    name: "Moa-on",
+    short_name: "Moa-on",
     start_url: "/login",
     display: "standalone",
     background_color: "#ffffff",

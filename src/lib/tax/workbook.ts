@@ -366,7 +366,7 @@ export async function buildTaxWorkbook(opts: { month: string; companyName: strin
   const files = new Map(rows.map((r) => [r.item_id, evidenceFile(r, month, total)?.name ?? null]));
   const ctx: Ctx = { month, total, files };
   const wb = new ExcelJS.Workbook();
-  wb.creator = "WORKON";
+  wb.creator = "Moa-on";
   wb.created = new Date();
   addTable(wb.addWorksheet("지출내역"), SHEET1, rows, ctx, ["공급가액", "부가세", "합계금액", "회사지원금", "개인부담금", "정산금액"]);
   const [y, m] = month.split("-");

@@ -1,6 +1,6 @@
 // 사내 메신저 화면 계산 (D-203, spec/features/messenger.md). 순수 함수라 단위 테스트한다.
 
-export type ChatKind = "direct" | "group" | "claim" | "notice" | "assistant"; // notice = 사람마다 하나인 알림방(D-206), assistant = WORKON 도우미 방(D-222)
+export type ChatKind = "direct" | "group" | "claim" | "notice" | "assistant"; // notice = 사람마다 하나인 알림방(D-206), assistant = Moa-on 도우미 방(D-222)
 export type ChatMember = { member_id: string; name: string; status: string; last_read_at: string; joined_at: string };
 export type ChatMessage = {
   id: string;
@@ -74,7 +74,7 @@ export function roomTitle(room: { kind: ChatKind; title: string | null; claim_ti
   const others = room.members.filter((m) => m.member_id !== meId);
   if (room.kind === "direct") return others[0] ? displayName(others[0]) : "대화 상대 없음";
   if (room.kind === "notice") return "알림";
-  if (room.kind === "assistant") return "WORKON 도우미";
+  if (room.kind === "assistant") return "Moa-on 도우미";
   if (room.kind === "claim") return room.claim_title?.trim() ? `📄 ${room.claim_title}` : "📄 소명서 대화";
   if (room.title?.trim()) return room.title;
   if (!others.length) return "대화 상대 없음";

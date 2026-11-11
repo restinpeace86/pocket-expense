@@ -25,7 +25,7 @@ import { getHolidays } from "@/lib/expense/holidays";
 import { getExportOptions } from "@/lib/tax/export-options";
 import { OfficeWorkbookPreview } from "@/components/tax-office/office-workbook-preview";
 
-export const metadata = { title: "세무 마감 · WORKON" };
+export const metadata = { title: "세무 마감 · Moa-on" };
 
 // 화면: 세무 마감 및 증빙 다운로드 (tax-closing.md)
 export default function ExportPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/export">) {

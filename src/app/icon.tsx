@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-// 브라우저 탭 아이콘(D-221): 브랜드 색 바탕 + 흰 켜진 스위치(WORKON 로고의 O)
+// 브라우저 탭 아이콘(D-221): 브랜드 색 바탕 + 흰 켜진 스위치(Moa-on 로고의 O)
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 

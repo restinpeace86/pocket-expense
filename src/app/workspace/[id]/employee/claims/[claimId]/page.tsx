@@ -7,7 +7,7 @@ import { chatEnabled } from "@/lib/chat/server";
 import { ClaimEventLink } from "@/components/calendar/claim-event-link";
 import { getClaimDetail } from "@/lib/claims/detail";
 
-export const metadata = { title: "지출결의서 · WORKON" };
+export const metadata = { title: "지출결의서 · Moa-on" };
 
 // 직원 결의서 상세 (employee-mobile.md ④): 본인 결의서만
 export default function EmployeeClaimPage({ params }: PageProps<"/workspace/[id]/employee/claims/[claimId]">) {

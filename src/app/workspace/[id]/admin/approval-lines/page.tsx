@@ -3,7 +3,7 @@ import { ApprovalLinesHeading, ApprovalLinesView } from "@/components/admin/appr
 import { getApprovalLines } from "@/lib/admin/approval-lines";
 import { requireWorkspace } from "@/lib/auth/guards";
 
-export const metadata = { title: "사전 검토 결재라인 · WORKON" };
+export const metadata = { title: "사전 검토 결재라인 · Moa-on" };
 
 // 화면 ⑥ 사전 검토 결재라인 (admin-dashboard.md ⑥)
 export default function ApprovalLinesPage({ params }: PageProps<"/workspace/[id]/admin/approval-lines">) {

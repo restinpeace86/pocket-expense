@@ -3,7 +3,7 @@ import { ConvertList, type ConversionRow } from "@/components/doc-convert/conver
 import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "서류 → 엑셀 · WORKON" };
+export const metadata = { title: "서류 → 엑셀 · Moa-on" };
 
 // 서류 → 엑셀(8-104 A-1): 기기에서 사진·PDF 고르기 + 내 변환 / 회사 공유
 export default function ConvertListPage({ params }: PageProps<"/workspace/[id]/employee/convert">) {

@@ -4,7 +4,7 @@ import { ScanResult } from "@/components/attendance/scan-result";
 import { requireLogin } from "@/lib/auth/guards";
 import { getMembership } from "@/lib/auth/session";
 
-export const metadata = { title: "QR 출퇴근 · WORKON", robots: { index: false } };
+export const metadata = { title: "QR 출퇴근 · Moa-on", robots: { index: false } };
 
 // QR 출퇴근 결과(spec/features/attendance.md §3, D-236): 휴대폰 기본 카메라·앱 [QR 출퇴근] 모두 이 주소로 온다
 export default function ScanPage({ searchParams }: PageProps<"/attend/scan">) {

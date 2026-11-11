@@ -6,7 +6,7 @@ import { currentMonthKst } from "@/lib/dates";
 import { getMyClaims, getMySummary } from "@/lib/employee/queries";
 import { filterStatuses, parseFilter, parseMonth } from "@/lib/expense/status";
 
-export const metadata = { title: "지출결의 · WORKON" };
+export const metadata = { title: "지출결의 · Moa-on" };
 
 // [지출결의] 화면: 내 결의서 목록 (worker-dashboard.md §4, D-235 — 예전 직원 홈에서 옮김)
 export default function ClaimsPage({ params, searchParams }: PageProps<"/workspace/[id]/employee/claims">) {

@@ -4,7 +4,7 @@ import { ReviewToggle } from "@/components/app-admin/review-toggle";
 import { authorLabel, featureLabel, isDisplayableReview, REVIEW_DISPLAY_MIN } from "@/lib/feedback-survey";
 import { requireAppAdmin } from "@/lib/app-admin/guard";
 
-export const metadata = { title: "후기·설문 · WORKON 운영자" };
+export const metadata = { title: "후기·설문 · Moa-on 운영자" };
 
 // 후기·설문 (D-130): 회사별 설문 결과와 랜딩 노출 관리. 숨김(is_displayed)만 바꿀 수 있다
 export default function ReviewsPage() {

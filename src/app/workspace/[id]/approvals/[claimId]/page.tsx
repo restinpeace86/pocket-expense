@@ -11,7 +11,7 @@ import { isAdminRole } from "@/lib/auth/paths";
 import { getClaimDetail } from "@/lib/claims/detail";
 import { canActOnClaim } from "@/lib/claims/types";
 
-export const metadata = { title: "결재 · WORKON" };
+export const metadata = { title: "결재 · Moa-on" };
 
 // 결재 화면 (approver.md ①) — 알림톡 [결재하러 가기] 도착지.
 // 링크에 토큰이 없으므로 로그인은 proxy가 확인하고(로그인 뒤 이 주소로 돌아옴), 여기서는 권한에 맞는 화면을 보여 준다.

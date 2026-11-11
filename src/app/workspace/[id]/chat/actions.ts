@@ -75,7 +75,7 @@ async function answerInAssistantRoom(messageId: string, info: PushInfo): Promise
   return { ...row, sender_name: null, attachment_path: null, attachment_thumb_path: null, attachment_name: null, attachment_size: null, attachment_mime: null, width: null, height: null, deleted: false };
 }
 
-// 채팅 목록 [WORKON 도우미] → 내 도우미 방(없으면 만들기)
+// 채팅 목록 [Moa-on 도우미] → 내 도우미 방(없으면 만들기)
 export async function openAssistantRoomAction(): Promise<{ roomId: string } | { error: string }> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("chat_assistant_room");

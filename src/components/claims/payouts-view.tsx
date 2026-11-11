@@ -159,7 +159,7 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
                     ) : (
                       <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">계좌 미등록</span>
-                        <CopyButton text={`${g.name}님, WORKON [내 정보]에서 정산 계좌를 등록해 주세요.`} label="계좌 등록 요청 문구 복사" />
+                        <CopyButton text={`${g.name}님, Moa-on [내 정보]에서 정산 계좌를 등록해 주세요.`} label="계좌 등록 요청 문구 복사" />
                       </p>
                     )}
                   </div>

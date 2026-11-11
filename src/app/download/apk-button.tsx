@@ -23,7 +23,7 @@ export function ApkButton({ apk, version }: { apk: string; version: string }) {
     );
   }
   return (
-    <a href={apk} download="WORKON.apk" className={cls}>
+    <a href={apk} download="Moa-on.apk" className={cls}>
       <Download className="size-4" aria-hidden /> 안드로이드 앱 받기 (v{version})
     </a>
   );

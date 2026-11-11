@@ -7,7 +7,7 @@ import { attendanceEnabled, getLeaveAdmin } from "@/lib/attendance/server";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { todayKst } from "@/lib/dates";
 
-export const metadata = { title: "직원별 연차 · WORKON" };
+export const metadata = { title: "직원별 연차 · Moa-on" };
 
 // 직원별 연차(D-240, spec/features/attendance.md §7): 설정 > 근태 안. 근태 꺼진 회사는 404
 export default function LeavePage({ params, searchParams }: PageProps<"/workspace/[id]/admin/attendance-settings/leave">) {

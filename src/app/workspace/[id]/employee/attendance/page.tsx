@@ -6,7 +6,7 @@ import { attendanceEnabled } from "@/lib/attendance/server";
 import { currentMonthKst, todayKst } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "근태 · WORKON" };
+export const metadata = { title: "근태 · Moa-on" };
 
 // 월 근태 현황(spec/features/attendance.md §5 D-237, §6 D-239): 홈 메뉴 칸 [근태] → 이번 달. 근태 꺼진 회사는 404
 export default function AttendanceMonthPage({ params, searchParams }: PageProps<"/workspace/[id]/employee/attendance">) {

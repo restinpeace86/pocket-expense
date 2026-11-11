@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getTaxMonth, MONTH } from "@/lib/tax/closing";
 import { isOwnCar } from "@/lib/tax/export-rows";
 
-export const metadata = { title: "월별 지출 현황 · WORKON" };
+export const metadata = { title: "월별 지출 현황 · Moa-on" };
 
 // 월별 지출 현황 (D-160, 개선사항 3): 승인·지급된 지출이 어떤 계정과목으로 세무사무소에 넘어가는지 보기만 한다.
 // 계정과목 변경 버튼 없음. 행은 세무 마감과 같은 기준(사용일자 달, 승인·지급)

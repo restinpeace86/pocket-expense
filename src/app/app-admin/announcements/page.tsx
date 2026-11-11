@@ -4,7 +4,7 @@ import { AnnouncementForm, AnnouncementList } from "@/components/push/announceme
 import { requireAppAdmin } from "@/lib/app-admin/guard";
 import { postPlatformAnnouncementAction } from "./actions";
 
-export const metadata = { title: "전체 공지 · WORKON 운영자" };
+export const metadata = { title: "전체 공지 · Moa-on 운영자" };
 
 // 전체 공지 (D-116 채널 A) — 모든 회사의 대표·직원에게
 export default function PlatformAnnouncementsPage() {

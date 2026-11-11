@@ -1,13 +1,13 @@
 import { configuredSiteUrl } from "@/lib/site-url";
 
 // 검색·공유용 기본 정보 (7차 개선사항 6, D-129)
-export const SITE_NAME = "WORKON";
-export const SITE_TITLE = "WORKON - 작은 회사 통합 운영관리 · 경비 정산·결재·사내 채팅·캘린더";
+export const SITE_NAME = "Moa-on";
+export const SITE_TITLE = "Moa-on - 작은 회사 통합 운영관리 · 경비 정산·결재·사내 채팅·캘린더";
 export const SITE_DESCRIPTION =
-  "5~20인 작은 회사를 위한 통합 운영관리 WORKON. 영수증 사진으로 AI가 지출결의서를 채우고 카카오톡으로 결재하며, 사내 채팅·일정 공유 캘린더·회의실 예약과 월말 세무사무소 자료 전달까지 한 구독으로 이어서 씁니다.";
+  "5~20인 작은 회사를 위한 통합 운영관리 Moa-on. 영수증 사진으로 AI가 지출결의서를 채우고 카카오톡으로 결재하며, 사내 채팅·일정 공유 캘린더·회의실 예약과 월말 세무사무소 자료 전달까지 한 구독으로 이어서 씁니다.";
 export const SITE_KEYWORDS = [
-  "WORKON",
-  "워크온",
+  "Moa-on",
+  "모아온",
   "소규모 회사 그룹웨어",
   "통합 운영관리",
   "사내 메신저",

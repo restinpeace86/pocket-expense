@@ -3,7 +3,7 @@ import { Panel } from "@/components/app-admin/app-admin-shell";
 import { HolidayEditor } from "@/components/app-admin/holiday-editor";
 import { requireAppAdmin } from "@/lib/app-admin/guard";
 
-export const metadata = { title: "공휴일 · WORKON 운영자" };
+export const metadata = { title: "공휴일 · Moa-on 운영자" };
 
 // 공휴일 (D-161): 마감일·알림일이 이 날짜거나 주말이면 앞 영업일로 당긴다. 해마다 연말에 다음 해 공휴일(대체공휴일·선거일)을 확인해 넣는다
 export default function HolidaysPage() {

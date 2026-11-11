@@ -5,7 +5,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import type { FormKind } from "@/lib/company-forms/model";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "회사 양식 · WORKON" };
+export const metadata = { title: "회사 양식 · Moa-on" };
 
 // 관리자 설정 › 회사 양식 (8-104 B④, spec/features/company-forms.md §B)
 export default function CompanyFormsPage({ params }: PageProps<"/workspace/[id]/admin/company-forms">) {

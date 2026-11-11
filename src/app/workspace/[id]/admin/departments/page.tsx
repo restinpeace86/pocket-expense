@@ -3,7 +3,7 @@ import { DepartmentsHeading, DepartmentsView } from "@/components/admin/departme
 import { getDepartments } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 
-export const metadata = { title: "부서 · WORKON" };
+export const metadata = { title: "부서 · Moa-on" };
 
 export default function DepartmentsPage({ params }: PageProps<"/workspace/[id]/admin/departments">) {
   return (

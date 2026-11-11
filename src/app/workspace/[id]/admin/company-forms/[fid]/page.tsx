@@ -6,7 +6,7 @@ import { signedFormSource } from "@/lib/company-forms/server";
 import { validDoc } from "@/lib/doc-convert/model";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "회사 양식 등록 · WORKON" };
+export const metadata = { title: "회사 양식 등록 · Moa-on" };
 
 // 회사 양식 등록 PC 편집(8-104 B②·B③, spec/features/company-forms.md §B-2)
 export default function CompanyFormEditPage({ params }: PageProps<"/workspace/[id]/admin/company-forms/[fid]">) {

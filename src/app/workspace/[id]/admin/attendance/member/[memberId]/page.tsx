@@ -7,7 +7,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { currentMonthKst } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "직원 월 근태 · WORKON" };
+export const metadata = { title: "직원 월 근태 · Moa-on" };
 
 // 관리자: 직원 월 근태(D-242) — 직원 화면과 같은 목록, 보기만(신청·취소 버튼 없음)
 export default function MemberMonthPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/attendance/member/[memberId]">) {

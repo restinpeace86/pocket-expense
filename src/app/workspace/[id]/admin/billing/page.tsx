@@ -7,7 +7,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { todayKst } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "요금제 · WORKON" };
+export const metadata = { title: "요금제 · Moa-on" };
 
 // 화면 A-05 요금제 (spec/screens/admin-billing.md) + 크레딧 사용 내역(8-104)
 export default function BillingPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/billing">) {

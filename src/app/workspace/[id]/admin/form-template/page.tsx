@@ -7,7 +7,7 @@ import { DEFAULT_LAYOUT, SAMPLE_DOC } from "@/lib/forms/layout";
 import { createClient } from "@/lib/supabase/server";
 import { getClaimDocsByIds } from "@/lib/tax/claim-docs";
 
-export const metadata = { title: "지출결의서 양식 · WORKON" };
+export const metadata = { title: "지출결의서 양식 · Moa-on" };
 
 // 지출결의서 양식 설정 (D-118, spec/screens/template-configuration.md)
 export default function FormTemplatePage({ params }: PageProps<"/workspace/[id]/admin/form-template">) {

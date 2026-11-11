@@ -21,7 +21,7 @@ describe("parseDay (D-222)", () => {
 describe("ruleIntent (D-222)", () => {
   it("일정", () => {
     expect(ruleIntent("오늘 일정 알려줘", T)).toEqual({ tool: "schedule", day: "2026-11-05" });
-    expect(ruleIntent("@WORKON 내일 스케줄", T)).toEqual({ tool: "schedule", day: "2026-11-06" });
+    expect(ruleIntent("@Moa-on 내일 스케줄", T)).toEqual({ tool: "schedule", day: "2026-11-06" });
   });
   it("회의실 빈 시간(방 이름)", () => {
     expect(ruleIntent("내일 회의실 빈 시간", T)).toEqual({ tool: "rooms", day: "2026-11-06" });

@@ -6,7 +6,7 @@ import { isAdminRole } from "@/lib/auth/paths";
 import { todayKst } from "@/lib/calendar/calendar";
 import { getCalendarDirectory, getMeetingRooms } from "@/lib/calendar/server";
 
-export const metadata = { title: "회의실 예약 · WORKON" };
+export const metadata = { title: "회의실 예약 · Moa-on" };
 
 // 회의실 예약 주소(D-215). D-234부터 예약은 캘린더 안 시트·창으로 연다 — 이 주소(도우미 답·예전 채팅 링크)는
 // 회의실이 있으면 캘린더(?rooms=날짜&room=)로 넘기고, 회의실이 없을 때만 안내를 보여 준다

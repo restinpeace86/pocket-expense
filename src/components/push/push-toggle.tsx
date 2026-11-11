@@ -166,7 +166,7 @@ export function PushToggle({ office = false }: { office?: boolean } = {}) {
         {state === "on" && !office && !app && endpoint && <VibrateSwitch endpoint={endpoint} />}
         {state === "on" && app && (
           <p className="w-full border-t border-zinc-100 pt-2 text-xs leading-relaxed text-zinc-600">
-            채팅 알림은 길게 진동하고 소리가 나요. 바꾸려면 휴대폰 설정 › 애플리케이션 › WORKON › 알림 › <b>채팅</b>에서 진동 패턴·소리를 고르세요.
+            채팅 알림은 길게 진동하고 소리가 나요. 바꾸려면 휴대폰 설정 › 애플리케이션 › Moa-on › 알림 › <b>채팅</b>에서 진동 패턴·소리를 고르세요.
           </p>
         )}
         {inst.kind === "prompt" && !inst.installed && (
@@ -194,7 +194,7 @@ export function PushToggle({ office = false }: { office?: boolean } = {}) {
         {state === "ios-install" && <p className="text-sm text-zinc-600">아이폰은 Safari 아래 [공유] → [홈 화면에 추가]로 연 앱에서 알림을 켤 수 있어요.</p>}
         {state === "denied" && (
           <p className="text-sm text-amber-700">
-            {app ? "알림이 막혀 있어요. 휴대폰 설정 › 애플리케이션 › WORKON › 알림에서 허용해 주세요." : "이 브라우저에서 알림이 막혀 있어요. 브라우저(또는 휴대폰) 설정 › 알림에서 이 사이트를 허용해 주세요."}
+            {app ? "알림이 막혀 있어요. 휴대폰 설정 › 애플리케이션 › Moa-on › 알림에서 허용해 주세요." : "이 브라우저에서 알림이 막혀 있어요. 브라우저(또는 휴대폰) 설정 › 알림에서 이 사이트를 허용해 주세요."}
           </p>
         )}
         {state === "unsupported" && <p className="text-sm text-zinc-500">이 브라우저는 웹 알림을 지원하지 않아요.</p>}

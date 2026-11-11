@@ -6,7 +6,7 @@ import { requireAppAdmin } from "@/lib/app-admin/guard";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { FEEDBACK_CATEGORY, FEEDBACK_STATUS_LABEL, userAgentSummary, type FeedbackCategory, type FeedbackStatus } from "@/lib/feedback-desk/format";
 
-export const metadata = { title: "의견 · WORKON 운영자" };
+export const metadata = { title: "의견 · Moa-on 운영자" };
 
 // 의견 보내기 (D-246): 직원·관리자가 보낸 버그 신고·기능 개선. 버그는 24시간 안에 확인(안내 문구 약속)
 export default function FeedbackPage({ searchParams }: PageProps<"/app-admin/feedback">) {

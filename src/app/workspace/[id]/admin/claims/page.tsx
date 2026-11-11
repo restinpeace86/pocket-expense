@@ -7,7 +7,7 @@ import { filterQuery, parseClaimFilters } from "@/lib/claims/filters";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { getAdminClaimList, parseApprovalTab } from "@/lib/claims/admin-list";
 
-export const metadata = { title: "지출 승인 관리 · WORKON" };
+export const metadata = { title: "지출 승인 관리 · Moa-on" };
 
 // 지출 승인 관리 목록 (admin-expense-approvals.md). 넓은 화면에서는 결의서를 고르면 오른쪽에 상세가 열린다
 export default function ClaimsPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/claims">) {

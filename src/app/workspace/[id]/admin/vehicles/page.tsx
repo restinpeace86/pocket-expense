@@ -4,7 +4,7 @@ import { getCompanyVehicles } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { currentMonthKst, monthRange } from "@/lib/dates";
 
-export const metadata = { title: "회사차량 · WORKON" };
+export const metadata = { title: "회사차량 · Moa-on" };
 
 // 회사차량 (D-105, spec/features/company-vehicles.md)
 export default function VehiclesPage({ params }: PageProps<"/workspace/[id]/admin/vehicles">) {

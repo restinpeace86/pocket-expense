@@ -42,7 +42,7 @@ export function TestimonialsView({ rows }: { rows: TestimonialRow[] }) {
       <h2 id="reviews-title" className="text-balance text-center text-3xl font-bold tracking-tight">
         실제 사용자 후기
       </h2>
-      <p className="mt-2 text-center text-sm text-zinc-400">WORKON을 쓰는 회사 담당자들이 직접 남긴 한 줄 후기예요.</p>
+      <p className="mt-2 text-center text-sm text-zinc-400">Moa-on을 쓰는 회사 담당자들이 직접 남긴 한 줄 후기예요.</p>
       {/* 경제적 이해관계 표시(추천·보증 심사지침): 후기 대가로 크레딧을 줬다는 사실을 밝힌다(D-137) */}
       <p className="mt-1 text-center text-xs text-zinc-500">후기를 남긴 회사에는 첫 결제 50% 할인 쿠폰을 드려요.</p>
       <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

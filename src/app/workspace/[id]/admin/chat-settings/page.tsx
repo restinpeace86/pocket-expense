@@ -5,7 +5,7 @@ import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "파일 보관 · WORKON" };
+export const metadata = { title: "파일 보관 · Moa-on" };
 
 // 사진·파일 보관(D-212 → D-218, spec/features/messenger.md §10): 회사 저장 공간 사용량 + 보관 기간(30·60·90일) — 채팅 사진·파일과 회의 자료 모두
 export default function ChatSettingsPage({ params }: PageProps<"/workspace/[id]/admin/chat-settings">) {

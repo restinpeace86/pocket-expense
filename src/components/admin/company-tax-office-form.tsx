@@ -80,8 +80,8 @@ export function CompanyTaxOfficeForm({ current, companyName, connectCode = null 
     // 연결 코드 링크(D-173): 어떤 계정으로 로그인해도 이 고객사와 연결된다
     const link = connectCode && !current.registered ? `${window.location.origin}/for-tax-office/${connectCode}` : `${window.location.origin}/login?next=/tax-office`;
     const text = current.registered
-      ? `[WORKON] ${companyName}의 세무 자료가 ${current.registered_name ?? current.office_name} 고객사 목록에 연결됐어요. 로그인하면 승인된 지출 장부·영수증·지출결의서·홈택스 자료를 받을 수 있어요.\n${link}`
-      : `[WORKON] 고객사 ${companyName}이(가) 지출·증빙 관리에 WORKON을 쓰고 있고, ${current.office_name}을(를) 세무대행 사무소로 지정했어요. 무료 세무사무소 워크스페이스에서 승인된 지출 장부·영수증·지출결의서·홈택스 자료를 한 번에 받을 수 있어요. 아래 링크로 시작하세요.\n${link}`;
+      ? `[Moa-on] ${companyName}의 세무 자료가 ${current.registered_name ?? current.office_name} 고객사 목록에 연결됐어요. 로그인하면 승인된 지출 장부·영수증·지출결의서·홈택스 자료를 받을 수 있어요.\n${link}`
+      : `[Moa-on] 고객사 ${companyName}이(가) 지출·증빙 관리에 Moa-on을 쓰고 있고, ${current.office_name}을(를) 세무대행 사무소로 지정했어요. 무료 세무사무소 워크스페이스에서 승인된 지출 장부·영수증·지출결의서·홈택스 자료를 한 번에 받을 수 있어요. 아래 링크로 시작하세요.\n${link}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);

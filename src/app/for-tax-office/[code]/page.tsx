@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { OfficeIntro } from "@/components/tax-office/office-intro";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "세무사무소 초대 · WORKON", robots: { index: false, follow: false } };
+export const metadata = { title: "세무사무소 초대 · Moa-on", robots: { index: false, follow: false } };
 
 // 고객사가 보낸 연결 링크 (D-173): 로그인 전에도 고객사·사무소 이름만 보여 주고, 시작하면 /tax-connect/코드로
 export default function TaxOfficeInvitePage({ params }: PageProps<"/for-tax-office/[code]">) {

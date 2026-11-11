@@ -20,7 +20,7 @@ import {
 import { processFeedbackShot } from "@/lib/receipts/image";
 import { createClient } from "@/lib/supabase/client";
 
-const DRAFT_KEY = "workon-feedback-draft";
+const DRAFT_KEY = "workon-feedback-draft"; // 저장 키는 예전 이름 그대로(D-251)
 
 // 의견 보내기(D-246, spec/features/improvement-2026-11.md §C): 머리글 아이콘 → 버그 신고 / 기능 개선 → 운영자에게
 // variant: icon = 머리글 아이콘, row = 관리자 휴대폰 메뉴(서랍) 안 한 줄(머리글이 좁아 회사 이름이 가려지지 않게)
@@ -257,7 +257,7 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
               </button>
             </div>
             <p className="-mt-2 break-keep text-[13px] text-zinc-600">
-              WORKON 만드는 사람들에게 바로 전달돼요. 회사 관리자는 보지 않아요.
+              Moa-on 만드는 사람들에게 바로 전달돼요. 회사 관리자는 보지 않아요.
             </p>
             <fieldset className="grid grid-cols-2 gap-2">
               <legend className="mb-2 text-sm font-bold">

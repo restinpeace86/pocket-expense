@@ -6,7 +6,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "정류장 도착 정보 · WORKON" };
+export const metadata = { title: "정류장 도착 정보 · Moa-on" };
 
 // 정류장 전 노선 도착(D-243): 회사 주변 정류장만. 저장된 값이 3분 넘었으면 그때 서울시 getStationByUid로 새로
 export default function BusStationPage({ params }: PageProps<"/workspace/[id]/employee/bus/[arsId]">) {

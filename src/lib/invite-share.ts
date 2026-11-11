@@ -11,7 +11,7 @@ export function inviteShareOptions(p: { companyName: string; joinLink: string; i
   return {
     objectType: "feed",
     content: {
-      title: `${p.companyName}에서 WORKON에 초대했어요`,
+      title: `${p.companyName}에서 Moa-on에 초대했어요`,
       description: "먼저 [웹으로 가입하기]로 가입 신청을 해 주세요. 휴대폰에서 앱처럼 쓰려면 [앱 설치 안내]를 눌러 내 휴대폰에 맞는 방법을 보세요.",
       imageUrl: `${origin}/share/invite-image`,
       imageWidth: 800,

@@ -5,7 +5,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { AccountTitleHistory, type AccountTitleChange } from "@/components/tax-office/account-title-history";
 
-export const metadata = { title: "계정과목 · WORKON" };
+export const metadata = { title: "계정과목 · Moa-on" };
 
 // 계정과목 (spec/screens/admin-dashboard.md ⑪, spec/features/account-titles.md)
 export default function AccountTitlesPage({ params }: PageProps<"/workspace/[id]/admin/account-titles">) {

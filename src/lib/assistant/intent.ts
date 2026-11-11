@@ -1,4 +1,4 @@
-// WORKON 도우미 1단계(D-222, spec/features/assistant.md): 조회·화면 이동만.
+// Moa-on 도우미 1단계(D-222, spec/features/assistant.md): 조회·화면 이동만.
 // 질문 → 무엇을 할지(intent). 흔한 말은 규칙으로 바로 알아듣고(AI 비용 없음), 못 알아들으면 서버가 Gemini에 같은 모양으로 물어본다.
 // 순수 함수라 단위 테스트한다. 날짜는 한국 시간 기준 YYYY-MM-DD.
 
@@ -61,7 +61,7 @@ const TARGET_WORDS: [OpenTarget, RegExp][] = [
 
 // 규칙으로 알아듣기. 못 알아들으면 null(→ 서버가 AI에)
 export function ruleIntent(raw: string, today: string): Intent | null {
-  const text = raw.replace(/@workon/gi, " ").trim();
+  const text = raw.replace(/@(moa-?on|workon|모아온)/gi, " ").trim(); // 예전 이름(@workon)도 받는다
   if (!text) return { tool: "help" };
   if (/^(도움말?|help|\?|뭐\s*할\s*수|무엇을\s*할|사용법|안녕)/i.test(text) || /할\s*수\s*있는\s*(게|것|일)/.test(text)) return { tool: "help" };
   const day = parseDay(text, today);

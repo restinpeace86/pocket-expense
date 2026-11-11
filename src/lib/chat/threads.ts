@@ -4,8 +4,8 @@ import type { ChatKind, ChatMessage, ChatThread } from "./format";
 export const THREAD_KINDS: readonly ChatKind[] = ["direct", "group", "claim"]; // 알림방·도우미 방은 없음
 export const THREAD_TITLE_MAX = 40;
 export const THREAD_SUMMARY_MAX = 60;
-export const OPEN_THREAD_EVENT = "workon:open-thread"; // 토스트·[내 서브 대화]에서 같은 방의 서브 대화 열기
-export const THREAD_READ_EVENT = "workon:thread-read"; // 서브 대화를 읽음 → [내 서브 대화] 배지 다시 셈
+export const OPEN_THREAD_EVENT = "moaon:open-thread"; // 토스트·[내 서브 대화]에서 같은 방의 서브 대화 열기
+export const THREAD_READ_EVENT = "moaon:thread-read"; // 서브 대화를 읽음 → [내 서브 대화] 배지 다시 셈
 
 // 이 메시지로 서브 대화를 만들 수 있나(보기는 thread가 있으면 언제나)
 export function canStartThread(m: Pick<ChatMessage, "kind" | "deleted" | "pending" | "thread_id" | "thread">, roomKind: ChatKind | null | undefined): boolean {

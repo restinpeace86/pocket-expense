@@ -9,10 +9,10 @@ import { pushOf } from "./channel";
 type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
 export type NoticeCard = { title: string; lines: string[]; url: string | null };
 
-// 알림톡 문구 → 카드(머리말 "[WORKON] …" 줄은 제목이 대신)
+// 알림톡 문구 → 카드(머리말 "[Moa-on] …" 줄은 제목이 대신)
 export function cardOf(m: BuiltMessage): NoticeCard {
   const lines = m.text.split("\n").map((l) => l.trim()).filter(Boolean);
-  const rest = (lines.length > 1 ? lines.slice(1) : lines.map((l) => l.replace(/^\[WORKON\]\s*/, ""))).map((l) => l.replace(/^[▶•·\-\s]+/, ""));
+  const rest = (lines.length > 1 ? lines.slice(1) : lines.map((l) => l.replace(/^\[Moa-on\]\s*/, ""))).map((l) => l.replace(/^[▶•·\-\s]+/, ""));
   return { title: pushOf(m).title, lines: rest, url: m.buttonPath };
 }
 

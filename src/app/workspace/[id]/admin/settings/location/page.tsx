@@ -3,7 +3,7 @@ import { CompanyLocationCard } from "@/components/admin/company-location-card";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { getCompanyNearby } from "@/lib/bus/server";
 
-export const metadata = { title: "회사 위치 · WORKON" };
+export const metadata = { title: "회사 위치 · Moa-on" };
 
 // 설정 › 회사 기본정보 › 회사 위치(D-243 → D-251)
 export default function Page({ params }: PageProps<"/workspace/[id]/admin/settings/location">) {

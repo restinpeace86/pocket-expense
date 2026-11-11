@@ -1,6 +1,6 @@
 import { SettingsSectionPage } from "../section";
 
-export const metadata = { title: "식대 한도 · WORKON" };
+export const metadata = { title: "식대 한도 · Moa-on" };
 
 // 설정 › 경비 정책 › 식대 한도(D-251)
 export default function Page({ params }: PageProps<"/workspace/[id]/admin/settings/meal">) {

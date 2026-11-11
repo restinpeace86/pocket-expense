@@ -25,7 +25,7 @@ const SECTION_LINKS = [
 
 const START_HREF = `/login?next=${encodeURIComponent("/onboarding/create-company")}`;
 
-// WORKON(D-220): 작은 회사 통합 운영관리 — 세 기둥. 지금 있는 기능만 쓴다(D-200 원칙)
+// Moa-on(D-220): 작은 회사 통합 운영관리 — 세 기둥. 지금 있는 기능만 쓴다(D-200 원칙)
 const PILLARS = [
   {
     icon: ReceiptText,
@@ -127,7 +127,7 @@ export default function LandingPage() {
           <h1 className="mt-5 break-keep text-[2.5rem] font-extrabold leading-[1.15] tracking-tight sm:text-6xl lg:text-[3.5rem]">
             작은 회사 운영,
             <br />
-            <span className="text-blue-400">WORKON</span> 하나로.
+            <span className="text-blue-400">Moa-on</span> 하나로.
           </h1>
           <p className="mt-5 max-w-md text-balance break-keep text-lg leading-relaxed text-zinc-300 sm:text-xl">
             경비·결재부터 사내 채팅·캘린더·회의실 예약, 세무사무소 전달까지. 따로 쓰던 업무 도구를 한 구독으로 묶고 서로 이어 놨어요.
@@ -243,7 +243,7 @@ export default function LandingPage() {
       <Faq />
 
       <section className="mx-auto max-w-3xl px-4 pb-28 pt-8 text-center">
-        <h2 className="text-balance break-keep text-3xl font-bold tracking-tight">회사 운영, 이제 WORKON 하나로 시작하세요.</h2>
+        <h2 className="text-balance break-keep text-3xl font-bold tracking-tight">회사 운영, 이제 Moa-on 하나로 시작하세요.</h2>
         <p className="mt-3 text-balance break-keep text-zinc-400">경비부터 결재, 사내 소통, 일정까지. 초기 도입비 없이 월 구독 하나로.</p>
         <Link href={START_HREF} className="mt-8 inline-flex min-h-14 items-center justify-center whitespace-nowrap rounded-xl bg-blue-500 px-8 text-lg font-semibold hover:bg-blue-400">
           🏢 우리 회사 무료로 시작하기
@@ -270,7 +270,7 @@ export default function LandingPage() {
           <Link href="/for-tax-office" className="inline-flex min-h-11 items-center hover:text-zinc-300">세무사무소</Link>
         </nav>
         <BusinessInfo />
-        <p>© 다모은랩 · WORKON</p>
+        <p>© 다모은랩 · Moa-on</p>
       </footer>
     </div>
   );

@@ -5,7 +5,7 @@ import { SectionHeading } from "@/components/ui/help";
 import { attendanceEnabled, getLeaveTypesAdmin } from "@/lib/attendance/server";
 import { requireWorkspace } from "@/lib/auth/guards";
 
-export const metadata = { title: "휴가 종류 · WORKON" };
+export const metadata = { title: "휴가 종류 · Moa-on" };
 
 // 휴가 종류(D-241, spec/features/attendance.md §8-1): 설정 > 근태 안. 근태 꺼진 회사는 404
 export default function VacationTypesPage({ params }: PageProps<"/workspace/[id]/admin/attendance-settings/vacation-types">) {

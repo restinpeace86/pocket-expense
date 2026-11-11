@@ -4,7 +4,7 @@ import { noticeCard, oneLine, previewText, type ChatKind } from "./format";
 export const TOAST_MS = 3000; // 3초 뒤 사라짐(마우스 올리면 멈춤)
 export const TOAST_MAX = 3;
 export const PULSE_GAP_MS = 1500; // 이 안에 또 오면 빛은 다시 켜지 않음
-export const VISUAL_ALERT_EVENT = "workon:visual-alert"; // [내 정보]·채팅 설정에서 바꾸면 바로 반영
+export const VISUAL_ALERT_EVENT = "moaon:visual-alert"; // [내 정보]·채팅 설정에서 바꾸면 바로 반영
 
 export type AlertMessage = {
   id: string;
