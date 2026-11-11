@@ -8,6 +8,11 @@ import { offBusAlertAction, setBusAlertAction, stationArrivalsAction } from "@/a
 import type { NearStop, StationData } from "@/lib/bus/server";
 import { StopsMap, type MapStop } from "./stops-map";
 import { arrivalLabel, CONGESTION, remainingSec, ROUTE_TYPE, stopsAway, type BusRoute } from "@/lib/bus/arrivals";
+import { TAGO_ROUTE_TYPE } from "@/lib/bus/tago";
+
+// 노선 종류 색: 서울(숫자 코드) · 서울 밖 TAGO("tago:직행좌석버스")
+const routeType = (t: string) => (t.startsWith("tago:") ? TAGO_ROUTE_TYPE[t.slice(5)] : ROUTE_TYPE[t]) ?? { label: "", cls: "bg-zinc-700" };
+const stopNoOf = (s: NearStop) => s.no ?? (/^\d{5}$/.test(s.ars_id) ? s.ars_id : null);
 
 // 주변 버스(D-243, spec/features/bus.md): 주변 정류장 → 정류장(전 노선 도착) → 알림 받기(직원당 1개, 30분)
 export type MyAlert = { ars_id: string; station_name: string; route_id: string; route_no: string; expires_at: string } | null;
@@ -100,7 +105,7 @@ function StopRow({ base, stop, open, onToggle, alertRoute }: { base: string; sto
           <BusIcon className="size-4" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
-          <b className="text-[15px]">{stop.name}</b> <span className="text-xs text-zinc-500">{stop.ars_id}</span>
+          <b className="text-[15px]">{stop.name}</b> {stopNoOf(stop) && <span className="text-xs text-zinc-500">{stopNoOf(stop)}</span>}
           {alertRoute && <span className="block text-xs font-semibold text-brand-700">알림: {alertRoute}번</span>}
         </span>
         <b className="text-sm text-zinc-700">{stop.meters}m</b>
@@ -120,7 +125,7 @@ function StopRow({ base, stop, open, onToggle, alertRoute }: { base: string; sto
             <ul className="flex flex-col">
               {routes.slice(0, 6).map((r) => {
                 const s1 = data.fetched_at ? remainingSec(r.arr1_sec, data.fetched_at, now) : r.arr1_sec;
-                const t = ROUTE_TYPE[r.route_type] ?? { label: "", cls: "bg-zinc-700" };
+                const t = routeType(r.route_type);
                 return (
                   <li key={r.route_id + r.route_no} className="flex items-center gap-2.5 py-1.5" data-acc-route={r.route_no}>
                     <span className={`min-w-12 shrink-0 rounded-md px-1.5 py-0.5 text-center text-[13px] font-extrabold text-white ${t.cls}`}>{r.route_no}</span>
@@ -151,6 +156,7 @@ const ERR: Record<string, string> = {
 export function BusStation({
   base,
   arsId,
+  stopNo = null,
   stationName,
   routes,
   fetchedAt,
@@ -159,6 +165,7 @@ export function BusStation({
 }: {
   base: string;
   arsId: string;
+  stopNo?: string | null; // 화면에 보이는 정류장 번호(서울 = 5자리, TAGO = nodeno)
   stationName: string;
   routes: BusRoute[];
   fetchedAt: string | null;
@@ -183,7 +190,7 @@ export function BusStation({
           <ChevronLeft className="size-6" />
         </Link>
         <h1 className="min-w-0 truncate text-xl font-bold md:text-2xl">
-          {stationName} <span className="text-sm font-normal text-zinc-500">{arsId}</span>
+          {stationName} {stopNo && <span className="text-sm font-normal text-zinc-500">{stopNo}</span>}
         </h1>
         <button type="button" onClick={() => router.refresh()} className="ml-auto flex h-10 shrink-0 items-center gap-1 rounded-lg px-2 text-[13px] font-semibold text-brand-700 hover:bg-brand-50" data-bus-age>
           <RotateCw className="size-4" aria-hidden /> {ageMin === null ? "새로고침" : ageMin === 0 ? "방금 정보" : `${ageMin}분 전 정보`}
@@ -202,7 +209,7 @@ export function BusStation({
           {routes.map((r) => {
             const s1 = fetchedAt ? remainingSec(r.arr1_sec, fetchedAt, now) : r.arr1_sec;
             const s2 = fetchedAt ? remainingSec(r.arr2_sec, fetchedAt, now) : r.arr2_sec;
-            const t = ROUTE_TYPE[r.route_type] ?? { label: "", cls: "bg-zinc-700" };
+            const t = routeType(r.route_type);
             const on = alertHere?.route_id === r.route_id;
             const away = stopsAway(r.arr1_msg);
             return (
@@ -237,7 +244,7 @@ export function BusStation({
         </ul>
       )}
       {!error && routes.length === 0 && <p className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-8 text-center text-sm text-zinc-500">지금 이 정류장에 들어오는 버스 정보가 없어요.</p>}
-      <p className="text-xs leading-relaxed text-zinc-600">가져온 시각 기준으로 시간을 줄여 보여 주고, 3분마다 새 정보로 바꿔요. 서울 버스만 보여요.</p>
+      <p className="text-xs leading-relaxed text-zinc-600">가져온 시각 기준으로 시간을 줄여 보여 주고, 3분마다 새 정보로 바꿔요. 서울은 서울시, 그 밖의 지역은 국토교통부 버스 정보예요.</p>
       {picking && <AlertSheet route={picking} arsId={arsId} stationName={stationName} current={alert} onClose={() => setPicking(null)} />}
     </main>
   );

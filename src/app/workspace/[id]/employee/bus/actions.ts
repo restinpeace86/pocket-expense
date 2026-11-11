@@ -35,7 +35,7 @@ export async function offBusAlertAction(): Promise<{ ok: boolean }> {
 // 주변 버스 아코디언(D-251 개선사항 4): 펼칠 때만 그 정류장 도착 정보. 우리 회사 주변 정류장만(아무 번호나 조회 못 하게)
 export async function stationArrivalsAction(arsId: string): Promise<StationData | null> {
   const nearby = await getCompanyNearby();
-  if (!nearby?.seoul || !nearby.stops.some((s) => s.ars_id === arsId)) return null;
+  if (!nearby?.bus || !nearby.stops.some((s) => s.ars_id === arsId)) return null;
   const admin = createAdminClient();
   if (!admin) return null;
   return getStation(admin, arsId);

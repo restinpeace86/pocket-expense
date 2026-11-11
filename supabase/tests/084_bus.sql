@@ -142,5 +142,38 @@ end;
 $$;
 reset role;
 
+-- ④ 서울 밖(D-254): 회사 B를 판교로 → 서버가 TAGO 정류장을 저장 → 200m 안 가까운 순, 알림은 그 정류장만, 위치를 옮기면 다시 받음
+select public._t_as84('a8500000-0000-0000-0000-000000000003');
+set local role authenticated;
+select public.company_location_save('경기 성남시 분당구 대왕판교로 660', '경기 성남시 분당구 대왕판교로 660', 37.4004, 127.1068, '경기');
+do $$
+begin
+  if (public.bus_company_nearby() ->> 'bus')::boolean then raise exception 'FAIL [no tago yet]'; end if;
+end;
+$$;
+reset role;
+update public.company_locations set tago_at = now(), tago_stops = '[
+  {"key":"t31020-GGB206000539","no":"7495","name":"금토천교","lat":37.4013,"lng":127.106,"meters":118},
+  {"key":"t31020-GGB206000543","no":"7499","name":"금토천교","lat":37.4012,"lng":127.1055,"meters":140},
+  {"key":"t31020-GGB206000999","no":"7000","name":"먼곳","lat":37.404,"lng":127.11,"meters":450}]'::jsonb
+ where company_id = 'c8500000-0000-0000-0000-00000000000b';
+select public._t_as84('a8500000-0000-0000-0000-000000000003');
+set local role authenticated;
+do $$
+declare v jsonb := public.bus_company_nearby();
+begin
+  if not (v ->> 'bus')::boolean or (v ->> 'seoul')::boolean or (v ->> 'fallback')::boolean then raise exception 'FAIL [tago flags %]', v; end if;
+  if jsonb_array_length(v -> 'stops') <> 2 or v -> 'stops' -> 0 ->> 'ars_id' <> 't31020-GGB206000539' or v -> 'stops' -> 0 ->> 'no' <> '7495' then raise exception 'FAIL [tago stops %]', v -> 'stops'; end if;
+  perform public._t_raises84($q$select public.bus_alert_set('t31020-GGB206000999', 'R1', '1', '먼곳')$q$, 'STOP_NOT_NEARBY', 'tago far');
+end;
+$$;
+reset role;
+update public.company_locations set lat = 37.41 where company_id = 'c8500000-0000-0000-0000-00000000000b';
+do $$
+begin
+  if (select tago_stops is not null or tago_at is not null from public.company_locations where company_id = 'c8500000-0000-0000-0000-00000000000b') then raise exception 'FAIL [tago reset]'; end if;
+end;
+$$;
+
 select 'ok' as bus_084;
 rollback;

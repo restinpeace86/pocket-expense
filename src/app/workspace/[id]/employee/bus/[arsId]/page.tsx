@@ -21,15 +21,16 @@ async function Content({ params }: Pick<PageProps<"/workspace/[id]/employee/bus/
   const { id, arsId } = await params;
   await requireWorkspace(id);
   const nearby = await getCompanyNearby();
-  const stop = nearby?.seoul ? nearby.stops.find((s) => s.ars_id === arsId) : null;
+  const stop = nearby?.bus ? nearby.stops.find((s) => s.ars_id === decodeURIComponent(arsId)) : null;
   if (!stop) notFound();
   const admin = createAdminClient();
   if (!admin) throw new Error("service");
-  const [station, { data: alert }] = await Promise.all([getStation(admin, arsId), (await createClient()).from("bus_alerts").select("ars_id, station_name, route_id, route_no, expires_at").maybeSingle()]);
+  const [station, { data: alert }] = await Promise.all([getStation(admin, stop.ars_id), (await createClient()).from("bus_alerts").select("ars_id, station_name, route_id, route_no, expires_at").maybeSingle()]);
   return (
     <BusStation
       base={`/workspace/${id}/employee`}
-      arsId={arsId}
+      arsId={stop.ars_id}
+      stopNo={stop.no ?? (/^\d{5}$/.test(stop.ars_id) ? stop.ars_id : null)}
       stationName={station.station_name || stop.name}
       routes={station.routes}
       fetchedAt={station.fetched_at}

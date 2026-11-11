@@ -2314,6 +2314,8 @@ export type Database = {
           lat: number
           lng: number
           region: string
+          tago_at: string | null
+          tago_stops: Json | null
           updated_at: string
           updated_by: string | null
           updated_by_name: string | null
@@ -2327,6 +2329,8 @@ export type Database = {
           lat: number
           lng: number
           region: string
+          tago_at?: string | null
+          tago_stops?: Json | null
           updated_at?: string
           updated_by?: string | null
           updated_by_name?: string | null
@@ -2340,6 +2344,8 @@ export type Database = {
           lat?: number
           lng?: number
           region?: string
+          tago_at?: string | null
+          tago_stops?: Json | null
           updated_at?: string
           updated_by?: string | null
           updated_by_name?: string | null

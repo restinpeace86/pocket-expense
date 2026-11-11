@@ -116,7 +116,7 @@ export function alertMessage(routeNo: string, sec: number, stationName: string, 
   const away = stopsAway(msg);
   return [
     `${routeNo}번 버스 약 ${mins}분 후 도착`,
-    `정류장: ${stationName}(${arsId})${direction ? ` · ${direction} 방면` : ""}${away ? ` · ${away}` : ""}`,
+    `정류장: ${stationName}${/^\d{5}$/.test(arsId) ? `(${arsId})` : ""}${direction ? ` · ${direction} 방면` : ""}${away ? ` · ${away}` : ""}`,
     "참고용이에요. 실제와 1~3분 차이가 날 수 있어요.",
   ].join("\n");
 }

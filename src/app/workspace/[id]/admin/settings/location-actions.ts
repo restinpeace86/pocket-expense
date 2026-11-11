@@ -1,7 +1,9 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { geocodeAddress, type NearStop } from "@/lib/bus/server";
+import { getMembership } from "@/lib/auth/session";
+import { geocodeAddress, refreshTagoStops, type Nearby, type NearStop } from "@/lib/bus/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 // 회사 위치(D-243 → D-251): 우편번호 검색 창에서 고른 도로명·지번·우편번호 → 카카오 좌표 → 저장(관리자만·이력은 DB 함수)
@@ -30,7 +32,16 @@ export async function saveCompanyLocationAction(picked: PickedAddress): Promise<
     p_zonecode: zonecode ?? undefined,
   });
   if (error) return { ok: false, error: error.message.includes("NOT_ALLOWED") ? "관리자만 바꿀 수 있어요." : "저장하지 못했어요. 잠시 뒤 다시 해 주세요." };
-  const d = data as unknown as { stops: NearStop[]; fallback: boolean };
+  let d = data as unknown as { stops: NearStop[]; fallback: boolean };
+  // 서울 밖(D-254): TAGO 근처 정류장을 바로 받아 저장하고 다시 읽는다
+  if (g.region !== "서울") {
+    const m = await getMembership();
+    const admin = createAdminClient();
+    if (m && admin) await refreshTagoStops(admin, m.company_id, g.lat, g.lng);
+    const again = await supabase.rpc("bus_company_nearby");
+    const n = again.data as unknown as Nearby;
+    d = { stops: n?.stops ?? [], fallback: n?.fallback ?? false };
+  }
   refresh();
-  return { ok: true, found: g.found, region: g.region, lat: g.lat, lng: g.lng, stops: g.region === "서울" ? d.stops : [], fallback: d.fallback };
+  return { ok: true, found: g.found, region: g.region, lat: g.lat, lng: g.lng, stops: d.stops, fallback: d.fallback };
 }

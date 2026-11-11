@@ -28,7 +28,7 @@ export function hubTiles(ws: string, o: { inbox: { waiting: number } | null; roo
     { key: "convert", href: `${ws}/employee/convert`, label: "서류 → 엑셀", icon: FileSpreadsheet },
     // 파일 보관함(D-245): 채팅을 쓰는 회사
     ...(o.vault ? [{ key: "vault", href: `${ws}/employee/vault`, label: "파일 보관함", icon: Archive }] : []),
-    // 주변 버스(D-243): 회사 위치가 서울일 때 메뉴 맨 끝
+    // 주변 버스(D-243 → D-254 전국): 회사 주변에 정류장이 있을 때 메뉴 맨 끝
     ...(o.bus ? [{ key: "bus", href: `${ws}/employee/bus`, label: "주변 버스", icon: Bus }] : []),
   ];
 }

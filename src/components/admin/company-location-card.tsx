@@ -8,7 +8,7 @@ import { StopsMap, type MapStop } from "@/components/bus/stops-map";
 import { PostcodeDialog, type PostcodePick } from "./postcode-dialog";
 
 // 회사 위치(D-243 → D-251 개선사항 2): [주소 검색] → 우편번호 창에서 고르면 바로 저장(도로명·지번·우편번호 + 서버가 좌표)
-// 직원 [주변 버스]가 이 위치 200m 안 정류장을 보여 준다. 지금은 서울 버스만
+// 직원 [주변 버스]가 이 위치 200m 안 정류장을 보여 준다. 서울 = 서울시, 그 밖 = 국토교통부 TAGO(D-254)
 const field = "flex min-h-11 items-center rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-[15px] text-zinc-800";
 
 export function CompanyLocationCard({ current }: { current: Nearby }) {
@@ -28,9 +28,9 @@ export function CompanyLocationCard({ current }: { current: Nearby }) {
   const zonecode = picked?.zonecode ?? current?.zonecode ?? "";
   const shown =
     result && result.ok
-      ? { seoul: result.region === "서울", stops: result.stops, fallback: result.fallback, lat: result.lat, lng: result.lng }
+      ? { seoul: result.stops.length > 0, stops: result.stops, fallback: result.fallback, lat: result.lat, lng: result.lng }
       : current
-        ? { seoul: current.seoul, stops: current.stops, fallback: current.fallback, lat: current.lat, lng: current.lng }
+        ? { seoul: !!current.bus, stops: current.stops, fallback: current.fallback, lat: current.lat, lng: current.lng }
         : null;
   // 위치 확인용 지도(D-251 개선사항 4): 회사 핀 + 정류장 최대 3곳. 도착 정보는 직원 [주변 버스]에서(조회 한도 아끼기)
   const [sel, setSel] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export function CompanyLocationCard({ current }: { current: Nearby }) {
         <MapPin className="size-5 text-brand-700" aria-hidden />
         회사 위치
       </h2>
-      <p className="text-sm leading-relaxed text-zinc-600">[주소 검색]에서 회사 주소를 고르면 바로 저장돼요. 직원 홈 [주변 버스]가 이 위치 200m 안 정류장을 보여 줘요(지금은 서울 버스만).</p>
+      <p className="text-sm leading-relaxed text-zinc-600">[주소 검색]에서 회사 주소를 고르면 바로 저장돼요. 직원 홈 [주변 버스]가 이 위치 200m 안 정류장과 버스 도착 정보를 보여 줘요(전국 시내버스, 일부 군 지역 제외).</p>
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -99,7 +99,7 @@ export function CompanyLocationCard({ current }: { current: Nearby }) {
               <span className="block">500m 안에 정류장이 없어요.</span>
             )
           ) : (
-            <span className="block">서울이 아니라 지금은 [주변 버스]가 보이지 않아요(서울 버스만 지원).</span>
+            <span className="block">이 위치 500m 안에서 버스 정류장을 찾지 못했어요. 그래서 직원 홈에 [주변 버스]가 보이지 않아요.</span>
           )}
           {current?.updated_by_name && !result && <span className="block text-zinc-600">마지막 변경: {current.updated_by_name}</span>}
         </div>
