@@ -1,22 +1,39 @@
 "use client";
 
-import { ChevronLeft, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { Loader2, X } from "lucide-react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { createLeaveAction } from "@/app/workspace/[id]/employee/vacation/actions";
 import { daysLabel } from "@/lib/attendance/leave";
 import { dayLabel } from "@/lib/attendance/month";
 import type { ProcessedProof } from "@/lib/attendance/proof-image";
-import { PAID_LABEL, preview, type VacationData } from "@/lib/attendance/vacation";
+import { PAID_LABEL, preview, yearSummary, type VacationData } from "@/lib/attendance/vacation";
 import type { LeaveInputs } from "@/lib/company-forms/leave-inputs";
 import { LeaveCustomFields, missingRequired } from "./leave-custom-fields";
 import { ProofPicker, uploadProofs } from "./proof-picker";
 
 // 휴가 신청(spec/features/attendance.md §8-3, D-241): 종류 → 단위 → 날짜 → 미리 보기(근무일·남은 연차) → 사유(선택) → 증빙(필수 종류)
-export function VacationForm({ data, back, companyId, memberId, custom = null }: { data: VacationData; back: string; companyId: string; memberId: string; custom?: LeaveInputs | null }) {
+// D-257: [휴가 및 근태 신청] 위로 올라오는 창(휴대폰은 위쪽 남은 연차 줄이 보이게 거의 전체 높이, PC는 가운데)
+export function VacationForm({
+  data,
+  companyId,
+  memberId,
+  custom = null,
+  onClose,
+  onDone,
+}: {
+  data: VacationData;
+  companyId: string;
+  memberId: string;
+  custom?: LeaveInputs | null;
+  onClose: () => void;
+  onDone: (flash: string, year: string) => void;
+}) {
   const [values, setValues] = useState<Record<string, string>>(() => custom?.last ?? {});
-  const router = useRouter();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
   const h = data.settings.daily_hours;
   const monthStart = `${data.today.slice(0, 7)}-01`;
   const [typeId, setTypeId] = useState(data.types[0]?.id ?? "");
@@ -35,6 +52,7 @@ export function VacationForm({ data, back, companyId, memberId, custom = null }:
   const [error, setError] = useState<string | null>(null);
   const [busy, start_] = useTransition();
   const p = useMemo(() => preview(data, { typeId, unit: u, start, end: u === "hour" ? start : end, startTime, hours, reason }, monthStart), [data, typeId, u, start, end, startTime, hours, reason, monthStart]);
+  const left = yearSummary(data).remaining; // 창 머리에 남은 연차(목록 위 숫자가 창에 가려도 보이게)
   const quick = data.types.slice(0, 4);
   const rest = data.types.slice(4);
 
@@ -52,22 +70,27 @@ export function VacationForm({ data, back, companyId, memberId, custom = null }:
         const failed = await uploadProofs(companyId, memberId, r.id, files, consent);
         if (failed.length) flash = "proof";
       } else if (type?.proof === "required") flash = "proof";
-      router.replace(`${back}?year=${start.slice(0, 4)}&done=${flash}`);
-      router.refresh();
+      onDone(flash, start.slice(0, 4));
     });
 
   const chip = (on: boolean) => `h-10 rounded-full border px-3.5 text-[13px] ${on ? "border-brand-600 bg-brand-50 font-semibold text-brand-800" : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"}`;
   const input = "h-12 w-full rounded-xl border border-zinc-300 bg-white px-3 text-[15px] outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20";
 
   return (
-    <div className="mx-auto w-full max-w-md md:pt-4">
-      <header className="flex h-14 items-center gap-1 border-b border-zinc-200 bg-white px-2">
-        <Link href={back} aria-label="뒤로" className="flex size-11 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100">
-          <ChevronLeft className="size-6" />
-        </Link>
-        <h1 className="text-[17px] font-bold">휴가 신청</h1>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-center" onClick={onClose}>
+      <section role="dialog" aria-modal="true" aria-labelledby="vacation-new-title" onClick={(e) => e.stopPropagation()} className="flex max-h-[calc(100dvh-7.5rem)] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-white md:max-h-[90dvh] md:rounded-3xl" data-vacation-sheet>
+      <header className="flex h-14 shrink-0 items-center gap-1 border-b border-zinc-200 px-3">
+        <h2 id="vacation-new-title" className="pl-2 text-[17px] font-bold">휴가 신청</h2>
+        {left !== null && (
+          <span className="ml-1 rounded-full bg-brand-50 px-2.5 py-1 text-[13px] font-semibold text-brand-800" data-sheet-balance>
+            남은 연차 {left < 0 ? `−${daysLabel(-left, h)}` : daysLabel(left, h)}
+          </span>
+        )}
+        <button type="button" onClick={onClose} aria-label="닫기" className="ml-auto flex size-10 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100">
+          <X className="size-5" />
+        </button>
       </header>
-      <main className="flex flex-col gap-4 px-4 pb-40 pt-4">
+      <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-6 pt-4">
         <div className="flex flex-col gap-2">
           <span className="text-sm font-semibold">종류</span>
           <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="휴가 종류">
@@ -176,14 +199,15 @@ export function VacationForm({ data, back, companyId, memberId, custom = null }:
         )}
         <p className="text-xs leading-relaxed text-zinc-600">관리자가 승인하면 [알림]방으로 알려 드려요. 승인 전에는 바로 취소할 수 있고, 승인 뒤에는 취소 신청을 해요. 지난 날짜는 이번 달까지만 신청할 수 있어요.</p>
       </main>
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3">
-        <div className="mx-auto max-w-md">
+      <div className="shrink-0 border-t border-zinc-200 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 md:pb-4">
+        <div>
           <button type="button" onClick={submit} disabled={busy || !!p.error} className="flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-base font-semibold text-white hover:bg-brand-700 disabled:opacity-60" data-submit-vacation>
             {busy && <Loader2 className="size-5 animate-spin" aria-hidden />}
             휴가 신청 보내기
           </button>
         </div>
       </div>
+      </section>
     </div>
   );
 }

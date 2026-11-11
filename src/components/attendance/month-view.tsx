@@ -2,14 +2,16 @@
 
 import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { useUrlSheet } from "@/components/ui/use-url-sheet";
 import { cancelAttendanceRequest } from "@/app/workspace/[id]/employee/attendance/actions";
 import { minutesLabel, monthLabel, type MonthRow, type MonthSummary, type RowBadge } from "@/lib/attendance/month";
 import { changeLines } from "@/lib/attendance/request";
 import { kstTime } from "@/lib/attendance/rules";
+import { RequestPanel } from "./request-form";
 
 // 월 근태 현황(spec/features/attendance.md §5 D-237, §6 D-239): 요약 + 날짜 목록(최근 위) + 날짜 누르면 그날 상세(정정 신청·휴일 근무 상신)
+// D-257: 그날 상세·신청 칸은 한 화면 안의 창. 주소 ?date=…&kind=…로 열어 휴대폰 [뒤로]가 창만 닫는다
 const BADGE: Record<RowBadge, { text: string; cls: string } | undefined> = {
   plain: undefined,
   auto: { text: "자동 퇴근", cls: "bg-orange-100 text-orange-800" },
@@ -60,6 +62,7 @@ export function MonthView({
   backHref,
   backLabel = "홈으로",
   monthPrefix,
+  request,
 }: {
   base: string;
   month: string;
@@ -75,18 +78,25 @@ export function MonthView({
   backHref?: string;
   backLabel?: string;
   monthPrefix?: string; // 달 이동 주소 앞부분(서버에서 넘김 — 함수는 못 넘김)
+  // 직원 화면: 창 안 신청 칸에 쓸 오늘 날짜·정규 출퇴근 시각(관리자 보기는 없음)
+  request?: { today: string; defaults: { in: string; out: string } };
 }) {
   const mHref = (m: string) => `${monthPrefix ?? `${base}/attendance?month=`}${m}`;
-  // 날짜만 기억하고 목록에서 꺼낸다(취소 뒤 목록이 새로 오면 열린 날도 새 값)
-  const [openDate, setOpenDate] = useState<string | null>(null);
+  // 날짜는 주소에서(취소 뒤 목록이 새로 오면 열린 날도 새 값)
+  const sheet = useUrlSheet();
+  const openDate = sheet.get("date");
+  const kindParam = sheet.get("kind");
   const open = openDate ? (rows.find((r) => r.date === openDate) ?? null) : null;
-  const setOpen = (r: MonthRow | null) => setOpenDate(r?.date ?? null);
+  const closeAll = () => sheet.close(["date", "kind"]);
   useEffect(() => {
     if (!openDate) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenDate(null);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && sheet.close(["date", "kind"]);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // sheet은 매번 새 객체지만 하는 일은 같다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openDate]);
+  const monthHref = (date: string, done: string) => `${base}/attendance?month=${date.slice(0, 7)}&done=${done}`;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-3 px-4 pb-28 pt-3 md:max-w-3xl md:px-6 md:pt-6">
@@ -163,7 +173,7 @@ export function MonthView({
             const sub = subLine(r);
             return (
               <li key={r.date} className="border-b border-zinc-100 last:border-b-0">
-                <button type="button" onClick={() => setOpen(r)} data-day={r.date} data-kind={r.kind} data-badge={r.badge} className="flex min-h-14 w-full items-center gap-2.5 px-3.5 py-2 text-left hover:bg-zinc-50">
+                <button type="button" onClick={() => sheet.open({ date: r.date, kind: null })} data-day={r.date} data-kind={r.kind} data-badge={r.badge} className="flex min-h-14 w-full items-center gap-2.5 px-3.5 py-2 text-left hover:bg-zinc-50">
                   <span className={`w-[4.25rem] shrink-0 text-sm font-semibold ${tone[r.dayTone]}`}>{r.label}</span>
                   <span className="min-w-0 flex-1">
                     <span className={`block text-sm ${r.inTime ? "text-zinc-900" : "text-zinc-500"}`}>
@@ -182,13 +192,41 @@ export function MonthView({
       )}
       <p className="text-xs leading-relaxed text-zinc-600">기록 없는 휴일은 목록에 나오지 않아요.{readOnly ? " 관리자 보기라 신청·취소는 할 수 없어요." : " 휴일 근무는 QR로 찍은 날만 상신할 수 있어요. 정정 신청은 이번 달 기록만 할 수 있어요."}</p>
 
-      {open && <DaySheet row={open} base={base} readOnly={readOnly} onClose={() => setOpen(null)} />}
+      {open && (
+        <DaySheet
+          row={open}
+          readOnly={readOnly}
+          kind={!readOnly && request && (kindParam === "holiday" ? open.canHoliday : kindParam === "correction" ? open.canCorrect : false) ? (kindParam as "correction" | "holiday") : null}
+          request={request}
+          onClose={closeAll}
+          onForm={(k) => sheet.open({ kind: k })}
+          onBack={() => sheet.back({ kind: null })}
+          onFinish={(done) => sheet.finish(monthHref(open.date, done))}
+        />
+      )}
     </main>
   );
 }
 
-function DaySheet({ row, base, readOnly, onClose }: { row: MonthRow; base: string; readOnly: boolean; onClose: () => void }) {
-  const router = useRouter();
+function DaySheet({
+  row,
+  readOnly,
+  kind,
+  request,
+  onClose,
+  onForm,
+  onBack,
+  onFinish,
+}: {
+  row: MonthRow;
+  readOnly: boolean;
+  kind: "correction" | "holiday" | null;
+  request?: { today: string; defaults: { in: string; out: string } };
+  onClose: () => void;
+  onForm: (k: "correction" | "holiday") => void;
+  onBack: () => void;
+  onFinish: (done: string) => void;
+}) {
   const [busy, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const r = row.record;
@@ -198,10 +236,8 @@ function DaySheet({ row, base, readOnly, onClose }: { row: MonthRow; base: strin
       setError(null);
       const res = await cancelAttendanceRequest(id);
       if (!res.ok) return setError(res.error ?? "취소하지 못했어요.");
-      router.replace(`${base}/attendance?month=${row.date.slice(0, 7)}&done=canceled`);
-      router.refresh();
+      onFinish("canceled");
     });
-  const requestHref = (kind: "correction" | "holiday") => `${base}/attendance/request?date=${row.date}&kind=${kind}`;
   const outVia = (m: string | null | undefined) => (m === "auto" ? "자동" : m === "correction" ? "정정" : null);
 
   return (
@@ -212,7 +248,12 @@ function DaySheet({ row, base, readOnly, onClose }: { row: MonthRow; base: strin
         aria-labelledby="day-title"
         onClick={(e) => e.stopPropagation()}
         className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4 md:rounded-3xl md:pb-6"
+        data-day-sheet={row.date}
       >
+        {kind && request ? (
+          <RequestPanel key={kind} kind={kind} row={row} today={request.today} defaults={request.defaults} onBack={onBack} onDone={(self) => onFinish(self ? "self" : "pending")} />
+        ) : (
+        <>
         <div className="flex items-center gap-2">
           <h2 id="day-title" className="text-xl font-bold">
             {row.label}
@@ -313,16 +354,16 @@ function DaySheet({ row, base, readOnly, onClose }: { row: MonthRow; base: strin
         {readOnly ? null : row.canHoliday ? (
           <>
             <p className="mt-4 rounded-xl bg-red-50 px-3.5 py-3 text-[13px] leading-relaxed text-red-900">휴일 출근은 상신 → 관리자 승인이 되어야 근무한 날로 인정돼요. 시각이 다르면 상신할 때 함께 고칠 수 있어요.</p>
-            <Link href={requestHref("holiday")} className="mt-3 flex h-12 w-full items-center justify-center rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700">
+            <button type="button" onClick={() => onForm("holiday")} className="mt-3 flex h-12 w-full items-center justify-center rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700" data-open-request="holiday">
               휴일 근무 상신
-            </Link>
+            </button>
           </>
         ) : row.canCorrect ? (
           <>
             <p className="mt-4 rounded-xl bg-zinc-100 px-3.5 py-3 text-[13px] leading-relaxed text-zinc-700">실제 시각이 다르면 정정 신청으로 고칠 수 있어요. 관리자가 승인하면 바뀌고, 원래 기록은 남아요.</p>
-            <Link href={requestHref("correction")} className="mt-3 flex h-12 w-full items-center justify-center rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700">
+            <button type="button" onClick={() => onForm("correction")} className="mt-3 flex h-12 w-full items-center justify-center rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700" data-open-request="correction">
               정정 신청
-            </Link>
+            </button>
           </>
         ) : (
           !row.pending && (
@@ -334,6 +375,8 @@ function DaySheet({ row, base, readOnly, onClose }: { row: MonthRow; base: strin
                   : "이 날짜는 신청할 수 없어요(근태를 켜기 전이거나 가입 전이에요)."}
             </p>
           )
+        )}
+        </>
         )}
       </section>
     </div>

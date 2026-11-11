@@ -5,6 +5,9 @@ import { CheckCircle2, ChevronLeft, ChevronRight, FileText, Loader2, X } from "l
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { useUrlSheet } from "@/components/ui/use-url-sheet";
+import type { LeaveInputs } from "@/lib/company-forms/leave-inputs";
+import { VacationForm } from "./vacation-form";
 import { cancelLeaveAction, removeLeaveFileAction } from "@/app/workspace/[id]/employee/vacation/actions";
 import { daysLabel } from "@/lib/attendance/leave";
 import { leaveAmountLabel, leaveBadge, leaveDateLabel, PROOF_MAX_FILES, yearSummary, type Leave, type VacationData } from "@/lib/attendance/vacation";
@@ -21,7 +24,26 @@ const FLASH: Record<string, string> = {
   cancel_pending: "취소 신청을 보냈어요. 승인되면 연차를 돌려받아요.",
 };
 
-export function VacationView({ data, base, companyId, memberId, flash }: { data: VacationData; base: string; companyId: string; memberId: string; flash: string | null }) {
+// D-257: [휴가 신청]은 주소 ?new=1로 여는 창(휴대폰 [뒤로]는 창만 닫음). formData = 신청 창에 쓸 값(올해 + 다음 해 연차 기간)
+export function VacationView({
+  data,
+  formData,
+  custom,
+  base,
+  companyId,
+  memberId,
+  flash,
+}: {
+  data: VacationData;
+  formData: VacationData;
+  custom: LeaveInputs | null;
+  base: string;
+  companyId: string;
+  memberId: string;
+  flash: string | null;
+}) {
+  const sheet = useUrlSheet();
+  const newOpen = sheet.get("new") === "1";
   const h = data.settings.daily_hours;
   const s = yearSummary(data);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -86,9 +108,9 @@ export function VacationView({ data, base, companyId, memberId, flash }: { data:
         )}
       </section>
 
-      <Link href={`${base}/vacation/new`} className="flex h-13 items-center justify-center rounded-xl bg-brand-600 text-base font-semibold text-white hover:bg-brand-700" data-new-vacation>
+      <button type="button" onClick={() => sheet.open({ new: "1" })} className="flex h-13 items-center justify-center rounded-xl bg-brand-600 text-base font-semibold text-white hover:bg-brand-700" data-new-vacation>
         휴가 신청
-      </Link>
+      </button>
 
       {data.leaves.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-8 text-center text-sm text-zinc-500">{data.year}년 휴가 내역이 없어요.</p>
@@ -116,6 +138,9 @@ export function VacationView({ data, base, companyId, memberId, flash }: { data:
       )}
       <p className="text-xs leading-relaxed text-zinc-600">승인 전에는 바로 취소할 수 있고, 승인된 휴가는 취소 신청을 해요(승인되면 연차를 돌려받아요). 지난 날짜는 이번 달까지만 신청·취소할 수 있어요.</p>
 
+      {newOpen && (
+        <VacationForm data={formData} companyId={companyId} memberId={memberId} custom={custom} onClose={() => sheet.close(["new"])} onDone={(flash, year) => sheet.finish(`${base}/vacation?year=${year}&done=${flash}`)} />
+      )}
       {open && <LeaveSheet leave={open} h={h} today={data.today} base={base} companyId={companyId} memberId={memberId} onClose={() => setOpenId(null)} />}
     </main>
   );

@@ -94,7 +94,7 @@ export function ScanResult({ token, home, camera }: { token: string; home: strin
     );
     actions = result.holiday ? (
       <>
-        <Link href={`${home}/attendance/request?date=${kstDate(result.inAt)}&kind=holiday`} className={primary}>
+        <Link href={`${home}/attendance?month=${kstDate(result.inAt).slice(0, 7)}&date=${kstDate(result.inAt)}&kind=holiday`} className={primary}>
           휴일 근무 상신
         </Link>
         <Link href={home} className={secondary}>
@@ -117,7 +117,7 @@ export function ScanResult({ token, home, camera }: { token: string; home: strin
     extra = <p className="mt-5 w-full rounded-xl bg-zinc-100 px-4 py-3.5 text-sm leading-relaxed text-zinc-700">실수로 일찍 찍었거나 퇴근 후 더 일했다면 정정 신청을 올려 주세요. 관리자가 승인하면 고쳐져요.</p>;
     actions = (
       <>
-        <Link href={`${home}/attendance/request?date=${kstDate(result.inAt)}&kind=${result.holiday ? "holiday" : "correction"}`} className={primary}>
+        <Link href={`${home}/attendance?month=${kstDate(result.inAt).slice(0, 7)}&date=${kstDate(result.inAt)}&kind=${result.holiday ? "holiday" : "correction"}`} className={primary}>
           {result.holiday ? "휴일 근무 상신" : "정정 신청"}
         </Link>
         <Link href={home} className={secondary}>
