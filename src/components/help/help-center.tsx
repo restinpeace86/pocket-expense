@@ -2,12 +2,13 @@
 
 import { ArrowRight, ChevronDown, Loader2, Search, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { Sim, SIM_KEYS } from "@/components/sims";
 import { askHelpAction, type HelpAnswer } from "@/lib/help/actions";
 import { guidePath, HELP_CATEGORIES, type HelpCategory, type HelpGuide } from "@/lib/help/guides";
 
 // AI 도움말 센터(D-251 → D-255): 검색창(문장 → AI 답 + 가장 가까운 글 펼침, 단어 하나 → 맞는 글 바로) + 카테고리 탭 · 글(단계 + 화면 그림 + 이동)
-// renderSim: 글에 시뮬레이션 키가 있으면 [▶ 화면으로 보기]로 그 자리에서 재생(시뮬레이션 단계에서 채움)
+// 글에 시뮬레이션 키가 있으면 [▶ 화면으로 보기]로 그 자리에서 재생(components/sims, 랜딩과 같은 것)
 export function HelpCenter({
   companyId,
   mode,
@@ -15,7 +16,6 @@ export function HelpCenter({
   guides,
   initialQ,
   initialDoc,
-  renderSim,
 }: {
   companyId: string;
   mode: "admin" | "employee";
@@ -23,7 +23,6 @@ export function HelpCenter({
   guides: HelpGuide[];
   initialQ: string;
   initialDoc: string | null;
-  renderSim?: (sim: string) => ReactNode;
 }) {
   const ws = `/workspace/${companyId}`;
   const byId = new Map(guides.map((g) => [g.id, g]));
@@ -106,7 +105,7 @@ export function HelpCenter({
                     <p className="text-xs text-zinc-500">참고한 글 · {HELP_CATEGORIES.find((c) => c.key === refs[0].cat)?.label}</p>
                     <p className="text-base font-bold">{refs[0].title}</p>
                   </div>
-                  <ArticleBody g={refs[0]} href={href(refs[0])} renderSim={renderSim} />
+                  <ArticleBody g={refs[0]} href={href(refs[0])} />
                 </div>
               )}
               {refs.length > 1 && (
@@ -148,13 +147,13 @@ export function HelpCenter({
                     <span className="block text-[15px] font-semibold">{g.title}</span>
                     {!on && g.summary && <span className="block truncate text-xs text-zinc-500">{g.summary}</span>}
                   </span>
-                  {g.sim && renderSim && <span className="shrink-0 text-[11px] font-semibold text-brand-700">▶ 미리 보기</span>}
+                  {hasSim(g) && <span className="shrink-0 text-[11px] font-semibold text-brand-700">▶ 미리 보기</span>}
                   {g.audience === "admin" && <span className="shrink-0 rounded-md bg-zinc-100 px-1.5 py-0.5 text-[11px] text-zinc-600">관리자</span>}
                   <ChevronDown className={`size-4 shrink-0 text-zinc-400 transition-transform ${on ? "rotate-180" : ""}`} aria-hidden />
                 </button>
                 {on && (
                   <div className="border-t border-zinc-100">
-                    <ArticleBody g={g} href={href(g)} renderSim={renderSim} />
+                    <ArticleBody g={g} href={href(g)} />
                   </div>
                 )}
               </li>
@@ -166,7 +165,9 @@ export function HelpCenter({
 }
 
 // 글 본문: 단계(번호 + 글 + 화면 그림) · [▶ 화면으로 보기] · [이동]
-function ArticleBody({ g, href, renderSim }: { g: HelpGuide; href: string | null; renderSim?: (sim: string) => ReactNode }) {
+const hasSim = (g: HelpGuide) => !!g.sim && SIM_KEYS.includes(g.sim);
+
+function ArticleBody({ g, href }: { g: HelpGuide; href: string | null }) {
   const [sim, setSim] = useState(false);
   return (
     <div className="flex flex-col gap-3.5 px-4 pb-4 pt-3" data-help-body={g.id}>
@@ -187,9 +188,13 @@ function ArticleBody({ g, href, renderSim }: { g: HelpGuide; href: string | null
           </li>
         ))}
       </ol>
-      {g.sim && renderSim && sim && <div data-help-sim={g.sim}>{renderSim(g.sim)}</div>}
+      {hasSim(g) && sim && (
+        <div className="rounded-2xl border border-brand-100 bg-brand-50/40 p-2.5" data-help-sim={g.sim}>
+          <Sim simKey={g.sim!} playNow />
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
-        {g.sim && renderSim && (
+        {hasSim(g) && (
           <button type="button" onClick={() => setSim((v) => !v)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50 px-3 text-sm font-semibold text-brand-800 hover:bg-brand-100" data-help-sim-open>
             {sim ? "■ 닫기" : "▶ 화면으로 보기"}
           </button>

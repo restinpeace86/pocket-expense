@@ -42,19 +42,19 @@ export function TestimonialsView({ rows }: { rows: TestimonialRow[] }) {
       <h2 id="reviews-title" className="text-balance text-center text-3xl font-bold tracking-tight">
         실제 사용자 후기
       </h2>
-      <p className="mt-2 text-center text-sm text-zinc-400">Moa-on을 쓰는 회사 담당자들이 직접 남긴 한 줄 후기예요.</p>
+      <p className="mt-2 text-center text-sm text-zinc-600">Moa-on을 쓰는 회사 담당자들이 직접 남긴 한 줄 후기예요.</p>
       {/* 경제적 이해관계 표시(추천·보증 심사지침): 후기 대가로 크레딧을 줬다는 사실을 밝힌다(D-137) */}
       <p className="mt-1 text-center text-xs text-zinc-500">후기를 남긴 회사에는 첫 결제 50% 할인 쿠폰을 드려요.</p>
       <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((r) => (
-          <li key={r.id} className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-5">
+          <li key={r.id} className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
             <p className="flex gap-0.5" aria-label={`별점 ${r.rating}점`}>
               {[1, 2, 3, 4, 5].map((n) => (
-                <Star key={n} className={`size-4 ${n <= r.rating ? "fill-amber-400 text-amber-400" : "text-zinc-600"}`} />
+                <Star key={n} className={`size-4 ${n <= r.rating ? "fill-amber-400 text-amber-400" : "text-zinc-300"}`} />
               ))}
             </p>
-            <p className="mt-3 flex-1 break-keep leading-relaxed text-zinc-100">&ldquo;{r.review}&rdquo;</p>
-            <p className="mt-4 text-sm text-zinc-400">— {authorLabel(r)}</p>
+            <p className="mt-3 flex-1 break-keep leading-relaxed text-zinc-800">&ldquo;{r.review}&rdquo;</p>
+            <p className="mt-4 text-sm text-zinc-500">— {authorLabel(r)}</p>
           </li>
         ))}
       </ul>

@@ -36,26 +36,26 @@ const FAQS = [
 
 export function Faq() {
   return (
-    <section id="faq" className="mx-auto max-w-3xl scroll-mt-20 px-4 py-16" aria-labelledby="faq-title">
+    <section id="faq" className="mx-auto max-w-3xl scroll-mt-20 px-4 py-16 text-zinc-900" aria-labelledby="faq-title">
       <h2 id="faq-title" className="text-balance text-center text-3xl font-bold tracking-tight">
         자주 묻는 질문
       </h2>
       <ul className="mt-8 flex flex-col gap-3">
         {FAQS.map(({ q, a }) => (
           <li key={q}>
-            <details className="group rounded-2xl border border-white/10 bg-white/5">
+            <details className="group rounded-2xl border border-zinc-200 bg-white shadow-sm">
               <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 font-semibold [&::-webkit-details-marker]:hidden">
                 <span className="break-keep">{q}</span>
-                <ChevronDown className="size-5 shrink-0 text-zinc-400 transition-transform group-open:rotate-180" aria-hidden />
+                <ChevronDown className="size-5 shrink-0 text-zinc-500 transition-transform group-open:rotate-180" aria-hidden />
               </summary>
-              <p className="break-keep px-5 pb-5 text-sm leading-relaxed text-zinc-300">{a}</p>
+              <p className="break-keep px-5 pb-5 text-sm leading-relaxed text-zinc-600">{a}</p>
             </details>
           </li>
         ))}
       </ul>
-      <p className="mt-6 text-center text-sm text-zinc-400">
+      <p className="mt-6 text-center text-sm text-zinc-500">
         자세한 내용은{" "}
-        <Link href="/terms" className="underline underline-offset-2 hover:text-zinc-200">
+        <Link href="/terms" className="underline underline-offset-2 hover:text-zinc-800">
           이용약관
         </Link>
         에서 확인할 수 있어요.
