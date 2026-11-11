@@ -5,6 +5,7 @@ import { kstTime, stayLabel } from "@/lib/attendance/rules";
 import type { AttendanceToday } from "@/lib/attendance/server";
 import type { RequestItem } from "@/lib/employee/requests";
 import { MyRequests, type TodayRoom } from "./my-requests";
+import { HelpSearchBox } from "@/components/help/help-search-box";
 
 // 직원 홈 = 허브 (worker-dashboard.md §0, D-235)
 // 메뉴 칸(맨 위 고정, 아이콘+이름, 처리할 것만 배지) → 나의 신청함(D-251, 상태는 여기 한 곳) → 공지(있을 때만)
@@ -99,6 +100,10 @@ export function EmployeeHub({
       </div>
 
       {notices && <div className="md:col-start-1 md:row-start-2">{notices}</div>}
+      {/* AI 도움말(D-251 개선사항 7): 홈 맨 아래 */}
+      <div className="md:col-start-1">
+        <HelpSearchBox action={`${ws}/employee/help`} />
+      </div>
     </main>
   );
 }

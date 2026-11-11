@@ -3419,6 +3419,42 @@ export type Database = {
           },
         ]
       }
+      help_questions: {
+        Row: {
+          company_id: string
+          count: number
+          day: string
+          member_id: string
+        }
+        Insert: {
+          company_id: string
+          count?: number
+          day: string
+          member_id: string
+        }
+        Update: {
+          company_id?: string
+          count?: number
+          day?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_questions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "help_questions_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       hometax_uploads: {
         Row: {
           company_id: string
@@ -5301,6 +5337,7 @@ export type Database = {
         }[]
       }
       get_tax_office_by_code: { Args: { p_code: string }; Returns: string }
+      help_take: { Args: never; Returns: number }
       join_company: {
         Args: {
           p_account_holder: string

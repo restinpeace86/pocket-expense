@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, Bell, Building2, CalendarDays, ClipboardCheck, Clock, Car, ChartBar, ChevronDown, FileDown, FileText, HardDrive, LayoutDashboard, Menu, MessageCircle, ReceiptText, Settings, SlidersHorizontal, ToggleRight, Users, Wallet, X, type LucideIcon } from "lucide-react";
+import { Banknote, Bell, Building2, CircleHelp, CalendarDays, ClipboardCheck, Clock, Car, ChartBar, ChevronDown, FileDown, FileText, HardDrive, LayoutDashboard, Menu, MessageCircle, ReceiptText, Settings, SlidersHorizontal, ToggleRight, Users, Wallet, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -243,6 +243,10 @@ export function AdminShell({
           <div className="min-w-0 flex-1 [&>header]:border-b-0">
             <WorkspaceHeader membership={membership} mode="admin" />
           </div>
+          {/* AI 도움말(D-251 개선사항 7): 머리글 [?] — PC·휴대폰 같은 자리, 채팅 아이콘 옆 */}
+          <Link href={`${base}/help`} aria-label="도움말" className="mr-1 inline-flex size-11 shrink-0 items-center justify-center rounded-xl hover:bg-zinc-100 md:order-last md:mr-1" data-help-link>
+            <CircleHelp className="size-5" />
+          </Link>
           {/* 채팅(D-208): 왼쪽 메뉴가 아니라 머리글 아이콘(PC·휴대폰 같음) — 채팅은 관리자 틀 밖 전체 화면이라 메뉴 항목과 동작이 달라서 */}
           {chatUnread !== null && (
             <Link href={`/workspace/${membership.company_id}/chat`} aria-label={`채팅${chatUnread ? ` 안 읽은 메시지 ${chatUnread}개` : ""}`} className="relative mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-xl hover:bg-zinc-100 md:order-last md:mr-4">
