@@ -53,6 +53,7 @@ export function HelpCenter({
   const refs = answer && answer.ok ? answer.refs.map((id) => byId.get(id)).filter((g): g is HelpGuide => !!g) : [];
   const cats = HELP_CATEGORIES.filter((c) => guides.some((g) => g.cat === c.key));
   const word = answer?.ok && answer.remaining === null; // 단어 검색(AI 없음)
+  const aiText = !!(answer?.ok && answer.answer); // AI가 답을 만들었을 때만 "AI 답변"
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-4" data-help-center>
@@ -88,12 +89,12 @@ export function HelpCenter({
             <>
               <div className="flex flex-col gap-2 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3.5">
                 <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-700">
-                  <Sparkles className="size-3.5" aria-hidden /> {word ? "찾은 글" : "AI 답변"}
+                  <Sparkles className="size-3.5" aria-hidden /> {aiText ? "AI 답변" : "찾은 글"}
                 </p>
                 {answer.found && answer.answer ? (
                   <p className="text-[15px] leading-relaxed text-zinc-900">{answer.answer}</p>
                 ) : answer.found ? (
-                  <p className="text-[15px] text-zinc-900">{word ? `"${q.trim()}"와 맞는 글이에요.` : "관련 있는 도움말 글을 찾았어요."} 아래에서 단계별로 보세요.</p>
+                  <p className="text-[15px] text-zinc-900">{word ? `"${q.trim()}"와 맞는 글이에요.` : "AI 답을 만들지 못해 가까운 도움말 글을 보여 드려요."} 아래에서 단계별로 보세요.</p>
                 ) : (
                   <p className="text-[15px] text-zinc-900">도움말에서 찾지 못했어요. 다른 말로 물어보거나 아래 카테고리에서 찾아보세요. 그래도 없으면 머리글 경광등 아이콘(의견 보내기)으로 알려 주세요.</p>
                 )}
