@@ -1,6 +1,6 @@
 // 안드로이드 설치 앱 내려받기(D-228, spec/features/android-app.md)
 // 설치 파일(APK)은 Supabase 공개 저장소 app-downloads에 늘 같은 이름으로 올린다(새 버전은 덮어씀).
-export const ANDROID_APP_VERSION = "1.0.1";
+export const ANDROID_APP_VERSION = "1.0.2";
 // 설치 파일을 저장소에 올린 뒤 true — 그 전에는 받기 버튼·안내 링크를 숨긴다(없는 파일로 보내지 않게)
 export const ANDROID_APK_READY = true;
 export const ANDROID_APK_PATH = "android/workon.apk";

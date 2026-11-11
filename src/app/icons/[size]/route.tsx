@@ -8,10 +8,8 @@ export async function GET(_req: Request, ctx: RouteContext<"/icons/[size]">) {
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #4f46e5 0%, #312e81 100%)" }}>
-        {/* 켜진 스위치(D-221 로고) — 마스크 아이콘 안전 영역(가운데 80%) 안에 */}
-        <div style={{ width: size * 0.56, height: size * 0.32, borderRadius: size, background: "white", display: "flex", alignItems: "center", justifyContent: "flex-end", padding: size * 0.04 }}>
-          <div style={{ width: size * 0.24, height: size * 0.24, borderRadius: size, background: "#4f46e5" }} />
-        </div>
+        {/* 모이는 M(D-252 로고) — 마스크 아이콘 안전 영역(가운데 80%) 안에 */}
+        <svg width={size * 0.56} height={size * 0.56} viewBox="0 0 44 44"><path d="M8 34V14l14 12 14-12v20" fill="none" stroke="white" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" /><circle cx="22" cy="8" r="4" fill="white" /></svg>
       </div>
     ),
     { width: size, height: size },

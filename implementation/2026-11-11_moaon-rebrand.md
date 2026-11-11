@@ -20,3 +20,9 @@
 - tsc, test(417), test:db, build 통과
 - E2E `e2e-brand.mjs` ALL_OK — 랜딩·로그인·약관·처리방침·앱 받기·관리자·직원 홈에 WORKON 없음, manifest 이름, 약관 버전, 로고 aria-label. leftovers []
 - 화면: 랜딩 390, 로그인 390, 공유 이미지, 머리글 로고 확인
+
+## 로고 D · 앱 1.0.2 (D-252, 2026-11-11)
+- `brand/logo.tsx`: `MoaMark`(모이는 M), `LogoMark`(브랜드 색 네모 + 흰 M), `Wordmark`(아이콘 + Moa-on), `StackedLogo`(큰 아이콘 + Moa-on). 사이드바는 Wordmark만
+- 탭 아이콘 `icon.tsx`, 앱 아이콘 `icons/[size]`, 공유 이미지·초대 이미지, 안드로이드 알림 아이콘(`ic_stat_notify.xml` 벡터)·런처 아이콘(새 /icons/512로 만듦, 둥근 것 포함)
+- 안드로이드 1.0.2(versionCode 3): 앱 이름 Moa-on, 새 아이콘, 같은 서명 키(CN=Damounlab) → `app-downloads/android/workon.apk`에 올림(공개 200, APK 형식). `ANDROID_APP_VERSION` 1.0.2
+- 검증: tsc, test(424), build, `e2e-brand` ALL_OK, aapt2(이름 Moa-on·1.0.2)·apksigner 확인, 캡처(머리글·로그인·랜딩·아이콘 512) 확인
