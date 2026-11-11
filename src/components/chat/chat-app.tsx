@@ -73,7 +73,7 @@ export function ChatApp({
   const mode = useViewMode(membership.company_id, isAdminRole(membership.role), serverMode);
   const ws = `/workspace/${membership.company_id}`;
   const homeHref = mode === "admin" ? `${ws}/admin` : `${ws}/employee`;
-  const profileHref = mode === "admin" ? `${ws}/admin/settings` : `${ws}/employee/profile`;
+  const profileHref = mode === "admin" ? `${ws}/admin/device-alerts` : `${ws}/employee/profile`;
   const pathname = usePathname();
   const base = `/workspace/${membership.company_id}/chat`;
   const inRoom = pathname.startsWith(`${base}/`);

@@ -26,7 +26,7 @@ export function AttendanceTabs({ active, pending, settingsHref }: { active: "tod
         </Link>
       </nav>
       <Link href={settingsHref} className="inline-flex h-10 items-center rounded-xl border border-zinc-300 bg-white px-3.5 text-sm text-zinc-800 hover:bg-zinc-50">
-        근태 설정
+        근태 정책
       </Link>
     </div>
   );

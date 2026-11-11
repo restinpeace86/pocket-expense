@@ -31,5 +31,5 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/at
   await requireWorkspace(id, { admin: true });
   if (!(await attendanceEnabled())) notFound();
   const data = await getLeaveTypesAdmin();
-  return <VacationTypesAdmin data={data} base={`/workspace/${id}/admin`} />;
+  return <VacationTypesAdmin data={data} />;
 }

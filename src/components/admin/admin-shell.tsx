@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, Building2, CalendarDays, ClipboardCheck, Clock, Car, ChartBar, ChevronDown, CreditCard, DoorOpen, FileDown, FileStack, FileText, HardDrive, Landmark, LayoutDashboard, Menu, MessageCircle, ReceiptText, Repeat, Route, Settings, SlidersHorizontal, Users, Wallet, X, type LucideIcon } from "lucide-react";
+import { Banknote, Bell, Building2, CalendarDays, ClipboardCheck, Clock, Car, ChartBar, ChevronDown, FileDown, FileText, HardDrive, LayoutDashboard, Menu, MessageCircle, ReceiptText, Settings, SlidersHorizontal, ToggleRight, Users, Wallet, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -10,12 +10,14 @@ import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import { FeedbackButton } from "@/components/feedback/feedback-button";
 import type { Membership } from "@/lib/auth/paths";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
+import { findSettingsTab, visibleGroups, type SettingsGroupKey } from "@/lib/admin/settings-groups";
+import { SettingsTabs } from "@/components/admin/settings-tabs";
 import { useChatUnread } from "@/components/chat/use-chat-unread";
 import { LogoMark, Wordmark } from "@/components/brand/logo";
 
 // 관리자 워크스페이스 레이아웃 (spec/screens/admin-dashboard.md 0): PC는 좌측 사이드바, 모바일은 햄버거 메뉴
 // 설정은 하단 배치 + 하위 메뉴 (admin-settings.md §4)
-type NavItem = { href: string; label: string; icon: LucideIcon; ready: boolean; chatOnly?: boolean };
+type NavItem = { href: string; label: string; icon: LucideIcon; ready: boolean };
 const NAV: NavItem[] = [
   { href: "", label: "홈", icon: LayoutDashboard, ready: true },
   { href: "/claims", label: "지출 승인 관리", icon: ReceiptText, ready: true },
@@ -24,27 +26,18 @@ const NAV: NavItem[] = [
   { href: "/spending", label: "월별 지출 현황", icon: ChartBar, ready: true }, // 계정과목별 보기 전용(D-160)
   { href: "/export", label: "세무 마감", icon: FileDown, ready: true },
 ];
-const SETTINGS_NAV: NavItem[] = [
-  { href: "/settings", label: "지출 한도·정책", icon: SlidersHorizontal, ready: true },
-  { href: "/corporate-cards", label: "법인카드", icon: CreditCard, ready: true },
-  { href: "/vehicles", label: "회사차량", icon: Car, ready: true },
-  // 캘린더 켜기·끄기 + 회의실(D-207·D-208): 꺼져 있어도 늘 보여야 관리자가 켤 수 있다
-  { href: "/calendar-settings", label: "캘린더·회의실", icon: DoorOpen, ready: true },
-  // 근태 켜기·근무 기준·출근 단말·변경 이력(D-236): 꺼져 있어도 늘 보여야 관리자가 켤 수 있다
-  { href: "/attendance-settings", label: "근태 설정", icon: Clock, ready: true },
-  // 채팅 저장 공간·보관 기간(D-212): 메신저가 켜진 회사만
-  // 사진·파일 보관(D-212 → D-218): 채팅 사진·파일 + 회의 자료 — 메신저 스위치와 관계없이
-  { href: "/chat-settings", label: "파일 보관", icon: HardDrive, ready: true },
-  { href: "/recurring", label: "정기 결제", icon: Repeat, ready: true },
-  { href: "/form-template", label: "지출결의서 양식", icon: FileText, ready: true },
-  // 회사 양식(8-104 B): 휴가신청서·결재 문서를 회사 모양으로 — 등록은 PC에서
-  { href: "/company-forms", label: "회사 양식", icon: FileStack, ready: true },
-  { href: "/departments", label: "부서", icon: Building2, ready: true },
-  { href: "/approval-lines", label: "사전 검토 결재라인", icon: Route, ready: true },
-  { href: "/tax-office", label: "세무사무소", icon: Landmark, ready: true },
-  { href: "/billing", label: "요금제", icon: Wallet, ready: true },
-  // 사내 공지·알림 이력은 메뉴에서 숨김(D-159, 개선사항 2) — 화면·데이터는 그대로, 알림 이력은 앱 운영자 화면으로
-];
+// 설정 8개 메뉴(D-251): 7개 그룹 + 요금제. 그룹 안 하위 영역은 화면 위 탭(SettingsTabs)
+const GROUP_ICON: Record<SettingsGroupKey, LucideIcon> = {
+  company: Building2,
+  assets: Car,
+  features: ToggleRight,
+  policy: SlidersHorizontal,
+  attendance: Clock,
+  forms: FileText,
+  files: HardDrive,
+  billing: Wallet,
+};
+// 사내 공지·알림 이력은 메뉴에서 숨김(D-159, 개선사항 2) — 화면·데이터는 그대로, 알림 이력은 앱 운영자 화면으로
 
 function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: string; pathname: string; onNavigate?: () => void }) {
   const { href, label, icon: Icon, ready } = item;
@@ -75,11 +68,13 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
 
 // settingsOpen: 휴대폰 메뉴(서랍)에서는 설정 하위 메뉴를 펼친 채로 연다(개선사항 1-1) — 화면 이름이 바로 보이게
 // feedback: 관리자 1:1 문의 주소 — 휴대폰 서랍 메뉴에서만 넘긴다(PC는 오른쪽 아래 떠 있는 버튼, 7차 개선사항 3)
-function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, calendar = false, chat = false, attendance = null }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; calendar?: boolean; chat?: boolean; attendance?: number | null }) {
+function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, calendar = false, attendance = null }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; calendar?: boolean; attendance?: number | null }) {
   const realPath = usePathname();
   const pathname = previewPath ? `${base}${previewPath}` : realPath;
-  const settingsNav = SETTINGS_NAV.filter((i) => !i.chatOnly || chat);
-  const settingsActive = settingsNav.some((i) => pathname.startsWith(`${base}${i.href}`));
+  const groups = visibleGroups(attendance !== null);
+  const activeGroup = pathname.startsWith(base) ? findSettingsTab(pathname.slice(base.length))?.group.key : undefined;
+  const settingsActive = activeGroup !== undefined;
+  const deviceHref = `${base}/device-alerts`;
   return (
     <nav className="flex flex-col gap-1 p-3" aria-label="관리자 메뉴">
       {NAV.slice(0, 1).map((item) => (
@@ -128,9 +123,23 @@ function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback
           <ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" />
         </summary>
         <div className="mt-1 flex flex-col gap-1 pl-3">
-          {settingsNav.map((item) => (
-            <NavLink key={item.label} item={item} base={base} pathname={pathname} onNavigate={onNavigate} />
-          ))}
+          {groups.map((g) => {
+            const Icon = GROUP_ICON[g.key];
+            const on = activeGroup === g.key;
+            return (
+              <Link
+                key={g.key}
+                href={`${base}${g.tabs[0].href}`}
+                onClick={onNavigate}
+                aria-current={on ? "page" : undefined}
+                data-settings-group={g.key}
+                className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm ${g.key === "billing" ? "mt-2 border-t border-sidebar-border pt-2" : ""} ${on ? "bg-sidebar-active font-semibold text-sidebar-active-fg" : "text-sidebar-fg hover:bg-sidebar-hover"}`}
+              >
+                <Icon className="size-5 shrink-0" />
+                {g.label}
+              </Link>
+            );
+          })}
           {feedback && (
             <a
               href={feedback}
@@ -146,6 +155,18 @@ function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback
           )}
         </div>
       </details>
+      {/* 이 기기 알림(D-251): 사람·기기마다 정하는 것이라 회사 설정 묶음 밖 */}
+      <Link
+        href={deviceHref}
+        onClick={onNavigate}
+        aria-current={pathname.startsWith(deviceHref) ? "page" : undefined}
+        data-nav="device-alerts"
+        className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm ${pathname.startsWith(deviceHref) ? "bg-sidebar-active font-semibold text-sidebar-active-fg" : "text-sidebar-fg hover:bg-sidebar-hover"}`}
+      >
+        <Bell className="size-5 shrink-0" />
+        <span className="flex-1">이 기기 알림</span>
+        <span className="whitespace-nowrap text-[11px] text-sidebar-muted">나만</span>
+      </Link>
     </nav>
   );
 }
@@ -190,7 +211,7 @@ export function AdminShell({
         <p className="px-6 pb-3 pt-5">
           <Brand />
         </p>
-        <NavList base={base} previewPath={previewPath} calendar={calendar} chat={chat != null} attendance={attendance} />
+        <NavList base={base} previewPath={previewPath} calendar={calendar} attendance={attendance} />
       </aside>
 
       {open && (
@@ -203,7 +224,7 @@ export function AdminShell({
                 <X className="size-5" />
               </button>
             </div>
-            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} calendar={calendar} chat={chat != null} attendance={attendance} />
+            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} calendar={calendar} attendance={attendance} />
             <div className="mt-auto sm:hidden">
               <div className="px-2 pb-1">
                 <FeedbackButton variant="row" />
@@ -230,7 +251,10 @@ export function AdminShell({
             </Link>
           )}
         </div>
-        <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 py-6 md:px-8">{children}</main>
+        <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 py-6 md:px-8">
+          <SettingsTabs base={base} previewPath={previewPath} />
+          {children}
+        </main>
       </div>
 
       {/* 관리자 1:1 문의 — PC(md 이상)만 오른쪽 아래에 띄운다. 화면 아래 고정 버튼 줄(.kb-hide.fixed: 승인·지급·내려받기)이 있으면 그 위로 비켜 선다 */}

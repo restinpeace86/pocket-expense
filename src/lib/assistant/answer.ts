@@ -132,7 +132,7 @@ export async function answer(text: string, who: Who): Promise<AssistantReply> {
 
     case "schedule": {
       const { data, error } = await supabase.rpc("calendar_events_range", { p_from: intent.day, p_to: intent.day, p_members: [who.member_id] });
-      if (error) return { body: calendarOff(error.message) ? "회사에서 사내 캘린더를 쓰지 않아요. 관리자가 설정 › 캘린더·회의실에서 켤 수 있어요." : "일정을 불러오지 못했어요. 잠시 뒤 다시 물어봐 주세요.", link: null };
+      if (error) return { body: calendarOff(error.message) ? "회사에서 사내 캘린더를 쓰지 않아요. 관리자가 설정 › 기능 사용에서 켤 수 있어요." : "일정을 불러오지 못했어요. 잠시 뒤 다시 물어봐 주세요.", link: null };
       const list = eventsOnDay((data as unknown as CalEvent[]) ?? [], intent.day).filter((e) => e.attendees.find((a) => a.member_id === who.member_id)?.response !== "declined");
       const head = `${dayLabel(intent.day)} 내 일정`;
       if (!list.length) return { body: `${head}은 없어요.`, link: `${ws}/calendar?date=${intent.day}` };
@@ -147,7 +147,7 @@ export async function answer(text: string, who: Who): Promise<AssistantReply> {
       ]);
       if (e1 || e2) return { body: calendarOff(e1?.message ?? e2?.message) ? "회사에서 사내 캘린더를 쓰지 않아요." : "회의실 현황을 불러오지 못했어요. 잠시 뒤 다시 물어봐 주세요.", link: null };
       let list = (rooms as unknown as MeetingRoom[]) ?? [];
-      if (!list.length) return { body: "등록된 회의실이 없어요. 관리자가 설정 › 캘린더·회의실에서 추가할 수 있어요.", link: null };
+      if (!list.length) return { body: "등록된 회의실이 없어요. 관리자가 설정 › 회사 자산 › 회의실에서 추가할 수 있어요.", link: null };
       if (intent.room) {
         const key = intent.room.replace(/\s+/g, "");
         const hit = list.filter((r) => r.name.replace(/\s+/g, "").includes(key) || key.includes(r.name.replace(/\s+/g, "")));

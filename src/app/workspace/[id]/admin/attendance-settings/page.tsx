@@ -1,35 +1,25 @@
 import { Suspense } from "react";
-import { AttendanceAdmin } from "@/components/admin/attendance-admin";
 import { AttendanceGuide } from "@/components/admin/attendance-guide";
 import { SectionHeading } from "@/components/ui/help";
-import { getAttendanceAdminView } from "@/lib/attendance/server";
-import { requireWorkspace } from "@/lib/auth/guards";
+import { AttendancePart } from "./part";
 
-export const metadata = { title: "근태 · WORKON" };
+export const metadata = { title: "근무 기준 · WORKON" };
 
-// 근태 설정(D-236, spec/features/attendance.md §1·§2-1): 켜기·근무 기준·출근 단말·변경 이력
-// 사용 안내는 평소 접혀 있고(처음 한 번만 펼쳐 보임) 예시 화면 그림으로 설명한다
+// 설정 › 근태 정책 › 근무 기준(D-236 → D-251). 켜기·끄기는 설정 › 기능 사용, 출근 단말·변경 이력은 옆 탭
 export default function AttendanceSettingsPage({ params }: PageProps<"/workspace/[id]/admin/attendance-settings">) {
   return (
     <>
       <SectionHeading
         as="h1"
-        title="근태"
-        summary="회사 기기에 QR을 띄워 두고, 직원이 휴대폰으로 찍어 출근·퇴근을 남겨요."
+        title="근무 기준"
+        summary="근무하는 요일·시각과 퇴근을 잊었을 때 알릴 시간을 정해요."
         helpId="admin.attendance-settings"
         helpLabel="근태는 이렇게 동작해요 (예시 화면)"
         help={<AttendanceGuide />}
       />
       <Suspense fallback={<div className="mt-6 h-64 animate-pulse rounded-xl bg-zinc-100" />}>
-        <Content params={params} />
+        <AttendancePart params={params} part="rules" />
       </Suspense>
     </>
   );
-}
-
-async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/attendance-settings">["params"] }) {
-  const { id } = await params;
-  await requireWorkspace(id, { admin: true });
-  const view = await getAttendanceAdminView();
-  return <AttendanceAdmin view={view} />;
 }

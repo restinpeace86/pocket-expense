@@ -2,7 +2,6 @@
 
 import { AlertTriangle, Loader2, Plus, X } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { saveLeaveShortageAction, saveLeaveTypeAction, type LeaveTypeInput } from "@/app/workspace/[id]/admin/attendance-settings/vacation-types/actions";
 import type { LeaveTypeRow, LeaveTypesAdmin } from "@/lib/attendance/server";
@@ -17,12 +16,12 @@ const isLegal = (t: LeaveTypeRow) => !!t.builtin_key && t.builtin_key !== "famil
 // 법정 휴가를 끌 때 알릴 말(조항 + 규모 안내)
 function offNotice(t: LeaveTypeRow, underFive: boolean): string {
   const base = `${t.name}는(은) ${t.law_ref}로 정해진 휴가예요. 끄면 직원이 앱에서 신청할 수 없을 뿐, 법이 적용되는 회사라면 직원이 청구할 때 회사는 줘야 해요. 이미 승인된 기록은 그대로 남아요.`;
-  if (t.builtin_key === "menstrual") return `${base}\n\n참고: 상시 5명 미만 회사는 생리휴가(근로기준법 제73조)가 적용되지 않는다고 안내되고 있어요${underFive ? " — 근태 설정에서 '5인 미만 회사'로 되어 있어요" : ""}.`;
+  if (t.builtin_key === "menstrual") return `${base}\n\n참고: 상시 5명 미만 회사는 생리휴가(근로기준법 제73조)가 적용되지 않는다고 안내되고 있어요${underFive ? " — 근무 기준에서 '5인 미만 회사'로 되어 있어요" : ""}.`;
   if (t.builtin_key === "public") return `${base}\n\n예비군·민방위 훈련 기간은 휴무로 처리하고 불리하게 대하면 안 돼요(예비군법 제10조·민방위기본법 제27조).`;
   return `${base}\n\n참고: 출산전후휴가와 남녀고용평등법 휴가(배우자 출산·난임치료·가족돌봄)는 회사 규모와 상관없이 적용된다고 안내되고 있어요. 정확한 적용은 고용노동부 1350에서 확인해 주세요.`;
 }
 
-export function VacationTypesAdmin({ data, base }: { data: LeaveTypesAdmin; base: string }) {
+export function VacationTypesAdmin({ data }: { data: LeaveTypesAdmin }) {
   const [editing, setEditing] = useState<LeaveTypeRow | "new" | null>(null);
   const [confirmOff, setConfirmOff] = useState<LeaveTypeRow | null>(null);
   const [busy, start] = useTransition();
@@ -44,9 +43,6 @@ export function VacationTypesAdmin({ data, base }: { data: LeaveTypesAdmin; base
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href={`${base}/attendance-settings`} className="text-sm text-zinc-600 hover:underline">
-        ← 근태 설정
-      </Link>
       <ShortageCard mode={data.shortage} />
 
       <section className={`${card} overflow-hidden`} aria-label="휴가 종류 목록">
@@ -101,7 +97,7 @@ export function VacationTypesAdmin({ data, base }: { data: LeaveTypesAdmin; base
           })}
         </ul>
       </section>
-      <p className="text-xs leading-relaxed text-zinc-600">반차는 따로 두지 않아요 — 시간차를 켜면 연차를 4시간(반차)·2시간(반반차)처럼 써요. 육아휴직처럼 몇 달씩 쉬는 휴직은 이번에는 다루지 않아요. 바꾼 내용은 근태 설정의 [변경 이력]에 남아요.</p>
+      <p className="text-xs leading-relaxed text-zinc-600">반차는 따로 두지 않아요 — 시간차를 켜면 연차를 4시간(반차)·2시간(반반차)처럼 써요. 육아휴직처럼 몇 달씩 쉬는 휴직은 이번에는 다루지 않아요. 바꾼 내용은 근태 정책의 [변경 이력]에 남아요.</p>
 
       {confirmOff && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-center" onClick={() => setConfirmOff(null)}>

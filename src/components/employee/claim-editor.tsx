@@ -847,7 +847,7 @@ export function ClaimEditor({
             {data.vehicles.length ? (
               <Chips label="차량" options={data.vehicles.map((v) => ({ value: v.id, label: `${v.nickname} · ${v.plate_number}` }))} value={form.vehicleId} onChange={(v) => set("vehicleId", v)} />
             ) : (
-              <p className="text-xs text-zinc-500">등록된 회사차량이 없어요. 관리자가 [설정 › 회사차량]에 등록하면 여기서 고를 수 있어요.</p>
+              <p className="text-xs text-zinc-500">등록된 회사차량이 없어요. 관리자가 [설정 › 회사 자산 › 회사차량]에 등록하면 여기서 고를 수 있어요.</p>
             )}
           </div>
         )}
@@ -987,7 +987,7 @@ export function ClaimEditor({
                     {data.vehicles.length ? (
                       <Chips label="출장 차량" options={data.vehicles.map((v) => ({ value: v.id, label: `${v.nickname} · ${v.plate_number}` }))} value={form.vehicleId} onChange={(v) => set("vehicleId", v)} />
                     ) : (
-                      <p className="text-xs text-zinc-500">등록된 회사차량이 없어요. 관리자가 [설정 › 회사차량]에 등록하면 여기서 고를 수 있어요.</p>
+                      <p className="text-xs text-zinc-500">등록된 회사차량이 없어요. 관리자가 [설정 › 회사 자산 › 회사차량]에 등록하면 여기서 고를 수 있어요.</p>
                     )}
                     <p className="text-xs text-zinc-500">주유·통행료·주차 영수증은 회사차량 비용(차량유지비)으로, 숙박·식사·대중교통은 출장비(여비교통비)로 자동으로 나눠요.</p>
                   </div>

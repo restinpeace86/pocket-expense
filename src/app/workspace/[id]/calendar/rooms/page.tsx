@@ -39,7 +39,7 @@ async function Rooms({ params, searchParams }: Pick<PageProps<"/workspace/[id]/c
         <div className="rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-700">
           <p className="font-semibold text-zinc-900">아직 등록된 회의실이 없어요.</p>
           <p className="mt-1">
-            {admin ? "설정 › 캘린더·회의실에서 회의실을 추가하면 여기서 예약할 수 있어요." : "관리자가 회의실을 등록하면 여기서 예약할 수 있어요. 장소는 일정에 글자로 적어 주세요."}
+            {admin ? "설정 › 회사 자산 › 회의실에서 회의실을 추가하면 여기서 예약할 수 있어요." : "관리자가 회의실을 등록하면 여기서 예약할 수 있어요. 장소는 일정에 글자로 적어 주세요."}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {admin && (

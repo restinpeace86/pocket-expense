@@ -35,6 +35,11 @@ insert into public.members (id, auth_user_id, company_id, name, phone, role, sta
   ('a6810000-0000-0000-0000-000000000002', 'a6800000-0000-0000-0000-000000000002', 'c6800000-0000-0000-0000-00000000000a', 'A직원', '01096801002', 'employee', 'approved', now()),
   ('a6810000-0000-0000-0000-000000000003', 'a6800000-0000-0000-0000-000000000003', 'c6800000-0000-0000-0000-00000000000b', 'B대표', '01096801003', 'super_admin', 'approved', now());
 
+-- 두 회사 모두 꺼 둔 상태에서 시작(D-251부터 기본은 켜짐)
+insert into public.company_features (company_id, feature, enabled) values
+  ('c6800000-0000-0000-0000-00000000000a', 'calendar', false),
+  ('c6800000-0000-0000-0000-00000000000b', 'calendar', false);
+
 -- ① 직원은 못 켬
 select public._t_as68('a6800000-0000-0000-0000-000000000002');
 set local role authenticated;

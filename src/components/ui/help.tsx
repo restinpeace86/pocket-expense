@@ -1,30 +1,15 @@
 "use client";
 
 import { ChevronDown, Info } from "lucide-react";
-import { useEffect, useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
-// 화면 설명(도움말) — spec/common/ui-rules.md §6 (D-065)
+// 화면 설명(도움말) — spec/common/ui-rules.md §6 (D-065 → D-251)
 // ① 한 줄 요약은 항상, ② 자세한 설명은 [ⓘ …]을 눌러 그 자리에서 펼침, ③ 예시는 선택한 항목에만(각 화면에서).
-// 처음 보는 브라우저에서는 ②를 한 번 펼쳐 보여 주고, 이후에는 접힌 상태로 둔다.
-const SEEN_PREFIX = "pe-help-seen:";
-
-export function HelpDetails({ id, label = "왜 필요한가요?", children }: { id: string; label?: string; children: ReactNode }) {
-  const ref = useRef<HTMLDetailsElement>(null);
-  useEffect(() => {
-    try {
-      const key = SEEN_PREFIX + id;
-      if (!window.localStorage.getItem(key)) {
-        if (ref.current) ref.current.open = true;
-        window.localStorage.setItem(key, "1");
-      }
-    } catch {
-      // 저장소를 쓸 수 없으면 접힌 상태 그대로
-    }
-  }, [id]);
-
+// D-251: 설명이 길어 설정할 칸이 아래로 밀려서, 처음에도 펼치지 않고 늘 접어 둔다. 대신 펼칠 수 있다는 게 눈에 띄게 알약 버튼으로
+export function HelpDetails({ id, label = "설명 보기", children }: { id: string; label?: string; children: ReactNode }) {
   return (
-    <details ref={ref} className="group mt-1">
-      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1 rounded-lg text-sm font-medium text-brand-700 hover:text-brand-800 [&::-webkit-details-marker]:hidden">
+    <details className="group mt-1.5" data-help={id}>
+      <summary className="inline-flex min-h-9 cursor-pointer list-none items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-700 hover:bg-brand-100 [&::-webkit-details-marker]:hidden">
         <Info className="size-4 shrink-0" />
         {label}
         <ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" />

@@ -36,7 +36,10 @@ insert into public.members (id, auth_user_id, company_id, name, phone, role, sta
   ('a6710000-0000-0000-0000-000000000002', 'a6700000-0000-0000-0000-000000000002', 'c6700000-0000-0000-0000-00000000000a', 'A직원', '01096701002', 'employee', 'approved', now()),
   ('a6710000-0000-0000-0000-000000000003', 'a6700000-0000-0000-0000-000000000003', 'c6700000-0000-0000-0000-00000000000b', 'B대표', '01096701003', 'super_admin', 'approved', now());
 
--- ① 캘린더 꺼짐 = 회의실도 못 씀
+-- ① 캘린더 꺼짐 = 회의실도 못 씀(D-251부터 기본은 켜짐 → 꺼 둔 줄로 시작)
+insert into public.company_features (company_id, feature, enabled) values
+  ('c6700000-0000-0000-0000-00000000000a', 'calendar', false),
+  ('c6700000-0000-0000-0000-00000000000b', 'calendar', false);
 select public._t_as67('a6700000-0000-0000-0000-000000000001');
 set local role authenticated;
 do $$
@@ -46,9 +49,8 @@ begin
 end;
 $$;
 reset role;
-insert into public.company_features (company_id, feature, enabled) values
-  ('c6700000-0000-0000-0000-00000000000a', 'calendar', true),
-  ('c6700000-0000-0000-0000-00000000000b', 'calendar', true);
+update public.company_features set enabled = true
+ where company_id in ('c6700000-0000-0000-0000-00000000000a', 'c6700000-0000-0000-0000-00000000000b') and feature = 'calendar';
 
 -- ② 관리자: 등록·이름 중복·순서 / 표 직접 접근 불가
 select public._t_as67('a6700000-0000-0000-0000-000000000001');

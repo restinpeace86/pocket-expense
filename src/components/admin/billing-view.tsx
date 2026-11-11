@@ -134,6 +134,34 @@ function AddonCard({ addons }: { addons: BillingAddon[] }) {
   );
 }
 
+// 저장 용량 추가(D-248 요금, D-251 요금제 메뉴): 결제 연동 전이라 요금 안내만. 신청·켜기는 8-103 Spec 뒤
+const STORAGE_ADDONS = [
+  { gb: 10, price: 10000 },
+  { gb: 25, price: 20000 },
+  { gb: 50, price: 35000 },
+  { gb: 100, price: 40000 },
+];
+function StorageAddonCard() {
+  return (
+    <section className="rounded-xl border border-zinc-200 bg-white p-5" aria-labelledby="storage-addon-title" data-storage-addon>
+      <h2 id="storage-addon-title" className="flex flex-wrap items-center gap-2 font-semibold text-zinc-900">
+        저장 용량 추가
+        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">준비 중</span>
+      </h2>
+      <p className="mt-1 text-sm text-zinc-700">채팅 사진·파일과 파일 보관함이 함께 쓰는 용량을 늘려요. 매달 요금이에요.</p>
+      <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {STORAGE_ADDONS.map((a) => (
+          <li key={a.gb} className="rounded-xl border border-zinc-200 px-3 py-2.5 text-center">
+            <b className="block text-[15px]">+{a.gb}GB</b>
+            <span className="block text-sm tabular-nums text-zinc-700">월 {formatWon(a.price)}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs text-zinc-500">VAT 별도. 결제가 열리면 여기서 바로 신청할 수 있어요.</p>
+    </section>
+  );
+}
+
 function PaymentForm() {
   const input = "min-h-11 w-full cursor-not-allowed rounded-xl border border-zinc-200 bg-zinc-100 px-3 text-base text-zinc-400 placeholder:text-zinc-400";
   return (
@@ -221,6 +249,7 @@ export function BillingView({ status, plans, addons = [], preview = false, today
           </ul>
         </div>
       </section>
+      <StorageAddonCard />
       <PaymentForm />
     </>
   );

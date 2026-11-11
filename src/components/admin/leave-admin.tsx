@@ -50,9 +50,6 @@ export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Link href={`${base}/attendance-settings`} className="text-sm text-zinc-600 hover:underline">
-          ← 근태 설정
-        </Link>
         <div className="ml-auto flex items-center">
           <Link href={`?year=${data.year - 1}`} aria-label="이전 해" className="flex size-11 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100">
             <ChevronLeft className="size-5" />
@@ -67,7 +64,7 @@ export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string 
       <section className={`${card} px-4 py-3.5 text-sm leading-relaxed text-zinc-800 md:px-5`} aria-label="우리 회사 연도 기준">
         <b>우리 회사 연도 기준: {data.settings.basis === "calendar" ? "1월 1일~12월 31일(회계연도)" : "직원별 입사일"}</b>{" "}
         <Link href={`${base}/attendance-settings`} className="text-[13px] text-brand-700 hover:underline">
-          근태 설정에서 바꾸기
+          근무 기준에서 바꾸기
         </Link>
         <span className="block text-[13px] text-zinc-600">
           {data.settings.basis === "calendar"
@@ -75,7 +72,7 @@ export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string 
             : `${data.year}년에 시작하는 각 직원의 연차 연도(입사한 날부터 1년)예요.`}
         </span>
         {data.settings.under_five && (
-          <span className="mt-2 block rounded-lg bg-amber-50 px-3 py-2 text-[13px] text-amber-950">근태 설정에서 &quot;5인 미만 회사&quot;로 되어 있어요. 근로기준법 제60조가 적용되지 않아 추천값 없이 회사가 직접 정해요.</span>
+          <span className="mt-2 block rounded-lg bg-amber-50 px-3 py-2 text-[13px] text-amber-950">근무 기준에서 &quot;5인 미만 회사&quot;로 되어 있어요. 근로기준법 제60조가 적용되지 않아 추천값 없이 회사가 직접 정해요.</span>
         )}
       </section>
 
@@ -145,7 +142,7 @@ export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string 
           })}
         </ul>
       </section>
-      <p className="text-xs leading-relaxed text-zinc-600">추천값은 법 기준을 계산한 참고값이에요. 확정·수정·입사일·시간차 설정은 모두 근태 설정의 [변경 이력]에 남아요. 직원 화면의 남은 연차는 휴가 신청 기능에서 열려요.</p>
+      <p className="text-xs leading-relaxed text-zinc-600">추천값은 법 기준을 계산한 참고값이에요. 확정·수정·입사일·시간차 설정은 모두 근태 정책의 [변경 이력]에 남아요. 직원 화면의 남은 연차는 휴가 신청 기능에서 열려요.</p>
 
       {editing && <EditSheet row={editing} h={h} hourly={data.settings.hourly_leave} today={data.today} onClose={() => setEditId(null)} />}
     </div>

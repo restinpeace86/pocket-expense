@@ -129,7 +129,7 @@ export function AdminHomeView({
       )}
 
       {policyToConfirm && (
-        <Link href={`${basePath}/settings`} className="flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 text-brand-900 hover:bg-brand-100">
+        <Link href={`${basePath}/settings/meal`} className="flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 text-brand-900 hover:bg-brand-100">
           <SlidersHorizontal className="mt-0.5 size-5 shrink-0" />
           <span className="min-w-0 flex-1">
             <span className="block font-medium">정산 정책을 확인해 주세요</span>

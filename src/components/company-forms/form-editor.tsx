@@ -190,7 +190,7 @@ export function FormEditor({ ws, form, src }: { ws: string; form: EditorForm; sr
       <div className="flex flex-col items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-5" data-pc-only>
         <Monitor className="size-8 text-brand-700" aria-hidden />
         <h1 className="text-lg font-bold">양식 등록은 PC에서 해 주세요</h1>
-        <p className="text-[14px] leading-relaxed text-zinc-700">칸을 하나하나 연결해야 해서 큰 화면이 필요해요. 지금까지 한 내용은 저장돼 있어요 — PC에서 [설정 › 회사 양식 › 등록 대기]를 열어 이어 하세요.</p>
+        <p className="text-[14px] leading-relaxed text-zinc-700">칸을 하나하나 연결해야 해서 큰 화면이 필요해요. 지금까지 한 내용은 저장돼 있어요 — PC에서 [설정 › 양식·결재 › 회사 양식 › 등록 대기]를 열어 이어 하세요.</p>
         <Link href={`${ws}/admin/company-forms`} className="flex h-11 items-center rounded-xl bg-zinc-900 px-4 text-sm font-bold text-white">
           회사 양식 목록
         </Link>

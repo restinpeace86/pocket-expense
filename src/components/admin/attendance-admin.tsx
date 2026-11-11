@@ -1,8 +1,7 @@
 "use client";
 
-import { CalendarCheck, ChevronRight, Clock, Loader2, MonitorSmartphone } from "lucide-react";
+import { Clock, Loader2, MonitorSmartphone } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import {
   createPairCodeAction,
@@ -22,52 +21,26 @@ const fmt = (iso: string) =>
 const card = "rounded-2xl border border-zinc-200 bg-white p-4 md:p-5";
 const select = "h-11 rounded-xl border border-zinc-300 bg-white px-3 text-[15px]";
 
-export function AttendanceAdmin({ view }: { view: AttendanceAdminView }) {
+// 설정 › 근태 정책(D-251): 근무 기준 · 출근 단말 · 변경 이력을 탭마다 나눠 보여 준다. 켜기·끄기는 설정 › 기능 사용
+export function AttendanceAdmin({ view, part, featuresHref }: { view: AttendanceAdminView; part: "rules" | "terminals" | "history"; featuresHref: string }) {
+  if (part === "history") return <History rows={view.history} />;
+  if (!view.enabled) return <AttendanceOff featuresHref={featuresHref} />;
+  return part === "rules" ? <SettingsForm initial={view.settings} /> : <Terminals terminals={view.terminals} />;
+}
+
+export function AttendanceOff({ featuresHref }: { featuresHref: string }) {
   return (
-    <div className="flex flex-col gap-6">
-      <EnabledSwitch enabled={view.enabled} />
-      {view.enabled ? (
-        <>
-          <LeaveLink />
-          <SettingsForm initial={view.settings} />
-          <Terminals terminals={view.terminals} />
-        </>
-      ) : (
-        <p className="rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-6 text-center text-sm text-zinc-500">근태를 켜면 근무 시각과 출근 단말을 정할 수 있어요.</p>
-      )}
-      <History rows={view.history} />
-    </div>
+    <p className="rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-6 text-center text-sm text-zinc-500" data-attendance-off>
+      근태가 꺼져 있어요.{" "}
+      <Link href={featuresHref} className="font-semibold text-brand-700 hover:underline">
+        설정 › 기능 사용
+      </Link>
+      에서 켜면 정할 수 있어요.
+    </p>
   );
 }
 
-// 직원별 연차(D-240) · 휴가 종류(D-241): 설정 > 근태 안
-function LeaveLink() {
-  const pathname = usePathname();
-  const base = pathname.replace(/\/$/, "");
-  return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <LinkCard href={`${base}/leave`} title="직원별 연차" body="근로기준법 기준 추천 일수를 보고 직원마다 연차를 확정해요. 입사일·시간차·소수점도 여기서 정해요." data="leave" />
-      <LinkCard href={`${base}/vacation-types`} title="휴가 종류" body="연차 말고 경조사·병가·법정 휴가 중 우리 회사에서 쓸 것을 켜고, 연차가 모자랄 때 어떻게 할지 정해요." data="vacation-types" />
-    </div>
-  );
-}
-
-function LinkCard({ href, title, body, data }: { href: string; title: string; body: string; data: string }) {
-  return (
-    <Link href={href} className={`${card} flex items-center gap-3 hover:bg-zinc-50`} data-leave-link={data === "leave" ? "" : undefined} data-link={data}>
-      <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
-        <CalendarCheck className="size-5" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <b className="block">{title}</b>
-        <span className="block text-sm text-zinc-600">{body}</span>
-      </span>
-      <ChevronRight className="size-5 shrink-0 text-zinc-400" aria-hidden />
-    </Link>
-  );
-}
-
-function EnabledSwitch({ enabled }: { enabled: boolean }) {
+export function AttendanceSwitch({ enabled }: { enabled: boolean }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const toggle = () => {

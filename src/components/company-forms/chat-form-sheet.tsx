@@ -58,7 +58,7 @@ function HoldSheet({ ws, message, onClose }: { ws: string; message: { id: string
         {done ? (
           <>
             <p className="flex items-start gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-[14px] text-emerald-900" data-held>
-              <Check className="mt-0.5 size-4 shrink-0" aria-hidden /> 담아 뒀어요. PC에서 [설정 › 회사 양식 › 등록 대기]를 열어 이어 하세요(30일 동안 보관).
+              <Check className="mt-0.5 size-4 shrink-0" aria-hidden /> 담아 뒀어요. PC에서 [설정 › 양식·결재 › 회사 양식 › 등록 대기]를 열어 이어 하세요(30일 동안 보관).
             </p>
             <Link href={`${ws}/admin/company-forms`} className="flex h-12 items-center justify-center rounded-xl border border-zinc-300 text-[15px] font-semibold">
               회사 양식 보기

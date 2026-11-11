@@ -242,7 +242,7 @@ export function CompanyFormsView({
             <h2 id="pc-only-title" className="text-lg font-bold">
               양식 등록은 PC에서 해 주세요
             </h2>
-            <p className="text-[14px] leading-relaxed text-zinc-700">칸을 하나하나 연결해야 해서 큰 화면이 필요해요. PC에서 [설정 › 회사 양식]을 열어 주세요. 휴대폰에서는 채팅의 사진·PDF를 길게 눌러 [회사 양식으로 등록] → 담아 둘 수 있어요.</p>
+            <p className="text-[14px] leading-relaxed text-zinc-700">칸을 하나하나 연결해야 해서 큰 화면이 필요해요. PC에서 [설정 › 양식·결재 › 회사 양식]을 열어 주세요. 휴대폰에서는 채팅의 사진·PDF를 길게 눌러 [회사 양식으로 등록] → 담아 둘 수 있어요.</p>
             <button type="button" onClick={() => setPcNotice(false)} className="h-12 rounded-xl bg-zinc-900 text-[15px] font-bold text-white">
               확인
             </button>

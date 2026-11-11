@@ -57,7 +57,7 @@ export function LeaveLawGuide() {
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-xl bg-brand-50 px-4 py-3 text-[13px] leading-relaxed text-brand-950">
-          <b>연도 기준 두 가지</b>(근태 설정에서 골라요)
+          <b>연도 기준 두 가지</b>(근무 기준에서 골라요)
           <br />· <b>1월 1일~12월 31일(회계연도)</b>: 입사한 다음 해 1월 1일에 근무한 날만큼 나눠서 줘요(15일 × 재직일수 ÷ 365). 그 뒤로는 매년 1월 1일에 줘요. 단, <b>입사일 기준으로 계산한 것보다 적게 주면 안 돼요</b>.
           <br />· <b>직원별 입사일</b>: 입사한 날을 기준으로 1년씩 계산해요. 법 조문 그대로예요.
         </div>

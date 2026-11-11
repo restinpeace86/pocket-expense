@@ -105,7 +105,7 @@ const MESSAGES: Record<string, string> = {
   NOT_NO_EVIDENCE: "증빙 없음으로 올린 영수증만 카드 내역으로 대체할 수 있어요. 화면을 새로고침해 주세요.",
   CARD_ROW_MISMATCH: "카드 결제와 영수증이 맞지 않아요(법인카드·같은 금액만). 화면을 새로고침해 주세요.",
   RECURRING_ALREADY: "이 기간 정기 결제 결의서가 이미 있어요.",
-  ASSIGNEE_INACTIVE: "정기 결제 담당자가 활성 멤버가 아니에요. [설정 › 정기 결제]에서 담당자를 바꿔 주세요.",
+  ASSIGNEE_INACTIVE: "정기 결제 담당자가 활성 멤버가 아니에요. [설정 › 경비 정책 › 정기 결제]에서 담당자를 바꿔 주세요.",
   INVALID_REQUEST: "요청·답변 내용은 1~500자로 써 주세요.",
   INVALID_PAYOUT_PROOF: "확인증 파일을 저장하지 못했어요. 다시 올려 주세요.",
   NO_DEFAULT_TITLES: "사무소 기본 계정과목이 아직 없어요. 고객사 계정과목 화면에서 [이 회사 설정을 사무소 기본값으로 저장]을 먼저 눌러 주세요.",

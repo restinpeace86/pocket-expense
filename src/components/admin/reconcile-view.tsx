@@ -293,7 +293,7 @@ function Results({ result: r, base, holders }: { result: ReconcileResult; base: 
           <h2 className="flex items-center gap-1.5 font-semibold text-amber-700">
             <AlertTriangle className="size-4" /> 결제일인데 카드 내역에서 못 찾은 정기 결제 ({r.recurring.notFound.length})
           </h2>
-          <p className="mt-1 break-keep text-sm text-zinc-600">해지했거나 금액·가맹점 이름이 바뀌었을 수 있어요. [설정 › 정기 결제]에서 금액·카드 내역 가맹점 이름을 확인해 주세요.</p>
+          <p className="mt-1 break-keep text-sm text-zinc-600">해지했거나 금액·가맹점 이름이 바뀌었을 수 있어요. [설정 › 경비 정책 › 정기 결제]에서 금액·카드 내역 가맹점 이름을 확인해 주세요.</p>
           <ul className="mt-3 divide-y divide-zinc-100 text-sm">
             {r.recurring.notFound.map((n) => (
               <li key={`${n.recurringId}-${n.due}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">

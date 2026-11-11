@@ -39,13 +39,26 @@ insert into public.members (id, auth_user_id, company_id, name, phone, role, sta
   ('a6610000-0000-0000-0000-000000000003', 'a6600000-0000-0000-0000-000000000003', 'c6600000-0000-0000-0000-00000000000a', 'A사원', '01096601003', 'employee', 'approved', now()),
   ('a6610000-0000-0000-0000-000000000004', 'a6600000-0000-0000-0000-000000000004', 'c6600000-0000-0000-0000-00000000000b', 'B대표', '01096601004', 'super_admin', 'approved', now());
 
--- ① 캘린더 스위치 꺼짐(기본) / 메신저는 줄이 없어도 켜짐(D-206)
+-- ① 메신저·캘린더 모두 줄이 없으면 켜짐(D-206 · D-251)
 select public._t_as66('a6600000-0000-0000-0000-000000000001');
 set local role authenticated;
 do $$
 begin
   if not public.my_feature_enabled('messenger') then raise exception 'FAIL [messenger default on]'; end if;
-  if public.my_feature_enabled('calendar') then raise exception 'FAIL [calendar default off]'; end if;
+  if not public.my_feature_enabled('calendar') then raise exception 'FAIL [calendar default on]'; end if;
+end;
+$$;
+reset role;
+
+-- ①-2 끈 회사(enabled=false 줄)는 아무것도 못 함
+insert into public.company_features (company_id, feature, enabled) values
+  ('c6600000-0000-0000-0000-00000000000a', 'calendar', false),
+  ('c6600000-0000-0000-0000-00000000000b', 'calendar', false);
+select public._t_as66('a6600000-0000-0000-0000-000000000001');
+set local role authenticated;
+do $$
+begin
+  if public.my_feature_enabled('calendar') then raise exception 'FAIL [calendar off row]'; end if;
   if public.chat_unread_total() is null then raise exception 'FAIL [messenger badge default on]'; end if;
   perform public._t_raises66($q$select public.calendar_directory()$q$, 'FEATURE_DISABLED', 'off directory');
   perform public._t_raises66($q$select public.calendar_events_range(current_date, current_date, array[gen_random_uuid()])$q$, 'FEATURE_DISABLED', 'off range');
@@ -54,9 +67,8 @@ end;
 $$;
 reset role;
 
-insert into public.company_features (company_id, feature, enabled) values
-  ('c6600000-0000-0000-0000-00000000000a', 'calendar', true),
-  ('c6600000-0000-0000-0000-00000000000b', 'calendar', true);
+update public.company_features set enabled = true
+ where company_id in ('c6600000-0000-0000-0000-00000000000a', 'c6600000-0000-0000-0000-00000000000b') and feature = 'calendar';
 
 -- ② 만들기: 다른 회사 사람은 참석자에서 빠짐, 10분 단위, 표 직접 쓰기·읽기 불가
 select public._t_as66('a6600000-0000-0000-0000-000000000001');

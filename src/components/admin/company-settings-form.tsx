@@ -23,7 +23,11 @@ const toInt = (v: string) => {
 const won2 = (n: number | string | null) => (n == null ? "-" : `${Number(n).toLocaleString("ko-KR", { maximumFractionDigits: 2 })}원`);
 
 // 회사 정보 · 정산 정책 (spec/screens/admin-settings.md §1·§2). 설명 구성은 ui-rules.md §6.
-export function CompanySettingsForm({ settings: s, preview = false, closing = null }: { settings: CompanySettings; preview?: boolean; closing?: ClosingDates | null }) {
+// show(D-251): 설정 탭마다 한 영역만 보여 준다. 저장은 늘 전체 값을 함께 보내므로 안 보이는 영역은 저장된 값 그대로 간다
+export type SettingsSection = "company" | "meal" | "fuel" | "perDiem";
+const ALL: SettingsSection[] = ["company", "meal", "fuel", "perDiem"];
+export function CompanySettingsForm({ settings: s, preview = false, closing = null, show = ALL }: { settings: CompanySettings; preview?: boolean; closing?: ClosingDates | null; show?: SettingsSection[] }) {
+  const has = (k: SettingsSection) => show.includes(k);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -78,6 +82,13 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
+      {!has("company") && (
+        <>
+          <input type="hidden" name="name" value={s.name} />
+          <input type="hidden" name="businessNumber" value={s.business_number} />
+        </>
+      )}
+      {has("company") && (
       <section className={card}>
         <SectionHeading
           title="회사 정보"
@@ -100,7 +111,9 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
           </Field>
         </div>
       </section>
+      )}
 
+      {has("meal") && (
       <section className={card}>
         <SectionHeading
           title="식대 한도"
@@ -178,7 +191,9 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
           />
         </div>
       </section>
+      )}
 
+      {has("fuel") && (
       <section className={card}>
         <SectionHeading
           title="자차 유류비"
@@ -286,7 +301,9 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
           />
         </div>
       </section>
+      )}
 
+      {has("perDiem") && (
       <section className={card}>
         <SectionHeading
           title="출장 일비"
@@ -331,6 +348,7 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
           />
         </div>
       </section>
+      )}
 
       {closing && <FixedClosingSection dates={closing} />}
 
