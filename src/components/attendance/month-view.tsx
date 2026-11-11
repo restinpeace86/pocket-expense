@@ -56,7 +56,7 @@ export function MonthView({
   monthEnd,
   flash,
   readOnly = false,
-  title = "근태",
+  title = "출퇴근 기록",
   backHref,
   backLabel = "홈으로",
   monthPrefix,

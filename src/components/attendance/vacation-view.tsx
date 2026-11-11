@@ -34,7 +34,7 @@ export function VacationView({ data, base, companyId, memberId, flash }: { data:
         <Link href={base} aria-label="홈으로" className="flex size-10 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100">
           <ChevronLeft className="size-6" />
         </Link>
-        <h1 className="text-xl font-bold md:text-2xl">휴가</h1>
+        <h1 className="text-xl font-bold md:text-2xl">휴가 및 근태 신청</h1>
         <div className="ml-auto flex items-center">
           <Link href={`${base}/vacation?year=${data.year - 1}`} aria-label="이전 해" className="flex size-11 items-center justify-center rounded-lg text-zinc-700 hover:bg-zinc-100">
             <ChevronLeft className="size-5" />

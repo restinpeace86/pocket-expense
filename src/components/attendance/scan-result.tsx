@@ -88,7 +88,7 @@ export function ScanResult({ token, home, camera }: { token: string; home: strin
       <>
         {day(result.holiday)}
         <p className="mt-5 w-full rounded-xl bg-zinc-100 px-4 py-3.5 text-sm leading-relaxed text-zinc-700">
-          {result.holiday ? "휴일 기록은 남았어요. 휴일 근무 상신 → 관리자 승인이 되어야 근무한 날로 인정돼요. 나중에 [근태]에서 그날을 눌러 올려도 돼요." : "퇴근 시각이 다르면 [근태]에서 정정 신청으로 고칠 수 있어요."}
+          {result.holiday ? "휴일 기록은 남았어요. 휴일 근무 상신 → 관리자 승인이 되어야 근무한 날로 인정돼요. 나중에 [출퇴근 기록]에서 그날을 눌러 올려도 돼요." : "퇴근 시각이 다르면 [출퇴근 기록]에서 정정 신청으로 고칠 수 있어요."}
         </p>
       </>
     );

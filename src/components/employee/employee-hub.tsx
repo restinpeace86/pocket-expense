@@ -15,11 +15,11 @@ export function hubTiles(ws: string, o: { inbox: { waiting: number } | null; roo
     { key: "claims", href: `${ws}/employee/claims`, label: "지출결의", icon: ReceiptText },
     { key: "settlements", href: `${ws}/employee/settlements`, label: "정산", icon: Wallet },
     ...(o.inbox ? [{ key: "approvals", href: `${ws}/approvals`, label: "결재함", icon: Inbox, badge: o.inbox.waiting }] : []),
-    // 근태 켠 회사(D-237): [근태] = 월 근태 현황, [휴가] = 남은 연차·휴가 신청(D-241)
+    // 근태 켠 회사(D-237): [출퇴근 기록] = 월 근태 현황, [휴가 및 근태 신청] = 남은 연차·휴가 신청(D-241). 이름은 D-251 개선사항 5
     ...(o.attendance
       ? [
-          { key: "attendance", href: `${ws}/employee/attendance`, label: "근태", icon: Clock },
-          { key: "vacation", href: `${ws}/employee/vacation`, label: "휴가", icon: TreePalm },
+          { key: "attendance", href: `${ws}/employee/attendance`, label: "출퇴근 기록", icon: Clock },
+          { key: "vacation", href: `${ws}/employee/vacation`, label: "휴가 및 근태 신청", icon: TreePalm },
         ]
       : []),
     ...(o.rooms ? [{ key: "rooms", href: `${ws}/calendar?rooms=${o.today}`, label: "회의실", icon: DoorOpen }] : []),
@@ -70,8 +70,9 @@ export function EmployeeHub({
               data-tile={key}
               className="relative flex h-[5.25rem] flex-col items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white text-sm font-medium text-zinc-800 shadow-sm hover:border-brand-300 active:bg-zinc-50 md:h-26 md:text-[15px]"
             >
-              <Icon className="size-7 text-brand-600" strokeWidth={1.8} aria-hidden />
-              {label}
+              <Icon className="size-7 shrink-0 text-brand-600" strokeWidth={1.8} aria-hidden />
+              {/* 긴 이름(휴가 및 근태 신청)은 좁은 휴대폰에서 두 줄로(D-251) */}
+              <span className="break-keep px-1.5 text-center leading-tight">{label}</span>
               {!!badge && (
                 <span className="absolute right-[calc(50%-2.25rem)] top-2.5 min-w-5 rounded-full bg-red-600 px-1 text-center text-[11px] font-semibold leading-5 text-white">
                   {badge > 99 ? "99+" : badge}

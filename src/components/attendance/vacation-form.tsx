@@ -159,7 +159,7 @@ export function VacationForm({ data, back, companyId, memberId }: { data: Vacati
         {type && type.proof !== "none" && (
           <>
             <ProofPicker files={files} onChange={setFiles} consent={consent} onConsent={(v) => (setConsent(v), setError(null))} required={type.proof === "required"} />
-            {type.proof === "required" && files.length === 0 && <p className="-mt-2 text-xs text-indigo-800">아직 서류가 없으면 신청부터 하고 나중에 [휴가]에서 올려도 돼요. 올리기 전에는 승인되지 않아요.</p>}
+            {type.proof === "required" && files.length === 0 && <p className="-mt-2 text-xs text-indigo-800">아직 서류가 없으면 신청부터 하고 나중에 [휴가 및 근태 신청]에서 올려도 돼요. 올리기 전에는 승인되지 않아요.</p>}
           </>
         )}
         {error && (
