@@ -9,10 +9,13 @@ import { daysLabel } from "@/lib/attendance/leave";
 import { dayLabel } from "@/lib/attendance/month";
 import type { ProcessedProof } from "@/lib/attendance/proof-image";
 import { PAID_LABEL, preview, type VacationData } from "@/lib/attendance/vacation";
+import type { LeaveInputs } from "@/lib/company-forms/leave-inputs";
+import { LeaveCustomFields, missingRequired } from "./leave-custom-fields";
 import { ProofPicker, uploadProofs } from "./proof-picker";
 
 // 휴가 신청(spec/features/attendance.md §8-3, D-241): 종류 → 단위 → 날짜 → 미리 보기(근무일·남은 연차) → 사유(선택) → 증빙(필수 종류)
-export function VacationForm({ data, back, companyId, memberId }: { data: VacationData; back: string; companyId: string; memberId: string }) {
+export function VacationForm({ data, back, companyId, memberId, custom = null }: { data: VacationData; back: string; companyId: string; memberId: string; custom?: LeaveInputs | null }) {
+  const [values, setValues] = useState<Record<string, string>>(() => custom?.last ?? {});
   const router = useRouter();
   const h = data.settings.daily_hours;
   const monthStart = `${data.today.slice(0, 7)}-01`;
@@ -40,7 +43,9 @@ export function VacationForm({ data, back, companyId, memberId }: { data: Vacati
       setError(null);
       if (p.error) return setError(p.error);
       if (files.length && !consent) return setError("증빙을 올리려면 민감정보 수집·이용에 동의해 주세요.");
-      const r = await createLeaveAction({ type_id: typeId, unit: u, start_date: start, end_date: u === "hour" ? start : end, start_time: u === "hour" ? startTime : null, hours: u === "hour" ? hours : null, reason: reason.trim() || null });
+      const miss = custom ? missingRequired(custom.fields, values) : null;
+      if (miss) return setError(`회사 추가 항목 [${miss.label}]을(를) 채워 주세요.`);
+      const r = await createLeaveAction({ type_id: typeId, unit: u, start_date: start, end_date: u === "hour" ? start : end, start_time: u === "hour" ? startTime : null, hours: u === "hour" ? hours : null, reason: reason.trim() || null, ...(custom ? { custom: values } : {}) });
       if (!r.ok) return setError(r.error);
       let flash = r.selfApproved ? "self" : "pending";
       if (files.length) {
@@ -155,6 +160,8 @@ export function VacationForm({ data, back, companyId, memberId }: { data: Vacati
           </span>
           <textarea rows={2} maxLength={200} value={reason} onChange={(e) => setReason(e.target.value)} placeholder={type?.key === "annual" ? "비워 둬도 신청돼요" : "예: 본인 결혼 · 병원 진료"} className="rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-[15px] outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20" />
         </label>
+
+        {custom && <LeaveCustomFields formName={custom.formName} fields={custom.fields} values={values} onChange={(k, v) => (setValues((x) => ({ ...x, [k]: v })), setError(null))} members={custom.members} />}
 
         {type && type.proof !== "none" && (
           <>

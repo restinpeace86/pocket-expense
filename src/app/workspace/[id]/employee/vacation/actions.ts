@@ -4,7 +4,7 @@ import { vacationErrorText } from "@/lib/attendance/vacation";
 import { createClient } from "@/lib/supabase/server";
 
 // 휴가 신청·증빙·취소(D-241, spec/features/attendance.md §8). 검사·권한·알림은 DB 함수가 한다
-export type LeaveCreateInput = { type_id: string; unit: "day" | "hour"; start_date: string; end_date: string; start_time: string | null; hours: number | null; reason: string | null };
+export type LeaveCreateInput = { type_id: string; unit: "day" | "hour"; start_date: string; end_date: string; start_time: string | null; hours: number | null; reason: string | null; custom?: Record<string, string> };
 
 export async function createLeaveAction(input: LeaveCreateInput): Promise<{ ok: true; id: string; status: string; selfApproved: boolean } | { ok: false; error: string }> {
   const supabase = await createClient();

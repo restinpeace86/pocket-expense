@@ -674,12 +674,14 @@ export type Database = {
           cancel_status: string | null
           company_id: string
           created_at: string
+          custom_payload: Json
           decided_at: string | null
           decided_by: string | null
           decided_by_name: string | null
           deduct_days: number
           deducts: boolean
           end_date: string
+          form_id: string | null
           hours: number | null
           id: string
           member_id: string
@@ -689,6 +691,7 @@ export type Database = {
           proof: string
           reason: string | null
           reject_reason: string | null
+          remaining_days: number | null
           self_approved: boolean
           start_date: string
           start_time: string | null
@@ -707,12 +710,14 @@ export type Database = {
           cancel_status?: string | null
           company_id: string
           created_at?: string
+          custom_payload?: Json
           decided_at?: string | null
           decided_by?: string | null
           decided_by_name?: string | null
           deduct_days?: number
           deducts: boolean
           end_date: string
+          form_id?: string | null
           hours?: number | null
           id?: string
           member_id: string
@@ -722,6 +727,7 @@ export type Database = {
           proof: string
           reason?: string | null
           reject_reason?: string | null
+          remaining_days?: number | null
           self_approved?: boolean
           start_date: string
           start_time?: string | null
@@ -740,12 +746,14 @@ export type Database = {
           cancel_status?: string | null
           company_id?: string
           created_at?: string
+          custom_payload?: Json
           decided_at?: string | null
           decided_by?: string | null
           decided_by_name?: string | null
           deduct_days?: number
           deducts?: boolean
           end_date?: string
+          form_id?: string | null
           hours?: number | null
           id?: string
           member_id?: string
@@ -755,6 +763,7 @@ export type Database = {
           proof?: string
           reason?: string | null
           reject_reason?: string | null
+          remaining_days?: number | null
           self_approved?: boolean
           start_date?: string
           start_time?: string | null
@@ -771,6 +780,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_leaves_form_fk"
+            columns: ["form_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "company_forms"
+            referencedColumns: ["id", "company_id"]
           },
           {
             foreignKeyName: "attendance_leaves_member_id_company_id_fkey"

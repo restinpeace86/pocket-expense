@@ -37,6 +37,7 @@ export type Leave = {
   can_decide?: boolean;
   mine?: boolean;
   has_proof: boolean;
+  form_id?: string | null; // 회사 휴가신청서 양식으로 낸 휴가(8-104 C)
   files: LeaveFile[];
   granted: number | null;
   used_other: number | null;
@@ -143,6 +144,8 @@ export function vacationErrorText(message: string | undefined): string {
   if (m.includes("NO_GRANT")) return "회사가 아직 이 기간 연차를 확정하지 않았어요. 관리자에게 알려 주세요.";
   if (m.includes("CROSS_PERIOD")) return "연차 기간을 넘어가요. 나눠서 신청해 주세요.";
   if (m.includes("NOT_ENOUGH")) return "남은 연차가 모자라요.";
+  if (m.includes("CUSTOM_REQUIRED")) return "회사 추가 항목 중 필수 칸을 채워 주세요.";
+  if (m.includes("CUSTOM_INVALID")) return "회사 추가 항목 값을 다시 확인해 주세요.";
   if (m.includes("CONSENT_REQUIRED")) return "민감정보 수집·이용에 동의해야 증빙을 올릴 수 있어요.";
   if (m.includes("FILE_LIMIT")) return `증빙은 ${PROOF_MAX_FILES}개까지 올릴 수 있어요.`;
   if (m.includes("PROOF_REQUIRED")) return "증빙이 아직 없어서 승인할 수 없어요.";

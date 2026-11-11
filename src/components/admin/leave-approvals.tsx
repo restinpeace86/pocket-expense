@@ -1,5 +1,6 @@
 "use client";
 
+import { LeaveDocButtons } from "@/components/company-forms/leave-doc-buttons";
 import { FileText, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -82,6 +83,7 @@ export function LeaveApprovals({ items, dailyHours, done }: { items: Leave[]; da
                     {l.cancel_status === "rejected" && ` · 취소 반려(${l.cancel_reject_reason})`}
                   </span>
                 )}
+                {l.form_id && <LeaveDocButtons leaveId={l.id} compact />}
                 {error?.id === l.id && (
                   <span role="alert" className="text-[13px] font-semibold text-red-700">
                     {error.text}

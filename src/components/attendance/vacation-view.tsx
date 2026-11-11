@@ -1,5 +1,6 @@
 "use client";
 
+import { LeaveDocButtons } from "@/components/company-forms/leave-doc-buttons";
 import { CheckCircle2, ChevronLeft, ChevronRight, FileText, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -203,6 +204,7 @@ function LeaveSheet({ leave: l, h, today, base, companyId, memberId, onClose }: 
             </>
           )}
         </dl>
+        {l.form_id && <LeaveDocButtons leaveId={l.id} />}
         {l.reject_reason && <p className="rounded-xl bg-zinc-100 px-3.5 py-2.5 text-[13px] text-zinc-800">반려 사유: {l.reject_reason}</p>}
         {l.cancel_status === "pending" && <p className="rounded-xl bg-indigo-50 px-3.5 py-2.5 text-[13px] text-indigo-900">취소 신청 중이에요{l.cancel_reason ? ` · 사유: ${l.cancel_reason}` : ""}. 승인되면 연차를 돌려받아요.</p>}
         {l.cancel_status === "rejected" && <p className="rounded-xl bg-zinc-100 px-3.5 py-2.5 text-[13px] text-zinc-800">취소 신청이 반려됐어요 · {l.cancel_reject_reason}</p>}
