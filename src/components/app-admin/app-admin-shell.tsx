@@ -22,6 +22,7 @@ export function AppAdminShell({ children }: { children: ReactNode }) {
             <Link href="/app-admin/referrals" className="text-zinc-300 hover:text-white">추천</Link>
             <Link href="/app-admin/notifications" className="text-zinc-300 hover:text-white">알림 이력</Link>
             <Link href="/app-admin/holidays" className="text-zinc-300 hover:text-white">공휴일</Link>
+            <Link href="/app-admin/help" className="text-zinc-300 hover:text-white">도움말 글</Link>
             <span className="hidden rounded-full bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 sm:inline">공지·후기 숨김·공휴일·양식 접수 표시 외 읽기 전용</span>
           </nav>
         </div>

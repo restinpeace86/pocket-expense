@@ -1,6 +1,6 @@
 "use client";
 
-import { ImagePlus, Loader2, MessageSquareWarning, X } from "lucide-react";
+import { ImagePlus, Loader2, Siren, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { submitFeedbackAction } from "@/app/workspace/[id]/feedback/actions";
@@ -41,7 +41,7 @@ export function FeedbackButton({
           className={`flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-left text-sm font-medium hover:bg-sidebar-hover ${className}`}
           data-feedback-open
         >
-          <MessageSquareWarning className="size-5" aria-hidden />
+          <Siren className="size-5" aria-hidden />
           의견 보내기{" "}
           <span className="text-xs opacity-75">버그 신고 · 기능 개선</span>
         </button>
@@ -54,7 +54,7 @@ export function FeedbackButton({
           className={`size-11 items-center justify-center rounded-xl border border-zinc-300 text-zinc-700 hover:bg-zinc-50 ${className || "inline-flex"}`}
           data-feedback-open
         >
-          <MessageSquareWarning className="size-5" aria-hidden />
+          <Siren className="size-5" aria-hidden />
         </button>
       )}
       {open && <FeedbackDialog onClose={() => setOpen(false)} />}

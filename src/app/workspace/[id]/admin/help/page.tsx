@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { HelpCenter } from "@/components/help/help-center";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { helpFeatures } from "@/lib/help/features";
+import { guidesFor } from "@/lib/help/guides";
+import { loadHelp } from "@/lib/help/store";
 
 export const metadata = { title: "도움말 · Moa-on" };
 
@@ -20,5 +22,5 @@ export default function AdminHelpPage({ params, searchParams }: PageProps<"/work
 async function Content({ params, searchParams }: Pick<PageProps<"/workspace/[id]/admin/help">, "params" | "searchParams">) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   await requireWorkspace(id, { admin: true });
-  return <HelpCenter companyId={id} features={await helpFeatures()} mode="admin" admin initialQ={typeof sp.q === "string" ? sp.q : ""} initialDoc={typeof sp.doc === "string" ? sp.doc : null} />;
+  return <HelpCenter companyId={id} guides={guidesFor(await loadHelp(), true, await helpFeatures())} mode="admin" admin initialQ={typeof sp.q === "string" ? sp.q : ""} initialDoc={typeof sp.doc === "string" ? sp.doc : null} />;
 }

@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { HelpCenter } from "@/components/help/help-center";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { helpFeatures } from "@/lib/help/features";
+import { guidesFor } from "@/lib/help/guides";
+import { loadHelp } from "@/lib/help/store";
 
 export const metadata = { title: "도움말 · Moa-on" };
 
@@ -27,7 +29,7 @@ async function Content({ params, searchParams }: Pick<PageProps<"/workspace/[id]
         </Link>
         <h1 className="text-xl font-bold md:text-2xl">도움말</h1>
       </div>
-      <HelpCenter companyId={id} features={await helpFeatures()} mode="employee" admin={false} initialQ={typeof sp.q === "string" ? sp.q : ""} initialDoc={typeof sp.doc === "string" ? sp.doc : null} />
+      <HelpCenter companyId={id} guides={guidesFor(await loadHelp(), false, await helpFeatures())} mode="employee" admin={false} initialQ={typeof sp.q === "string" ? sp.q : ""} initialDoc={typeof sp.doc === "string" ? sp.doc : null} />
     </main>
   );
 }

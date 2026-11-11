@@ -3441,6 +3441,60 @@ export type Database = {
           },
         ]
       }
+      help_articles: {
+        Row: {
+          admin_path: string | null
+          audience: string
+          category: string
+          id: string
+          keywords: string[]
+          needs: string | null
+          path: string | null
+          path_label: string | null
+          published: boolean
+          sim: string | null
+          sort: number
+          summary: string
+          title: string
+          updated_at: string
+          updated_by_name: string | null
+        }
+        Insert: {
+          admin_path?: string | null
+          audience?: string
+          category: string
+          id: string
+          keywords?: string[]
+          needs?: string | null
+          path?: string | null
+          path_label?: string | null
+          published?: boolean
+          sim?: string | null
+          sort?: number
+          summary?: string
+          title: string
+          updated_at?: string
+          updated_by_name?: string | null
+        }
+        Update: {
+          admin_path?: string | null
+          audience?: string
+          category?: string
+          id?: string
+          keywords?: string[]
+          needs?: string | null
+          path?: string | null
+          path_label?: string | null
+          published?: boolean
+          sim?: string | null
+          sort?: number
+          summary?: string
+          title?: string
+          updated_at?: string
+          updated_by_name?: string | null
+        }
+        Relationships: []
+      }
       help_questions: {
         Row: {
           company_id: string
@@ -3474,6 +3528,38 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      help_steps: {
+        Row: {
+          article_id: string
+          body: string
+          idx: number
+          image_alt: string | null
+          image_path: string | null
+        }
+        Insert: {
+          article_id: string
+          body: string
+          idx: number
+          image_alt?: string | null
+          image_path?: string | null
+        }
+        Update: {
+          article_id?: string
+          body?: string
+          idx?: number
+          image_alt?: string | null
+          image_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_steps_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "help_articles"
+            referencedColumns: ["id"]
           },
         ]
       }
