@@ -42,6 +42,24 @@
 - 이 화면에는 두지 않는다(D-068). 초대 링크·QR·재발급은 관리자 홈과 멤버 관리에서 한다.
 
 ## 4. [⚙️ 설정] 허브 구성 (Admin Settings Hub)
+
+> **D-251(2026-11-11)로 아래 구성을 대체**: 왼쪽 메뉴 8개 + 그룹 화면 위 탭(`src/lib/admin/settings-groups.ts`). 탭 주소는 기존 주소를 그대로 쓴다.
+>
+> | 메뉴 | 탭 |
+> |---|---|
+> | 회사 기본정보 | 회사정보 `/settings` · 회사 위치 `/settings/location` · 부서 · 세무사무소 |
+> | 회사 자산 | 법인카드 · 회사차량 · 회의실 `/calendar-settings` |
+> | 기능 사용 `/features` | 근태 사용 · 사내 캘린더 사용(기본 켜짐) |
+> | 경비 정책 | 식대 한도 `/settings/meal` · 자차 유류비 `/settings/fuel` · 출장 일비 `/settings/per-diem` · 정기 결제 `/recurring` · 마감 일정 `/settings/closing` |
+> | 근태 정책(근태 켰을 때만) | 직원별 연차 · 휴가 종류 · 근무 기준 `/attendance-settings` · 출근 단말 `/attendance-settings/terminals` · 변경 이력 `/attendance-settings/history` |
+> | 양식·결재 | 지출결의서 양식 · 회사 양식 · 사전 검토 결재라인 |
+> | 파일 보관 | (탭 없음) |
+> | 요금제 | 요금제 + 저장 용량 추가 요금 안내(준비 중, D-248) |
+>
+> - 회사정보·식대·유류비·일비는 같은 저장(`update_company_settings`)이라 탭마다 그 영역만 보이고 나머지 값은 그대로 보낸다.
+> - [이 기기 알림]은 회사 설정이 아니라 메뉴 맨 아래 별도(`/admin/device-alerts`).
+> - 설명글(ⓘ)은 늘 접힌 채로 시작한다(D-251).
+
 ```
 [⚙️ 설정]
  ├── 🎛️ 사내 지출 한도 및 정책 설정   /admin/settings (이 화면: 회사 정보, 1식 한도·초과 처리 방식, 유류비 단가, 청구 기한, 공용 초대 링크)
