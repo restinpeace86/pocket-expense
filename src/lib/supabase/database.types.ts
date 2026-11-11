@@ -2294,34 +2294,40 @@ export type Database = {
           address: string
           company_id: string
           found_address: string | null
+          jibun_address: string | null
           lat: number
           lng: number
           region: string
           updated_at: string
           updated_by: string | null
           updated_by_name: string | null
+          zonecode: string | null
         }
         Insert: {
           address: string
           company_id: string
           found_address?: string | null
+          jibun_address?: string | null
           lat: number
           lng: number
           region: string
           updated_at?: string
           updated_by?: string | null
           updated_by_name?: string | null
+          zonecode?: string | null
         }
         Update: {
           address?: string
           company_id?: string
           found_address?: string | null
+          jibun_address?: string | null
           lat?: number
           lng?: number
           region?: string
           updated_at?: string
           updated_by?: string | null
           updated_by_name?: string | null
+          zonecode?: string | null
         }
         Relationships: [
           {
@@ -5155,9 +5161,11 @@ export type Database = {
         Args: {
           p_address: string
           p_found: string
+          p_jibun?: string
           p_lat: number
           p_lng: number
           p_region: string
+          p_zonecode?: string
         }
         Returns: Json
       }

@@ -61,6 +61,10 @@ begin
   end loop;
   perform set_config('t.ars', v -> 'stops' -> 0 ->> 'ars_id', true);
   perform public.company_location_save('서울 중구 세종대로 110 (본관)', '서울 중구 태평로1가 31', 37.5663, 126.9779, '서울');
+  -- D-251: 우편번호 검색 — 지번·우편번호 함께, 우편번호는 5자리만
+  perform public._t_raises84($q$select public.company_location_save('서울 중구 세종대로 110', null, 37.5663, 126.9779, '서울', '서울 중구 태평로1가 31', '0451')$q$, 'INVALID', 'zonecode 5');
+  perform public.company_location_save('서울 중구 세종대로 110 (본관)', '서울 중구 세종대로 110', 37.5663, 126.9779, '서울', '서울 중구 태평로1가 31', '04524');
+  if (public.bus_company_nearby() ->> 'zonecode') <> '04524' or (public.bus_company_nearby() ->> 'jibun_address') <> '서울 중구 태평로1가 31' then raise exception 'FAIL [jibun/zonecode]'; end if;
 end;
 $$;
 reset role;

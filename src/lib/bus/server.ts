@@ -9,6 +9,10 @@ type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
 export type Nearby = {
   address: string;
   found_address: string | null;
+  jibun_address?: string | null; // D-251: 우편번호 검색으로 고른 지번·우편번호(이전 저장분은 없음)
+  zonecode?: string | null;
+  lat: number;
+  lng: number;
   region: string;
   seoul: boolean;
   updated_by_name: string | null;
