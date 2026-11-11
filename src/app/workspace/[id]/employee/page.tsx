@@ -6,13 +6,14 @@ import { getCompanyNearby } from "@/lib/bus/server";
 import { chatEnabled } from "@/lib/chat/server";
 import { HireDatePrompt } from "@/components/attendance/hire-date-prompt";
 import { NoticeStrip } from "@/components/push/notice-strip";
-import { EmployeeHub, hubTiles, type HubEvent } from "@/components/employee/employee-hub";
+import { EmployeeHub, hubTiles } from "@/components/employee/employee-hub";
+import type { TodayRoom } from "@/components/employee/my-requests";
 import { requireWorkspace } from "@/lib/auth/guards";
-import { eventsOnDay, placeLabel, timeLabelOn } from "@/lib/calendar/calendar";
+import { eventsOnDay, timeLabelOn } from "@/lib/calendar/calendar";
 import { calendarEnabled, getCalendarEvents, getMeetingRooms } from "@/lib/calendar/server";
 import { getInboxBadge } from "@/lib/claims/inbox";
 import { todayKst } from "@/lib/dates";
-import { getMySummary } from "@/lib/employee/queries";
+import { getMyRequests, getMySummary } from "@/lib/employee/queries";
 
 export const metadata = { title: "홈 · Moa-on" };
 
@@ -37,20 +38,24 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
   const membership = await requireWorkspace(id);
   const today = todayKst();
   const [summary, notices, inbox, calendar, attendance, hireMissing, nearby, chat] = await Promise.all([getMySummary(), getRecentNotices(), getInboxBadge(membership), calendarEnabled(), getMyAttendanceToday(), myHireDateMissing(), getCompanyNearby(), chatEnabled()]);
-  const [rooms, events] = calendar ? await Promise.all([getMeetingRooms(), getCalendarEvents(today, today, [membership.member_id])]) : [[], []];
-  const todays: HubEvent[] | null = calendar
-    ? eventsOnDay(events, today)
-        .slice(0, 3)
-        .map((e) => ({ id: e.id, time: timeLabelOn(e, today), title: e.title, place: placeLabel(e), href: `${ws}/calendar?date=${today}&event=${e.id}` }))
+  const [[rooms, events], requests] = await Promise.all([
+    calendar ? Promise.all([getMeetingRooms(), getCalendarEvents(today, today, [membership.member_id])]) : Promise.resolve([[], []] as [Awaited<ReturnType<typeof getMeetingRooms>>, Awaited<ReturnType<typeof getCalendarEvents>>]),
+    getMyRequests(ws, membership.member_id, attendance !== null),
+  ]);
+  // 나의 신청함(D-251): 오늘 내 회의실 예약만 따로, 나머지 오늘 일정은 수만
+  const todayEvents = calendar ? eventsOnDay(events, today) : [];
+  const todayRooms: TodayRoom[] | null = calendar
+    ? todayEvents.filter((e) => e.room_id).map((e) => ({ id: e.id, time: timeLabelOn(e, today), title: e.title, room: e.room_name ?? "회의실", href: `${ws}/calendar?date=${today}&event=${e.id}` }))
     : null;
   return (
     <EmployeeHub
       ws={ws}
       today={today}
       tiles={hubTiles(ws, { inbox, rooms: rooms.length > 0, today, attendance: attendance !== null, bus: !!nearby?.seoul, vault: chat })}
-      events={todays}
+      rooms={todayRooms}
+      otherEvents={todayEvents.filter((e) => !e.room_id).length}
+      requests={requests}
       pendingPayout={summary.pending_payout}
-      rejectedCount={summary.rejected_count}
       notices={
         hireMissing || notices.length ? (
           <div className="flex flex-col gap-3">

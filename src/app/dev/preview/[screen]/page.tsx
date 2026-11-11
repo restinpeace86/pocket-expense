@@ -383,9 +383,14 @@ async function Preview({
             ws="#"
             today="2026-11-09"
             tiles={hubTiles("#", { inbox: { waiting: 2 }, rooms: true, today: "2026-11-09" })}
-            events={[{ id: "e1", time: "14:00~15:00", title: "주간회의", place: "3층 회의실", href: "#" }]}
+            rooms={[{ id: "e1", time: "14:00~15:00", title: "주간회의", room: "3층 회의실", href: "#" }]}
+            otherEvents={1}
+            requests={[
+              { key: "l1", kind: "leave", title: "11/14 연차", sub: "휴가 신청", status: "wait", label: "승인 대기", href: "#", at: "2026-11-09" },
+              { key: "c1", kind: "claim", title: "거래처 미팅 식대 48,000원", sub: "지출결의서", status: "wait", label: "결재 중", href: "#", at: "2026-11-08" },
+              { key: "c2", kind: "claim", title: "택시비 12,300원", sub: "지출결의서", status: "bad", label: "반려", href: "#", at: "2026-11-07" },
+            ]}
             pendingPayout={142000}
-            rejectedCount={1}
             notices={<NoticeStrip notices={SAMPLE_NOTICES} />}
           />
         </EmployeeShell>

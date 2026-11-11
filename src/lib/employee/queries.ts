@@ -4,6 +4,7 @@ import type { ClaimStatus } from "@/lib/expense/status";
 import type { EmployeeSummary, MyClaimRow } from "./types";
 import { decodeCursor, keysetFilter, toPage } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
+import { buildRequests, RECENT_DAYS, type ClaimRow, type FixRow, type LeaveRow, type RequestItem } from "./requests";
 
 // 직원 화면 조회 — 본인 결의서만(RLS도 본인·관리자·검토자만 보이게 막지만, 직원 모드에서는 본인 것만 명시적으로 고른다: workspace-architecture §2.D)
 
@@ -57,4 +58,27 @@ export async function getMySummary(): Promise<EmployeeSummary> {
   const supabase = await createClient();
   const { data } = await supabase.rpc("my_employee_summary");
   return (data as unknown as EmployeeSummary) ?? { pending_payout: 0, rejected_count: 0, credits_left: 0 };
+}
+
+// 나의 신청함(D-251 개선사항 6): 내 것만(member_id로 거름 — 관리자는 RLS로 회사 전체가 보이므로 꼭 거른다)
+export async function getMyRequests(ws: string, memberId: string, attendanceOn: boolean): Promise<RequestItem[]> {
+  const supabase = await createClient();
+  const since = new Date(Date.now() - RECENT_DAYS * 86_400_000).toISOString();
+  const [leaves, fixes, open, done] = await Promise.all([
+    attendanceOn
+      ? supabase
+          .from("attendance_leaves")
+          .select("id, type_name, start_date, end_date, unit, hours, status, decided_at, created_at, cancel_status, cancel_requested_at")
+          .eq("member_id", memberId)
+          .or(`status.eq.pending,cancel_status.eq.pending,decided_at.gte.${since}`)
+          .order("created_at", { ascending: false })
+          .limit(30)
+      : Promise.resolve({ data: [] }),
+    attendanceOn
+      ? supabase.from("attendance_requests").select("id, work_date, kind, status, decided_at, created_at").eq("member_id", memberId).or(`status.eq.pending,decided_at.gte.${since}`).order("created_at", { ascending: false }).limit(30)
+      : Promise.resolve({ data: [] }),
+    supabase.from("expense_claims").select("id, title, total_amount, status, submitted_at, approved_at, rejected_at, paid_at").eq("member_id", memberId).in("status", ["submitted", "rejected"]).order("updated_at", { ascending: false }).limit(30),
+    supabase.from("expense_claims").select("id, title, total_amount, status, submitted_at, approved_at, rejected_at, paid_at").eq("member_id", memberId).in("status", ["approved", "paid"]).gte("approved_at", since).order("approved_at", { ascending: false }).limit(30),
+  ]);
+  return buildRequests(ws, { leaves: (leaves.data ?? []) as LeaveRow[], fixes: (fixes.data ?? []) as FixRow[], claims: [...(open.data ?? []), ...(done.data ?? [])] as ClaimRow[] }, new Date());
 }
