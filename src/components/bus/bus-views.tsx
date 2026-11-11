@@ -86,11 +86,12 @@ function StopRow({ base, stop, open, onToggle, alertRoute }: { base: string; sto
   const [busy, start] = useTransition();
   const now = useNow(15_000);
   const panel = `stop-${stop.ars_id}`;
-  const click = () => {
-    onToggle();
-    // 펼칠 때만 가져온다(3분 안이면 서버가 저장된 값을 돌려줌)
-    if (!open) start(async () => setData(await stationArrivalsAction(stop.ars_id)));
-  };
+  // 펼칠 때만 가져온다(목록·지도 마커 어느 쪽으로 열어도). 3분 안이면 서버가 저장된 값을 돌려줌
+  useEffect(() => {
+    if (!open || data !== undefined) return;
+    start(async () => setData(await stationArrivalsAction(stop.ars_id)));
+  }, [open, data, stop.ars_id]);
+  const click = onToggle;
   const routes = data?.routes ?? [];
   return (
     <li className={`overflow-hidden rounded-2xl border bg-white transition-shadow ${open ? "border-emerald-600 shadow-[0_0_0_3px_rgba(4,120,87,0.18)]" : "border-zinc-200"}`} data-stop={stop.ars_id} data-open={open ? "" : undefined}>
