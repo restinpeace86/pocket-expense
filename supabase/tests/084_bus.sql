@@ -55,6 +55,7 @@ begin
   perform public._t_raises84($q$select public.company_location_save('x', null, 37.5, 126.9, '서울')$q$, 'INVALID', 'short address');
   v := public.company_location_save('서울 중구 세종대로 110', '서울 중구 태평로1가 31', 37.5663, 126.9779, '서울');
   if (v ->> 'fallback')::boolean or jsonb_array_length(v -> 'stops') not between 1 and 5 then raise exception 'FAIL [nearby %]', v; end if;
+  if (v -> 'stops' -> 0 ->> 'lat') is null or (v -> 'stops' -> 0 ->> 'lng') is null then raise exception 'FAIL [stop coords %]', v; end if; -- D-251 지도
   for e in select * from jsonb_array_elements(v -> 'stops') loop
     if (e ->> 'meters')::numeric > 200 or (e ->> 'meters')::numeric < prev then raise exception 'FAIL [order/200m %]', v; end if;
     prev := (e ->> 'meters')::numeric;

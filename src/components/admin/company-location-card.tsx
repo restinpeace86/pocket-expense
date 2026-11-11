@@ -1,9 +1,10 @@
 "use client";
 
 import { Loader2, MapPin, Search } from "lucide-react";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { saveCompanyLocationAction, type LocationResult } from "@/app/workspace/[id]/admin/settings/location-actions";
 import type { Nearby } from "@/lib/bus/server";
+import { StopsMap, type MapStop } from "@/components/bus/stops-map";
 import { PostcodeDialog, type PostcodePick } from "./postcode-dialog";
 
 // 회사 위치(D-243 → D-251 개선사항 2): [주소 검색] → 우편번호 창에서 고르면 바로 저장(도로명·지번·우편번호 + 서버가 좌표)
@@ -27,10 +28,14 @@ export function CompanyLocationCard({ current }: { current: Nearby }) {
   const zonecode = picked?.zonecode ?? current?.zonecode ?? "";
   const shown =
     result && result.ok
-      ? { seoul: result.region === "서울", stops: result.stops, fallback: result.fallback }
+      ? { seoul: result.region === "서울", stops: result.stops, fallback: result.fallback, lat: result.lat, lng: result.lng }
       : current
-        ? { seoul: current.seoul, stops: current.stops, fallback: current.fallback }
+        ? { seoul: current.seoul, stops: current.stops, fallback: current.fallback, lat: current.lat, lng: current.lng }
         : null;
+  // 위치 확인용 지도(D-251 개선사항 4): 회사 핀 + 정류장 최대 3곳. 도착 정보는 직원 [주변 버스]에서(조회 한도 아끼기)
+  const [sel, setSel] = useState<string | null>(null);
+  const center = useMemo(() => (shown && typeof shown.lat === "number" ? { lat: shown.lat, lng: shown.lng } : null), [shown?.lat, shown?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
+  const mapStops = useMemo(() => (shown?.stops ?? []).slice(0, 3).filter((s): s is MapStop => typeof s.lat === "number" && typeof s.lng === "number"), [shown?.stops]);
   return (
     <section aria-labelledby="loc-title" className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 md:p-5" data-company-location>
       <h2 id="loc-title" className="flex items-center gap-2 text-lg font-bold">
@@ -99,6 +104,7 @@ export function CompanyLocationCard({ current }: { current: Nearby }) {
           {current?.updated_by_name && !result && <span className="block text-zinc-600">마지막 변경: {current.updated_by_name}</span>}
         </div>
       )}
+      {center && !busy && <StopsMap center={center} label="회사" stops={mapStops} selected={sel} onSelect={(a) => setSel((x) => (x === a ? null : a))} className="h-56 md:h-64" />}
       {open && <PostcodeDialog onPick={onPick} onClose={close} />}
     </section>
   );

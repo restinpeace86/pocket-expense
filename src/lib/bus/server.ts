@@ -17,9 +17,11 @@ export type Nearby = {
   seoul: boolean;
   updated_by_name: string | null;
   updated_at: string;
-  stops: { ars_id: string; name: string; meters: number }[];
+  stops: NearStop[];
   fallback: boolean;
 } | null;
+// D-251: 지도용 좌표(144부터). 이전 응답 호환을 위해 선택
+export type NearStop = { ars_id: string; name: string; meters: number; lat?: number; lng?: number };
 export type StationData = { ars_id: string; station_name: string | null; routes: BusRoute[]; fetched_at: string | null; error: string | null };
 
 export const getCompanyNearby = cache(async (): Promise<Nearby> => {

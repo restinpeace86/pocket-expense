@@ -23,5 +23,5 @@ async function Content({ params }: Pick<PageProps<"/workspace/[id]/employee/bus"
   if (!nearby?.seoul) notFound();
   const supabase = await createClient();
   const { data: alert } = await supabase.from("bus_alerts").select("ars_id, station_name, route_id, route_no, expires_at").maybeSingle();
-  return <BusStops base={`/workspace/${id}/employee`} address={nearby.found_address ?? nearby.address} stops={nearby.stops} fallback={nearby.fallback} alert={(alert as MyAlert) ?? null} />;
+  return <BusStops base={`/workspace/${id}/employee`} address={nearby.found_address ?? nearby.address} center={typeof nearby.lat === "number" ? { lat: nearby.lat, lng: nearby.lng } : null} stops={nearby.stops} fallback={nearby.fallback} alert={(alert as MyAlert) ?? null} />;
 }

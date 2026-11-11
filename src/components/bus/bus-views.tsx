@@ -1,10 +1,12 @@
 "use client";
 
-import { Bell, BellOff, ChevronLeft, ChevronRight, Loader2, RotateCw, X } from "lucide-react";
+import { Bell, BellOff, Bus as BusIcon, ChevronDown, ChevronLeft, ChevronRight, Loader2, RotateCw, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { offBusAlertAction, setBusAlertAction } from "@/app/workspace/[id]/employee/bus/actions";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { offBusAlertAction, setBusAlertAction, stationArrivalsAction } from "@/app/workspace/[id]/employee/bus/actions";
+import type { NearStop, StationData } from "@/lib/bus/server";
+import { StopsMap, type MapStop } from "./stops-map";
 import { arrivalLabel, CONGESTION, remainingSec, ROUTE_TYPE, stopsAway, type BusRoute } from "@/lib/bus/arrivals";
 
 // 주변 버스(D-243, spec/features/bus.md): 주변 정류장 → 정류장(전 노선 도착) → 알림 받기(직원당 1개, 30분)
@@ -44,7 +46,14 @@ export function AlertBanner({ alert, base }: { alert: MyAlert; base: string }) {
   );
 }
 
-export function BusStops({ base, address, stops, fallback, alert }: { base: string; address: string; stops: { ars_id: string; name: string; meters: number }[]; fallback: boolean; alert: MyAlert }) {
+// 주변 버스(D-243 → D-251 개선사항 4): 위 지도(회사 핀 + 정류장 최대 3곳) + 아래 정류장 목록.
+// 마커나 목록을 누르면 그 정류장이 하이라이트되고 아코디언으로 도착 정보가 펼쳐진다(다시 누르거나 다른 곳을 누르면 접힘)
+const MAP_STOPS = 3;
+export function BusStops({ base, address, center, stops, fallback, alert }: { base: string; address: string; center: { lat: number; lng: number } | null; stops: NearStop[]; fallback: boolean; alert: MyAlert }) {
+  const shown = useMemo(() => stops.slice(0, MAP_STOPS), [stops]);
+  const [open, setOpen] = useState<string | null>(null);
+  const toggle = useCallback((ars: string) => setOpen((o) => (o === ars ? null : ars)), []);
+  const mapStops = useMemo(() => shown.filter((s): s is MapStop => typeof s.lat === "number" && typeof s.lng === "number"), [shown]);
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-3 px-4 pb-28 pt-3 md:max-w-2xl md:px-6 md:pt-6">
       <div className="flex items-center gap-1">
@@ -54,29 +63,79 @@ export function BusStops({ base, address, stops, fallback, alert }: { base: stri
         <h1 className="text-xl font-bold md:text-2xl">주변 버스</h1>
       </div>
       <AlertBanner alert={alert} base={base} />
+      {center && <StopsMap center={center} label="회사" stops={mapStops} selected={open} onSelect={toggle} />}
       <p className="text-[13px] text-zinc-600">
-        {address}에서 {fallback ? "200m 안에 정류장이 없어 500m 안 가까운 곳" : "200m 안 정류장"}이에요.
+        {address}에서 {fallback ? "200m 안에 정류장이 없어 500m 안 가까운 곳" : "200m 안 정류장"}이에요. 정류장을 누르면 도착 정보가 펼쳐져요.
       </p>
-      {stops.length === 0 ? (
+      {shown.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-8 text-center text-sm text-zinc-500">회사 주변 500m 안에 정류장이 없어요.</p>
       ) : (
-        <ul aria-label="주변 정류장" className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-          {stops.map((s) => (
-            <li key={s.ars_id} className="border-b border-zinc-100 last:border-b-0">
-              <Link href={`${base}/bus/${s.ars_id}`} className="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-zinc-50" data-stop={s.ars_id}>
-                <span className="min-w-0 flex-1">
-                  <b className="text-[15px]">{s.name}</b> <span className="text-xs text-zinc-500">{s.ars_id}</span>
-                  {alert?.ars_id === s.ars_id && <span className="block text-xs font-semibold text-brand-700">알림: {alert.route_no}번</span>}
-                </span>
-                <b className="text-sm text-zinc-700">{s.meters}m</b>
-                <ChevronRight className="size-4 shrink-0 text-zinc-400" aria-hidden />
-              </Link>
-            </li>
+        <ul aria-label="주변 정류장" className="flex flex-col gap-2">
+          {shown.map((s) => (
+            <StopRow key={s.ars_id} base={base} stop={s} open={open === s.ars_id} onToggle={() => toggle(s.ars_id)} alertRoute={alert?.ars_id === s.ars_id ? alert.route_no : null} />
           ))}
         </ul>
       )}
       <Note />
     </main>
+  );
+}
+
+function StopRow({ base, stop, open, onToggle, alertRoute }: { base: string; stop: NearStop; open: boolean; onToggle: () => void; alertRoute: string | null }) {
+  const [data, setData] = useState<StationData | null | undefined>(undefined);
+  const [busy, start] = useTransition();
+  const now = useNow(15_000);
+  const panel = `stop-${stop.ars_id}`;
+  const click = () => {
+    onToggle();
+    // 펼칠 때만 가져온다(3분 안이면 서버가 저장된 값을 돌려줌)
+    if (!open) start(async () => setData(await stationArrivalsAction(stop.ars_id)));
+  };
+  const routes = data?.routes ?? [];
+  return (
+    <li className={`overflow-hidden rounded-2xl border bg-white transition-shadow ${open ? "border-emerald-600 shadow-[0_0_0_3px_rgba(4,120,87,0.18)]" : "border-zinc-200"}`} data-stop={stop.ars_id} data-open={open ? "" : undefined}>
+      <button type="button" onClick={click} aria-expanded={open} aria-controls={panel} className="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left hover:bg-zinc-50">
+        <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg border-2 ${open ? "border-emerald-700 bg-emerald-700 text-white" : "border-emerald-700 text-emerald-700"}`}>
+          <BusIcon className="size-4" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <b className="text-[15px]">{stop.name}</b> <span className="text-xs text-zinc-500">{stop.ars_id}</span>
+          {alertRoute && <span className="block text-xs font-semibold text-brand-700">알림: {alertRoute}번</span>}
+        </span>
+        <b className="text-sm text-zinc-700">{stop.meters}m</b>
+        <ChevronDown className={`size-4 shrink-0 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+      </button>
+      <div id={panel} hidden={!open} className="border-t border-dashed border-zinc-200 px-4 pb-3 pt-2" data-arrivals>
+        {busy || data === undefined ? (
+          <p className="flex items-center gap-2 py-2 text-sm text-zinc-500">
+            <Loader2 className="size-4 animate-spin" aria-hidden /> 도착 정보를 가져오는 중…
+          </p>
+        ) : data === null ? (
+          <p className="py-2 text-sm text-zinc-600">도착 정보를 가져오지 못했어요.</p>
+        ) : (
+          <>
+            {data.error && <p className="py-1 text-[13px] text-zinc-600">{ERR[data.error] ?? ERR.NETWORK}</p>}
+            {routes.length === 0 && !data.error && <p className="py-2 text-sm text-zinc-500">지금 들어오는 버스 정보가 없어요.</p>}
+            <ul className="flex flex-col">
+              {routes.slice(0, 6).map((r) => {
+                const s1 = data.fetched_at ? remainingSec(r.arr1_sec, data.fetched_at, now) : r.arr1_sec;
+                const t = ROUTE_TYPE[r.route_type] ?? { label: "", cls: "bg-zinc-700" };
+                return (
+                  <li key={r.route_id + r.route_no} className="flex items-center gap-2.5 py-1.5" data-acc-route={r.route_no}>
+                    <span className={`min-w-12 shrink-0 rounded-md px-1.5 py-0.5 text-center text-[13px] font-extrabold text-white ${t.cls}`}>{r.route_no}</span>
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">{arrivalLabel(s1, r.arr1_msg)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            <Link href={`${base}/bus/${stop.ars_id}`} className="mt-1 inline-flex min-h-10 items-center gap-1 text-[13px] font-semibold text-brand-700 hover:underline" data-stop-detail>
+              {routes.length > 6 ? `전체 ${routes.length}개 노선 · ` : ""}자세히 · 알림 받기
+              <ChevronRight className="size-4" aria-hidden />
+            </Link>
+          </>
+        )}
+      </div>
+    </li>
   );
 }
 
