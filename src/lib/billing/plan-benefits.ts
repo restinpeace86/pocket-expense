@@ -36,7 +36,8 @@ export function planBenefits(p: PlanLike): { label: string; sub?: string }[] {
     p.max_members
       ? { label: `영수증 올리는 직원 최대 ${p.max_members}명`, sub: `그 안에서는 인원이 늘어도 같은 가격${per ? ` · 최대 인원 기준 1인당 약 ${per.toLocaleString("ko-KR")}원` : ""}` }
       : { label: "직원 수 제한 없음", sub: "인원이 늘어도 같은 가격" },
-    { label: `AI 영수증 읽기 월 ${p.monthly_receipts.toLocaleString("ko-KR")}장`, sub: `장당 약 ${Math.round(p.monthly_price / p.monthly_receipts).toLocaleString("ko-KR")}원` },
+    // D-261: 장당 가격은 빼고 "월 최대 n장 지원" — 1인당 가격과 같은 월 요금을 두 번 나눠 보여 주면 따로 내는 것처럼 보여서
+    { label: `AI 영수증 읽기 월 최대 ${p.monthly_receipts.toLocaleString("ko-KR")}장 지원`, sub: "같은 가격에 포함 · 매월 1일 새로 채워져요" },
     ...(p.chat_storage_mb ? [{ label: `사내 채팅 사진·파일 저장 ${storageLabel(p.chat_storage_mb)}`, sub: "사진·파일 보관 30·60·90일 중 선택" }] : []),
     ...(p.vault_storage_mb ? [{ label: `파일 영구 보관 ${storageLabel(p.vault_storage_mb)}`, sub: "채팅 파일 중 [영구 보관]한 것은 지울 때까지" }] : []),
     { label: "모든 기능 포함", sub: "결재·정산·세무 마감·세무사무소 연결" },
