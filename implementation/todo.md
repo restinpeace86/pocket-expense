@@ -386,12 +386,12 @@
 - [ ] 9-13 아이폰 설치 앱 App Store 준비(D-259, spec/features/ios-app.md) — 사용자 2026-11-12 지시. 서비스명·도메인 미정(정해지면 이름 2곳·server.url 1곳만 바꿈)
   - [x] 9-13a Capacitor 아이폰 프로젝트(SPM)·아이콘·시작 화면·권한 문구·URL scheme·알림 권한(entitlements)
   - [x] 9-13b 알림: APNs → FCM 토큰(AppDelegate + Firebase), 서버 메시지 apns 설정, 아이폰 웹 알림 중복 방지, 웹이 아이폰 앱을 설치 앱으로 인식
-  - [ ] 9-13c migration 151(push_app_tokens.platform에 ios) 운영 DB 적용 — 자동 실행 권한에서 막혀 사용자 승인 대기(적용 전에는 아이폰 토큰만 저장 안 됨, 안드로이드 영향 없음)
+  - [x] 9-13c migration 151(push_app_tokens.platform에 ios) 운영 DB 적용 — 2026-11-12 사용자 승인 후 적용, test:db 통과, ios 토큰 저장·다른 값 막힘 확인
   - [x] 9-13d GitHub Actions `iOS 앱 빌드`(확인용/App Store Connect 올리기) + ExportOptions
   - [ ] 9-13e (사용자) Apple Developer 가입·앱 ID(Push)·APNs 키 → Firebase·Firebase 아이폰 앱·App Store Connect 앱·API 키·GitHub Secret 5개 → 확인용 빌드 실행(아직 macOS 빌드로 확인 안 함)
   - [ ] 9-13f **보류 — 사용자 결정 필요, 임의로 구현하지 말 것**: 심사 대비 Apple로 로그인(4.8)·앱 안 계정 삭제(5.1.1(v))·아이폰 앱 결제 버튼 숨김(3.1.1)·심사용 예시 계정(2.1) (ios-app.md §7) → 2026-11-12 사용자: Apple 로그인·계정 삭제를 계정 준비와 같이 진행, 결제는 Apple 결제가 우리 가격(인원·장수, 회사가 냄)과 안 맞음 → 3.1.3(c) 기업용 예외로 웹 결제 유지. 검토안 artifact "아이폰 심사 준비"(https://claude.ai/artifact/81CBXH2LfgA25ZWNj2kBtV) 정할 것 4개 답 대기 — 답 전 구현 금지 · 사용자 2026-11-12 "당장 못 하니 저장해 놔" — 보관: review/2026-11-12_ios-review.html, artifact 사이드바 고정
 
-- [x] 9-14 서비스명 확정 전 준비(사용자 2026-11-12 "그렇게 해") — `implementation/2026-11-12_prelaunch-prep.md` (D-260). migration 152(약관 버전)는 151과 함께 운영 DB 적용 승인 대기
+- [x] 9-14 서비스명 확정 전 준비(사용자 2026-11-12 "그렇게 해") — `implementation/2026-11-12_prelaunch-prep.md` (D-260). migration 152(약관 버전) 2026-11-12 사용자 승인 후 적용(terms·privacy_version = 2026-11-12 확인)
   - [x] 9-14a 서비스명·로고·아이콘을 한 곳(brand)으로 모으기 — 성능 영향 없게(빌드 때 정해지는 상수)
   - [x] 9-14b 개인정보처리방침·약관 보완(8-93: 출퇴근 기록·기기 정보·입사일 + 아이폰 앱 카메라·사진)
   - [x] 9-14c 입력 칸 개선 ⑤ 일정 길이 칩 ⑥ 회의실 이번 주 날짜 띠 ⑦ 관리자 결의서 날짜 거르기 칩(9-12 검토안)
