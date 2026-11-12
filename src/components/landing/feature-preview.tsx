@@ -38,7 +38,7 @@ export function FeaturePreview({ startHref }: { startHref: string }) {
     <section id="preview" className="scroll-mt-16 bg-zinc-950 py-16 text-white sm:py-20" aria-labelledby="preview-title" data-feature-preview>
       <div className="mx-auto max-w-5xl px-4">
         <div className="text-center">
-          <span className="inline-flex rounded-full border border-blue-300/30 bg-blue-400/10 px-3 py-1 text-sm font-medium text-blue-200">기능 미리 보기</span>
+          <span className="inline-flex rounded-full border border-indigo-300/30 bg-indigo-400/10 px-3 py-1 text-sm font-medium text-indigo-200">기능 미리 보기</span>
           <h2 id="preview-title" className="mx-auto mt-4 max-w-2xl text-balance break-keep text-3xl font-bold tracking-tight sm:text-4xl">
             말보다 화면으로 보세요
           </h2>
@@ -56,7 +56,7 @@ export function FeaturePreview({ startHref }: { startHref: string }) {
                     role="tab"
                     aria-selected={on}
                     onClick={() => setTab(key)}
-                    className={`inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-semibold transition ${on ? "border-blue-400 bg-blue-500 text-white" : "border-white/15 bg-white/5 text-zinc-300 hover:bg-white/10"}`}
+                    className={`inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-semibold transition ${on ? "border-indigo-400 bg-gradient-to-r from-indigo-500 to-violet-500 text-white" : "border-white/15 bg-white/5 text-zinc-300 hover:bg-white/10"}`}
                     data-preview-tab={key}
                   >
                     <Icon className="size-4" aria-hidden /> {label}
@@ -76,7 +76,7 @@ export function FeaturePreview({ startHref }: { startHref: string }) {
         </div>
 
         <div className="mt-10 text-center">
-          <Link href={startHref} className="inline-flex min-h-14 max-w-full items-center justify-center rounded-xl bg-blue-500 px-6 text-center text-base font-semibold text-balance break-keep hover:bg-blue-400 sm:text-lg">
+          <Link href={startHref} className="inline-flex min-h-14 max-w-full items-center justify-center rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 text-center text-base font-semibold text-balance break-keep shadow-lg shadow-indigo-500/30 hover:from-indigo-400 hover:to-violet-400 sm:text-lg">
             우리 회사로 무료 체험하기 (첫 월말 마감까지 무료)
           </Link>
         </div>
