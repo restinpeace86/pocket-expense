@@ -389,7 +389,7 @@
   - [ ] 9-13c migration 151(push_app_tokens.platform에 ios) 운영 DB 적용 — 자동 실행 권한에서 막혀 사용자 승인 대기(적용 전에는 아이폰 토큰만 저장 안 됨, 안드로이드 영향 없음)
   - [x] 9-13d GitHub Actions `iOS 앱 빌드`(확인용/App Store Connect 올리기) + ExportOptions
   - [ ] 9-13e (사용자) Apple Developer 가입·앱 ID(Push)·APNs 키 → Firebase·Firebase 아이폰 앱·App Store Connect 앱·API 키·GitHub Secret 5개 → 확인용 빌드 실행(아직 macOS 빌드로 확인 안 함)
-  - [ ] 9-13f **보류 — 사용자 결정 필요, 임의로 구현하지 말 것**: 심사 대비 Apple로 로그인(4.8)·앱 안 계정 삭제(5.1.1(v))·아이폰 앱 결제 버튼 숨김(3.1.1)·심사용 예시 계정(2.1) (ios-app.md §7) → 2026-11-12 사용자: Apple 로그인·계정 삭제를 계정 준비와 같이 진행, 결제는 Apple 결제가 우리 가격(인원·장수, 회사가 냄)과 안 맞음 → 3.1.3(c) 기업용 예외로 웹 결제 유지. 검토안 artifact "아이폰 심사 준비"(https://claude.ai/artifact/81CBXH2LfgA25ZWNj2kBtV) 정할 것 4개 답 대기 — 답 전 구현 금지
+  - [ ] 9-13f **보류 — 사용자 결정 필요, 임의로 구현하지 말 것**: 심사 대비 Apple로 로그인(4.8)·앱 안 계정 삭제(5.1.1(v))·아이폰 앱 결제 버튼 숨김(3.1.1)·심사용 예시 계정(2.1) (ios-app.md §7) → 2026-11-12 사용자: Apple 로그인·계정 삭제를 계정 준비와 같이 진행, 결제는 Apple 결제가 우리 가격(인원·장수, 회사가 냄)과 안 맞음 → 3.1.3(c) 기업용 예외로 웹 결제 유지. 검토안 artifact "아이폰 심사 준비"(https://claude.ai/artifact/81CBXH2LfgA25ZWNj2kBtV) 정할 것 4개 답 대기 — 답 전 구현 금지 · 사용자 2026-11-12 "당장 못 하니 저장해 놔" — 보관: review/2026-11-12_ios-review.html, artifact 사이드바 고정
 
 ## todo_improvement (2026-11-11) — D-251 승인, 순서대로
 - [x] 9-1 관리자 설정 8개 메뉴 + 탭, 캘린더 기본 켜짐, 이 기기 알림 분리, 설명 기본 접힘, 요금제 용량 안내 — 2026-11-11 `implementation/2026-11-11_settings-groups.md`
