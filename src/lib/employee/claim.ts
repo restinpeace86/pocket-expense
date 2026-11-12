@@ -10,6 +10,7 @@ import type { Membership } from "@/lib/auth/paths";
 import { signReceiptUrls } from "@/lib/storage/signed-urls";
 import { createClient } from "@/lib/supabase/server";
 import type { CompanyField, EditorClaim, EditorData, EditorItem } from "./editor-types";
+import { frequentRoutes, recentMerchants, recentPlaces, recentValues, type EditorRecent } from "./recent";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: string) => UUID.test(v);
@@ -49,7 +50,7 @@ export async function signOriginalUrl(path: string | null): Promise<string | nul
 export async function getMyClaimForEdit(membership: Membership, claimId: string, synced = false): Promise<EditorData | null> {
   if (!isUuid(claimId)) return null;
   const supabase = await createClient();
-  const [claimRes, itemsRes, cardsRes, companyRes, meRes, dupRes, vehiclesRes, formRes, lastRes] = await Promise.all([
+  const [claimRes, itemsRes, cardsRes, companyRes, meRes, dupRes, vehiclesRes, formRes, lastRes, recentClaimsRes, recentItemsRes, locationRes] = await Promise.all([
     supabase
       .from("expense_claims")
       .select("id, status, title, description, exception_memo, trip_transport, default_payment_method, is_business_trip, trip_destination, trip_start_date, trip_end_date, trip_purpose, item_count, total_amount, total_company_supported, total_personal_burden, rejection_reason, category, purchase_type, meeting_purpose, client_name, attendees, purchase_purpose, purchase_items, headcount, vehicle_id, recurring_payment_id, header_custom_payload, condolence_target, calendar_event_id")
@@ -66,6 +67,23 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string,
     // 회사 추가 항목(D-120): 지금 쓰는 양식에서 '직원이 작성'인 칸 + 내 지난 결의서 값(미리 채움)
     supabase.from("form_templates").select("schema").eq("company_id", membership.company_id).eq("is_active", true).maybeSingle(),
     supabase.from("expense_claims").select("header_custom_payload").eq("company_id", membership.company_id).eq("member_id", membership.member_id).neq("id", claimId).neq("header_custom_payload", "{}").order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    // 내가 전에 쓴 값(9-12 ③④, D-258): 내 지난 결의서 글자 칸 · 내 영수증 가맹점·자차 경로 · 회사 위치([회사] 버튼)
+    supabase
+      .from("expense_claims")
+      .select("client_name, meeting_purpose, purchase_purpose, purchase_items, trip_destination, trip_purpose")
+      .eq("company_id", membership.company_id)
+      .eq("member_id", membership.member_id)
+      .neq("id", claimId)
+      .order("created_at", { ascending: false })
+      .limit(40),
+    supabase
+      .from("expense_items")
+      .select("merchant_name, merchant_business_number, start_location, start_lat, start_lng, end_location, end_lat, end_lng, is_round_trip, route_evidence, expense_claims!inner(member_id)")
+      .eq("company_id", membership.company_id)
+      .eq("expense_claims.member_id", membership.member_id)
+      .order("created_at", { ascending: false })
+      .limit(80),
+    supabase.from("company_locations").select("address, found_address, lat, lng").eq("company_id", membership.company_id).maybeSingle(),
   ]);
   const dups = (dupRes.data ?? {}) as Record<string, EditorItem["duplicate"]>;
   const claim = claimRes.data;
@@ -104,7 +122,24 @@ export async function getMyClaimForEdit(membership: Membership, claimId: string,
   const companyFields: CompanyField[] = inputFieldsOf(formRes.data ? normalizeLayout(formRes.data.schema) : null).map((f) => ({ key: f.key, label: f.label, required: !!f.required, options: f.options ?? null }));
   const asStrings = (v: unknown): Record<string, string> =>
     v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v as Record<string, unknown>).filter(([, x]) => typeof x === "string") as [string, string][]) : {};
+  const past = recentClaimsRes.data ?? [];
+  const pastItems = recentItemsRes.data ?? [];
+  const loc = locationRes.data;
+  const company = loc ? { name: "회사", address: loc.found_address || loc.address, lat: Number(loc.lat), lng: Number(loc.lng) } : null;
+  const recent: EditorRecent = {
+    clientName: recentValues(past.map((p) => p.client_name)),
+    meetingPurpose: recentValues(past.map((p) => p.meeting_purpose)),
+    purchasePurpose: recentValues(past.map((p) => p.purchase_purpose)),
+    purchaseItems: recentValues(past.map((p) => p.purchase_items)),
+    tripDestination: recentValues(past.map((p) => p.trip_destination)),
+    tripPurpose: recentValues(past.map((p) => p.trip_purpose)),
+    merchants: recentMerchants(pastItems),
+    places: recentPlaces(pastItems, company),
+    routes: frequentRoutes(pastItems),
+    company,
+  };
   return {
+    recent,
     perDiem: { enabled: !!c?.per_diem_enabled && (c?.per_diem_amount ?? 0) > 0, amount: c?.per_diem_amount ?? 0 },
     companyFields,
     lastCustom: asStrings(lastRes.data?.header_custom_payload),

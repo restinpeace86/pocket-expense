@@ -8,6 +8,7 @@ import { OdometerPhotos } from "@/components/employee/odometer-photos";
 import { PlaceSearch } from "@/components/employee/place-search";
 import { inputClass } from "@/components/ui/page-shell";
 import type { EditorClaim, EditorItem, FuelPolicy, RoutePlaceInput } from "@/lib/employee/editor-types";
+import { EMPTY_RECENT, type EditorRecent, type RecentRoute } from "@/lib/employee/recent";
 import { cardAmount, FUEL_TYPE_LABEL, routeCardFrom, routeFormula, STANDARD_KM_PER_L } from "@/lib/expense/route";
 import { formatWon } from "@/lib/format";
 import { guardAction } from "@/lib/action-guard";
@@ -25,6 +26,7 @@ export function OwnCarInline({
   claim,
   item,
   fuel,
+  recent = EMPTY_RECENT,
   ensureItem,
   register,
   onError,
@@ -32,6 +34,7 @@ export function OwnCarInline({
   claim: EditorClaim;
   item: EditorItem | null;
   fuel: FuelPolicy;
+  recent?: EditorRecent; // [회사]·최근 장소·자주 다닌 길(D-258)
   ensureItem: () => Promise<string | null>; // 새 경로: 항목을 만들고 id를 돌려준다(실패하면 null)
   register: (id: string, h: ItemFormHandle | null) => void;
   onError: (message: string | null) => void;
@@ -147,6 +150,15 @@ export function OwnCarInline({
     saveRoute({ start: s, end: e, roundTrip, manual: null });
   };
 
+  // D-258: [회사](설정의 회사 위치) + 내 지난 운행의 최근 장소, 자주 다닌 길은 출발·도착·왕복을 한 번에
+  const quick = [...(recent.company ? [{ ...recent.company, company: true }] : []), ...recent.places];
+  const pickRoute = (r: RecentRoute) => {
+    setStart(r.start);
+    setEnd(r.end);
+    setRoundTrip(r.roundTrip);
+    saveRoute({ start: r.start, end: r.end, roundTrip: r.roundTrip, manual: null });
+  };
+
   return (
     <div className="flex flex-col gap-4">
       {/* 디지털 증빙 — 영수증 사진 자리 */}
@@ -184,8 +196,29 @@ export function OwnCarInline({
         </p>
       )}
 
-      <PlaceSearch label="출발지" value={start} onSelect={(p) => choose("start", p)} placeholder="예: 판교역, 회사 이름, 주소" disabled={calculating} />
-      <PlaceSearch label="도착지" value={end} onSelect={(p) => choose("end", p)} placeholder="예: 부산역, 거래처 이름, 주소" suggestion={claim.trip_destination ?? undefined} disabled={calculating} />
+      {!(start && end) && recent.routes.length > 0 && !calculating && (
+        <div className="flex flex-col gap-1.5" role="group" aria-label="자주 다닌 길" data-frequent-routes>
+          <span className="text-sm font-medium text-zinc-800">자주 다닌 길</span>
+          <div className="flex flex-wrap gap-1.5">
+            {recent.routes.map((r) => (
+              <button
+                key={`${r.start.name}→${r.end.name}`}
+                type="button"
+                onClick={() => pickRoute(r)}
+                className="inline-flex min-h-10 max-w-full items-center rounded-xl border border-zinc-300 bg-white px-3 text-left text-[13px] text-zinc-800 hover:bg-zinc-50"
+                data-route-chip
+              >
+                <span className="truncate">
+                  {r.start.name} {r.roundTrip ? "↔" : "→"} {r.end.name}
+                  {r.roundTrip && <span className="text-zinc-500">(왕복)</span>}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <PlaceSearch label="출발지" value={start} onSelect={(p) => choose("start", p)} placeholder="예: 판교역, 회사 이름, 주소" quick={quick} disabled={calculating} />
+      <PlaceSearch label="도착지" value={end} onSelect={(p) => choose("end", p)} placeholder="예: 부산역, 거래처 이름, 주소" suggestion={claim.trip_destination ?? undefined} quick={quick} disabled={calculating} />
       {notice && <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">{notice}</p>}
       {manualOpen ? (
         <div className="flex flex-col gap-1.5 rounded-xl bg-zinc-50 p-3">

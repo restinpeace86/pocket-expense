@@ -3,25 +3,29 @@
 import { Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { createLeaveAction } from "@/app/workspace/[id]/employee/vacation/actions";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { daysLabel } from "@/lib/attendance/leave";
 import { dayLabel } from "@/lib/attendance/month";
 import type { ProcessedProof } from "@/lib/attendance/proof-image";
-import { PAID_LABEL, preview, yearSummary, type VacationData } from "@/lib/attendance/vacation";
+import { halfDayStart, leaveMarks, offDayReason, PAID_LABEL, preview, workdaysBetween, yearSummary, type VacationData } from "@/lib/attendance/vacation";
 import type { LeaveInputs } from "@/lib/company-forms/leave-inputs";
 import { LeaveCustomFields, missingRequired } from "./leave-custom-fields";
 import { ProofPicker, uploadProofs } from "./proof-picker";
 
 // 휴가 신청(spec/features/attendance.md §8-3, D-241): 종류 → 단위 → 날짜 → 미리 보기(근무일·남은 연차) → 사유(선택) → 증빙(필수 종류)
 // D-257: [휴가 및 근태 신청] 위로 올라오는 창(휴대폰은 위쪽 남은 연차 줄이 보이게 거의 전체 높이, PC는 가운데)
+// D-258: 날짜는 달력(시작일·끝일 두 번 누르기, 쉬는 날 흐리게, 낸 휴가 점), 반차는 [오전 반차]·[오후 반차](정규 출퇴근 시각으로 채움)
 export function VacationForm({
   data,
   companyId,
   memberId,
   custom = null,
+  work = { start: "09:00", end: "18:00" },
   onClose,
   onDone,
 }: {
   data: VacationData;
+  work?: { start: string; end: string }; // 회사 정규 출퇴근 시각(반차 시작 시각)
   companyId: string;
   memberId: string;
   custom?: LeaveInputs | null;
@@ -40,18 +44,28 @@ export function VacationForm({
   const [more, setMore] = useState(false);
   const type = data.types.find((t) => t.id === typeId);
   const hoursOk = !!type?.allow_hours && (type.key !== "annual" || data.settings.hourly_leave);
-  const [unit, setUnit] = useState<"day" | "hour">("day");
-  const u = hoursOk ? unit : "day";
+  const [mode, setMode] = useState<"day" | "am" | "pm" | "hour">("day");
+  const m = hoursOk ? mode : "day";
+  const u = m === "day" ? "day" : "hour";
+  const half = Math.floor(h / 2);
   const [start, setStart] = useState(data.today);
   const [end, setEnd] = useState(data.today);
-  const [startTime, setStartTime] = useState("14:00");
-  const [hours, setHours] = useState(Math.floor(h / 2));
+  const [time, setStartTime] = useState("14:00");
+  const [hrs, setHours] = useState(half);
+  const startTime = m === "am" || m === "pm" ? halfDayStart(m, work, half) : time;
+  const hours = m === "am" || m === "pm" ? half : hrs;
+  const marks = useMemo(() => leaveMarks(data.leaves), [data.leaves]);
+  const off = useMemo(() => {
+    const hol = new Set(data.holidays);
+    return (d: string) => offDayReason(d, data.settings.work_days, hol);
+  }, [data.holidays, data.settings.work_days]);
+  const workdayCount = (a: string, b: string) => `근무일 ${workdaysBetween(a, b, data.settings.work_days, new Set(data.holidays))}일`;
   const [reason, setReason] = useState("");
   const [files, setFiles] = useState<ProcessedProof[]>([]);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, start_] = useTransition();
-  const p = useMemo(() => preview(data, { typeId, unit: u, start, end: u === "hour" ? start : end, startTime, hours, reason }, monthStart), [data, typeId, u, start, end, startTime, hours, reason, monthStart]);
+  const p = useMemo(() => preview(data, { typeId, unit: u, start, end: u === "hour" ? start : end || start, startTime, hours, reason }, monthStart), [data, typeId, u, start, end, startTime, hours, reason, monthStart]);
   const left = yearSummary(data).remaining; // 창 머리에 남은 연차(목록 위 숫자가 창에 가려도 보이게)
   const quick = data.types.slice(0, 4);
   const rest = data.types.slice(4);
@@ -63,7 +77,7 @@ export function VacationForm({
       if (files.length && !consent) return setError("증빙을 올리려면 민감정보 수집·이용에 동의해 주세요.");
       const miss = custom ? missingRequired(custom.fields, values) : null;
       if (miss) return setError(`회사 추가 항목 [${miss.label}]을(를) 채워 주세요.`);
-      const r = await createLeaveAction({ type_id: typeId, unit: u, start_date: start, end_date: u === "hour" ? start : end, start_time: u === "hour" ? startTime : null, hours: u === "hour" ? hours : null, reason: reason.trim() || null, ...(custom ? { custom: values } : {}) });
+      const r = await createLeaveAction({ type_id: typeId, unit: u, start_date: start, end_date: u === "hour" ? start : end || start, start_time: u === "hour" ? startTime : null, hours: u === "hour" ? hours : null, reason: reason.trim() || null, ...(custom ? { custom: values } : {}) });
       if (!r.ok) return setError(r.error);
       let flash = r.selfApproved ? "self" : "pending";
       if (files.length) {
@@ -116,41 +130,59 @@ export function VacationForm({
         {hoursOk && (
           <div className="flex flex-col gap-2">
             <span className="text-sm font-semibold">단위</span>
-            <div className="flex gap-1.5" role="radiogroup" aria-label="단위">
-              <button type="button" role="radio" aria-checked={u === "day"} onClick={() => setUnit("day")} className={chip(u === "day")}>
-                하루 이상
-              </button>
-              <button type="button" role="radio" aria-checked={u === "hour"} onClick={() => setUnit("hour")} className={chip(u === "hour")}>
-                시간
-              </button>
+            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="단위">
+              {(
+                [
+                  ["day", "하루 이상"],
+                  ["am", "오전 반차"],
+                  ["pm", "오후 반차"],
+                  ["hour", "시간"],
+                ] as const
+              ).map(([k, label]) => (
+                <button key={k} type="button" role="radio" aria-checked={m === k} onClick={() => (setMode(k), k !== "day" && setEnd(start))} className={chip(m === k)} data-unit={k}>
+                  {label}
+                </button>
+              ))}
             </div>
+            {(m === "am" || m === "pm") && (
+              <span className="text-xs text-zinc-600" data-half-time>
+                {startTime}부터 {half}시간 · 회사 정규 출퇴근 시각({work.start}~{work.end}) 기준이에요. 다르면 [시간]에서 골라요.
+              </span>
+            )}
           </div>
         )}
 
-        {u === "day" ? (
+        <div className="flex flex-col gap-1.5" data-vacation-calendar>
+          <DateRangePicker
+            inline
+            single={u === "hour"}
+            label="날짜"
+            min={monthStart}
+            start={start}
+            end={u === "hour" ? start : end}
+            off={off}
+            marks={marks}
+            count={(a, b) => (m === "am" ? "오전 반차" : m === "pm" ? "오후 반차" : m === "hour" ? `${startTime}부터 ${hours}시간` : workdayCount(a, b))}
+            onChange={(a, b) => (setStart(a), setEnd(b))}
+          />
+          <span className="flex flex-wrap gap-x-3 text-xs text-zinc-600">
+            <span>
+              <span className="mr-1 inline-block size-1.5 rounded-full bg-amber-500 align-middle" aria-hidden />
+              이미 낸 휴가
+            </span>
+            <span>흐린 날은 쉬는 날(주말·공휴일)</span>
+          </span>
+        </div>
+
+        {m === "hour" && (
           <div className="grid grid-cols-2 gap-2">
             <label className="flex flex-col gap-1.5">
-              <span className="text-[13px] font-semibold">시작하는 날</span>
-              <input type="date" min={monthStart} value={start} onChange={(e) => (setStart(e.target.value), end < e.target.value && setEnd(e.target.value))} className={input} aria-label="시작하는 날" />
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[13px] font-semibold">끝나는 날</span>
-              <input type="date" min={start} value={end} onChange={(e) => setEnd(e.target.value)} className={input} aria-label="끝나는 날" />
-            </label>
-          </div>
-        ) : (
-          <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-2">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[13px] font-semibold">날짜</span>
-              <input type="date" min={monthStart} value={start} onChange={(e) => setStart(e.target.value)} className={input} aria-label="날짜" />
-            </label>
-            <label className="flex flex-col gap-1.5">
               <span className="text-[13px] font-semibold">시작</span>
-              <input type="time" step={600} value={startTime} onChange={(e) => setStartTime(e.target.value)} className={input} aria-label="시작 시각" />
+              <input type="time" step={600} value={time} onChange={(e) => setStartTime(e.target.value)} className={input} aria-label="시작 시각" />
             </label>
             <label className="flex flex-col gap-1.5">
               <span className="text-[13px] font-semibold">시간</span>
-              <select value={hours} onChange={(e) => setHours(Number(e.target.value))} className={input} aria-label="시간">
+              <select value={hrs} onChange={(e) => setHours(Number(e.target.value))} className={input} aria-label="시간">
                 {Array.from({ length: h - 1 }, (_, i) => i + 1).map((n) => (
                   <option key={n} value={n}>
                     {n}시간{n * 2 === h ? "(반차)" : n * 4 === h ? "(반반차)" : ""}

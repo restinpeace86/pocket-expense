@@ -8,6 +8,7 @@ import { applyChip, minutesBetween, REASON_CHIPS, REASON_MAX, validateRequest } 
 import { kstTime } from "@/lib/attendance/rules";
 
 // 정정 신청 · 휴일 근무 상신 쓰기(spec/features/attendance.md §6, D-239 → D-257: [근태] 그날 상세 창 안에서)
+// D-258: 시각 칸 위에 [정규 출근/퇴근 09:00]·[지금](그날이 오늘일 때만) 한 번 누르기, 다른 시각은 시각 칸에서
 export function RequestPanel({
   kind,
   row,
@@ -47,13 +48,34 @@ export function RequestPanel({
     });
   };
 
-  const timeField = (label: string, value: string, set: (v: string) => void, now: string | null, nowLabel: string | null, id: string) => {
+  const [clock] = useState(() => (row.date === today ? kstTime(new Date()).slice(0, 5) : null)); // 창을 연 때의 지금
+  const timeField = (label: string, value: string, set: (v: string) => void, now: string | null, nowLabel: string | null, id: string, regular: string) => {
     const changed = now !== value;
+    const quick = [
+      ...(/^\d{2}:\d{2}$/.test(regular) ? [{ key: "regular", text: `정규 ${label} ${regular}`, v: regular }] : []),
+      ...(clock ? [{ key: "now", text: `지금 ${clock}`, v: clock }] : []),
+    ];
     return (
       <div className="flex flex-col gap-1.5">
         <label htmlFor={id} className="text-sm font-semibold">
           {label} <span className="font-normal text-zinc-600">· 지금 {nowLabel ?? "기록 없음"}</span>
         </label>
+        {quick.length > 0 && (
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label={`${label} 시각 빠른 선택`}>
+            {quick.map((q) => (
+              <button
+                key={q.key}
+                type="button"
+                aria-pressed={value === q.v}
+                onClick={() => set(q.v)}
+                className={`h-9 rounded-full border px-3 text-[13px] tabular-nums ${value === q.v ? "border-brand-600 bg-brand-50 font-semibold text-brand-800" : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"}`}
+                data-time-chip={`${id}-${q.key}`}
+              >
+                {q.text}
+              </button>
+            ))}
+          </div>
+        )}
         <div className={`flex h-13 items-center gap-2 rounded-xl border-2 bg-white px-3.5 ${changed ? "border-brand-600" : "border-zinc-300"}`}>
           <input id={id} type="time" step={60} value={value} onChange={(e) => set(e.target.value)} className="min-w-0 flex-1 bg-transparent text-lg font-bold tabular-nums outline-none" />
           {changed && <span className="text-xs font-semibold text-brand-700">바꿈</span>}
@@ -97,8 +119,8 @@ export function RequestPanel({
 
       {editTimes && (
         <>
-          {timeField("출근", newIn, setNewIn, row.inTime, row.inTime, "req-in")}
-          {timeField("퇴근", newOut, setNewOut, row.outTime, row.outTime && row.kind === "auto" ? `${row.outTime} (자동)` : row.outTime, "req-out")}
+          {timeField("출근", newIn, setNewIn, row.inTime, row.inTime, "req-in", defaults.in)}
+          {timeField("퇴근", newOut, setNewOut, row.outTime, row.outTime && row.kind === "auto" ? `${row.outTime} (자동)` : row.outTime, "req-out", defaults.out)}
           {validTimes && (
             <p className="-mt-1 text-[13px] text-zinc-600" data-stay-preview>
               머문 시간 {oldMins !== null ? `${minutesLabel(oldMins)} → ` : ""}

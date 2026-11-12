@@ -6,6 +6,7 @@ import type { ExpenseCategory, PurchaseType, TripType } from "@/lib/expense/cate
 import type { ClaimStatus } from "@/lib/expense/status";
 import type { EvidenceAi } from "@/lib/receipts/evidence-reason";
 import type { LineItem } from "@/lib/receipts/parse-result";
+import type { EditorRecent } from "./recent";
 
 // 결의서 편집 화면(E-02)이 주고받는 데이터
 export type PaymentMethod = "corporate_card" | "personal_card";
@@ -133,6 +134,7 @@ export type EditorData = {
   perDiem: { enabled: boolean; amount: number }; // 출장 일비(하루, 식비 포함, D-124)
   companyFields: CompanyField[]; // 회사 추가 항목(관리자가 양식에서 '직원이 작성'으로 정한 칸, D-120). 없으면 화면에 안 보임
   lastCustom: Record<string, string>; // 내 지난 결의서의 값(미리 채움)
+  recent?: EditorRecent; // 내가 전에 쓴 값(칩·이어 보기·자차 [회사]·자주 다닌 길, D-258). 없으면 칩 없이 지금처럼
 };
 
 export type CompanyField = { key: string; label: string; required: boolean; options: string[] | null };

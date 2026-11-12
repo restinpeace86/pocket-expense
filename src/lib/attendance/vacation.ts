@@ -169,3 +169,31 @@ export function fileSizeLabel(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))}KB`;
   return `${Math.round((bytes / 1024 / 1024) * 10) / 10}MB`;
 }
+
+// D-258 휴가 신청 달력·반차 ---------------------------------------------------------------
+const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+const toHm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+// 오전 반차 = 정규 출근부터, 오후 반차 = 정규 퇴근에서 반차 시간만큼 앞(09:00~18:00, 4시간 → 14:00)
+export function halfDayStart(which: "am" | "pm", work: { start: string; end: string }, hours: number): string {
+  const ok = (t: string) => /^([01]\d|2[0-3]):[0-5]\d/.test(t);
+  const s = ok(work.start) ? work.start.slice(0, 5) : "09:00";
+  const e = ok(work.end) ? work.end.slice(0, 5) : "18:00";
+  if (which === "am") return s;
+  return toHm(Math.max(toMin(e) - hours * 60, toMin(s)));
+}
+// 쉬는 날 이유(근무 요일 아님 → 요일, 공휴일). 근무일이면 null
+export function offDayReason(date: string, workDays: number[], holidays: Set<string>): string | null {
+  if (holidays.has(date)) return "공휴일";
+  return workDays.includes(isoDow(date)) ? null : "쉬는 날";
+}
+// 이미 낸 휴가(대기·승인, 취소 승인 제외)를 날짜별로: { "2026-11-20": "연차 대기" }
+export function leaveMarks(leaves: Pick<Leave, "start_date" | "end_date" | "status" | "cancel_status" | "type_name">[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const l of leaves) {
+    if (l.status !== "pending" && l.status !== "approved") continue;
+    if (l.cancel_status === "approved") continue;
+    const label = `${l.type_name}${l.status === "pending" ? " 승인 대기" : ""}`;
+    for (let d = l.start_date; d <= l.end_date; d = addDays(d, 1)) out[d] = out[d] ? `${out[d]}, ${label}` : label;
+  }
+  return out;
+}

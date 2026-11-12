@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { leaveBadge, leaveDateLabel, preview, skippedDays, workdaysBetween, yearSummary, type VacationData } from "./vacation";
+import { halfDayStart, leaveBadge, leaveDateLabel, leaveMarks, offDayReason, preview, skippedDays, workdaysBetween, yearSummary, type VacationData } from "./vacation";
 
 // 2026-12-24 목 · 12-25 성탄절 · 12-26 토
 const data: VacationData = {
@@ -47,5 +47,25 @@ describe("휴가 신청 미리 보기(D-241)", () => {
     expect(leaveBadge({ status: "pending", cancel_status: null, proof: "required", has_proof: false }).text).toBe("증빙 기다리는 중");
     expect(leaveBadge({ status: "approved", cancel_status: "pending", proof: "none", has_proof: false }).key).toBe("cancel_pending");
     expect(yearSummary(data)).toMatchObject({ remaining: 9.5, pending: 1 });
+  });
+});
+
+describe("D-258 반차 시각·쉬는 날·낸 휴가 점", () => {
+  it("오전 반차 = 정규 출근, 오후 반차 = 정규 퇴근 − 반차 시간", () => {
+    expect(halfDayStart("am", { start: "09:00", end: "18:00" }, 4)).toBe("09:00");
+    expect(halfDayStart("pm", { start: "09:00", end: "18:00" }, 4)).toBe("14:00");
+    expect(halfDayStart("pm", { start: "08:30", end: "17:30" }, 4)).toBe("13:30");
+    expect(halfDayStart("pm", { start: "", end: "" }, 4)).toBe("14:00");
+  });
+  it("쉬는 날 이유: 공휴일 → 근무 요일 아님 → 근무일 null", () => {
+    const hol = new Set(["2026-12-25"]);
+    expect(offDayReason("2026-12-25", [1, 2, 3, 4, 5], hol)).toBe("공휴일");
+    expect(offDayReason("2026-12-26", [1, 2, 3, 4, 5], hol)).toBe("쉬는 날");
+    expect(offDayReason("2026-12-24", [1, 2, 3, 4, 5], hol)).toBeNull();
+  });
+  it("대기·승인 휴가만 날짜마다 점, 반려·취소·취소 승인은 빼고", () => {
+    const l = (start_date: string, end_date: string, status: "pending" | "approved" | "rejected" | "canceled", cancel_status: "approved" | null = null) => ({ start_date, end_date, status, cancel_status, type_name: "연차" });
+    const m = leaveMarks([l("2026-11-20", "2026-11-21", "approved"), l("2026-11-24", "2026-11-24", "pending"), l("2026-11-25", "2026-11-25", "rejected"), l("2026-11-26", "2026-11-26", "approved", "approved")]);
+    expect(m).toEqual({ "2026-11-20": "연차", "2026-11-21": "연차", "2026-11-24": "연차 승인 대기" });
   });
 });

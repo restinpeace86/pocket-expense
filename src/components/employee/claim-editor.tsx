@@ -10,6 +10,8 @@ import { ackItemCategoryAction, createManualItemAction, createOwnCarItemAction, 
 import { categoryMismatch } from "@/lib/expense/category-check";
 import { RouteEvidenceCard } from "@/components/claims/route-evidence-card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { RecentInput } from "@/components/ui/recent-input";
+import { EMPTY_RECENT } from "@/lib/employee/recent";
 import { inputClass } from "@/components/ui/page-shell";
 import type { ClaimHeaderInput, EditorData, EditorItem, PaymentMethod, TripTransport } from "@/lib/employee/editor-types";
 import { FUEL_TYPE_LABEL, routeCardFrom, STANDARD_KM_PER_L } from "@/lib/expense/route";
@@ -485,6 +487,7 @@ export function ClaimEditor({
   const aiCategory = form.category ? null : initialCategory({ ...claim, is_business_trip: form.isBusinessTrip }, items);
   const category = form.category ?? aiCategory;
   const isTrip = category ? category === "trip" : form.isBusinessTrip;
+  const recent = data.recent ?? EMPTY_RECENT; // 내가 전에 쓴 값(D-258)
   const suggestion = suggestTitle({ isBusinessTrip: isTrip, tripDestination: form.tripDestination, tripStartDate: form.tripStartDate || null, category }, items);
   const title = titleTouched ? form.title : suggestion;
   // 지출 사유 초안: 결의서 카테고리를 따른다 — 직원이 아직 안 고쳤으면(descTouched=false, 'isUserModified') 카테고리를 바꿀 때 초안도 바뀌고,
@@ -889,13 +892,13 @@ export function ClaimEditor({
               <Label htmlFor="claim-meeting-purpose" required>
                 미팅 목적
               </Label>
-              <input id="claim-meeting-purpose" className={inputClass} value={form.meetingPurpose} maxLength={200} placeholder="예: A사 신규 계약 협의" onChange={(e) => set("meetingPurpose", e.target.value)} />
+              <RecentInput id="claim-meeting-purpose" label="미팅 목적" className={inputClass} value={form.meetingPurpose} maxLength={200} placeholder="예: A사 신규 계약 협의" onChange={(v) => set("meetingPurpose", v)} recent={recent.meetingPurpose} />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="claim-client" required>
                 거래처명
               </Label>
-              <input id="claim-client" className={inputClass} value={form.clientName} maxLength={100} placeholder="예: (주)에이컴퍼니" onChange={(e) => set("clientName", e.target.value)} />
+              <RecentInput id="claim-client" label="거래처명" className={inputClass} value={form.clientName} maxLength={100} placeholder="예: (주)에이컴퍼니" onChange={(v) => set("clientName", v)} recent={recent.clientName} />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="claim-attendees" required>
@@ -918,11 +921,11 @@ export function ClaimEditor({
               <Label htmlFor="claim-purchase-purpose" required>
                 구매 목적
               </Label>
-              <input id="claim-purchase-purpose" className={inputClass} value={form.purchasePurpose} maxLength={200} placeholder="예: 탕비실 비품 보충" onChange={(e) => set("purchasePurpose", e.target.value)} />
+              <RecentInput id="claim-purchase-purpose" label="구매 목적" className={inputClass} value={form.purchasePurpose} maxLength={200} placeholder="예: 탕비실 비품 보충" onChange={(v) => set("purchasePurpose", v)} recent={recent.purchasePurpose} />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="claim-purchase-items">품목</Label>
-              <input id="claim-purchase-items" className={inputClass} value={form.purchaseItems} maxLength={200} placeholder="예: 커피 원두, 생수 2박스" onChange={(e) => set("purchaseItems", e.target.value)} />
+              <RecentInput id="claim-purchase-items" label="품목" className={inputClass} value={form.purchaseItems} maxLength={200} placeholder="예: 커피 원두, 생수 2박스" onChange={(v) => set("purchaseItems", v)} recent={recent.purchaseItems} />
             </div>
             <p className="text-xs text-zinc-500">회사 물품은 전액 지원돼요.</p>
           </div>
@@ -947,7 +950,7 @@ export function ClaimEditor({
                 <Label htmlFor="trip-dest" required>
                   출장지
                 </Label>
-                <input id="trip-dest" className={inputClass} value={form.tripDestination} maxLength={100} placeholder="예: 부산" onChange={(e) => set("tripDestination", e.target.value)} />
+                <RecentInput id="trip-dest" label="출장지" className={inputClass} value={form.tripDestination} maxLength={100} placeholder="예: 부산" onChange={(v) => set("tripDestination", v)} recent={recent.tripDestination} />
               </div>
               {/* 달력 하나에서 시작일 → 종료일 (개선사항 6-1) */}
               <DateRangePicker label="출장 기간" required start={form.tripStartDate} end={form.tripEndDate} onChange={(s, e) => setForm((f) => ({ ...f, tripStartDate: s, tripEndDate: e }))} />
@@ -1016,7 +1019,7 @@ export function ClaimEditor({
                           <div key={key} id={i ? `owncar-${i.id}` : undefined} className={`scroll-mt-4 rounded-xl ${open ? "sm:border sm:border-brand-200 sm:bg-brand-50/40 sm:p-3" : ""}`}>
                             {open ? (
                               <>
-                                <OwnCarInline claim={claim} item={i} fuel={data.fuel} ensureItem={ensureOwnCar} register={register} onError={onItemError} />
+                                <OwnCarInline claim={claim} item={i} fuel={data.fuel} recent={recent} ensureItem={ensureOwnCar} register={register} onError={onItemError} />
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1062,7 +1065,7 @@ export function ClaimEditor({
                 <Label htmlFor="trip-purpose" required>
                   출장 목적
                 </Label>
-                <input id="trip-purpose" className={inputClass} value={form.tripPurpose} maxLength={100} placeholder="예: 부산 지사 분기 점검" onChange={(e) => set("tripPurpose", e.target.value)} />
+                <RecentInput id="trip-purpose" label="출장 목적" className={inputClass} value={form.tripPurpose} maxLength={100} placeholder="예: 부산 지사 분기 점검" onChange={(v) => set("tripPurpose", v)} recent={recent.tripPurpose} />
               </div>
             </div>
           )}
@@ -1186,6 +1189,7 @@ export function ClaimEditor({
                   base={base}
                   deadline={data.deadline}
                   claimCategory={category}
+                  merchants={recent.merchants}
                   tripTransport={form.tripTransport}
                   perDiem={data.perDiem.enabled}
                   mismatch={!item.category_mismatch_ack && categoryMismatch(category, item.aiCategory)}

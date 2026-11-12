@@ -1,18 +1,20 @@
 "use client";
 
-import { Loader2, MapPin, X } from "lucide-react";
+import { Building2, History, Loader2, MapPin, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { inputClass } from "@/components/ui/page-shell";
 import type { RoutePlaceInput } from "@/lib/employee/editor-types";
 
 // 출발지·도착지 자동완성 (trip-expense.md §4.1). 글자를 치면 0.3초 뒤 서버(/api/places → Kakao Local)에 묻고 목록에서 고른다.
 // 고른 장소만 저장한다(좌표가 있어야 거리 계산이 된다). 검색이 안 되면 목록이 비고, 화면은 거리 직접 입력으로 안내한다.
+// D-258: quick = 한 번 누르면 고르는 장소([회사] = 설정의 회사 위치 + 내 지난 운행의 최근 장소). 검색은 그대로
 export function PlaceSearch({
   label,
   value,
   onSelect,
   placeholder,
   suggestion,
+  quick = [],
   disabled = false,
 }: {
   label: string;
@@ -20,6 +22,7 @@ export function PlaceSearch({
   onSelect: (p: RoutePlaceInput | null) => void;
   placeholder: string;
   suggestion?: string; // 예: 도착지 칸에 출장지를 먼저 넣어 검색
+  quick?: (RoutePlaceInput & { company?: boolean })[];
   disabled?: boolean;
 }) {
   const id = useId();
@@ -119,6 +122,23 @@ export function PlaceSearch({
         />
         {loading && <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-zinc-400" />}
       </div>
+      {quick.length > 0 && !q && !disabled && (
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${label} 빠른 선택`} data-place-quick>
+          {quick.map((p) => (
+            <button
+              key={`${p.name}-${p.lat}-${p.lng}`}
+              type="button"
+              onClick={() => choose(p)}
+              title={p.address ?? undefined}
+              className={`inline-flex h-9 max-w-full items-center gap-1 truncate rounded-full border px-3 text-[13px] ${p.company ? "border-brand-300 bg-brand-50 font-semibold text-brand-800" : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"}`}
+              data-place-chip={p.company ? "company" : p.name}
+            >
+              {p.company ? <Building2 className="size-3.5 shrink-0" aria-hidden /> : <History className="size-3.5 shrink-0 text-zinc-400" aria-hidden />}
+              <span className="truncate">{p.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {suggestion && !q && (
         <button type="button" onClick={() => setQ(suggestion)} className="self-start text-sm text-brand-700 underline underline-offset-2">
           출장지 &ldquo;{suggestion}&rdquo;(으)로 찾기

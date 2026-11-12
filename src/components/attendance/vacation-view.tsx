@@ -29,6 +29,7 @@ export function VacationView({
   data,
   formData,
   custom,
+  work,
   base,
   companyId,
   memberId,
@@ -37,6 +38,7 @@ export function VacationView({
   data: VacationData;
   formData: VacationData;
   custom: LeaveInputs | null;
+  work?: { start: string; end: string };
   base: string;
   companyId: string;
   memberId: string;
@@ -139,7 +141,7 @@ export function VacationView({
       <p className="text-xs leading-relaxed text-zinc-600">승인 전에는 바로 취소할 수 있고, 승인된 휴가는 취소 신청을 해요(승인되면 연차를 돌려받아요). 지난 날짜는 이번 달까지만 신청·취소할 수 있어요.</p>
 
       {newOpen && (
-        <VacationForm data={formData} companyId={companyId} memberId={memberId} custom={custom} onClose={() => sheet.close(["new"])} onDone={(flash, year) => sheet.finish(`${base}/vacation?year=${year}&done=${flash}`)} />
+        <VacationForm data={formData} companyId={companyId} memberId={memberId} custom={custom} work={work} onClose={() => sheet.close(["new"])} onDone={(flash, year) => sheet.finish(`${base}/vacation?year=${year}&done=${flash}`)} />
       )}
       {open && <LeaveSheet leave={open} h={h} today={data.today} base={base} companyId={companyId} memberId={memberId} onClose={() => setOpenId(null)} />}
     </main>

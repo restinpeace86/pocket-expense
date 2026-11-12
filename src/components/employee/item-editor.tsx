@@ -21,6 +21,7 @@ import { evidenceReason } from "@/lib/receipts/evidence-reason";
 import { guardAction } from "@/lib/action-guard";
 import { noEvidenceNotice } from "@/lib/expense/evidence-penalty";
 import { measureAction } from "@/lib/perf/client";
+import { RecentInput } from "@/components/ui/recent-input";
 
 // 영수증 항목 편집 — 결의서 화면 안 인라인(아코디언) (worker-tax-processing.md §2·§3-3, smart-meal.md §4, corporate-cards.md §3, todo_improvement(2차) 3)
 export const CATEGORY_ICON: Record<ExpenseCategory, string> = { meal: "🍚", trip: "🧳", meeting: "🤝", purchase: "📦", team_dinner: "🍻", condolence: "💐", seminar: "🎤", books: "📚", training: "🎓", company_car: "🚙", saas: "💻" };
@@ -216,6 +217,7 @@ export function ItemInlineForm({
   base,
   deadline = { holidays: [] },
   claimCategory,
+  merchants = [],
   tripTransport = null,
   perDiem = false,
   mismatch = false,
@@ -226,6 +228,7 @@ export function ItemInlineForm({
   onError,
 }: {
   claim: EditorClaim;
+  merchants?: { name: string; businessNumber: string | null }[]; // 내가 전에 쓴 가맹점(고르면 사업자번호도, D-258)
   claimCategory: ExpenseCategory | null; // 결의서 화면에서 지금 고른 대표 카테고리(D-098). 저장 전이라도 화면은 이것을 따른다
   tripTransport?: TripTransport | null; // 출장 이동 수단(회사차량이면 세부 유형이 달라짐)
   perDiem?: boolean; // 회사가 출장 일비(식비 포함)를 쓰면 출장 식비는 고르지 않는다(D-124)
@@ -512,7 +515,21 @@ export function ItemInlineForm({
       )}
 
       <Field label="가맹점명" required htmlFor={fid("merchant")}>
-        <input id={fid("merchant")} className={inputClass} value={input.merchantName} maxLength={100} placeholder="예: 스타벅스 강남점" onChange={(e) => set("merchantName", e.target.value)} />
+        <RecentInput
+          id={fid("merchant")}
+          label="가맹점명"
+          className={inputClass}
+          value={input.merchantName}
+          maxLength={100}
+          placeholder="예: 스타벅스 강남점"
+          onChange={(v) => set("merchantName", v)}
+          recent={merchants.slice(0, 5).map((m) => m.name)}
+          pool={merchants.map((m) => m.name)}
+          onPick={(v) => {
+            const bn = merchants.find((m) => m.name === v)?.businessNumber;
+            if (bn && !input.merchantBusinessNumber) set("merchantBusinessNumber", bn);
+          }}
+        />
       </Field>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="사용일자" required htmlFor={fid("date")}>
