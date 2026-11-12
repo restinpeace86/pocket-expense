@@ -7,6 +7,7 @@ import { cellValue, rowsForTarget } from "@/lib/tax-office/template-fields";
 import { mainSheetName, mainSheetNote, WEHAGO_DEFAULT, type MainSheet } from "./main-sheet";
 export { mainSheetName, mainSheetNote, WEHAGO_DEFAULT, type MainSheet } from "./main-sheet";
 import { bizNo, checks, classLabels, EVIDENCE_LABEL, evidenceFile, evidenceNo, isOwnCar, settlement, statusLabel, supplyVat, upload적요, type ExportRow } from "./export-rows";
+import { BRAND } from "@/lib/brand";
 
 // 세무 마감 엑셀 (tax-export.md §3.2~3.4): 시트1 지출내역(전체 데이터) / 시트2 요약 / 시트3·4 세무 업로드 — 법인카드·개인(사비) 따로(세무사무소 답변 2026-10-27, D-136) / 시트5 위하고 일반전표(사비 두 줄, D-176)
 type Col = { header: string; width?: number; kind?: "won" | "date" | "datetime" | "num"; value: (r: ExportRow, ctx: Ctx) => unknown };
@@ -366,7 +367,7 @@ export async function buildTaxWorkbook(opts: { month: string; companyName: strin
   const files = new Map(rows.map((r) => [r.item_id, evidenceFile(r, month, total)?.name ?? null]));
   const ctx: Ctx = { month, total, files };
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Moa-on";
+  wb.creator = BRAND.name;
   wb.created = new Date();
   addTable(wb.addWorksheet("지출내역"), SHEET1, rows, ctx, ["공급가액", "부가세", "합계금액", "회사지원금", "개인부담금", "정산금액"]);
   const [y, m] = month.split("-");

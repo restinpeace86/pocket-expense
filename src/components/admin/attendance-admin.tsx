@@ -104,7 +104,11 @@ function SettingsForm({ initial }: { initial: AttendanceSettings }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  useEffect(() => setS(initial), [initial]);
+  const [prevInitial, setPrevInitial] = useState(initial);
+  if (prevInitial !== initial) {
+    setPrevInitial(initial);
+    setS(initial);
+  }
   const dirty = JSON.stringify(s) !== JSON.stringify(initial);
   const set = <K extends keyof AttendanceSettings>(k: K, v: AttendanceSettings[K]) => {
     setSaved(false);
@@ -230,9 +234,8 @@ function Terminals({ terminals }: { terminals: AttendanceAdminView["terminals"] 
       clearInterval(r);
     };
   }, [pair]);
-  useEffect(() => {
-    if (pair && terminals.some((t) => t.name === pair.name && new Date(t.created_at).getTime() > new Date(pair.expiresAt).getTime() - 11 * 60_000)) setPair(null);
-  }, [terminals, pair]);
+  // 그 이름의 단말이 연결되면 코드 창을 닫는다
+  if (pair && terminals.some((t) => t.name === pair.name && new Date(t.created_at).getTime() > new Date(pair.expiresAt).getTime() - 11 * 60_000)) setPair(null);
 
   const create = (e: React.FormEvent) => {
     e.preventDefault();

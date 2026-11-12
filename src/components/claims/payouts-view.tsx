@@ -11,6 +11,7 @@ import type { PayoutGroup } from "@/lib/claims/payouts";
 import { formatWon } from "@/lib/format";
 import { guardAction } from "@/lib/action-guard";
 import { measureAction } from "@/lib/perf/client";
+import { BRAND } from "@/lib/brand";
 
 // 화면 A-02 정산 지급 관리 (admin-payouts.md). 실제 이체는 회사 은행에서 하고, 여기서는 체크리스트·처리 기록만 남긴다
 function CopyButton({ text, label }: { text: string; label: string }) {
@@ -159,7 +160,7 @@ export function PayoutsView({ groups, tab, base, claimsBase }: { groups: PayoutG
                     ) : (
                       <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">계좌 미등록</span>
-                        <CopyButton text={`${g.name}님, Moa-on [내 정보]에서 정산 계좌를 등록해 주세요.`} label="계좌 등록 요청 문구 복사" />
+                        <CopyButton text={`${g.name}님, ${BRAND.name} [내 정보]에서 정산 계좌를 등록해 주세요.`} label="계좌 등록 요청 문구 복사" />
                       </p>
                     )}
                   </div>

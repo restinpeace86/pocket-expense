@@ -6,6 +6,7 @@ import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { buildDocModel, clean, DEFAULT_LAYOUT, type DocField, type DocModel, type FormLayout } from "@/lib/forms/layout";
 import type { ClaimDoc } from "./claim-docs";
+import { BRAND } from "@/lib/brand";
 
 const A4 = { w: 595.28, h: 841.89 };
 const M = 40;
@@ -235,7 +236,7 @@ export async function buildClaimsPdf(opts: {
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
   pdf.setTitle(opts.month ? `지출결의서 ${opts.month}` : `지출결의서 ${opts.docs[0]?.title ?? ""}`);
-  pdf.setProducer("Moa-on");
+  pdf.setProducer(BRAND.name);
   const layout = opts.layout ?? DEFAULT_LAYOUT;
   const evidence = opts.evidence ?? null;
   const evidenceNo = evidence ? new Map([...evidence].map(([id, e]) => [id, e.no])) : null;

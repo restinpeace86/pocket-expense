@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FEEDBACK_DONE, FEEDBACK_ERROR, feedbackInputError, feedbackNotifyText, feedbackPagePath, userAgentSummary, viewportLabel } from "./format";
+import { BRAND } from "@/lib/brand";
 
 describe("의견 보내기 (D-246)", () => {
   it("구분·길이 검사", () => {
@@ -25,14 +26,14 @@ describe("의견 보내기 (D-246)", () => {
 
   it("운영자 알림은 첫 줄 60자", () => {
     const t = feedbackNotifyText("예시 회사", "김대리", "bug", `${"가".repeat(70)}\n둘째 줄`, true);
-    expect(t).toContain("🐛 [Moa-on] 버그 신고: 예시 회사 · 김대리 · 캡처 있음");
+    expect(t).toContain(`🐛 [${BRAND.name}] 버그 신고: 예시 회사 · 김대리 · 캡처 있음`);
     expect(t).toContain(`${"가".repeat(60)}…`);
     expect(t).not.toContain("둘째 줄");
   });
 
-  it("안내 문구: 버그는 24시간 안에 확인, 기능 개선은 Moa-on", () => {
+  it(`안내 문구: 버그는 24시간 안에 확인, 기능 개선은 ${BRAND.name}`, () => {
     expect(FEEDBACK_DONE.bug.paragraphs.join(" ")).toContain("24시간 안에 확인");
-    expect(FEEDBACK_DONE.feature.paragraphs.join(" ")).toContain("Moa-on");
+    expect(FEEDBACK_DONE.feature.paragraphs.join(" ")).toContain(BRAND.name);
     expect(FEEDBACK_DONE.feature.paragraphs.join(" ")).not.toContain("모아온");
   });
 });

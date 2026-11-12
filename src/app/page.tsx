@@ -9,6 +9,7 @@ import { Testimonials } from "@/components/landing/testimonials";
 import { OPERATOR, SHOW_FULL_BUSINESS_INFO } from "@/components/legal/documents";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 import { Wordmark } from "@/components/brand/logo";
+import { BRAND, BRAND_JOSA } from "@/lib/brand";
 
 // 랜딩 페이지 (spec/screens/landing-page.md §0, D-255 §C 개편). 정적 화면 — 세션을 읽지 않는다.
 // 밝은 바탕 + [기능 미리 보기]만 진한 띠(시뮬레이션 7개 탭). CTA는 로그인 후 회사 생성 위저드로 간다.
@@ -140,7 +141,7 @@ export default function LandingPage() {
             <h1 className="mt-5 break-keep text-[2.5rem] font-extrabold leading-[1.15] tracking-tight sm:text-6xl lg:text-[3.5rem]">
               작은 회사 운영,
               <br />
-              <span className="text-blue-600">Moa-on</span> 하나로.
+              <span className="text-blue-600">{BRAND.name}</span> 하나로.
             </h1>
             <p className="mt-5 max-w-md text-balance break-keep text-lg leading-relaxed text-zinc-600 sm:text-xl">
               경비·결재, 출퇴근·휴가, 사내 채팅·캘린더·회의실, 세무사무소 전달까지. 따로 쓰던 업무 도구를 한 구독으로 묶고 서로 이어 놨어요.
@@ -160,7 +161,7 @@ export default function LandingPage() {
       </header>
 
       <section id="why" className="mx-auto max-w-5xl scroll-mt-20 px-4 py-16" aria-labelledby="why-title">
-        <Heading id="why-title" title="Moa-on이 다른 점" sub="기능을 모아 놓기만 한 게 아니라, 작은 회사에서 손이 가장 많이 가는 일을 대신해요." />
+        <Heading id="why-title" title={`${BRAND_JOSA.i} 다른 점`} sub="기능을 모아 놓기만 한 게 아니라, 작은 회사에서 손이 가장 많이 가는 일을 대신해요." />
         <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {WHY.map(({ icon: Icon, big, body }, i) => (
             <li key={big} className={`${card} flex flex-col p-5`}>
@@ -287,7 +288,7 @@ export default function LandingPage() {
 
       <section className="bg-gradient-to-b from-white to-blue-50 px-4 pb-28 pt-10 text-center">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-balance break-keep text-3xl font-bold tracking-tight">회사 운영, 이제 Moa-on 하나로 시작하세요.</h2>
+          <h2 className="text-balance break-keep text-3xl font-bold tracking-tight">회사 운영, 이제 {BRAND.name} 하나로 시작하세요.</h2>
           <p className="mt-3 text-balance break-keep text-zinc-600">경비부터 결재, 출퇴근·휴가, 사내 소통, 일정까지. 초기 도입비 없이 월 구독 하나로.</p>
           <Link href={START_HREF} className="mt-8 inline-flex min-h-14 items-center justify-center whitespace-nowrap rounded-xl bg-blue-600 px-8 text-lg font-semibold text-white hover:bg-blue-500">
             🏢 우리 회사 무료로 시작하기
@@ -315,7 +316,7 @@ export default function LandingPage() {
           <Link href="/for-tax-office" className="inline-flex min-h-11 items-center hover:text-zinc-800">세무사무소</Link>
         </nav>
         <BusinessInfo />
-        <p>© 다모은랩 · Moa-on</p>
+        <p>© 다모은랩 · {BRAND.name}</p>
       </footer>
     </div>
   );

@@ -14,8 +14,9 @@ import { calendarEnabled, getCalendarEvents, getMeetingRooms } from "@/lib/calen
 import { getInboxBadge } from "@/lib/claims/inbox";
 import { todayKst } from "@/lib/dates";
 import { getMyRequests, getMySummary } from "@/lib/employee/queries";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "홈 · Moa-on" };
+export const metadata = { title: `홈 · ${BRAND.name}` };
 
 // 화면 E-01 직원 홈 = 허브 (spec/screens/worker-dashboard.md §0, D-235)
 export default function EmployeeHomePage({ params, searchParams }: PageProps<"/workspace/[id]/employee">) {

@@ -4,8 +4,9 @@ import { getAccountTitles } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { AccountTitleHistory, type AccountTitleChange } from "@/components/tax-office/account-title-history";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "계정과목 · Moa-on" };
+export const metadata = { title: `계정과목 · ${BRAND.name}` };
 
 // 계정과목 (spec/screens/admin-dashboard.md ⑪, spec/features/account-titles.md)
 export default function AccountTitlesPage({ params }: PageProps<"/workspace/[id]/admin/account-titles">) {

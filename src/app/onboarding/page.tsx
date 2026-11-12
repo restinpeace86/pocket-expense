@@ -5,8 +5,9 @@ import { InviteCodeForm } from "@/components/onboarding/invite-code-form";
 import { buttonPrimary, buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
 import { requireNoMembership } from "@/lib/auth/guards";
 import { isTaxOfficeUser } from "@/lib/tax-office/queries";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "시작하기 · Moa-on" };
+export const metadata = { title: `시작하기 · ${BRAND.name}` };
 
 export default function OnboardingPage() {
   return (

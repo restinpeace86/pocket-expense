@@ -6,6 +6,7 @@ import { needsAlimtalk, pushOf, CHANNEL } from "./channel";
 import { getSender, siteUrl } from "./sender";
 import { approvalCompleted, approvalRejected, approvalRequest, closingNotice, invite, merchantSummary, normalizePhone, payoutCompleted, recurringReady, reminder, taxClosed, taxOfficeInvite, taxRequest, type BuiltMessage, type ClosingNoticeInput } from "./templates";
 import { pushToMembers, pushToOfficeMembers } from "@/lib/push/server";
+import { BRAND } from "@/lib/brand";
 
 // 결재 알림 보내기 (kakao-alimtalk.md §2, notification-rule.md §2).
 // - 결재 처리(DB 트랜잭션)가 끝난 뒤에 부른다. 실패해도 결재는 되돌리지 않는다.
@@ -321,7 +322,7 @@ export async function notifyOfficeClosed(companyId: string, month: string, count
   // 앱 알림만(D-213) — 사무소는 세무사무소 화면 고객사 현황에서도 마감을 본다
   await pushToOfficeMembers(
     targets.map((t) => t.member_id),
-    { title: `${company?.name ?? "고객사"} ${Number(month.slice(5, 7))}월 마감 완료`, body: message.text.replace("[Moa-on] ", ""), url: message.buttonPath, tag: `tax-closed-${companyId}-${month}` },
+    { title: `${company?.name ?? "고객사"} ${Number(month.slice(5, 7))}월 마감 완료`, body: message.text.replace(`[${BRAND.name}] `, ""), url: message.buttonPath, tag: `tax-closed-${companyId}-${month}` },
   );
   return targets.length;
 }

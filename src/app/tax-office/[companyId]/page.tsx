@@ -12,8 +12,9 @@ import { listHometax } from "@/lib/hometax/server";
 import { listTaxRequests, markTaxRequestsSeen } from "@/lib/tax-office/requests";
 import { getExportOptions } from "@/lib/tax/export-options";
 import { ISSUE_KINDS, type IssueKind } from "@/lib/tax/export-rows";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "세무 자료 · Moa-on 세무사무소" };
+export const metadata = { title: `세무 자료 · ${BRAND.name} 세무사무소` };
 
 // 세무사무소: 고객사 한 곳의 월별 세무 자료 (D-149). 회사 관리자 세무 마감과 같은 행(승인·지급된 지출만)
 const openRequestItems = (rs: { item_id: string | null; status: string }[]) => rs.filter((r) => r.item_id && r.status !== "resolved").map((r) => r.item_id!);

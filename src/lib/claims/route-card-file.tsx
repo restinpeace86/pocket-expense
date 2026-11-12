@@ -4,6 +4,7 @@ import { formatDateTimeKst } from "@/lib/claims/format";
 import { routeCardFrom, routeFormula, type RouteCard } from "@/lib/expense/route";
 import { formatWon } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { BRAND } from "@/lib/brand";
 
 // 자차 유류비 '출장 경로 및 거리 산정 요약' 증빙 이미지 (D-088)
 // 상신이 끝나면 확정된 값으로 PNG를 만들어 영수증 버킷 {company}/route-cards/{claim}/{item}.png 에 저장하고 항목에 연결한다.
@@ -55,7 +56,7 @@ function rows(d: RouteCardDoc): [string, string][] {
 export async function renderRouteCardPng(d: RouteCardDoc): Promise<ArrayBuffer | null> {
   const r = rows(d);
   const title = "출장 경로 및 거리 산정 요약";
-  const footer = `${d.companyName} · 상신 ${d.submittedAt ? formatDateTimeKst(d.submittedAt) : "-"} · Moa-on 자동 생성 · 항목 ${d.itemId.slice(0, 8)}`;
+  const footer = `${d.companyName} · 상신 ${d.submittedAt ? formatDateTimeKst(d.submittedAt) : "-"} · ${BRAND.name} 자동 생성 · 항목 ${d.itemId.slice(0, 8)}`;
   const amount = `정산 금액 ${formatWon(d.card.amount)}`;
   const allText = [title, footer, amount, ...r.flat(), "주유 영수증 없이 경로·거리·단가로 산정한 자차 유류비 증빙입니다"].join("");
   const [regular, bold] = await Promise.all([loadFont(allText, 400), loadFont(allText, 700)]);
@@ -63,7 +64,7 @@ export async function renderRouteCardPng(d: RouteCardDoc): Promise<ArrayBuffer |
   const img = new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "#ffffff", fontFamily: "NotoSansKR", color: "#18181b", padding: 48 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "3px solid #4f46e5", paddingBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `3px solid ${BRAND.color.main}`, paddingBottom: 20 }}>
           <div style={{ fontSize: 40, fontWeight: 700 }}>{title}</div>
           <div style={{ display: "flex", fontSize: 22, color: d.card.source === "api" ? "#4338ca" : "#92400e", background: d.card.source === "api" ? "#eef2ff" : "#fef3c7", borderRadius: 999, padding: "6px 16px" }}>
             {d.card.source === "api" ? "길찾기 자동 계산" : "직접 입력 거리"}
@@ -77,7 +78,7 @@ export async function renderRouteCardPng(d: RouteCardDoc): Promise<ArrayBuffer |
             </div>
           ))}
         </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 28, fontSize: 44, fontWeight: 700, color: "#312e81" }}>{amount}</div>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 28, fontSize: 44, fontWeight: 700, color: BRAND.color.deep }}>{amount}</div>
         <div style={{ display: "flex", marginTop: "auto", fontSize: 20, color: "#71717a", flexDirection: "column" }}>
           <div style={{ display: "flex" }}>주유 영수증 없이 경로·거리·단가로 산정한 자차 유류비 증빙입니다</div>
           <div style={{ display: "flex", marginTop: 6 }}>{footer}</div>

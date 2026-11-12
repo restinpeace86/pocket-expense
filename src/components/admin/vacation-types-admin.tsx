@@ -136,7 +136,11 @@ function ShortageCard({ mode }: { mode: "block" | "borrow" }) {
   const [m, setM] = useState(mode);
   const [busy, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  useEffect(() => setM(mode), [mode]);
+  const [prevMode, setPrevMode] = useState(mode);
+  if (prevMode !== mode) {
+    setPrevMode(mode);
+    setM(mode);
+  }
   const save = (next: "block" | "borrow") => {
     setM(next);
     start(async () => {

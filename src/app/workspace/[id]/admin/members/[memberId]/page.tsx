@@ -4,8 +4,9 @@ import { MemberDetailView } from "@/components/admin/member-detail";
 import { capabilitiesFor } from "@/lib/admin/capabilities";
 import { getCompanyMealLimit, getDepartments, getMember } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "멤버 정보 · Moa-on" };
+export const metadata = { title: `멤버 정보 · ${BRAND.name}` };
 
 type Props = PageProps<"/workspace/[id]/admin/members/[memberId]">;
 

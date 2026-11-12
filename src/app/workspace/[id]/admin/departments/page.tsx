@@ -2,8 +2,9 @@ import { Suspense } from "react";
 import { DepartmentsHeading, DepartmentsView } from "@/components/admin/departments-view";
 import { getDepartments } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "부서 · Moa-on" };
+export const metadata = { title: `부서 · ${BRAND.name}` };
 
 export default function DepartmentsPage({ params }: PageProps<"/workspace/[id]/admin/departments">) {
   return (

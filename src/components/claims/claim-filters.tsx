@@ -3,10 +3,12 @@
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { ClaimFilters } from "@/lib/claims/filters";
+import { quickMonths, RECENT3, type ClaimFilters } from "@/lib/claims/filters";
+import { currentMonthKst } from "@/lib/dates";
 import { CATEGORY_LABEL, type ExpenseCategory } from "@/lib/expense/categories";
 
 // 지출 승인 관리 공통 필터 (admin-expense-approvals.md §4.A): 월(항목 사용일자), 부서, 직원, 카테고리, 검색(제목·가맹점명)
+// 9-14c ⑦: 월 위에 [이번 달]·[지난달]·[최근 3개월] — 누르면 바로 적용, 다른 달은 월 칸에서
 // 휴대폰에서는 16px(아이폰이 확대하지 않게)·44px, 넓은 화면에서는 조금 작게
 const sel = "min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-2 text-base lg:min-h-10 lg:text-sm";
 
@@ -25,6 +27,7 @@ export function ClaimFiltersBar({
 }) {
   const router = useRouter();
   const [f, setF] = useState(filters);
+  const [quick] = useState(() => quickMonths(currentMonthKst()));
   const active = Object.values(filters).filter(Boolean).length;
   const go = (next: ClaimFilters) => {
     const p = new URLSearchParams({ tab });
@@ -58,7 +61,28 @@ export function ClaimFiltersBar({
           />
         </label>
         <div className="grid grid-cols-2 gap-2">
-          <input type="month" aria-label="사용 월" value={f.month ?? ""} onChange={(e) => set("month", e.target.value || null)} className={`${sel} col-span-2`} />
+          <div className="col-span-2 flex flex-wrap gap-1.5" role="group" aria-label="기간 빠른 선택">
+            {quick.map((m) => {
+              const on = filters.month === m.value;
+              return (
+                <button
+                  key={m.key}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => {
+                    const next = { ...f, month: on ? null : m.value };
+                    setF(next);
+                    go(next);
+                  }}
+                  className={`min-h-10 rounded-full border px-3.5 text-sm ${on ? "border-brand-600 bg-brand-50 font-semibold text-brand-800" : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"}`}
+                  data-quick-month={m.key}
+                >
+                  {m.label}
+                </button>
+              );
+            })}
+          </div>
+          <input type="month" aria-label="사용 월" value={f.month && f.month !== RECENT3 ? f.month : ""} onChange={(e) => set("month", e.target.value || null)} className={`${sel} col-span-2`} />
           <select aria-label="카테고리" value={f.category ?? ""} onChange={(e) => set("category", (e.target.value || null) as ExpenseCategory | null)} className={sel}>
             <option value="">모든 카테고리</option>
             {(Object.keys(CATEGORY_LABEL) as ExpenseCategory[]).map((c) => (
@@ -100,7 +124,7 @@ export function ClaimFiltersBar({
             적용
           </button>
         </div>
-        <p className="text-[11px] text-zinc-500">월은 영수증 사용일자 기준이에요.</p>
+        <p className="text-[11px] text-zinc-500">기간은 영수증 사용일자 기준이에요. 최근 3개월 = 이번 달을 포함한 세 달.</p>
       </form>
     </details>
   );

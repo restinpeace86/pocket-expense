@@ -3,6 +3,7 @@
 // - 진동: 기기 설정 [알림 올 때 소리·진동]이 켜져 있으면 길게 세 번(D-227) — 휴대폰이 무음이면 OS가 알아서 울리지 않는다.
 //   끄면 소리·진동 없이 배너만(silent). 안드로이드 8 이상은 진동 모양을 휴대폰의 사이트 알림 설정이 정하기도 한다.
 // - 같은 대화방 알림은 한 장(tag)으로 묶고 가장 최근 메시지로 바꿔 다시 울린다(renotify).
+const BRAND_NAME = "Moa-on"; // 서비스 이름 — scripts/apply-brand.mjs가 src/lib/brand.ts에 맞춘다(9-14a)
 const VIBRATE = [500, 200, 500, 200, 500]; // 길게 세 번(D-227) — 안드로이드 8 이상 크롬은 이 값 대신 휴대폰 알림 설정의 진동을 쓴다
 
 self.addEventListener("install", () => self.skipWaiting());
@@ -13,9 +14,9 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "Moa-on", body: event.data ? event.data.text() : "" };
+    data = { title: BRAND_NAME, body: event.data ? event.data.text() : "" };
   }
-  const title = data.title || "Moa-on";
+  const title = data.title || BRAND_NAME;
   const chat = !!(data.tag && String(data.tag).startsWith("chat-"));
   const loud = data.vibrate !== false;
   event.waitUntil(

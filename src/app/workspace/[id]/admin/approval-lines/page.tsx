@@ -2,8 +2,9 @@ import { Suspense } from "react";
 import { ApprovalLinesHeading, ApprovalLinesView } from "@/components/admin/approval-lines-view";
 import { getApprovalLines } from "@/lib/admin/approval-lines";
 import { requireWorkspace } from "@/lib/auth/guards";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "사전 검토 결재라인 · Moa-on" };
+export const metadata = { title: `사전 검토 결재라인 · ${BRAND.name}` };
 
 // 화면 ⑥ 사전 검토 결재라인 (admin-dashboard.md ⑥)
 export default function ApprovalLinesPage({ params }: PageProps<"/workspace/[id]/admin/approval-lines">) {

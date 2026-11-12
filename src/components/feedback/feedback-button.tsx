@@ -19,6 +19,7 @@ import {
 } from "@/lib/feedback-desk/format";
 import { processFeedbackShot } from "@/lib/receipts/image";
 import { createClient } from "@/lib/supabase/client";
+import { BRAND } from "@/lib/brand";
 
 const DRAFT_KEY = "workon-feedback-draft"; // 저장 키는 예전 이름 그대로(D-251)
 
@@ -257,7 +258,7 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
               </button>
             </div>
             <p className="-mt-2 break-keep text-[13px] text-zinc-600">
-              Moa-on 만드는 사람들에게 바로 전달돼요. 회사 관리자는 보지 않아요.
+              {BRAND.name} 만드는 사람들에게 바로 전달돼요. 회사 관리자는 보지 않아요.
             </p>
             <fieldset className="grid grid-cols-2 gap-2">
               <legend className="mb-2 text-sm font-bold">

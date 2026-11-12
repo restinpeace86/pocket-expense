@@ -5,8 +5,9 @@ import { isAdminRole } from "@/lib/auth/paths";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { validDoc } from "@/lib/doc-convert/model";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "서류 → 엑셀 · Moa-on" };
+export const metadata = { title: `서류 → 엑셀 · ${BRAND.name}` };
 
 // 변환 결과 보기·고치기(8-104 A③·A④, spec/features/company-forms.md §A)
 export default function ConvertPage({ params }: PageProps<"/workspace/[id]/employee/convert/[cid]">) {

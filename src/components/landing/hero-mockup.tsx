@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { useSeen } from "./use-seen";
+import { BRAND } from "@/lib/brand";
 
 // 히어로 목업 애니메이션 (spec/screens/landing-page.md §3). 소개 동영상이 준비되면 교체할 수 있다.
 // 사람이 보고 있을 때만 재생하고(useSeen, D-182), 벗어나거나 다른 탭으로 가면 멈췄다가 다시 보이면 이어서 재생한다(휴대폰은 목업이 첫 화면 아래에 있음)
@@ -46,7 +47,7 @@ export function HeroMockup() {
       <div className="ml-auto mt-4 flex w-full max-w-64 flex-col gap-2 lg:absolute lg:-bottom-44 lg:-right-8 lg:mt-0 lg:w-64">
         <div className="landing-bubble rounded-2xl bg-[#FEE500] p-3 text-sm text-black/85 shadow-xl" style={{ animationDelay: "3.6s" }}>
           <p className="text-[11px] text-black/60">카카오톡 알림톡</p>
-          <p className="font-semibold">[Moa-on] 결재 요청</p>
+          <p className="font-semibold">[{BRAND.name}] 결재 요청</p>
           <p className="mt-1">김개발님 · 부산 출장 3건 · 72,000원</p>
           <p className="mt-2 rounded-lg bg-white py-1.5 text-center text-black/85">결재하러 가기</p>
         </div>

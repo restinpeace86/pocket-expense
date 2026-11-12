@@ -2,8 +2,9 @@ import { Suspense } from "react";
 import { HelpAdmin } from "@/components/app-admin/help-admin";
 import { requireAppAdmin } from "@/lib/app-admin/guard";
 import type { AdminArticle } from "./actions";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "도움말 글 · Moa-on 운영자" };
+export const metadata = { title: `도움말 글 · ${BRAND.name} 운영자` };
 
 // 운영자 › 도움말 글(D-255 §A-5): 목록(카테고리·대상·공개) + 글 고치기(단계 글·그림·이동·시뮬레이션)
 export default function HelpAdminPage() {

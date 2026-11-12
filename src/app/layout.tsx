@@ -7,6 +7,7 @@ import { KeyboardAware } from "@/components/ui/keyboard-aware";
 import { NativeAppBridge } from "@/components/push/native-app-bridge";
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TITLE, siteOrigin, verificationTags } from "@/lib/seo";
 import { THEME_KEYS, THEME_STORAGE_KEY } from "@/lib/theme";
+import { BRAND } from "@/lib/brand";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,7 +40,7 @@ export const metadata: Metadata = {
   verification: verificationTags(),
   // 홈 화면에 추가했을 때 아이콘·이름(아이폰 웹 알림은 홈 화면 앱에서만, D-116)
   icons: { apple: "/icons/180" },
-  appleWebApp: { capable: true, title: "Moa-on", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: BRAND.name, statusBarStyle: "default" },
 };
 
 // 밝은 화면 전용(D-230): 휴대폰이 다크 모드여도 크롬·앱이 화면을 어둡게 칠하지 않게(우리 색 테마는 data-theme으로)

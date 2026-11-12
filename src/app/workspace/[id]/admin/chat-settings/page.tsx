@@ -4,8 +4,9 @@ import { VaultUsageCard, type VaultUsage } from "@/components/admin/vault-usage"
 import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "파일 보관 · Moa-on" };
+export const metadata = { title: `파일 보관 · ${BRAND.name}` };
 
 // 사진·파일 보관(D-212 → D-218, spec/features/messenger.md §10): 회사 저장 공간 사용량 + 보관 기간(30·60·90일) — 채팅 사진·파일과 회의 자료 모두
 export default function ChatSettingsPage({ params }: PageProps<"/workspace/[id]/admin/chat-settings">) {

@@ -4,8 +4,9 @@ import { BusStops, type MyAlert } from "@/components/bus/bus-views";
 import { getCompanyNearby } from "@/lib/bus/server";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "주변 버스 · Moa-on" };
+export const metadata = { title: `주변 버스 · ${BRAND.name}` };
 
 // 주변 버스(D-243 → D-254 전국): 회사 200m 안 정류장(가까운 순 5곳, 없으면 500m 3곳). 주변 정류장이 없거나 회사 위치가 없으면 404
 export default function BusPage({ params }: PageProps<"/workspace/[id]/employee/bus">) {

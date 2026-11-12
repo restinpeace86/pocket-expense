@@ -4,8 +4,9 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { helpFeatures } from "@/lib/help/features";
 import { guidesFor } from "@/lib/help/guides";
 import { loadHelp } from "@/lib/help/store";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "도움말 · Moa-on" };
+export const metadata = { title: `도움말 · ${BRAND.name}` };
 
 // AI 도움말 센터 — 관리자(D-251 개선사항 7): 머리글 [?]에서. 관리자용 글까지 보인다
 export default function AdminHelpPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/help">) {

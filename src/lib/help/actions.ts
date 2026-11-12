@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { helpFeatures } from "./features";
 import { guidesFor, isShortQuery, rankGuides } from "./guides";
 import { loadHelp } from "./store";
+import { BRAND } from "@/lib/brand";
 
 // AI 도움말(D-251 개선사항 7 → D-255 DB): 질문과 가까운 도움말 글 몇 편만 골라 Gemini가 그 글만 보고 짧게 답한다.
 // 글에 없으면 지어내지 않고 "도움말에 없어요". 크레딧은 쓰지 않고 한 사람 하루 20번(help_take). 단어 하나면 AI 없이 글만 바로
@@ -31,7 +32,7 @@ export async function askHelpAction(companyId: string, mode: "admin" | "employee
   if (!apiKey) return { ok: true, found: true, answer: null, refs: picked.map((g) => g.id), remaining: left };
   const model = process.env.GEMINI_ASSISTANT_MODEL || process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
   const docs = picked.map((g) => [`[${g.id}] ${g.title}`, g.summary, ...g.steps.map((st, i) => `${i + 1}. ${st.body}`)].join("\n")).join("\n\n");
-  const prompt = `너는 업무 앱 Moa-on의 도움말 안내원이다. 아래 [도움말 글]에 적힌 내용만 근거로 사용자의 질문에 한국어 해요체로 2~4문장, 버튼 이름은 [ ]로 답하라.
+  const prompt = `너는 업무 앱 ${BRAND.name}의 도움말 안내원이다. 아래 [도움말 글]에 적힌 내용만 근거로 사용자의 질문에 한국어 해요체로 2~4문장, 버튼 이름은 [ ]로 답하라.
 글에 답이 없으면 found=false, answer는 빈 문자열. 글에 없는 기능·숫자·화면을 지어내지 마라. ids에는 근거로 쓴 글의 id(최대 2개)를 넣어라.
 
 [도움말 글]

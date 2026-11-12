@@ -1,11 +1,10 @@
 import "server-only";
 import { isOverdue, kstDate, type DeadlinePolicy } from "@/lib/expense/deadline";
 import { getHolidays } from "@/lib/expense/holidays";
-import { todayKst } from "@/lib/dates";
-import { monthRange } from "@/lib/dates";
+import { currentMonthKst, todayKst } from "@/lib/dates";
 import type { ClaimStatus } from "@/lib/expense/status";
 import { createClient } from "@/lib/supabase/server";
-import type { ClaimFilters } from "./filters";
+import { filterDateRange, type ClaimFilters } from "./filters";
 
 // 지출 승인 관리 목록 (admin-expense-approvals.md §4.A·B). 같은 회사만(RLS), 작성 중(draft)은 보이지 않는다.
 export type ApprovalTab = "pending" | "done" | "rejected";
@@ -58,7 +57,7 @@ export async function getAdminClaimList(companyId: string, tab: ApprovalTab, fil
     if (filters.month || filters.category) {
       let iq = supabase.from("expense_items").select("claim_id").eq("company_id", companyId).limit(5000);
       if (filters.month) {
-        const { start, end } = monthRange(filters.month);
+        const { start, end } = filterDateRange(filters.month, currentMonthKst());
         iq = iq.gte("expense_date", start).lt("expense_date", end);
       }
       if (filters.category) iq = iq.eq("category", filters.category);

@@ -198,10 +198,12 @@ function LeaveSettingsCard({ settings }: { settings: LeaveSettings }) {
   const [rounding, setRounding] = useState(settings.rounding);
   const [busy, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  useEffect(() => {
+  const [prev, setPrev] = useState({ h: settings.hourly_leave, r: settings.rounding });
+  if (prev.h !== settings.hourly_leave || prev.r !== settings.rounding) {
+    setPrev({ h: settings.hourly_leave, r: settings.rounding });
     setHourly(settings.hourly_leave);
     setRounding(settings.rounding);
-  }, [settings.hourly_leave, settings.rounding]);
+  }
   const save = (nextHourly: boolean, nextRounding: LeaveSettings["rounding"]) => {
     const r = !nextHourly && nextRounding === "hour" ? "day" : nextRounding;
     setHourly(nextHourly);

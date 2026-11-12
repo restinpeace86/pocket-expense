@@ -3,8 +3,9 @@ import { CompanyTaxOfficeForm, type CompanyTaxOffice } from "@/components/admin/
 import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "세무사무소 · Moa-on" };
+export const metadata = { title: `세무사무소 · ${BRAND.name}` };
 
 // 우리 회사 세무사무소 (D-149): 계약한 세무사무소를 지정하면 그 사무소 워크스페이스의 고객사 목록에 우리 회사가 뜬다(사무소가 담당 세무사 배정)
 export default function CompanyTaxOfficePage({ params }: PageProps<"/workspace/[id]/admin/tax-office">) {

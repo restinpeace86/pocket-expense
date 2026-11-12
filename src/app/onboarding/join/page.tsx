@@ -5,8 +5,9 @@ import { buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
 import { requireNoMembership } from "@/lib/auth/guards";
 import { messageForDbError } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "직원 가입 · Moa-on" };
+export const metadata = { title: `직원 가입 · ${BRAND.name}` };
 
 export default function JoinPage({ searchParams }: PageProps<"/onboarding/join">) {
   return (

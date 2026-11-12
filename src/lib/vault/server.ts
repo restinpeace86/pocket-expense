@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { VAULT_BUCKET, vaultErrorMessage, vaultPaths, type VaultScope } from "./format";
+import { BRAND } from "@/lib/brand";
 
 type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
 type Check = { member_id: string; company_id: string; message_id: string; path: string; thumb_path: string | null };
@@ -74,7 +75,7 @@ export async function checkStorageTotal(admin: Admin): Promise<{ bytes: number; 
   await fetch(hook, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content: `⚠️ [Moa-on] 저장 공간 ${gb}GB — Supabase 포함량(100GB)의 ${Math.round((bytes / STORAGE_INCLUDED_BYTES) * 100)}%예요. 사용량 화면에서 트래픽도 확인해 주세요.` }),
+    body: JSON.stringify({ content: `⚠️ [${BRAND.name}] 저장 공간 ${gb}GB — Supabase 포함량(100GB)의 ${Math.round((bytes / STORAGE_INCLUDED_BYTES) * 100)}%예요. 사용량 화면에서 트래픽도 확인해 주세요.` }),
   }).catch(() => {});
   return { bytes, alerted: true };
 }

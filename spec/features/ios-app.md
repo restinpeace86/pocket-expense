@@ -7,7 +7,7 @@
 - `mobile/ios` — Capacitor 8 아이폰 프로젝트(Swift Package Manager, CocoaPods 없음). 앱 ID `kr.damounlab.app`(안드로이드와 같음), 이름 `Moa-on`(서비스명 확정 시 `capacitor.config.json` appName·`Info.plist` CFBundleDisplayName 두 곳만 바꿈)
 - 화면은 웹 그대로(`server.url` = 운영 주소). 주소(도메인)가 바뀌면 `capacitor.config.json` `server.url` 한 곳 + 새 빌드
 - 지원: iOS 15 이상, 아이폰·아이패드(세로·가로)
-- 아이콘·시작 화면: 웹 아이콘과 같은 모양(`scripts/ios-assets.mjs`로 만듦, 1024 아이콘은 투명 없음)
+- 아이콘·시작 화면: 웹 아이콘과 같은 모양(`scripts/apply-brand.mjs`로 만듦, 1024 아이콘은 투명 없음)
 
 ## 2. 알림
 - 아이폰 앱도 **FCM 토큰**을 서버에 등록한다: 앱(AppDelegate)이 Apple 기기 토큰(APNs)을 Firebase에 넘겨 FCM 토큰으로 바꾸고, 웹은 지금처럼 `PushNotifications` 'registration'으로 받는다. 서버(`lib/push/fcm.ts`)는 안드로이드와 같은 길로 보낸다

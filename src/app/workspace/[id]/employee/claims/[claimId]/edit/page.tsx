@@ -5,8 +5,9 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { getApprovalPreview } from "@/lib/admin/approval-lines";
 import { ClaimEventLink } from "@/components/calendar/claim-event-link";
 import { getMyClaimForEdit } from "@/lib/employee/claim";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "지출결의서 작성 · Moa-on" };
+export const metadata = { title: `지출결의서 작성 · ${BRAND.name}` };
 
 // 화면 E-02 지출결의서 작성 (spec/screens/worker-tax-processing.md)
 export default function ClaimEditPage({ params, searchParams }: PageProps<"/workspace/[id]/employee/claims/[claimId]/edit">) {

@@ -14,6 +14,7 @@ import { ChatThemeButton } from "./chat-theme";
 import { MyThreadsRow } from "./my-threads";
 import { openChatPopup, useChatPopup } from "./popup";
 import { MemberPicker } from "./member-picker";
+import { BRAND } from "@/lib/brand";
 
 // 채팅 목록(카톡 '채팅' 탭): 최근 대화 순, 마지막 메시지·시각·안 읽은 수. 새 메시지가 오면 다시 불러온다
 export function RoomList({ base }: { base: string }) {
@@ -207,7 +208,7 @@ function AssistantRow({ base, room, active }: { base: string; room: ChatRoomSumm
         <LogoMark className="size-12 rounded-[38%]" />
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">
-            <span className="truncate font-semibold text-zinc-900">Moa-on 도우미</span>
+            <span className="truncate font-semibold text-zinc-900">{BRAND.name} 도우미</span>
             <span className="shrink-0 rounded bg-brand-50 px-1 text-[11px] font-semibold text-brand-700">AI</span>
           </span>
           <span className="block truncate text-sm text-zinc-500">{err ?? (room?.last ? previewText(room.last) : "일정·회의실 빈 시간·내 결의서를 물어보세요")}</span>

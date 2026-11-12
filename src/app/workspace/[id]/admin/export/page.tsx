@@ -24,8 +24,9 @@ import { claimCutoff, mdLabel, monthLabel, taxCloseDue } from "@/lib/expense/dea
 import { getHolidays } from "@/lib/expense/holidays";
 import { getExportOptions } from "@/lib/tax/export-options";
 import { OfficeWorkbookPreview } from "@/components/tax-office/office-workbook-preview";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "세무 마감 · Moa-on" };
+export const metadata = { title: `세무 마감 · ${BRAND.name}` };
 
 // 화면: 세무 마감 및 증빙 다운로드 (tax-closing.md)
 export default function ExportPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/export">) {

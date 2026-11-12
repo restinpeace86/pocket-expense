@@ -6,8 +6,9 @@ import { Card, PageShell } from "@/components/ui/page-shell";
 import { destinationAfterLogin } from "@/lib/auth/paths";
 import { getCurrentUserId, getMembership } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "회사 초대 · Moa-on" };
+export const metadata = { title: `회사 초대 · ${BRAND.name}` };
 
 // 개별 초대 링크 진입 (D-042)
 export default function PersonalInvitePage({ params }: PageProps<"/join/i/[token]">) {

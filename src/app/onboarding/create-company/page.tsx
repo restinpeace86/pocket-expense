@@ -2,8 +2,9 @@ import { Suspense } from "react";
 import { CreateCompanyForm } from "@/components/onboarding/create-company-form";
 import { Card, PageShell } from "@/components/ui/page-shell";
 import { requireNoMembership } from "@/lib/auth/guards";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "회사 등록 · Moa-on" };
+export const metadata = { title: `회사 등록 · ${BRAND.name}` };
 
 // 회사 생성 위저드 (spec/screens/admin-onboarding.md). 로그인(Step 1)은 /login에서, 여기는 Step 2~3.
 export default function CreateCompanyPage() {

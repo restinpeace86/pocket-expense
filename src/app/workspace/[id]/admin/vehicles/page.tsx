@@ -3,8 +3,9 @@ import { VehiclesHeading, VehiclesView } from "@/components/admin/vehicles-view"
 import { getCompanyVehicles } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { currentMonthKst, monthRange } from "@/lib/dates";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "회사차량 · Moa-on" };
+export const metadata = { title: `회사차량 · ${BRAND.name}` };
 
 // 회사차량 (D-105, spec/features/company-vehicles.md)
 export default function VehiclesPage({ params }: PageProps<"/workspace/[id]/admin/vehicles">) {

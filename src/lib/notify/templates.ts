@@ -1,3 +1,4 @@
+import { BRAND, BRAND_JOSA } from "@/lib/brand";
 // 알림톡 템플릿 6종 문구 (spec/screens/notification-rule.md §2 — 문구의 단일 기준). 링크에는 토큰을 넣지 않는다(D-013).
 export type TemplateCode = "APPROVAL_REQUEST" | "APPROVAL_COMPLETED" | "APPROVAL_REJECTED" | "PAYOUT_COMPLETED" | "INVITE" | "REMINDER" | "RECURRING_READY" | "CLOSING" | "TAX_CLOSED" | "TAX_REQUEST" | "TAX_OFFICE_INVITE";
 
@@ -41,33 +42,33 @@ const linesOf = (vars: Record<string, string>) => Object.entries(vars).map(([k, 
 // 버튼(웹링크) 주소 = https://{도메인}/#{링크} — 링크 변수에는 앞의 "/"를 뺀 경로를 넣는다.
 export const ALIMTALK_TEMPLATES = {
   INVITE: {
-    name: "Moa-on 회사 초대",
-    text: "[Moa-on] 회사 초대 안내\n\n#{회사명}에서 #{이름}님을 Moa-on에 초대했습니다.\nMoa-on은 #{회사명}의 경비 정산·결재·사내 소통을 위한 업무 서비스입니다.\n\n아래 버튼을 눌러 가입을 마쳐 주세요.",
+    name: `${BRAND.name} 회사 초대`,
+    text: `[${BRAND.name}] 회사 초대 안내\n\n#{회사명}에서 #{이름}님을 ${BRAND.name}에 초대했습니다.\n${BRAND_JOSA.eun} #{회사명}의 경비 정산·결재·사내 소통을 위한 업무 서비스입니다.\n\n아래 버튼을 눌러 가입을 마쳐 주세요.`,
     button: "가입하기",
   },
   TAX_OFFICE_INVITE: {
-    name: "Moa-on 세무사무소 연결",
-    text: "[Moa-on] 세무사무소 연결 안내\n\n#{세무사}님, 고객사 #{회사명}이(가) 지출·증빙 관리에 Moa-on을 사용하며 #{사무소명}을(를) 세무대행 사무소로 지정했습니다.\n\n무료 세무사무소 워크스페이스에서 승인된 지출 장부·영수증·지출결의서·홈택스 자료를 한곳에서 받으실 수 있습니다.",
+    name: `${BRAND.name} 세무사무소 연결`,
+    text: `[${BRAND.name}] 세무사무소 연결 안내\n\n#{세무사}님, 고객사 #{회사명}이(가) 지출·증빙 관리에 ${BRAND_JOSA.eul} 사용하며 #{사무소명}을(를) 세무대행 사무소로 지정했습니다.\n\n무료 세무사무소 워크스페이스에서 승인된 지출 장부·영수증·지출결의서·홈택스 자료를 한곳에서 받으실 수 있습니다.`,
     button: "세무사무소로 시작하기",
   },
   APPROVAL_REQUEST: {
-    name: "Moa-on 결재 요청",
-    text: "[Moa-on] 결재 요청\n\n새로운 지출결의서가 상신되었습니다.\n\n상신자: #{상신자}\n제목: #{제목}\n금액: #{금액}\n사용처: #{사용처}\n결제수단: #{결제수단}",
+    name: `${BRAND.name} 결재 요청`,
+    text: `[${BRAND.name}] 결재 요청\n\n새로운 지출결의서가 상신되었습니다.\n\n상신자: #{상신자}\n제목: #{제목}\n금액: #{금액}\n사용처: #{사용처}\n결제수단: #{결제수단}`,
     button: "결재하러 가기",
   },
   APPROVAL_REJECTED: {
-    name: "Moa-on 결재 반려",
-    text: "[Moa-on] 결재 반려\n\n지출결의서가 반려되었습니다.\n\n신청자: #{신청자}\n제목: #{제목}\n금액: #{금액}\n사용처: #{사용처}\n반려 사유: #{반려사유}\n\n내용을 고쳐 다시 상신해 주세요.",
+    name: `${BRAND.name} 결재 반려`,
+    text: `[${BRAND.name}] 결재 반려\n\n지출결의서가 반려되었습니다.\n\n신청자: #{신청자}\n제목: #{제목}\n금액: #{금액}\n사용처: #{사용처}\n반려 사유: #{반려사유}\n\n내용을 고쳐 다시 상신해 주세요.`,
     button: "수정 후 다시 올리기",
   },
   REMINDER: {
-    name: "Moa-on 결의서 제출 안내",
-    text: "[Moa-on] 지출결의서 제출 안내\n\n#{회사명}에서 보내 드리는 안내입니다.\n아직 제출하지 않은 지출결의서가 #{건수}건 있습니다(작성 중·반려).\n\n확인 후 상신해 주세요.",
+    name: `${BRAND.name} 결의서 제출 안내`,
+    text: `[${BRAND.name}] 지출결의서 제출 안내\n\n#{회사명}에서 보내 드리는 안내입니다.\n아직 제출하지 않은 지출결의서가 #{건수}건 있습니다(작성 중·반려).\n\n확인 후 상신해 주세요.`,
     button: "제출하러 가기",
   },
   TAX_REQUEST: {
-    name: "Moa-on 세무 자료 요청",
-    text: "[Moa-on] 세무 자료 요청\n\n#{사무소명}에서 #{월} 세무 자료를 요청했습니다.\n\n요청 대상: #{대상}\n요청 내용: #{요청내용}\n\n세무 마감 화면에서 답변해 주세요.",
+    name: `${BRAND.name} 세무 자료 요청`,
+    text: `[${BRAND.name}] 세무 자료 요청\n\n#{사무소명}에서 #{월} 세무 자료를 요청했습니다.\n\n요청 대상: #{대상}\n요청 내용: #{요청내용}\n\n세무 마감 화면에서 답변해 주세요.`,
     button: "요청 확인하기",
   },
 } as const;
@@ -124,7 +125,7 @@ export function approvalCompleted(p: { companyId: string; claimId: string; name:
   };
   return {
     template: "APPROVAL_COMPLETED",
-    text: ["[Moa-on] 결재가 정상 완료되었습니다. ✅", ...linesOf(vars)].join("\n"),
+    text: [`[${BRAND.name}] 결재가 정상 완료되었습니다. ✅`, ...linesOf(vars)].join("\n"),
     buttonLabel: "내 내역 확인하기",
     buttonPath: `/workspace/${p.companyId}/employee/claims/${p.claimId}`,
     vars,
@@ -135,7 +136,7 @@ export function approvalCompleted(p: { companyId: string; claimId: string; name:
 export function payoutCompleted(p: { companyId: string; title: string; payout: number; paidAt: string }): BuiltMessage {
   return {
     template: "PAYOUT_COMPLETED",
-    text: ["[Moa-on] 사비 정산금이 지급되었습니다. 💰", `항목: ${p.title}`, `지급 금액: ${won(p.payout)} 원`, `지급 일시: ${p.paidAt}`].join("\n"),
+    text: [`[${BRAND.name}] 사비 정산금이 지급되었습니다. 💰`, `항목: ${p.title}`, `지급 금액: ${won(p.payout)} 원`, `지급 일시: ${p.paidAt}`].join("\n"),
     buttonLabel: "나의 정산 타임라인 확인",
     buttonPath: `/workspace/${p.companyId}/employee/settlements`,
   };
@@ -210,7 +211,7 @@ export function taxClosed(p: { companyId: string; companyName: string; month: st
   const m = `${Number(p.month.slice(5, 7))}월`;
   return {
     template: "TAX_CLOSED",
-    text: `[Moa-on] 고객사 ${p.companyName}이(가) ${p.month.slice(0, 4)}년 ${m} 지출을 세무 마감했어요(${p.count.toLocaleString("ko-KR")}건). 장부·영수증·지출결의서·홈택스 자료를 세무사무소 화면에서 받을 수 있어요.`,
+    text: `[${BRAND.name}] 고객사 ${p.companyName}이(가) ${p.month.slice(0, 4)}년 ${m} 지출을 세무 마감했어요(${p.count.toLocaleString("ko-KR")}건). 장부·영수증·지출결의서·홈택스 자료를 세무사무소 화면에서 받을 수 있어요.`,
     buttonLabel: "세무 자료 보기",
     buttonPath: `/tax-office/${p.companyId}?month=${p.month}`,
     vars: { company: p.companyName, month: p.month, count: String(p.count) },

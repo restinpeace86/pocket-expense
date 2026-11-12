@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import { SectionHeading } from "@/components/ui/help";
 import { AttendancePart } from "../part";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "출근 단말 · Moa-on" };
+export const metadata = { title: `출근 단말 · ${BRAND.name}` };
 
 // 설정 › 근태 정책 › 출근 단말(D-251)
 export default function Page({ params }: PageProps<"/workspace/[id]/admin/attendance-settings/terminals">) {

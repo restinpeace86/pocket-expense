@@ -3,8 +3,9 @@ import { PayoutsView } from "@/components/claims/payouts-view";
 import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { getPayoutGroups } from "@/lib/claims/payouts";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "정산 지급 관리 · Moa-on" };
+export const metadata = { title: `정산 지급 관리 · ${BRAND.name}` };
 
 // 화면 A-02 정산 지급 관리 (admin-payouts.md)
 export default function PayoutsPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/payouts">) {

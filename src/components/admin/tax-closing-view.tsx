@@ -13,6 +13,7 @@ import type { TaxMonth } from "@/lib/tax/closing";
 import { evidenceFile, evidenceNo, isOwnCar, issueKinds, rowHasFile, settlement, type IssueKind } from "@/lib/tax/export-rows";
 import { countIssues, IssueChips } from "@/components/tax/issue-chips";
 import { buildTaxZip, saveBlob, type ZipProgress } from "@/lib/tax/zip-client";
+import { BRAND } from "@/lib/brand";
 
 // 화면: 세무 마감 및 증빙 다운로드 (tax-closing.md, tax-export.md, D-045)
 const PREVIEW_ROWS = 300;
@@ -61,7 +62,7 @@ export function TaxClosingView({
   const issueStats = countIssues([...kinds.values()]);
   const shownRows = issue ? rows.filter((r) => kinds.get(r.item_id)?.includes(issue)) : rows;
   const [busy, start] = useTransition();
-  const zipBase = `Moa-on_${companyName.replace(/[\\/:*?"<>|\s]/g, "")}_${month}`;
+  const zipBase = `${BRAND.name}_${companyName.replace(/[\\/:*?"<>|\s]/g, "")}_${month}`;
 
   async function downloadPackage(only?: string[]) {
     setMessage(null);

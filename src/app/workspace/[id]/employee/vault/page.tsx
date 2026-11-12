@@ -6,8 +6,9 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { chatEnabled } from "@/lib/chat/server";
 import { createClient } from "@/lib/supabase/server";
 import type { VaultFile, VaultStatus } from "@/lib/vault/format";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "파일 보관함 · Moa-on" };
+export const metadata = { title: `파일 보관함 · ${BRAND.name}` };
 
 // 파일 보관함(D-245, spec/features/file-vault.md): 채팅에서 [영구 보관]한 파일 — 회사 공유 / 나만 보기
 export default function VaultPage({ params }: PageProps<"/workspace/[id]/employee/vault">) {

@@ -3,8 +3,9 @@ import { RecurringHeading, RecurringView } from "@/components/admin/recurring-vi
 import { getRecurringPayments } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { todayKst } from "@/lib/dates";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "정기 결제 · Moa-on" };
+export const metadata = { title: `정기 결제 · ${BRAND.name}` };
 
 // 정기 결제 (D-110, spec/features/recurring-subscriptions.md)
 export default function RecurringPage({ params }: PageProps<"/workspace/[id]/admin/recurring">) {

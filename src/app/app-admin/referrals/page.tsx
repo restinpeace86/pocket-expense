@@ -4,8 +4,9 @@ import { Panel, TableWrap, td, th } from "@/components/app-admin/app-admin-shell
 import { formatKst } from "@/lib/app-admin/labels";
 import { requireAppAdmin } from "@/lib/app-admin/guard";
 import { formatPhone } from "@/lib/format";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "추천 현황 · Moa-on 운영자" };
+export const metadata = { title: `추천 현황 · ${BRAND.name} 운영자` };
 
 type Filter = "all" | "paid" | "unpaid";
 const FILTERS: [Filter, string][] = [

@@ -5,8 +5,9 @@ import { buildMonth, monthEndNotice, shiftMonth, type MonthData } from "@/lib/at
 import { attendanceEnabled } from "@/lib/attendance/server";
 import { currentMonthKst, todayKst } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "출퇴근 기록 · Moa-on" };
+export const metadata = { title: `출퇴근 기록 · ${BRAND.name}` };
 
 // 월 근태 현황(spec/features/attendance.md §5 D-237, §6 D-239): 홈 메뉴 칸 [근태] → 이번 달. 근태 꺼진 회사는 404
 // D-257: ?date=…(&kind=correction|holiday)면 그날 창(신청 칸)이 열린 채로

@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AppAdminShell } from "@/components/app-admin/app-admin-shell";
 import { requireAppAdmin } from "@/lib/app-admin/guard";
+import { BRAND } from "@/lib/brand";
 
 // 앱관리자(운영자) 화면 (D-080). 운영자 계정이 아니면 404. 검색 노출 금지.
-export const metadata: Metadata = { title: "Moa-on", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: BRAND.name, robots: { index: false, follow: false } };
 
 export default function AppAdminLayout({ children }: LayoutProps<"/app-admin">) {
   return (

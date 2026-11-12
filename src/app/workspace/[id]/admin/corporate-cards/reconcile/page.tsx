@@ -7,8 +7,9 @@ import { SavedReconcilePanel } from "@/components/admin/card-reconcile-saved";
 import { getSavedReconcile } from "@/lib/cards/saved-server";
 import { currentMonthKst } from "@/lib/dates";
 import { MONTH } from "@/lib/tax/closing";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "법인카드 내역 대조 · Moa-on" };
+export const metadata = { title: `법인카드 내역 대조 · ${BRAND.name}` };
 
 // 법인카드 사용 내역 대조 (D-111)
 export default function ReconcilePage({ params, searchParams }: PageProps<"/workspace/[id]/admin/corporate-cards/reconcile">) {

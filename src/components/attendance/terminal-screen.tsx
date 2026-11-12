@@ -2,7 +2,7 @@
 
 import { Check, Loader2, LogOut, Moon, WifiOff } from "lucide-react";
 import QRCode from "qrcode";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 // 출근 단말 화면(spec/features/attendance.md §2-2, D-236) — 로그인 없이 이 기기에 저장된 단말 열쇠로만 동작
 // 열쇠 없음 → 연결 코드 입력 / 있음 → 몇 초마다 서버에서 지금 칸 QR을 받아 그림(30초마다 바뀜)
@@ -25,11 +25,15 @@ const hm = (d: Date) => new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Seoul
 const sec = (d: Date) => new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Seoul", second: "2-digit" }).format(d).padStart(2, "0");
 const dayLabel = (d: Date) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", weekday: "short" }).format(d);
 
+const noopSub = () => () => {};
+
 export function TerminalScreen() {
-  const [key, setKey] = useState<string | null | undefined>(undefined);
-  useEffect(() => setKey(readKey()), []);
+  // 저장된 단말 키는 브라우저에서만 읽는다(서버에서 그릴 때는 undefined = 빈 화면). 연결·해제하면 그 값으로 덮어씀
+  const stored = useSyncExternalStore<string | null | undefined>(noopSub, readKey, () => undefined);
+  const [set, setKey] = useState<{ v: string | null } | null>(null);
+  const key = set ? set.v : stored;
   if (key === undefined) return <div className="min-h-dvh bg-white" />;
-  if (!key) return <PairForm onPaired={(k) => setKey(k)} />;
+  if (!key) return <PairForm onPaired={(k) => setKey({ v: k })} />;
   return (
     <Live
       terminalKey={key}
@@ -37,7 +41,7 @@ export function TerminalScreen() {
         try {
           window.localStorage.removeItem(KEY);
         } catch {}
-        setKey(null);
+        setKey({ v: null });
       }}
     />
   );
@@ -136,7 +140,7 @@ function Live({ terminalKey, onRevoked }: { terminalKey: string; onRevoked: () =
   }, [terminalKey, onRevoked]);
 
   useEffect(() => {
-    poll();
+    void Promise.resolve().then(poll);
     const p = setInterval(poll, POLL_MS);
     const c = setInterval(() => setNow(Date.now()), 500);
     return () => {

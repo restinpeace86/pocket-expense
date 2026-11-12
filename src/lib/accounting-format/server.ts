@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { FORMAT_BUCKET, FORMAT_EXT, FORMAT_MAX_BYTES, FORMAT_PROGRAM_LABEL, FORMAT_PROGRAMS, type FormatProgram, type FormatRequest } from "./programs";
+import { BRAND } from "@/lib/brand";
 
 const MIME: Record<string, string> = {
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -58,7 +59,7 @@ export async function notifyFormatRequest(companyName: string, program: FormatPr
     await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: `📥 [Moa-on] 회계 양식 접수: ${companyName} · ${FORMAT_PROGRAM_LABEL[program]} — 운영자 화면 [양식 접수]에서 확인` }),
+      body: JSON.stringify({ content: `📥 [${BRAND.name}] 회계 양식 접수: ${companyName} · ${FORMAT_PROGRAM_LABEL[program]} — 운영자 화면 [양식 접수]에서 확인` }),
       signal: AbortSignal.timeout(3000),
     });
   } catch {

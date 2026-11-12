@@ -114,7 +114,7 @@ export function CalendarView(props: Props) {
     [supabase],
   );
   useEffect(() => {
-    void loadLeaves(from, to, selected);
+    void Promise.resolve().then(() => loadLeaves(from, to, selected));
   }, [from, to, selected, loadLeaves]);
 
   // 달·고른 사람이 바뀌면 다시 불러온다(늦게 온 옛 응답은 버림)
@@ -1050,6 +1050,14 @@ export function EventEditor({
     } else moveStart(d, sTime);
   };
 
+  // 9-14c ⑤: 시작을 고른 뒤 길이 한 번 누르기(끝 = 시작 + 길이). 다른 끝은 끝 칸에서
+  const lenMin = (Date.parse(kstIso(eDate, eTime)) - Date.parse(kstIso(sDate, sTime))) / 60_000;
+  const setLength = (min: number) => {
+    const end = addMinutes(sDate, sTime, min);
+    setEDate(end.date);
+    setETime(end.time);
+  };
+
   const startsIso = allDay ? kstIso(sDate, "00:00") : kstIso(sDate, sTime);
   const endsIso = allDay ? new Date(Date.parse(kstIso(eDate, "00:00")) + 86400_000).toISOString() : kstIso(eDate, eTime);
 
@@ -1172,6 +1180,28 @@ export function EventEditor({
               </select>
             )}
           </div>
+          {!allDay && (
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="일정 길이">
+              <span className="text-xs text-zinc-500">길이</span>
+              {[
+                [30, "30분"],
+                [60, "1시간"],
+                [90, "1시간 30분"],
+                [120, "2시간"],
+              ].map(([min, label]) => (
+                <button
+                  key={min}
+                  type="button"
+                  aria-pressed={lenMin === min}
+                  onClick={() => setLength(min as number)}
+                  className={`min-h-9 rounded-full border px-3 text-[13px] ${lenMin === min ? "border-brand-600 bg-brand-50 font-semibold text-brand-800" : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"}`}
+                  data-duration={min}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
           {!allDay && <p className="text-xs text-zinc-500">시간은 10분 단위로 잡아요.{kind === "meeting" && " 회의는 시작 10분 전에 참석자에게 채팅 [알림]방으로 안내가 가요."}</p>}
           {event && !event.all_day === !allDay && <p className="text-xs text-zinc-500">시간을 바꾸면 참석자 응답은 다시 &lsquo;대기&rsquo;가 돼요.</p>}
         </div>

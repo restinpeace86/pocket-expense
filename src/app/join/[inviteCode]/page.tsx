@@ -6,8 +6,9 @@ import { Card, PageShell } from "@/components/ui/page-shell";
 import { destinationAfterLogin } from "@/lib/auth/paths";
 import { getCurrentUserId, getMembership } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "회사 초대 · Moa-on" };
+export const metadata = { title: `회사 초대 · ${BRAND.name}` };
 
 // 공용 초대 링크/QR 진입 (spec/features/auth-onboarding.md §3.1)
 export default function InviteLinkPage({ params }: PageProps<"/join/[inviteCode]">) {

@@ -14,8 +14,9 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { AttendanceHomeCard } from "@/components/admin/attendance-home-card";
 import { attendancePendingCount } from "@/lib/attendance/server";
 import type { DayAdminData } from "@/lib/attendance/today";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "관리자 · Moa-on" };
+export const metadata = { title: `관리자 · ${BRAND.name}` };
 
 export default function AdminHomePage({ params }: PageProps<"/workspace/[id]/admin">) {
   return (

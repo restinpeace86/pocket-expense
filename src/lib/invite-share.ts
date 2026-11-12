@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/brand";
 // 직원 초대 카카오톡 공유 내용(D-229). 버튼 하나로 보내는 메시지에 두 가지 길을 같이 넣는다:
 //  ① [웹으로 가입하기] = 초대 링크(어떤 휴대폰·PC든 바로)
 //  ② [앱 설치 안내] = /download?join=초대코드 — 안드로이드 설치 앱 / 아이폰 홈 화면 추가 방법 + 같은 화면에서 가입
@@ -11,7 +12,7 @@ export function inviteShareOptions(p: { companyName: string; joinLink: string; i
   return {
     objectType: "feed",
     content: {
-      title: `${p.companyName}에서 Moa-on에 초대했어요`,
+      title: `${p.companyName}에서 ${BRAND.name}에 초대했어요`,
       description: "먼저 [웹으로 가입하기]로 가입 신청을 해 주세요. 휴대폰에서 앱처럼 쓰려면 [앱 설치 안내]를 눌러 내 휴대폰에 맞는 방법을 보세요.",
       imageUrl: `${origin}/share/invite-image`,
       imageWidth: 800,

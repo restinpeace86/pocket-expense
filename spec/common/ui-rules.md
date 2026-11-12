@@ -27,6 +27,7 @@
 - 영수증 올리기 영역은 PC에서 **크게 보이는 끌어다 놓기(드래그 앤 드롭) 영역**으로 바꿔, 이메일로 받은 PDF·이미지를 바로 올릴 수 있게 한다. 카메라 촬영 버튼 대신 "파일을 끌어다 놓거나 눌러서 고르세요" 안내.
 
 ## 3. 디자인 시스템
+- (D-260) 서비스 이름·로고·브랜드 색은 `src/lib/brand.ts` 한 곳. 화면 글자는 `BRAND.name`(조사 붙을 때 `BRAND_JOSA`), 로고 그림은 `markSvg()`. 글자로 "Moa-on"을 직접 쓰지 않는다. 설치 앱·서비스 워커는 `scripts/apply-brand.mjs`로 맞춘다.
 - TailwindCSS 기본, 일관된 색상 팔레트, `rounded-xl`, `shadow-sm`의 깔끔한 SaaS 톤.
 - 아이콘: `lucide-react` (카테고리: 일반 식대 `Utensils`, 출장비 `Briefcase`, 미팅비 `Users`, 회사 물품 구매 `ShoppingBag` / 출장 세부 유형: 출장 식비 `UtensilsCrossed`, 대중교통 `TrainFront`, 택시 `CarTaxiFront`, 통행료·주차 `ParkingSquare`, 숙박 `BedDouble`, 자차 `Car`, 기타 `Receipt`).
 

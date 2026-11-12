@@ -6,8 +6,9 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { getLeaveInputs } from "@/lib/company-forms/leave-inputs";
 import { todayKst } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "휴가 및 근태 신청 · Moa-on" };
+export const metadata = { title: `휴가 및 근태 신청 · ${BRAND.name}` };
 
 // 직원 [휴가](D-241, spec/features/attendance.md §8-2). 근태 꺼진 회사는 404
 // D-257: [휴가 신청]은 이 화면 위 창(?new=1) — 창에 쓸 회사 추가 항목·다음 해 연차 기간도 함께 읽는다

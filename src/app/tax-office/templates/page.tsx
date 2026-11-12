@@ -7,8 +7,9 @@ import { taxWorkbookLayout, taxWorkbookPreview, WEHAGO_DEFAULT, type MainSheet }
 import { validColumns } from "@/lib/tax-office/template-fields";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTaxOffice, isActiveMember } from "@/lib/tax-office/queries";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "결산 양식 · Moa-on 세무사무소" };
+export const metadata = { title: `결산 양식 · ${BRAND.name} 세무사무소` };
 
 // 월말 결산 양식 (D-150): 사무소 회계 프로그램의 엑셀 양식을 올리면 고객사 자료를 그 양식대로 채워 받는다.
 // 맨 위 "지금 고객사에 나가는 양식"(D-185·D-186) + 고객사 엑셀에 넣을 회계 프로그램 시트 고르기(D-189)

@@ -44,6 +44,8 @@ type Props = {
   onBooked?: () => void;
 };
 
+const WEEK = ["월", "화", "수", "목", "금", "토", "일"];
+
 export function RoomBoard({ ws, admin, today, initialDate, initialRoom, directory, rooms, embedded = false, onClose, onBooked }: Props) {
   const supabase = useMemo(() => createClient(), []);
   const me = directory.me;
@@ -85,6 +87,12 @@ export function RoomBoard({ ws, admin, today, initialDate, initialRoom, director
     window.history.replaceState(null, "", url.toString());
   }, [day, room, embedded]);
 
+  // 9-14c ⑥: 고른 날이 든 주(월~일) 날짜 띠 — 한 번 눌러 그날로. 다른 주는 화살표·날짜 칸으로
+  const week = useMemo(() => {
+    const dow = (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7; // 월 = 0
+    const mon = addDays(day, -dow);
+    return Array.from({ length: 7 }, (_, i) => addDays(mon, i));
+  }, [day]);
   const goDay = (d: string) => {
     setBookings(null);
     setDay(d);
@@ -146,6 +154,28 @@ export function RoomBoard({ ws, admin, today, initialDate, initialRoom, director
             </button>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1" role="group" aria-label="이번 주 날짜" data-week-strip>
+        {week.map((d, i) => {
+          const on = d === day;
+          const weekend = i >= 5;
+          return (
+            <button
+              key={d}
+              type="button"
+              aria-pressed={on}
+              aria-label={`${Number(d.slice(5, 7))}월 ${Number(d.slice(8))}일 ${WEEK[i]}요일${d === today ? " 오늘" : ""}`}
+              onClick={() => goDay(d)}
+              className={`flex min-h-12 flex-col items-center justify-center rounded-xl border text-xs tabular-nums ${on ? "border-brand-600 bg-brand-600 font-semibold text-white" : `border-zinc-200 bg-white hover:bg-zinc-50 ${weekend ? "text-zinc-400" : "text-zinc-700"}`} ${d < today && !on ? "opacity-60" : ""}`}
+              data-week-day={d}
+            >
+              <span>{WEEK[i]}</span>
+              <b className="text-sm">{Number(d.slice(8))}</b>
+              {d === today && <span className={`mt-0.5 size-1 rounded-full ${on ? "bg-white" : "bg-brand-600"}`} aria-hidden />}
+            </button>
+          );
+        })}
       </div>
 
       <p className="text-sm text-zinc-600">

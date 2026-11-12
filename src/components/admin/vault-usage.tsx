@@ -31,7 +31,7 @@ export function VaultUsageCard({ usage }: { usage: VaultUsage }) {
       </p>
       <h3 className="mt-1 text-[15px] font-bold">사람별 사용량</h3>
       <p className="text-[13px] leading-relaxed text-zinc-600">
-        '나만 보기' 파일은 이름·내용을 볼 수 없어요. 공간이 부족하면 많이 쓰는 직원에게 정리를 부탁해 주세요. 회사 공유 파일은 [파일 보관함]에서 관리자도 지울 수 있어요. 퇴사 처리한 직원의 '나만 보기' 파일은 30일 뒤 지워져요.
+        &lsquo;나만 보기&rsquo; 파일은 이름·내용을 볼 수 없어요. 공간이 부족하면 많이 쓰는 직원에게 정리를 부탁해 주세요. 회사 공유 파일은 [파일 보관함]에서 관리자도 지울 수 있어요. 퇴사 처리한 직원의 &lsquo;나만 보기&rsquo; 파일은 30일 뒤 지워져요.
       </p>
       {usage.members.length === 0 ? (
         <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-6 text-center text-sm text-zinc-500">아직 보관한 파일이 없어요.</p>

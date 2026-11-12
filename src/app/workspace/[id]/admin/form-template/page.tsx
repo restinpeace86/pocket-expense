@@ -6,8 +6,9 @@ import { getActiveForm } from "@/lib/forms/active";
 import { DEFAULT_LAYOUT, SAMPLE_DOC } from "@/lib/forms/layout";
 import { createClient } from "@/lib/supabase/server";
 import { getClaimDocsByIds } from "@/lib/tax/claim-docs";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "지출결의서 양식 · Moa-on" };
+export const metadata = { title: `지출결의서 양식 · ${BRAND.name}` };
 
 // 지출결의서 양식 설정 (D-118, spec/screens/template-configuration.md)
 export default function FormTemplatePage({ params }: PageProps<"/workspace/[id]/admin/form-template">) {

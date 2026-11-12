@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { submitFeedbackSurveyAction } from "@/app/workspace/[id]/admin/billing/actions";
 import { measureAction } from "@/lib/perf/client";
 import { COMPANY_SIZES, INDUSTRIES, JOB_ROLES, REVIEW_DISPLAY_MIN, REVIEW_MAX, REVIEW_STARTERS, SURVEY_REWARD, USEFUL_FEATURES, isDisplayableReview, reviewLength } from "@/lib/feedback-survey";
+import { BRAND_JOSA } from "@/lib/brand";
 
 // 후기·설문 → 첫 결제 50% 할인 쿠폰 (7차 개선사항 7, D-130 → D-201). 관리자 이상, 회사당 1회.
 // done: 이미 참여한 회사면 버튼 대신 "참여 완료". preview: 반응형 점검용(제출하지 않음)
@@ -138,7 +139,7 @@ function SurveyDialog({ onClose, onDone, preview }: { onClose: () => void; onDon
           <div className="flex flex-col gap-1.5">
             <label htmlFor="survey-review" className="text-sm font-semibold">
               한 줄 후기 <span className="text-red-600">*</span>
-              <span className="mt-0.5 block font-normal text-zinc-600">Moa-on으로 어떤 일이 편해졌나요?</span>
+              <span className="mt-0.5 block font-normal text-zinc-600">{BRAND_JOSA.euro} 어떤 일이 편해졌나요?</span>
             </label>
             <textarea
               id="survey-review"

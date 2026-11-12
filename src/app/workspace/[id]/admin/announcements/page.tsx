@@ -4,8 +4,9 @@ import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { postCompanyAnnouncementAction } from "./actions";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "사내 공지 · Moa-on" };
+export const metadata = { title: `사내 공지 · ${BRAND.name}` };
 
 // 사내 공지 (D-116 채널 B)
 export default function AnnouncementsPage({ params }: PageProps<"/workspace/[id]/admin/announcements">) {

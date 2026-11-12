@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { Smartphone } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { isNativeApp } from "./native";
 
 // 승인 대기 화면(D-232): 웹에서 가입 신청한 직원에게 "기다리는 동안 휴대폰에 설치"를 안내한다.
 // 이미 설치 앱·홈 화면 아이콘으로 연 경우엔 보이지 않는다
+const noop = () => () => {};
+function shouldShow(): boolean {
+  const standalone = window.matchMedia?.("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
+  return !standalone && !isNativeApp();
+}
+
 export function InstallNextStep() {
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    const standalone = window.matchMedia?.("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
-    setShow(!standalone && !isNativeApp());
-  }, []);
+  // 브라우저에서만 판단(서버에서 그릴 때는 숨김)
+  const show = useSyncExternalStore(noop, shouldShow, () => false);
   if (!show) return null;
   return (
     <section aria-label="휴대폰에 설치" className="rounded-xl border border-brand-200 bg-brand-50 p-4">

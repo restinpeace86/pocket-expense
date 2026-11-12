@@ -10,8 +10,9 @@ import type { DayAdminData } from "@/lib/attendance/today";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { todayKst } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "근태 · Moa-on" };
+export const metadata = { title: `근태 · ${BRAND.name}` };
 
 // [근태](D-242): 오늘 출근 · 승인 대기 · 처리 끝(D-239·D-241 승인 포함). 탭 없이 들어오면 처리할 승인이 있으면 승인 대기, 없으면 오늘 출근
 export default function AttendanceAdminPage({ params, searchParams }: PageProps<"/workspace/[id]/admin/attendance">) {

@@ -5,6 +5,7 @@ import { getReviewerInbox } from "@/lib/claims/inbox";
 import { formatWon } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeAiIntent, ruleIntent, type Intent, type OpenTarget } from "./intent";
+import { BRAND } from "@/lib/brand";
 
 // Moa-on 도우미 답(D-222, spec/features/assistant.md)
 // - 할 일은 조회·화면 이동뿐. 데이터는 로그인한 사람의 권한으로 지금 쓰는 DB 함수·표에서 꺼낸다(RLS·회사 분리 그대로 — AI는 데이터를 보지 않음)
@@ -14,7 +15,7 @@ type Supa = Awaited<ReturnType<typeof createClient>>;
 export type AssistantReply = { body: string; link: string | null };
 
 const HELP = [
-  "저는 Moa-on 도우미예요. 지금은 이런 걸 찾아 드려요:",
+  `저는 ${BRAND.name} 도우미예요. 지금은 이런 걸 찾아 드려요:`,
   "· 내 일정 — \"오늘 일정\", \"내일 일정\", \"11월 7일 일정\"",
   "· 회의실 빈 시간 — \"내일 회의실 빈 시간\", \"3층 회의실 오늘 언제 비어?\"",
   "· 내 결의서 — \"임시저장한 결의서\", \"반려된 결의서\"",
@@ -62,7 +63,7 @@ export async function understand(text: string, today: string): Promise<Intent> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return { tool: "help" };
   const model = process.env.GEMINI_ASSISTANT_MODEL || process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
-  const prompt = `너는 사내 업무 앱 Moa-on의 도우미다. 사용자의 한국어 질문을 아래 도구 중 하나로만 분류해 JSON으로 답하라. 오늘은 ${today}(한국 시간).
+  const prompt = `너는 사내 업무 앱 ${BRAND.name}의 도우미다. 사용자의 한국어 질문을 아래 도구 중 하나로만 분류해 JSON으로 답하라. 오늘은 ${today}(한국 시간).
 tool: "schedule"(내 일정, day) | "rooms"(회의실 빈 시간, day, room=회의실 이름이 있으면) | "my_claims"(내 결의서, filter=draft|rejected|open) | "approvals"(내가 승인할 결의서) | "open"(화면 열기, target=calendar|rooms|claims|new_claim|approvals|settlements|chat|profile) | "help"(사용법·인사) | "unsupported"(그 밖의 모든 것: 분석·작성·검색·예약하기·승인하기 등).
 day는 YYYY-MM-DD. 확실하지 않으면 unsupported.
 질문: ${JSON.stringify(text.slice(0, 300))}`;

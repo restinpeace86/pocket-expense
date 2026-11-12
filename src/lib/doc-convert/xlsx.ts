@@ -1,12 +1,13 @@
 import "server-only";
 import ExcelJS from "exceljs";
 import type { DocModel } from "./model";
+import { BRAND } from "@/lib/brand";
 
 // 표 모델 → 엑셀(쪽마다 시트). 열 너비·행 높이·합친 칸·테두리·굵게·맞춤·회색 라벨 칸을 옮긴다(8-104 A-4)
 const BORDER = { style: "thin" as const, color: { argb: "FF3F3F46" } };
 export async function buildDocWorkbook(doc: DocModel): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Moa-on";
+  wb.creator = BRAND.name;
   const used = new Set<string>();
   for (const s of doc.sheets) {
     let name = (s.name || "시트").replace(/[\\/?*[\]:]/g, " ").slice(0, 28);

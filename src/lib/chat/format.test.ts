@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assistantLinkLabel, buildRows, noticeCard, bytesLabel, meetingNoticeCard, oneLine, dateLabel, listTimeLabel, mergeMessages, previewText, roomTitle, timeLabel, unreadCountFor, readersFor, type ChatMessage } from "./format";
+import { BRAND } from "@/lib/brand";
 
 const msg = (id: string, sender: string | null, at: string, extra: Partial<ChatMessage> = {}): ChatMessage => ({
   id,
@@ -123,7 +124,7 @@ describe("meetingNoticeCard (D-217 10분 전 카드)", () => {
 
 describe("도우미 방 (D-222)", () => {
   it("방 이름·bot 글은 안 읽음 수 없음·[열기] 글자", () => {
-    expect(roomTitle({ kind: "assistant", title: null, members: [] }, "me")).toBe("Moa-on 도우미");
+    expect(roomTitle({ kind: "assistant", title: null, members: [] }, "me")).toBe(`${BRAND.name} 도우미`);
     expect(unreadCountFor({ sender_member_id: null, created_at: "2026-11-05T00:00:00Z", kind: "bot" }, [{ member_id: "me", last_read_at: "2026-11-04T00:00:00Z" }])).toBe(0);
     expect(assistantLinkLabel("/workspace/c1/calendar/rooms?date=2026-11-06")).toBe("회의실 예약 열기");
     expect(assistantLinkLabel("/workspace/c1/calendar?date=2026-11-06")).toBe("캘린더에서 보기");

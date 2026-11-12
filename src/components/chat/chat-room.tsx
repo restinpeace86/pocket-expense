@@ -23,6 +23,7 @@ import { isConvertible } from "@/lib/doc-convert/model";
 import { MemberPicker } from "./member-picker";
 import { signedUrls } from "./signed-urls";
 import { closeNativeNotifications } from "@/components/push/native";
+import { BRAND } from "@/lib/brand";
 
 type Detail = {
   id: string;
@@ -652,7 +653,7 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
               <div key={row.key} className="mt-2.5 flex justify-start gap-2">
                 <LogoMark className="size-10 rounded-[38%]" />
                 <div className="min-w-0 max-w-[80%]">
-                  <p className="mb-0.5 text-xs text-zinc-700">Moa-on 도우미</p>
+                  <p className="mb-0.5 text-xs text-zinc-700">{BRAND.name} 도우미</p>
                   <div className="flex items-end gap-1">
                     <div className="min-w-0 rounded-2xl rounded-tl-md border border-[var(--chat-other-border)] bg-[var(--chat-other)] px-3 py-2.5 text-sm shadow-sm" data-bot>
                       <p className="whitespace-pre-line break-words leading-relaxed text-zinc-900">{row.msg.body}</p>

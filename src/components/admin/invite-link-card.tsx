@@ -13,6 +13,7 @@ import { SectionHeading } from "@/components/ui/help";
 import { configuredSiteUrl, publicOrigin } from "@/lib/site-url";
 import { KakaoShareButton } from "./kakao-share-button";
 import { installGuideUrl } from "@/lib/invite-share";
+import { BRAND } from "@/lib/brand";
 
 const noop = () => () => {};
 
@@ -40,17 +41,17 @@ async function installQrImage(url: string, companyName: string): Promise<string>
   };
   g.fillStyle = "#ffffff";
   g.fillRect(0, 0, c.width, c.height);
-  g.fillStyle = "#4f46e5";
+  g.fillStyle = BRAND.color.main;
   g.fillRect(0, 0, c.width, 12);
   g.textAlign = "center";
-  g.fillStyle = "#1e1b4b";
-  fit("Moa-on 앱 설치 안내", 800, 40, 84);
+  g.fillStyle = BRAND.color.ink;
+  fit(`${BRAND.name} 앱 설치 안내`, 800, 40, 84);
   g.fillStyle = "#3f3f46";
   fit(`${companyName} 직원용`, 700, 26, 128);
   g.fillStyle = "#52525b";
   fit("휴대폰 카메라로 찍어 주세요", 500, 22, 162);
   g.drawImage(img, 60, 190, 520, 520);
-  g.fillStyle = "#1e1b4b";
+  g.fillStyle = BRAND.color.ink;
   fit("안드로이드 = 설치 앱  ·  아이폰 = 홈 화면 추가", 700, 24, 768);
   g.fillStyle = "#52525b";
   fit("열린 화면에서 가입 신청 → 앱(아이콘)에서 로그인", 400, 21, 810);

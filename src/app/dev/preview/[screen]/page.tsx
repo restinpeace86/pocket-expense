@@ -58,6 +58,7 @@ import { PRESETS as FORM_PRESETS, SAMPLE_DOC as FORM_SAMPLE_DOC } from "@/lib/fo
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 import type { Membership } from "@/lib/auth/paths";
 import { isThemeKey } from "@/lib/theme";
+import { BRAND } from "@/lib/brand";
 
 // 반응형 점검 전용 미리보기 (CLAUDE.md 헌법 제2장 제4조의2).
 // 로그인해야 보이는 화면을 실제 컴포넌트 그대로, 데이터 없이 그린다. ENABLE_UI_PREVIEW=1일 때만 열린다(배포 환경에서는 404).
@@ -641,8 +642,8 @@ async function Preview({
             failedOnly={false}
             base="#"
             rows={[
-              { id: "n1", claim_id: "c1", recipient_member_id: "m1", recipient_phone: "01011112222", template_code: "APPROVAL_REQUEST", payload: { text: "[Moa-on] 새로운 지출결의서가 상신되었습니다.\n상신자: 김개발 (개발팀)\n제목: 10/15 부산 출장 경비\n금액: 72,000 원 (영수증 3장)\n결제수단: 법인 2 · 사비 1", button_label: "결재하러 가기", button_url: "https://pocket-expense-ruby.vercel.app/workspace/00000000-0000-0000-0000-0000000000aa/approvals/00000000-0000-0000-0000-000000000001" }, status: "sent", provider: "log", error_message: null, created_at: "2026-10-20T01:00:00Z", recipient_name: "김대표", claim_title: "10/15 부산 출장 경비" },
-              { id: "n2", claim_id: "c1", recipient_member_id: "m2", recipient_phone: "", template_code: "APPROVAL_REJECTED", payload: { text: "[Moa-on] 지출결의서가 반려되었습니다.", button_label: "수정 후 재상신하기", button_url: "#" }, status: "failed", provider: "log", error_message: "수신 번호가 없거나 휴대폰 번호 형식이 아닙니다", created_at: "2026-10-20T02:00:00Z", recipient_name: "이직원", claim_title: "팀 점심" },
+              { id: "n1", claim_id: "c1", recipient_member_id: "m1", recipient_phone: "01011112222", template_code: "APPROVAL_REQUEST", payload: { text: `[${BRAND.name}] 새로운 지출결의서가 상신되었습니다.\n상신자: 김개발 (개발팀)\n제목: 10/15 부산 출장 경비\n금액: 72,000 원 (영수증 3장)\n결제수단: 법인 2 · 사비 1`, button_label: "결재하러 가기", button_url: "https://pocket-expense-ruby.vercel.app/workspace/00000000-0000-0000-0000-0000000000aa/approvals/00000000-0000-0000-0000-000000000001" }, status: "sent", provider: "log", error_message: null, created_at: "2026-10-20T01:00:00Z", recipient_name: "김대표", claim_title: "10/15 부산 출장 경비" },
+              { id: "n2", claim_id: "c1", recipient_member_id: "m2", recipient_phone: "", template_code: "APPROVAL_REJECTED", payload: { text: `[${BRAND.name}] 지출결의서가 반려되었습니다.`, button_label: "수정 후 재상신하기", button_url: "#" }, status: "failed", provider: "log", error_message: "수신 번호가 없거나 휴대폰 번호 형식이 아닙니다", created_at: "2026-10-20T02:00:00Z", recipient_name: "이직원", claim_title: "팀 점심" },
             ]}
           />
         </AdminShell>

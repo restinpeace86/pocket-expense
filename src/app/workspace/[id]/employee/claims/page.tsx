@@ -5,8 +5,9 @@ import { creditEventEnabled } from "@/lib/credits";
 import { currentMonthKst } from "@/lib/dates";
 import { getMyClaims, getMySummary } from "@/lib/employee/queries";
 import { filterStatuses, parseFilter, parseMonth } from "@/lib/expense/status";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "지출결의 · Moa-on" };
+export const metadata = { title: `지출결의 · ${BRAND.name}` };
 
 // [지출결의] 화면: 내 결의서 목록 (worker-dashboard.md §4, D-235 — 예전 직원 홈에서 옮김)
 export default function ClaimsPage({ params, searchParams }: PageProps<"/workspace/[id]/employee/claims">) {

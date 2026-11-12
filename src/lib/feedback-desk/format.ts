@@ -1,3 +1,4 @@
+import { BRAND, BRAND_JOSA } from "@/lib/brand";
 // 의견 보내기(버그 신고 · 기능 개선, D-246, spec/features/improvement-2026-11.md §C) — 화면·서버 공통
 export type FeedbackCategory = "bug" | "feature";
 export type FeedbackStatus = "pending" | "reviewing" | "resolved";
@@ -29,7 +30,7 @@ export const FEEDBACK_DONE: Record<FeedbackCategory, { title: string; paragraphs
     paragraphs: [
       "보내주신 개선 의견은 긍정적으로 검토해 추후 업데이트에 적극적으로 반영하도록 하겠습니다.",
       "다만, 해당 내용이 저희 서비스의 전체 뼈대와 실무 프로세스에 부합하는지 면밀히 검토하는 과정이 필요하여, 검토를 거쳐 우리 서비스에 가장 적합한 형태로 다듬어 선보이는 데 다소 시간이 소요될 수 있는 점 너른 양해 부탁드립니다.",
-      "앞으로도 직원 여러분의 업무를 더 편안하게 만들어 드릴 수 있도록 꾸준히 발전하는 Moa-on이 되겠습니다. 고맙습니다!",
+      `앞으로도 직원 여러분의 업무를 더 편안하게 만들어 드릴 수 있도록 꾸준히 발전하는 ${BRAND_JOSA.i} 되겠습니다. 고맙습니다!`,
     ],
   },
 };
@@ -67,7 +68,7 @@ export const viewportLabel = (w: number, h: number) => `${Math.round(w)}x${Math.
 export function feedbackNotifyText(companyName: string, reporter: string, category: FeedbackCategory, content: string, hasShot: boolean): string {
   const first = content.trim().split(/\r?\n/)[0] ?? "";
   const line = first.length > 60 ? `${first.slice(0, 60)}…` : first;
-  return `${FEEDBACK_CATEGORY[category].emoji} [Moa-on] ${FEEDBACK_CATEGORY[category].label}: ${companyName} · ${reporter}${hasShot ? " · 캡처 있음" : ""} — "${line}" (운영자 화면 [의견])`;
+  return `${FEEDBACK_CATEGORY[category].emoji} [${BRAND.name}] ${FEEDBACK_CATEGORY[category].label}: ${companyName} · ${reporter}${hasShot ? " · 캡처 있음" : ""} — "${line}" (운영자 화면 [의견])`;
 }
 
 // User-Agent를 사람이 읽을 요약으로(운영자 화면)

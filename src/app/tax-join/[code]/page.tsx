@@ -6,8 +6,9 @@ import { buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
 import { requireLogin } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTaxOffice } from "@/lib/tax-office/queries";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "세무사무소 합류 · Moa-on", robots: { index: false, follow: false } };
+export const metadata = { title: `세무사무소 합류 · ${BRAND.name}`, robots: { index: false, follow: false } };
 
 // 소속 세무사 합류 링크 (D-149). 회사 직원 가입과 별개
 export default function TaxJoinPage({ params }: PageProps<"/tax-join/[code]">) {

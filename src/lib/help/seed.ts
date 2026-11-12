@@ -1,6 +1,7 @@
 // 도움말 글 처음 데이터(D-255). DB(help_articles·help_steps)에 없는 글만 넣는다(운영자가 고친 글은 그대로) — scripts/help-seed.mjs
 // 단계 글은 해요체, 버튼 이름은 [ ]. shot = 화면 그림 캡처 키(.responsive/live/help-shots.mjs), sim = 시뮬레이션 키
 import type { HelpCategory, HelpFeature } from "./guides";
+import { BRAND } from "@/lib/brand";
 
 export type SeedStep = { body: string; shot?: string };
 export type SeedArticle = {
@@ -81,7 +82,7 @@ export const HELP_SEED: SeedArticle[] = [
     steps: [
       { body: "직원은 [내 정보], 관리자는 왼쪽 메뉴 맨 아래 [이 기기 알림]에서 [알림 켜기]를 눌러요." },
       { body: "아이폰은 Safari [공유 › 홈 화면에 추가]로 만든 아이콘으로 열어야 켤 수 있어요." },
-      { body: "알림이 막혀 있으면 휴대폰(또는 브라우저) 설정 › 알림에서 허용해 주세요. 안드로이드 앱은 설정 › 애플리케이션 › Moa-on › 알림이에요." },
+      { body: `알림이 막혀 있으면 휴대폰(또는 브라우저) 설정 › 알림에서 허용해 주세요. 안드로이드 앱은 설정 › 애플리케이션 › ${BRAND.name} › 알림이에요.` },
     ],
   },
   {
@@ -465,9 +466,9 @@ export const HELP_SEED: SeedArticle[] = [
     ],
   },
   {
-    id: "assistant", cat: "together", needs: "chat", title: "채팅 도우미에게 물어보기", summary: "채팅 목록 맨 위 [Moa-on 도우미]에게 일정·회의실·결의서를 물어요.",
+    id: "assistant", cat: "together", needs: "chat", title: "채팅 도우미에게 물어보기", summary: `채팅 목록 맨 위 [${BRAND.name} 도우미]에게 일정·회의실·결의서를 물어요.`,
     keywords: ["도우미", "챗봇", "내 일정", "빈 회의실"], path: "/chat", pathLabel: "채팅으로 이동",
-    steps: [{ body: "채팅 목록 맨 위 [Moa-on 도우미]에게 \"내일 일정\", \"3층 회의실 언제 비어 있어?\", \"반려된 결의서\"처럼 물으면 찾아 줘요." }],
+    steps: [{ body: `채팅 목록 맨 위 [${BRAND.name} 도우미]에게 "내일 일정", "3층 회의실 언제 비어 있어?", "반려된 결의서"처럼 물으면 찾아 줘요.` }],
   },
   {
     id: "calendar", cat: "together", needs: "calendar", title: "캘린더에 일정 넣기", summary: "회의·외근·출장 일정을 넣고 함께할 사람을 골라요.",

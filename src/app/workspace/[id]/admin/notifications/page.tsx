@@ -3,8 +3,9 @@ import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { NotificationList, type NotificationRow } from "@/components/admin/notification-list";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "알림 이력 · Moa-on" };
+export const metadata = { title: `알림 이력 · ${BRAND.name}` };
 
 // 알림 이력 (T11-4 일부, kakao-alimtalk.md §5): 보낸 알림톡과 실패 사유. 관리자 이상, 자기 회사만(RLS)
 

@@ -6,6 +6,7 @@ import { regenerateTaxOfficeCodeAction, setTaxOfficeMemberStatusAction } from "@
 import { FormError } from "@/components/onboarding/field";
 import { TransferAdminButton } from "./office-actions";
 import { guardAction } from "@/lib/action-guard";
+import { BRAND } from "@/lib/brand";
 
 const card = "rounded-xl border border-zinc-200 bg-white p-5 shadow-sm";
 const secondary =
@@ -24,7 +25,7 @@ export function OfficeInvite({ code, officeName }: { code: string; officeName: s
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(`[Moa-on] ${officeName}에 합류해 주세요. 로그인한 뒤 담당 고객사의 세무 자료를 볼 수 있어요.\n${link}`);
+      await navigator.clipboard.writeText(`[${BRAND.name}] ${officeName}에 합류해 주세요. 로그인한 뒤 담당 고객사의 세무 자료를 볼 수 있어요.\n${link}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {

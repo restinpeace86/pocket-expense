@@ -6,6 +6,7 @@ import { useActionState, useEffect, useId, useState } from "react";
 import { saveReferralAction, searchReferralCompaniesAction, type ReferralCompany, type ReferralState } from "@/app/onboarding/referral/actions";
 import { buttonPrimary, buttonSecondary, inputClass } from "@/components/ui/page-shell";
 import { Field, FormError } from "./field";
+import { BRAND_JOSA } from "@/lib/brand";
 
 const initial: ReferralState = { error: null };
 type Kind = "company" | "person";
@@ -158,7 +159,7 @@ function CompanyPicker({ value, onChange }: { value: ReferralCompany | null; onC
           </ul>
         )
       )}
-      {!showList && <span className="text-xs text-zinc-500">Moa-on을 쓰고 있는 회사 중에서 골라 주세요</span>}
+      {!showList && <span className="text-xs text-zinc-500">{BRAND_JOSA.eul} 쓰고 있는 회사 중에서 골라 주세요</span>}
     </div>
   );
 }

@@ -5,8 +5,9 @@ import { SectionHeading } from "@/components/ui/help";
 import { attendanceEnabled } from "@/lib/attendance/server";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { calendarEnabled } from "@/lib/calendar/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "기능 사용 · Moa-on" };
+export const metadata = { title: `기능 사용 · ${BRAND.name}` };
 
 // 설정 › 기능 사용(D-251): 회사 전체에 켜고 끄는 기능 모음. 꺼도 기록은 지워지지 않는다
 export default function FeaturesPage({ params }: PageProps<"/workspace/[id]/admin/features">) {

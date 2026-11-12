@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CHANNEL, needsAlimtalk, pushOf } from "./channel";
 import { approvalRejected, approvalRequest, invite, payoutCompleted } from "./templates";
+import { BRAND } from "@/lib/brand";
 
 describe("알림 길 나누기 (D-213)", () => {
   it("초대는 늘 알림톡(받는 사람이 아직 회원이 아님)", () => {
@@ -32,6 +33,6 @@ describe("알림 길 나누기 (D-213)", () => {
     expect(p.tag).toBe("claim-k");
     expect(pushOf(approvalRejected({ companyId: "c", claimId: "k", name: "김", title: "t", total: 1, merchant: "m", reason: "영수증 흐림" })).body).toContain("반려 사유: 영수증 흐림");
     expect(pushOf(payoutCompleted({ companyId: "c", title: "t", payout: 1000, paidAt: "11/5" })).title).toBe("정산금이 지급됐어요");
-    expect(pushOf(invite({ companyName: "회사", name: "김", token: "x" })).body).toContain("회사에서 김님을 Moa-on에 초대했습니다.");
+    expect(pushOf(invite({ companyName: "회사", name: "김", token: "x" })).body).toContain(`회사에서 김님을 ${BRAND.name}에 초대했습니다.`);
   });
 });

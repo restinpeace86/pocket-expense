@@ -6,8 +6,9 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { helpFeatures } from "@/lib/help/features";
 import { guidesFor } from "@/lib/help/guides";
 import { loadHelp } from "@/lib/help/store";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "도움말 · Moa-on" };
+export const metadata = { title: `도움말 · ${BRAND.name}` };
 
 // AI 도움말 센터 — 직원(D-251 개선사항 7): 홈 맨 아래 검색창에서. 직원용 글만
 export default function EmployeeHelpPage({ params, searchParams }: PageProps<"/workspace/[id]/employee/help">) {

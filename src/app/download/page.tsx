@@ -7,9 +7,10 @@ import { Check, Smartphone } from "lucide-react";
 import { Card, PageShell } from "@/components/ui/page-shell";
 import { ANDROID_APP_BENEFITS, ANDROID_APP_VERSION, androidApkUrl } from "@/lib/app-download";
 import { siteOrigin } from "@/lib/seo";
+import { BRAND, BRAND_JOSA } from "@/lib/brand";
 
 // 앱 받기(D-228): 안드로이드 = 설치 앱(APK) 또는 홈 화면 웹앱 중 고르기, 아이폰 = 홈 화면 웹앱. PC = 휴대폰으로 찍을 QR
-export const metadata = { title: "앱 받기 · Moa-on", description: "Moa-on을 휴대폰에서 앱처럼 쓰고 알림 받기" };
+export const metadata = { title: `앱 받기 · ${BRAND.name}`, description: `${BRAND_JOSA.eul} 휴대폰에서 앱처럼 쓰고 알림 받기` };
 
 export default async function DownloadPage() {
   const apk = androidApkUrl();
@@ -19,9 +20,9 @@ export default async function DownloadPage() {
     <PageShell>
       <div className="pt-6">
         <Link href="/" className="text-sm text-zinc-500 underline underline-offset-2">
-          Moa-on
+          {BRAND.name}
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">휴대폰에서 Moa-on 쓰기</h1>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">휴대폰에서 {BRAND.name} 쓰기</h1>
         <p className="mt-1 text-sm text-zinc-600">결재·채팅 알림을 휴대폰으로 바로 받아요.</p>
       </div>
 
@@ -99,7 +100,7 @@ export default async function DownloadPage() {
             목록을 내려 <b>[홈 화면에 추가]</b> → 오른쪽 위 <b>[추가]</b>.
           </li>
           <li>
-            홈 화면에 생긴 <b>Moa-on 아이콘</b>으로 열고 로그인 → [알림 켜기]. 아이콘으로 열어야 알림을 받을 수 있어요.
+            홈 화면에 생긴 <b>{BRAND.name} 아이콘</b>으로 열고 로그인 → [알림 켜기]. 아이콘으로 열어야 알림을 받을 수 있어요.
           </li>
         </ol>
       </Card>

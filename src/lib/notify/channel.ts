@@ -4,6 +4,7 @@
 //             놓치면 일이 멈추거나 돈·마감이 걸린 것만.
 // - push: 앱 알림만(알림톡 안 감). 알려 주면 좋은 소식이고 앱 화면(홈·내역)에서도 보인다.
 import type { BuiltMessage, TemplateCode } from "./templates";
+import { BRAND, BRAND_TAG_RE } from "@/lib/brand";
 
 export type Channel = "alimtalk" | "fallback" | "push";
 
@@ -46,7 +47,7 @@ export function pushOf(m: BuiltMessage, tag?: string): { title: string; body: st
   const keyed = after.filter((l) => /^[^:]{1,8}:\s/.test(l));
   const rest = keyed.length ? keyed : after;
   const body = rest
-    .map((l) => l.replace(/^\[Moa-on\]\s*/, "").replace(/^[▶•·\-\s]+/, ""))
+    .map((l) => l.replace(BRAND_TAG_RE, "").replace(/^[▶•·\-\s]+/, ""))
     .join(" · ");
-  return { title: PUSH_TITLE[m.template] ?? "Moa-on", body: body.length > 150 ? `${body.slice(0, 149)}…` : body, url: m.buttonPath, ...(tag ? { tag } : {}) };
+  return { title: PUSH_TITLE[m.template] ?? BRAND.name, body: body.length > 150 ? `${body.slice(0, 149)}…` : body, url: m.buttonPath, ...(tag ? { tag } : {}) };
 }

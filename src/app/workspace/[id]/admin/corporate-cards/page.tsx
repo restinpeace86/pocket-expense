@@ -4,8 +4,9 @@ import { ReconcileLink } from "@/components/admin/reconcile-link";
 import { getCorporateCards } from "@/lib/admin/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { currentMonthKst, monthRange } from "@/lib/dates";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "법인카드 · Moa-on" };
+export const metadata = { title: `법인카드 · ${BRAND.name}` };
 
 // 법인카드 (선택 기능, spec/screens/admin-dashboard.md ⑫, spec/features/corporate-cards.md)
 export default function CorporateCardsPage({ params }: PageProps<"/workspace/[id]/admin/corporate-cards">) {

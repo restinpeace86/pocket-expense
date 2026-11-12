@@ -5,8 +5,9 @@ import { InstallNextStep } from "@/components/push/install-next-step";
 import { buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
 import { requireUnapprovedMembership } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
+import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: "승인 대기 · Moa-on" };
+export const metadata = { title: `승인 대기 · ${BRAND.name}` };
 
 // 승인 대기 / 이용 중지 안내 (spec/features/auth-onboarding.md §3.3)
 export default function PendingPage() {

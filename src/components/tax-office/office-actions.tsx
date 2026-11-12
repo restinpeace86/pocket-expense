@@ -6,6 +6,7 @@ import { closeOfficeAction, leaveOfficeAction, releaseClientAction, transferAdmi
 import { FormError } from "@/components/onboarding/field";
 import { inputClass } from "@/components/ui/page-shell";
 import { guardAction } from "@/lib/action-guard";
+import { BRAND_JOSA } from "@/lib/brand";
 
 const secondary =
   "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-50";
@@ -108,7 +109,7 @@ export function CloseOfficeSection({ officeName, memberCount, clientCount }: { o
     <section className="rounded-xl border border-red-200 bg-white p-5 shadow-sm" aria-label="세무사무소 삭제">
       <h2 className="font-semibold text-red-800">세무사무소 삭제</h2>
       <p className="mt-1 break-keep text-sm text-zinc-600">
-        사무소가 Moa-on을 더 쓰지 않거나 폐업·잘못 등록했을 때 써요. 관리만 다른 사람에게 맡기려면 위 구성원 목록에서 [사무소 관리자 바꾸기]를 하세요. 삭제하면 구성원{" "}
+        사무소가 {BRAND_JOSA.eul} 더 쓰지 않거나 폐업·잘못 등록했을 때 써요. 관리만 다른 사람에게 맡기려면 위 구성원 목록에서 [사무소 관리자 바꾸기]를 하세요. 삭제하면 구성원{" "}
         {memberCount}명과 결산 양식이 모두 지워지고, 고객사 {clientCount}곳은
         &quot;세무사무소 가입 대기&quot;로 돌아가요(같은 이메일로 다시 등록하면 다시 연결돼요). 되돌릴 수 없어요.
       </p>
