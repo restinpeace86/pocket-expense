@@ -5,7 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { deletePushSubscriptionAction, getPushVibrateAction, savePushSubscriptionAction, sendTestPushAction, setPushVibrateAction } from "@/app/push/actions";
 import { useInstallPrompt } from "./install";
 import { ANDROID_APK_READY } from "@/lib/app-download";
-import { isNativeApp, nativePushOff, nativePushOn, nativePushState } from "./native";
+import { isNativeApp, nativePlatform, nativePushOff, nativePushOn, nativePushState } from "./native";
 import { deleteOfficePushAction, saveOfficePushAction, testOfficePushAction } from "@/app/tax-office/push-actions";
 
 // 이 기기에서 알림 받기 (D-116): 마감 리마인더 · 결재 대기 · 공지. 무료 웹푸시.
@@ -40,7 +40,7 @@ export function usePushSubscription(office = false) {
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
-  // 안드로이드 설치 앱(D-228): 웹 알림 대신 앱 알림(FCM). 세무사무소 계정은 웹 알림 그대로
+  // 설치 앱(안드로이드 D-228·아이폰 D-259): 웹 알림 대신 앱 알림(FCM). 세무사무소 계정은 웹 알림 그대로
   const app = !office && isNativeApp();
 
   useEffect(() => {
@@ -194,7 +194,7 @@ export function PushToggle({ office = false }: { office?: boolean } = {}) {
         {state === "ios-install" && <p className="text-sm text-zinc-600">아이폰은 Safari 아래 [공유] → [홈 화면에 추가]로 연 앱에서 알림을 켤 수 있어요.</p>}
         {state === "denied" && (
           <p className="text-sm text-amber-700">
-            {app ? "알림이 막혀 있어요. 휴대폰 설정 › 애플리케이션 › Moa-on › 알림에서 허용해 주세요." : "이 브라우저에서 알림이 막혀 있어요. 브라우저(또는 휴대폰) 설정 › 알림에서 이 사이트를 허용해 주세요."}
+            {app ? (nativePlatform() === "ios" ? "알림이 막혀 있어요. 아이폰 설정 › Moa-on › 알림에서 허용해 주세요." : "알림이 막혀 있어요. 휴대폰 설정 › 애플리케이션 › Moa-on › 알림에서 허용해 주세요.") : "이 브라우저에서 알림이 막혀 있어요. 브라우저(또는 휴대폰) 설정 › 알림에서 이 사이트를 허용해 주세요."}
           </p>
         )}
         {state === "unsupported" && <p className="text-sm text-zinc-500">이 브라우저는 웹 알림을 지원하지 않아요.</p>}

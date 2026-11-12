@@ -2,11 +2,12 @@
 
 import { deleteAppTokenAction, saveAppTokenAction } from "@/app/push/actions";
 
-// 안드로이드 설치 앱(D-228, spec/features/android-app.md) 안에서만 쓰는 알림 연결.
+// 설치 앱(안드로이드 D-228 spec/features/android-app.md · 아이폰 D-259 spec/features/ios-app.md) 안에서만 쓰는 알림 연결.
+// 두 앱 모두 FCM 토큰을 준다(아이폰은 앱이 APNs → FCM으로 바꿔 줌) — 서버는 같은 길(FCM)로 보낸다.
 // 설치 앱은 우리 웹(운영 주소)을 그대로 열고, 앱이 `window.Capacitor`(앱 기능 다리)를 넣어 준다.
 // 웹 코드는 @capacitor 패키지 없이 이 다리로 알림 기능(PushNotifications)만 부른다 — 브라우저에서는 아무것도 하지 않음.
 type Perm = { receive: "prompt" | "prompt-with-rationale" | "granted" | "denied" };
-type Delivered = { id: string; tag?: string; data?: unknown };
+type Delivered = { id: string; tag?: string; data?: { tag?: string } | unknown };
 type PushPlugin = {
   checkPermissions(): Promise<Perm>;
   requestPermissions(): Promise<Perm>;
@@ -29,9 +30,15 @@ function cap(): Cap | null {
   if (typeof window === "undefined") return null;
   return ((window as unknown as { Capacitor?: Cap }).Capacitor ?? null) as Cap | null;
 }
-export function isNativeApp(): boolean {
+export type NativePlatform = "android" | "ios";
+export function nativePlatform(): NativePlatform | null {
   const c = cap();
-  return !!c?.isNativePlatform?.() && c.getPlatform?.() === "android";
+  if (!c?.isNativePlatform?.()) return null;
+  const p = c.getPlatform?.();
+  return p === "android" || p === "ios" ? p : null;
+}
+export function isNativeApp(): boolean {
+  return nativePlatform() !== null;
 }
 function push(): PushPlugin | null {
   return isNativeApp() ? (cap()?.Plugins?.PushNotifications ?? null) : null;
@@ -68,7 +75,7 @@ export function initNativePush() {
   void p.addListener("registration", async ({ value }) => {
     write(value);
     const version = await cap()?.Plugins?.App?.getInfo().then((i) => i.version).catch(() => undefined);
-    await saveAppTokenAction(value, version).catch(() => undefined);
+    await saveAppTokenAction(value, version, nativePlatform() ?? "android").catch(() => undefined);
     settle(value);
   });
   void p.addListener("registrationError", () => settle(null));
@@ -121,13 +128,14 @@ export function closeNativeNotifications(tag: string) {
   void p
     .getDeliveredNotifications()
     .then(({ notifications }) => {
-      const hit = notifications.filter((n) => n.tag === tag);
+      // 안드로이드는 알림 tag, 아이폰은 알림에 실린 data.tag로 같은 방인지 본다
+      const hit = notifications.filter((n) => n.tag === tag || (n.data as { tag?: string } | undefined)?.tag === tag);
       return hit.length ? p.removeDeliveredNotifications({ notifications: hit }) : undefined;
     })
     .catch(() => undefined);
 }
 
-// ── 로그인(카카오·Google)은 휴대폰 크롬에서 하고 앱으로 돌아온다(D-230) ─────────────────────
+// ── 로그인(카카오·Google)은 휴대폰 크롬(아이폰은 Safari)에서 하고 앱으로 돌아온다(D-230, D-259) ─────
 // Google은 앱 안 화면(WebView) 로그인을 막고, 다른 주소는 앱이 크롬으로 넘긴다. 그래서 로그인 끝 주소를 앱 주소
 // (kr.damounlab.app://auth/callback)로 받아, 앱이 열리면 그 코드를 우리 /auth/callback으로 넘겨 앱 안에서 로그인을 마친다.
 // (로그인을 시작한 곳이 앱이라 확인용 값이 앱에 있어 앱 안에서만 마칠 수 있다. Supabase 로그인 허용 주소에 이 앱 주소가 있어야 함)

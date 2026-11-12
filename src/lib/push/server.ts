@@ -58,7 +58,7 @@ async function sendAll(admin: Admin, subs: Sub[], payload: PushPayload, table: S
 }
 
 // ── 안드로이드 설치 앱(FCM, D-228) ────────────────────────────────────────────
-type AppTok = { id: string; member_id: string; token: string };
+type AppTok = { id: string; member_id: string; token: string; platform?: string | null };
 async function sendApp(admin: Admin, toks: AppTok[], payload: PushPayload): Promise<{ sent: number; failed: number; byMember: Map<string, number> }> {
   const byMember = new Map<string, number>();
   let sent = 0;
@@ -88,12 +88,20 @@ async function sendApp(admin: Admin, toks: AppTok[], payload: PushPayload): Prom
 // 설치 앱이 있는 사람은 같은 휴대폰 크롬의 웹 알림을 건너뛴다(같은 알림 두 번 방지, D-228).
 // 웹 구독이 어느 기기 것인지는 브라우저 정보로만 알 수 있어 "안드로이드 브라우저" 구독을 뺀다(PC 웹 알림은 그대로)
 export function dropAndroidWeb<T extends { member_id: string; user_agent?: string | null }>(subs: T[], appMembers: Set<string>): T[] {
-  return subs.filter((s) => !(appMembers.has(s.member_id) && /Android/i.test(s.user_agent ?? "")));
+  return dropAppWeb(subs, { android: appMembers, ios: new Set() });
+}
+// D-259: 아이폰 설치 앱이 있는 사람은 아이폰(Safari 홈 화면) 웹 알림도 건너뛴다. 기기 종류별로 따로 본다
+export function dropAppWeb<T extends { member_id: string; user_agent?: string | null }>(subs: T[], app: { android: Set<string>; ios: Set<string> }): T[] {
+  return subs.filter((s) => {
+    const ua = s.user_agent ?? "";
+    return !((app.android.has(s.member_id) && /Android/i.test(ua)) || (app.ios.has(s.member_id) && /iPhone|iPad|iPod/i.test(ua)));
+  });
 }
 
 async function sendBoth(admin: Admin, subs: (Sub & { user_agent?: string | null })[], toks: AppTok[], payload: PushPayload, appOf: AppTok[] = toks) {
-  const appMembers = new Set(fcmConfigured() ? appOf.map((t) => t.member_id) : []);
-  const web = pushConfigured() ? await sendAll(admin, dropAndroidWeb(subs, appMembers), payload) : { sent: 0, failed: 0, byMember: new Map<string, number>() };
+  const on = fcmConfigured() ? appOf : [];
+  const appMembers = { android: new Set(on.filter((t) => t.platform !== "ios").map((t) => t.member_id)), ios: new Set(on.filter((t) => t.platform === "ios").map((t) => t.member_id)) };
+  const web = pushConfigured() ? await sendAll(admin, dropAppWeb(subs, appMembers), payload) : { sent: 0, failed: 0, byMember: new Map<string, number>() };
   const app = await sendApp(admin, toks, payload);
   const byMember = new Map(web.byMember);
   for (const [m, n] of app.byMember) byMember.set(m, (byMember.get(m) ?? 0) + n);
@@ -122,7 +130,7 @@ export async function pushToMembers(
   if (!targets.length) return { members: 0, sent: 0, failed: 0, reached: [], targets: [] };
   const [{ data: subs }, { data: toks }] = await Promise.all([
     admin.from("push_subscriptions").select(`${SUB_COLS}, user_agent`).eq("company_id", companyId).in("member_id", targets),
-    admin.from("push_app_tokens").select("id, member_id, token").eq("company_id", companyId).in("member_id", targets),
+    admin.from("push_app_tokens").select("id, member_id, token, platform").eq("company_id", companyId).in("member_id", targets),
   ]);
   const r = await sendBoth(admin, (subs ?? []) as Sub[], (toks ?? []) as AppTok[], payload);
   return { members: r.byMember.size, sent: r.sent, failed: r.failed, reached: [...r.byMember.keys()], targets };
@@ -134,7 +142,7 @@ export async function pushToCompany(companyId: string, payload: PushPayload): Pr
   if (!admin || !anyConfigured()) return { sent: 0, failed: 0 };
   const [{ data: subs }, { data: toks }] = await Promise.all([
     admin.from("push_subscriptions").select(`${SUB_COLS}, user_agent`).eq("company_id", companyId),
-    admin.from("push_app_tokens").select("id, member_id, token").eq("company_id", companyId),
+    admin.from("push_app_tokens").select("id, member_id, token, platform").eq("company_id", companyId),
   ]);
   const r = await sendBoth(admin, (subs ?? []) as Sub[], (toks ?? []) as AppTok[], payload);
   return { sent: r.sent, failed: r.failed };
@@ -149,7 +157,7 @@ export async function pushToAll(payload: Omit<PushPayload, "url">, urlFor: (comp
   // 설치 앱 토큰(회사별) — 앱 있는 사람의 안드로이드 웹 구독은 sendBoth가 뺀다
   const toksBy = new Map<string, AppTok[]>();
   for (let from = 0; ; from += 1000) {
-    const { data } = await admin.from("push_app_tokens").select("id, member_id, token, company_id").order("id").range(from, from + 999);
+    const { data } = await admin.from("push_app_tokens").select("id, member_id, token, company_id, platform").order("id").range(from, from + 999);
     if (!data?.length) break;
     for (const t of data) toksBy.set(t.company_id, [...(toksBy.get(t.company_id) ?? []), t]);
     if (data.length < 1000) break;

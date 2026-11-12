@@ -2,15 +2,17 @@
   "name": "workon-android",
   "private": true,
   "version": "1.0.1",
-  "description": "WORKON 안드로이드 설치 앱 껍데기(D-228) — 운영 웹을 그대로 열고 알림만 FCM으로",
+  "description": "Moa-on 설치 앱 껍데기 — 안드로이드(D-228)·아이폰(D-259). 운영 웹을 그대로 열고 알림만 FCM으로",
   "scripts": {
     "sync": "cap sync android",
-    "apk": "cap sync android && cd android && gradlew.bat assembleRelease"
+    "apk": "cap sync android && cd android && gradlew.bat assembleRelease",
+    "sync:ios": "cap sync ios"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
     "@capacitor/push-notifications": "^8.1.3"
   },
   "devDependencies": {

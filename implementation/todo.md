@@ -383,6 +383,14 @@
 - [x] 8-99 구현 2026-11-10 `implementation/2026-11-10_visual-alert.md` (D-246) **PC 무소음 시각 알림(토스트 + 가장자리 빛)** — 기능 2. Spec §B. 정한 것: PC만, 기본 켜짐, [내 정보]에서 끄기, 움직임 줄이기면 빛 없음
 - [x] 8-100 **의견 보내기(버그 신고·기능 요청)** — 구현 2026-11-10 `implementation/2026-11-10_feedback-desk.md`, 승인 D-246(한 회사 하루 5건·버그 캡처 1장) — 기능 3. Spec §C. 정한 것: 운영자(WORKON)가 받음(회사 관리자 못 봄)·디스코드 알림, 버그 답변 '24시간 안에 확인', 문구 서비스 이름 WORKON. 정할 것(추천안): 한 사람 하루 10건, 사진 첨부 없음. 개인정보처리방침(8-93)에 항목 추가 필요
 
+- [ ] 9-13 아이폰 설치 앱 App Store 준비(D-259, spec/features/ios-app.md) — 사용자 2026-11-12 지시. 서비스명·도메인 미정(정해지면 이름 2곳·server.url 1곳만 바꿈)
+  - [x] 9-13a Capacitor 아이폰 프로젝트(SPM)·아이콘·시작 화면·권한 문구·URL scheme·알림 권한(entitlements)
+  - [x] 9-13b 알림: APNs → FCM 토큰(AppDelegate + Firebase), 서버 메시지 apns 설정, 아이폰 웹 알림 중복 방지, 웹이 아이폰 앱을 설치 앱으로 인식
+  - [ ] 9-13c migration 151(push_app_tokens.platform에 ios) 운영 DB 적용 — 자동 실행 권한에서 막혀 사용자 승인 대기(적용 전에는 아이폰 토큰만 저장 안 됨, 안드로이드 영향 없음)
+  - [x] 9-13d GitHub Actions `iOS 앱 빌드`(확인용/App Store Connect 올리기) + ExportOptions
+  - [ ] 9-13e (사용자) Apple Developer 가입·앱 ID(Push)·APNs 키 → Firebase·Firebase 아이폰 앱·App Store Connect 앱·API 키·GitHub Secret 5개 → 확인용 빌드 실행(아직 macOS 빌드로 확인 안 함)
+  - [ ] 9-13f **보류 — 사용자 결정 필요, 임의로 구현하지 말 것**: 심사 대비 Apple로 로그인(4.8)·앱 안 계정 삭제(5.1.1(v))·아이폰 앱 결제 버튼 숨김(3.1.1)·심사용 예시 계정(2.1) (ios-app.md §7)
+
 ## todo_improvement (2026-11-11) — D-251 승인, 순서대로
 - [x] 9-1 관리자 설정 8개 메뉴 + 탭, 캘린더 기본 켜짐, 이 기기 알림 분리, 설명 기본 접힘, 요금제 용량 안내 — 2026-11-11 `implementation/2026-11-11_settings-groups.md`
 - [x] 9-2 회사 위치 = 우편번호 검색 창(도로명·지번·우편번호·좌표) — 2026-11-11 `implementation/2026-11-11_company-location-postcode.md`

@@ -1,0 +1,97 @@
+# 아이폰 설치 앱 빌드·업로드(D-259, spec/features/ios-app.md) — Mac 없이 GitHub의 macOS에서.
+# 손으로만 실행(Actions › iOS 앱 빌드 › Run workflow). 저장소에 올릴 때마다 돌지 않는다(macOS 실행 시간 아끼기).
+#   upload = false: 서명 없이 시뮬레이터용으로 빌드만(프로젝트가 깨지지 않았는지 확인)
+#   upload = true : App Store용으로 서명·빌드해 App Store Connect(TestFlight)에 올림 — 아래 Secret 4개가 있어야 함
+# Secret(저장소 Settings › Secrets and variables › Actions):
+#   APPLE_TEAM_ID            Apple Developer 팀 ID(10자리)
+#   ASC_KEY_ID / ASC_ISSUER_ID  App Store Connect API 키(관리자 역할) ID·발급자 ID
+#   ASC_KEY_P8_B64           그 키 파일(.p8) 내용을 base64로
+#   IOS_GOOGLE_SERVICE_INFO_PLIST_B64  Firebase 아이폰 앱 설정 파일(GoogleService-Info.plist) base64 — 없으면 알림 없이 빌드
+name: iOS 앱 빌드
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: "App Store Connect(TestFlight)에 올리기"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ios-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Capacitor 준비
+        run: |
+          npm ci
+          npx cap sync ios
+
+      - name: Firebase 설정 파일
+        env:
+          PLIST_B64: ${{ secrets.IOS_GOOGLE_SERVICE_INFO_PLIST_B64 }}
+        run: |
+          if [ -n "$PLIST_B64" ]; then
+            echo "$PLIST_B64" | base64 --decode > ios/App/App/GoogleService-Info.plist
+          else
+            echo "::warning::IOS_GOOGLE_SERVICE_INFO_PLIST_B64가 없어 알림 없이 빌드해요(앱은 열림)."
+            # 빈 plist — 앱은 Firebase를 켜지 않는다(AppDelegate가 GOOGLE_APP_ID 없으면 건너뜀)
+            printf '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0"><dict/></plist>\n' > ios/App/App/GoogleService-Info.plist
+          fi
+
+      - name: 버전
+        id: ver
+        run: |
+          echo "marketing=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "build=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          xcodebuild -version
+
+      - name: 확인용 빌드(서명 없음, 시뮬레이터)
+        if: ${{ !inputs.upload }}
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/dd CODE_SIGNING_ALLOWED=NO \
+            MARKETING_VERSION=${{ steps.ver.outputs.marketing }} CURRENT_PROJECT_VERSION=${{ steps.ver.outputs.build }} \
+            build | tail -40
+
+      - name: App Store용 빌드·업로드
+        if: ${{ inputs.upload }}
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8_B64: ${{ secrets.ASC_KEY_P8_B64 }}
+        run: |
+          for v in TEAM_ID KEY_ID ISSUER_ID KEY_P8_B64; do
+            if [ -z "${!v}" ]; then echo "::error::Secret $v 가 없어요. 워크플로 맨 위 설명을 보세요."; exit 1; fi
+          done
+          KEY_PATH="$RUNNER_TEMP/AuthKey_$KEY_ID.p8"
+          echo "$KEY_P8_B64" | base64 --decode > "$KEY_PATH"
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID")
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath build/App.xcarchive \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION=${{ steps.ver.outputs.marketing }} CURRENT_PROJECT_VERSION=${{ steps.ver.outputs.build }} \
+            "${AUTH[@]}" archive | tail -40
+          cp ios/ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
+          /usr/libexec/PlistBuddy -c "Set :teamID $TEAM_ID" "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive -archivePath build/App.xcarchive -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath build/export "${AUTH[@]}" | tail -40
+          rm -f "$KEY_PATH"
+          echo "올렸어요: 버전 ${{ steps.ver.outputs.marketing }} (빌드 ${{ steps.ver.outputs.build }}) — App Store Connect › TestFlight에서 처리 끝나면 보여요."

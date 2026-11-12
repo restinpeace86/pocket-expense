@@ -20,6 +20,25 @@ describe("안드로이드 설치 앱 알림 (D-228)", () => {
     expect(n.message.data).toEqual({ url: "/w" });
   });
 
+  it("아이폰 설치 앱(D-259): 같은 메시지에 apns — 높음 = 우선순위 10, 같은 tag는 묶고 바꿈, 소리 기본", async () => {
+    const { fcmBody } = await import("./fcm");
+    const b = fcmBody("tok", { title: "김개발", body: "점심", url: "/w", tag: "chat-r", urgency: "high" });
+    expect(b.message.apns).toEqual({ headers: { "apns-priority": "10", "apns-collapse-id": "chat-r" }, payload: { aps: { sound: "default", "thread-id": "chat-r" } } });
+    const n = fcmBody("tok", { title: "x", body: "y", url: "/w" });
+    expect(n.message.apns).toEqual({ headers: { "apns-priority": "5" }, payload: { aps: { sound: "default" } } });
+  });
+
+  it("아이폰 앱이 있는 사람은 아이폰 웹 알림만, 안드로이드 앱이 있는 사람은 안드로이드 웹 알림만 건너뜀", async () => {
+    const { dropAppWeb } = await import("./server");
+    const subs = [
+      { id: "1", member_id: "a", user_agent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari" },
+      { id: "2", member_id: "a", user_agent: "Mozilla/5.0 (Linux; Android 14) Chrome/130 Mobile" },
+      { id: "3", member_id: "b", user_agent: "Mozilla/5.0 (Linux; Android 14) Chrome/130 Mobile" },
+      { id: "4", member_id: "a", user_agent: "Mozilla/5.0 (Windows NT 10.0) Chrome/130" },
+    ];
+    expect(dropAppWeb(subs, { android: new Set(["b"]), ios: new Set(["a"]) }).map((s) => s.id)).toEqual(["2", "4"]);
+  });
+
   it("설치 앱이 있는 사람은 안드로이드 웹 알림만 건너뜀(같은 알림 두 번 방지), PC 웹 알림은 그대로", async () => {
     const { dropAndroidWeb } = await import("./server");
     const subs = [

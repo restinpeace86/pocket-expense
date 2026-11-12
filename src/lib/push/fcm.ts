@@ -1,7 +1,7 @@
 import "server-only";
 import crypto from "node:crypto";
 
-// 안드로이드 설치 앱 알림(FCM HTTP v1, D-228). 무료.
+// 설치 앱 알림(FCM HTTP v1, 안드로이드 D-228 · 아이폰 D-259 — 아이폰도 FCM이 APNs로 넘겨 줌). 무료.
 // - 키: FCM_SERVICE_ACCOUNT(Firebase 서비스 계정 JSON 한 줄, Vercel Secret). 없으면 보내지 않는다.
 // - 채팅·회의처럼 바로 봐야 하는 알림(urgency high)은 앱의 "chat" 채널(중요도 높음·길게 진동·소리), 나머지는 "general".
 //   진동 모양·세기는 앱이 채널을 만들 때 정하고(android/MainActivity), 사용자는 휴대폰 설정에서 채널별로 바꿀 수 있다.
@@ -70,6 +70,11 @@ export function fcmBody(token: string, m: FcmMessage) {
           default_sound: true,
           notification_priority: high ? "PRIORITY_HIGH" : "PRIORITY_DEFAULT",
         },
+      },
+      // 아이폰 설치 앱(D-259): 같은 tag면 앞 알림을 바꾸고(collapse), 같은 방끼리 묶고(thread-id), 소리 기본
+      apns: {
+        headers: { "apns-priority": high ? "10" : "5", ...(m.tag ? { "apns-collapse-id": m.tag.slice(0, 64) } : {}) },
+        payload: { aps: { sound: "default", ...(m.tag ? { "thread-id": m.tag } : {}) } },
       },
     },
   };

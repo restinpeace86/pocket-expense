@@ -20,5 +20,10 @@
       ]
     }
   },
-  "backgroundColor": "#ffffff"
+  "backgroundColor": "#ffffff",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#ffffff",
+    "limitsNavigationsToAppBoundDomains": false
+  }
 }
