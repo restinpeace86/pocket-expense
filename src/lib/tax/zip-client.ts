@@ -38,6 +38,24 @@ class Part {
   }
 }
 
+// 여러 회사를 한 ZIP에(D-268): 크기가 넘으면 _1, _2 …로 나누는 통. buildTaxZip에 넘기면 끝내지 않고 이어 담는다
+export class ZipSink {
+  parts: Blob[] = [];
+  private part = new Part();
+  constructor(private max = 500 * 1024 * 1024) {}
+  async add(name: string, data: Uint8Array) {
+    if (this.part.size > 0 && this.part.size + data.length > this.max) {
+      this.parts.push(await this.part.end());
+      this.part = new Part();
+    }
+    this.part.add(name, data);
+  }
+  async finish(): Promise<Blob[]> {
+    this.parts.push(await this.part.end());
+    return this.parts;
+  }
+}
+
 async function fetchBytes(url: string): Promise<Uint8Array | null> {
   try {
     const res = await fetch(url, { cache: "no-store" });
@@ -59,11 +77,13 @@ export async function buildTaxZip(opts: {
   attachments?: { folder: string; files: ZipFile[] }[];
   maxPartBytes?: number;
   concurrency?: number;
+  // 여러 회사를 한 ZIP에(D-268): 주면 이 통에 이어 담고 끝내지 않는다(parts는 빈 배열). prefix = "회사/2026-10/"
+  sink?: ZipSink;
+  prefix?: string;
 }): Promise<{ parts: Blob[]; failed: string[]; extraAdded: boolean; attachmentsFailed: string[] }> {
-  const max = opts.maxPartBytes ?? 500 * 1024 * 1024;
-  const parts: Blob[] = [];
-  let part = new Part();
-  part.add(opts.workbook.name, opts.workbook.data);
+  const sink = opts.sink ?? new ZipSink(opts.maxPartBytes);
+  const P = opts.prefix ?? "";
+  await sink.add(`${P}${opts.workbook.name}`, opts.workbook.data);
   const total = opts.files.length;
   let done = 0;
   let failed: ZipFile[] = [];
@@ -71,13 +91,7 @@ export async function buildTaxZip(opts: {
   // 받은 순서대로 넣되, 넣는 동안 다른 다운로드와 섞이지 않게 한 줄로 넣는다
   let chain = Promise.resolve();
   const put = (name: string, data: Uint8Array) => {
-    chain = chain.then(async () => {
-      if (part.size > 0 && part.size + data.length > max) {
-        parts.push(await part.end());
-        part = new Part();
-      }
-      part.add(`영수증/${name}`, data);
-    });
+    chain = chain.then(() => sink.add(`${P}영수증/${name}`, data));
     got.set(name, data);
     return chain;
   };
@@ -109,13 +123,13 @@ export async function buildTaxZip(opts: {
   for (const a of opts.attachments ?? []) {
     for (const f of a.files) {
       const data = f.url ? await fetchBytes(f.url) : null;
-      if (data) part.add(`${a.folder}/${f.name}`, data);
+      if (data) await sink.add(`${P}${a.folder}/${f.name}`, data);
       else attachmentsFailed.push(`${a.folder}/${f.name}`);
     }
   }
   const more = opts.extra ? await opts.extra(got).catch(() => null) : null;
-  if (more) part.add(more.name, more.data);
-  parts.push(await part.end());
+  if (more) await sink.add(`${P}${more.name}`, more.data);
+  const parts = opts.sink ? [] : await sink.finish();
   return { parts, failed: failed.map((f) => f.name), extraAdded: !!more, attachmentsFailed };
 }
 

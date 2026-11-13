@@ -1727,6 +1727,7 @@ export type Database = {
           id: string
           kind: string
           link: string | null
+          office_request_id: string | null
           pushed_at: string | null
           room_id: string
           sender_member_id: string | null
@@ -1749,6 +1750,7 @@ export type Database = {
           id?: string
           kind: string
           link?: string | null
+          office_request_id?: string | null
           pushed_at?: string | null
           room_id: string
           sender_member_id?: string | null
@@ -1771,6 +1773,7 @@ export type Database = {
           id?: string
           kind?: string
           link?: string | null
+          office_request_id?: string | null
           pushed_at?: string | null
           room_id?: string
           sender_member_id?: string | null
@@ -1778,6 +1781,13 @@ export type Database = {
           width?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_messages_office_request_id_fkey"
+            columns: ["office_request_id"]
+            isOneToOne: false
+            referencedRelation: "tax_office_requests"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_messages_room_id_company_id_fkey"
             columns: ["room_id", "company_id"]
@@ -1813,6 +1823,7 @@ export type Database = {
           kind: string
           last_message_at: string | null
           notice_member_id: string | null
+          office_id: string | null
           title: string | null
         }
         Insert: {
@@ -1826,6 +1837,7 @@ export type Database = {
           kind: string
           last_message_at?: string | null
           notice_member_id?: string | null
+          office_id?: string | null
           title?: string | null
         }
         Update: {
@@ -1839,6 +1851,7 @@ export type Database = {
           kind?: string
           last_message_at?: string | null
           notice_member_id?: string | null
+          office_id?: string | null
           title?: string | null
         }
         Relationships: [
@@ -1876,6 +1889,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "chat_rooms_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "tax_offices"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4173,6 +4193,45 @@ export type Database = {
           },
         ]
       }
+      office_client_checks: {
+        Row: {
+          checked_at: string
+          checked_by_name: string | null
+          company_id: string
+          month: string
+          office_id: string
+        }
+        Insert: {
+          checked_at?: string
+          checked_by_name?: string | null
+          company_id: string
+          month: string
+          office_id: string
+        }
+        Update: {
+          checked_at?: string
+          checked_by_name?: string | null
+          company_id?: string
+          month?: string
+          office_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "office_client_checks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "office_client_checks_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "tax_offices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oil_price_fetch_logs: {
         Row: {
           id: string
@@ -4761,6 +4820,48 @@ export type Database = {
           },
         ]
       }
+      tax_office_notices: {
+        Row: {
+          body: string
+          company_id: string
+          created_at: string
+          id: string
+          office_id: string
+          sent_by_name: string | null
+        }
+        Insert: {
+          body: string
+          company_id: string
+          created_at?: string
+          id?: string
+          office_id: string
+          sent_by_name?: string | null
+        }
+        Update: {
+          body?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          office_id?: string
+          sent_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_office_notices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_office_notices_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "tax_offices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_office_push_subscriptions: {
         Row: {
           auth: string
@@ -4804,6 +4905,8 @@ export type Database = {
       }
       tax_office_requests: {
         Row: {
+          acked_at: string | null
+          acked_by_name: string | null
           answer: string | null
           answered_at: string | null
           answered_by_name: string | null
@@ -4823,6 +4926,8 @@ export type Database = {
           unread_for: string | null
         }
         Insert: {
+          acked_at?: string | null
+          acked_by_name?: string | null
           answer?: string | null
           answered_at?: string | null
           answered_by_name?: string | null
@@ -4842,6 +4947,8 @@ export type Database = {
           unread_for?: string | null
         }
         Update: {
+          acked_at?: string | null
+          acked_by_name?: string | null
           answer?: string | null
           answered_at?: string | null
           answered_by_name?: string | null
@@ -5483,6 +5590,7 @@ export type Database = {
       close_tax_office: { Args: { p_confirm_name: string }; Returns: string[] }
       closing_admin_targets: { Args: { p_today?: string }; Returns: Json }
       closing_calendar: { Args: { p_month: string }; Returns: Json }
+      company_ack_tax_request: { Args: { p_id: string }; Returns: undefined }
       company_form_check: { Args: { p_message: string }; Returns: Json }
       company_form_delete: { Args: { p_id: string }; Returns: string }
       company_form_due: { Args: never; Returns: Json }
@@ -5746,6 +5854,20 @@ export type Database = {
       my_vacation: { Args: { p_year: number }; Returns: Json }
       office_answer_tax_request: {
         Args: { p_answer: string; p_id: string }
+        Returns: undefined
+      }
+      office_room_post: {
+        Args: {
+          p_body: string
+          p_company: string
+          p_link: string
+          p_office: string
+          p_request: string
+        }
+        Returns: number
+      }
+      office_set_client_check: {
+        Args: { p_company: string; p_month: string; p_on: boolean }
         Returns: undefined
       }
       override_item_account_title: {
@@ -6017,6 +6139,7 @@ export type Database = {
         Args: { p_company_id: string; p_month: string }
         Returns: Json
       }
+      tax_office_notice_list: { Args: { p_company: string }; Returns: Json }
       tax_office_notice_targets: {
         Args: { p_company_id: string }
         Returns: Json
@@ -6024,6 +6147,10 @@ export type Database = {
       tax_office_override_item_account_title: {
         Args: { p_account_title_id: string; p_item_id: string }
         Returns: Json
+      }
+      tax_office_send_notice: {
+        Args: { p_body: string; p_companies: string[] }
+        Returns: number
       }
       tax_office_template_list: {
         Args: never

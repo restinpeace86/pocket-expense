@@ -57,7 +57,15 @@ async function deliver(admin: Admin, p: { companyId: string; claimId?: string; m
 // fallback이 앱 알림으로 닿았으면 알림 이력에 webpush로 남긴다(독촉 하루 1회 판정·CS 확인용)
 async function notifyMembers(
   admin: Admin,
-  p: { companyId: string; claimId?: string; recipients: { id: string; phone: string | null }[]; message: BuiltMessage; push?: { title: string; body: string; url: string; tag?: string } },
+  p: {
+    companyId: string;
+    claimId?: string;
+    recipients: { id: string; phone: string | null }[];
+    message: BuiltMessage;
+    push?: { title: string; body: string; url: string; tag?: string };
+    // 세무 알림방(D-269): 있으면 개인 [알림]방 대신 그 세무사무소 알림방에 카드(요청 번호 → 카드 버튼)
+    officeRoom?: { officeId: string; requestId: string | null };
+  },
 ): Promise<{ pushed: number; alimtalk: number }> {
   const channel = CHANNEL[p.message.template];
   const ids = [...new Set(p.recipients.map((r) => r.id))];
@@ -68,7 +76,9 @@ async function notifyMembers(
   }
   // 회원에게 가는 알림은 모두 채팅 [알림]방에도 카드(D-224 → D-247: 결재 요청·반려·독촉·세무 자료 요청 같은 핵심 알림도 앱 안으로)
   if (channel !== "alimtalk" && ids.length) {
-    await postNoticeCards(admin, p.companyId, ids, p.push ? { title: p.push.title, lines: [p.push.body], url: p.push.url } : cardOf(p.message)).catch(() => 0);
+    const card = p.push ? { title: p.push.title, lines: [p.push.body], url: p.push.url } : cardOf(p.message);
+    if (p.officeRoom) await postOfficeRoom(admin, p.companyId, p.officeRoom.officeId, p.officeRoom.requestId, card).catch(() => 0);
+    else await postNoticeCards(admin, p.companyId, ids, card).catch(() => 0);
   }
   // 카카오 알림톡 추가 서비스(D-247): 회사가 켰을 때만 '앱 알림을 못 받은 사람'에게
   const alimtalkOn = channel === "fallback" ? await alimtalkEnabled(admin, p.companyId) : false;
@@ -328,12 +338,25 @@ export async function notifyOfficeClosed(companyId: string, month: string, count
 }
 
 // 세무사무소 자료 요청 → 회사 관리자들에게 알림톡 + 웹푸시 (D-169)
-export async function notifyCompanyRequest(companyId: string, p: { officeName: string; month: string; body: string; itemLabel?: string | null }): Promise<void> {
+// 세무 알림방(D-269): 회사 대표·관리자 각자의 "○○ 알림" 방에 카드(DB 함수, 앱 알림은 이미 보냄)
+async function postOfficeRoom(admin: Admin, companyId: string, officeId: string, requestId: string | null, card: { title: string; lines: string[]; url: string | null }): Promise<number> {
+  const body = [card.title, ...card.lines.map((l) => l.slice(0, 200))].join("\n");
+  const { data } = await admin.rpc("office_room_post", { p_company: companyId, p_office: officeId, p_body: body, p_link: card.url ?? (null as unknown as string), p_request: requestId as string });
+  return (data as number | null) ?? 0;
+}
+
+export async function notifyCompanyRequest(companyId: string, p: { officeName: string; month: string; body: string; itemLabel?: string | null; officeId?: string | null; requestId?: string | null }): Promise<void> {
   const admin = createAdminClient();
   if (!admin) return;
   const { data: admins } = await admin.from("members").select("id, phone").eq("company_id", companyId).eq("status", "approved").in("role", ["super_admin", "admin"]);
   const message = taxRequest({ companyId, ...p });
-  await notifyMembers(admin, { companyId, recipients: admins ?? [], message, push: { title: `${p.officeName} 자료 요청`, body: p.body.slice(0, 120), url: message.buttonPath, tag: "tax-request" } });
+  await notifyMembers(admin, {
+    companyId,
+    recipients: admins ?? [],
+    message,
+    push: { title: `${p.officeName} 자료 요청`, body: p.body.slice(0, 120), url: message.buttonPath, tag: "tax-request" },
+    officeRoom: p.officeId ? { officeId: p.officeId, requestId: p.requestId ?? null } : undefined,
+  });
 }
 
 // 회사가 자료 요청에 답변 → 세무사무소(담당 세무사·없으면 관리자)에게 웹푸시 (D-169)
@@ -361,7 +384,7 @@ export async function notifyOfficeRequest(companyId: string, p: { month: string;
 }
 
 // 세무사무소가 회사의 확인 요청에 답 → 회사 관리자들에게 웹푸시 (D-196)
-export async function notifyCompanyAnswered(companyId: string, p: { officeName: string; month: string; answer: string }): Promise<void> {
+export async function notifyCompanyAnswered(companyId: string, p: { officeName: string; month: string; answer: string; officeId?: string | null; requestId?: string | null }): Promise<void> {
   const admin = createAdminClient();
   if (!admin) return;
   const { data: admins } = await admin.from("members").select("id").eq("company_id", companyId).eq("status", "approved").in("role", ["super_admin", "admin"]);
@@ -373,7 +396,9 @@ export async function notifyCompanyAnswered(companyId: string, p: { officeName: 
   };
   const ids = (admins ?? []).map((a) => a.id);
   await pushToMembers(companyId, ids, push);
-  await postNoticeCards(admin, companyId, ids, { title: push.title, lines: [p.answer.slice(0, 200)], url: push.url }).catch(() => 0);
+  const card = { title: push.title, lines: [p.answer.slice(0, 200)], url: push.url };
+  if (p.officeId) await postOfficeRoom(admin, companyId, p.officeId, p.requestId ?? null, card).catch(() => 0);
+  else await postNoticeCards(admin, companyId, ids, card).catch(() => 0);
 }
 
 // 회사가 세무사무소를 지정 → 담당 세무사 휴대폰으로 초대 알림톡 (D-173). 아직 연결 안 된 경우만

@@ -7,7 +7,9 @@ import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LogoMark } from "@/components/brand/logo";
 
-type Company = { id: string; name: string };
+type Company = { id: string; name: string; tone?: "done" | "wait" | "alert" };
+const DOT = { done: "bg-emerald-500", wait: "bg-amber-500", alert: "bg-rose-600" } as const;
+const DOT_LABEL = { done: "마감 완료", wait: "마감 전", alert: "확인할 것 있음" } as const;
 type Item = { href: string; label: string; icon: LucideIcon; active: boolean };
 
 const LAST_KEY = "pe-tax-office-company";
@@ -65,6 +67,24 @@ export function TaxOfficeShell({ officeName, isAdmin, companies, children }: { o
   const nav = (onNavigate?: () => void) => (
     <nav className="flex flex-col gap-1 p-3" aria-label="세무사무소 메뉴">
       <NavItem item={{ href: "/tax-office", label: "고객사 현황", icon: LayoutDashboard, active: pathname === "/tax-office" }} onNavigate={onNavigate} />
+      {/* 고객사 목록(D-268): 지난달 상태 색 점 — 누르면 그 고객사 세무 자료 */}
+      {companies.length > 0 && (
+        <ul className="mt-1 flex max-h-[40vh] flex-col gap-0.5 overflow-y-auto" aria-label="고객사 목록" data-office-side-list>
+          {companies.map((c) => (
+            <li key={c.id}>
+              <Link
+                href={`/tax-office/${c.id}${q}`}
+                onClick={onNavigate}
+                aria-current={c.id === current ? "page" : undefined}
+                className={`flex min-h-9 items-center gap-2 rounded-lg px-3 text-sm ${c.id === current ? "bg-sidebar-active font-semibold text-sidebar-active-fg" : "hover:bg-sidebar-hover"}`}
+              >
+                <i className={`size-2 shrink-0 rounded-full ${DOT[c.tone ?? "wait"]}`} aria-label={DOT_LABEL[c.tone ?? "wait"]} role="img" />
+                <span className="min-w-0 truncate">{c.name}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
       <p className="mt-3 truncate border-t border-sidebar-border px-3 pb-1 pt-3 text-xs text-sidebar-muted">{selected ? selected.name : isAdmin ? "고객사" : "맡은 고객사"}</p>
       {companyItems.length > 0 ? (
         companyItems.map((item) => <NavItem key={item.label} item={item} onNavigate={onNavigate} />)

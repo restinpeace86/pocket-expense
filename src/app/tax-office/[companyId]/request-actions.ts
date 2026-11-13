@@ -13,8 +13,8 @@ export async function createTaxRequestAction(companyId: string, month: string, i
   const supabase = await createClient();
   const { data: id, error } = await supabase.rpc("create_tax_office_request", { p_company_id: companyId, p_month: month, p_item_id: itemId as string, p_body: body });
   if (error) return { ok: false, error: messageForDbError(error) };
-  const { data: r } = await supabase.from("tax_office_requests").select("office_name, item_label, body").eq("id", id as string).maybeSingle();
-  if (r) after(() => notifyCompanyRequest(companyId, { officeName: r.office_name ?? "세무사무소", month, body: r.body, itemLabel: r.item_label }));
+  const { data: r } = await supabase.from("tax_office_requests").select("office_name, office_id, item_label, body").eq("id", id as string).maybeSingle();
+  if (r) after(() => notifyCompanyRequest(companyId, { officeName: r.office_name ?? "세무사무소", month, body: r.body, itemLabel: r.item_label, officeId: r.office_id, requestId: id as string }));
   refresh();
   return { ok: true };
 }
@@ -24,8 +24,8 @@ export async function officeAnswerTaxRequestAction(companyId: string, id: string
   const supabase = await createClient();
   const { error } = await supabase.rpc("office_answer_tax_request", { p_id: id, p_answer: answer });
   if (error) return { ok: false, error: messageForDbError(error) };
-  const { data: r } = await supabase.from("tax_office_requests").select("month, office_name").eq("id", id).maybeSingle();
-  if (r) after(() => notifyCompanyAnswered(companyId, { officeName: r.office_name ?? "세무사무소", month: r.month, answer: answer.trim() }));
+  const { data: r } = await supabase.from("tax_office_requests").select("month, office_name, office_id").eq("id", id).maybeSingle();
+  if (r) after(() => notifyCompanyAnswered(companyId, { officeName: r.office_name ?? "세무사무소", month: r.month, answer: answer.trim(), officeId: r.office_id, requestId: id }));
   refresh();
   return { ok: true };
 }

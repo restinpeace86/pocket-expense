@@ -7,6 +7,9 @@ import { TaxOfficeShell } from "@/components/tax-office/tax-office-shell";
 import { requireLogin } from "@/lib/auth/guards";
 import { getMyTaxOffice, getTaxOfficeClients } from "@/lib/tax-office/queries";
 import { BRAND } from "@/lib/brand";
+import { createClient } from "@/lib/supabase/server";
+import { currentMonthKst } from "@/lib/dates";
+import { prevMonth, rowTone, type ClientStatus } from "@/lib/tax-office/dashboard";
 
 // 세무사무소 워크스페이스 (D-149): 회사 멤버와 별개. 구성원이 아니면 사무소 등록·합류 화면
 export const metadata: Metadata = { title: `세무사무소 · ${BRAND.name}`, robots: { index: false, follow: false } };
@@ -24,9 +27,12 @@ async function Guarded({ children }: { children: React.ReactNode }) {
   const state = await getMyTaxOffice();
   if (!state || state.member_id === null) return <TaxOfficeOnboarding email={state?.email ?? null} requests={state?.requests ?? []} />;
   if (state.status !== "active") return <Stopped office={state.office_name} />;
-  const clients = await getTaxOfficeClients();
+  // 왼쪽 고객사 목록 색(D-268): 지난달(마감하는 달) 상태
+  const supabase = await createClient();
+  const [clients, { data: statusData }] = await Promise.all([getTaxOfficeClients(), supabase.rpc("tax_office_client_status", { p_month: prevMonth(currentMonthKst()) })]);
+  const status = new Map(((statusData ?? []) as unknown as ClientStatus[]).map((x) => [x.company_id, x]));
   return (
-    <TaxOfficeShell officeName={state.office_name} isAdmin={state.role === "admin"} companies={clients.map((c) => ({ id: c.company_id, name: c.company_name }))}>
+    <TaxOfficeShell officeName={state.office_name} isAdmin={state.role === "admin"} companies={clients.map((c) => ({ id: c.company_id, name: c.company_name, tone: rowTone(status.get(c.company_id) ?? null) }))}>
       {children}
     </TaxOfficeShell>
   );

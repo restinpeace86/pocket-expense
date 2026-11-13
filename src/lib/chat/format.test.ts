@@ -24,6 +24,8 @@ const mem = (id: string, name: string, read = "2026-11-03T00:00:00Z", status = "
 describe("메신저 방 이름 (D-203)", () => {
   it("1:1은 상대 이름, 퇴사자는 (퇴사)", () => {
     expect(roomTitle({ kind: "direct", title: null, members: [mem("me", "나"), mem("a", "김대표")] }, "me")).toBe("김대표");
+    expect(roomTitle({ kind: "notice", title: "알림", members: [] }, "me")).toBe("알림");
+    expect(roomTitle({ kind: "notice", title: "한빛세무사무소 알림", members: [] }, "me")).toBe("한빛세무사무소 알림"); // D-269
     expect(roomTitle({ kind: "direct", title: null, members: [mem("me", "나"), mem("a", "최직원", undefined, "inactive")] }, "me")).toBe("최직원(퇴사)");
   });
   it("그룹은 정한 이름, 없으면 참여자 3명 + 외 N명", () => {

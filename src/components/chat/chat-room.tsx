@@ -24,12 +24,14 @@ import { MemberPicker } from "./member-picker";
 import { signedUrls } from "./signed-urls";
 import { closeNativeNotifications } from "@/components/push/native";
 import { BRAND } from "@/lib/brand";
+import { OfficeRequestActions } from "./office-request-actions";
 
 type Detail = {
   id: string;
   kind: ChatKind;
   title: string | null;
   claim_id: string | null;
+  office_id?: string | null; // 세무 알림방(D-269)
   claim: { id: string; title: string; status: string; total_amount: number; member_id: string } | null;
   members: ChatMember[];
 };
@@ -644,7 +646,7 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
                   <Bell className="size-5" />
                 </span>
                 <div className="flex min-w-0 max-w-[80%] items-end gap-1">
-                  <NoticeBubble body={row.msg.body} link={row.msg.link ?? null} />
+                  <NoticeBubble body={row.msg.body} link={row.msg.link ?? null} officeReq={row.msg.office_request ?? null} />
                   <span className="shrink-0 whitespace-nowrap pb-0.5 text-[11px] text-zinc-600">{timeLabel(row.msg.created_at)}</span>
                 </div>
               </div>
@@ -772,7 +774,9 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
           )}
         </div>
       ) : detail?.kind === "notice" ? (
-        <p className="shrink-0 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] text-center text-sm text-zinc-600">회의 10분 전·결재 완료·공지 같은 알림이 카드로 오는 방이에요. 답장은 보낼 수 없어요.</p>
+        <p className="shrink-0 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] text-center text-sm text-zinc-600" data-notice-composer>
+          {detail.office_id ? "세무사무소에서 보낸 요청을 확인하는 방이에요. 답은 카드 버튼으로 해 주세요." : "회의 10분 전·결재 완료·공지 같은 알림이 카드로 오는 방이에요. 답장은 보낼 수 없어요."}
+        </p>
       ) : (
       <form
         onSubmit={(e) => {
@@ -1184,7 +1188,7 @@ function MessageBody({
 }
 
 // [알림]방 글(D-206). 회의 10분 전 글은 카드로(D-217): 시간·제목·장소·안건 첫 줄·자료 수 + [안건·자료 보기]
-function NoticeBubble({ body, link }: { body: string | null; link: string | null }) {
+function NoticeBubble({ body, link, officeReq = null }: { body: string | null; link: string | null; officeReq?: ChatMessage["office_request"] }) {
   const card = meetingNoticeCard(body);
   if (!card) {
     // 앱 알림 카드(D-224): 첫 줄 = 제목, 나머지 = "이름: 값" 줄 또는 글
@@ -1211,10 +1215,14 @@ function NoticeBubble({ body, link }: { body: string | null; link: string | null
             )}
           </dl>
         )}
-        {link && (
-          <Link href={link} className="flex min-h-11 items-center justify-center border-t border-zinc-100 px-3 text-sm font-semibold text-brand-700 hover:bg-zinc-50">
-            {assistantLinkLabel(link)}
-          </Link>
+        {officeReq ? (
+          <OfficeRequestActions req={officeReq} uploadHref={link} />
+        ) : (
+          link && (
+            <Link href={link} className="flex min-h-11 items-center justify-center border-t border-zinc-100 px-3 text-sm font-semibold text-brand-700 hover:bg-zinc-50">
+              {assistantLinkLabel(link)}
+            </Link>
+          )
         )}
       </article>
     );

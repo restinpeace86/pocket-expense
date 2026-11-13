@@ -18,6 +18,7 @@ export type TaxRequest = {
   answered_at: string | null;
   resolved_at: string | null;
   created_at: string;
+  acked_by_name?: string | null; // 회사가 세무 알림방에서 [확인했어요](D-269)
 };
 
 // 아직 해결 안 된 요청(모든 달) + 이 달의 해결된 요청
@@ -25,7 +26,7 @@ export async function listTaxRequests(companyId: string, month: string): Promise
   const supabase = await createClient();
   const { data } = await supabase
     .from("tax_office_requests")
-    .select("id, month, item_id, item_label, body, requested_by_name, office_name, status, origin, unread_for, answer, answered_by_name, answered_at, resolved_at, created_at")
+    .select("id, month, item_id, item_label, body, requested_by_name, office_name, status, origin, unread_for, answer, answered_by_name, answered_at, resolved_at, created_at, acked_by_name")
     .eq("company_id", companyId)
     .or(`status.neq.resolved,month.eq.${month}`)
     .order("created_at", { ascending: false })

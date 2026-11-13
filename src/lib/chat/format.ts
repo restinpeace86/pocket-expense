@@ -26,6 +26,8 @@ export type ChatMessage = {
   localUrl?: string;
   thread_id?: string | null; // 서브 대화 글이면 그 서브 대화(D-246)
   thread?: ChatThread | null; // 이 글로 만든 서브 대화(메인 카드)
+  // 세무 알림방 카드의 자료 요청(D-269) — 버튼 상태
+  office_request?: { id: string; status: "open" | "answered" | "resolved"; origin: "office" | "company"; month: string; acked_by_name: string | null; answer: string | null } | null;
 };
 // 서브 대화(D-246, migration 137 chat_thread_json)
 export type ChatThread = {
@@ -74,7 +76,7 @@ export function displayName(m: Pick<ChatMember, "name" | "status"> | undefined |
 export function roomTitle(room: { kind: ChatKind; title: string | null; claim_title?: string | null; members: Pick<ChatMember, "member_id" | "name" | "status">[] }, meId: string): string {
   const others = room.members.filter((m) => m.member_id !== meId);
   if (room.kind === "direct") return others[0] ? displayName(others[0]) : "대화 상대 없음";
-  if (room.kind === "notice") return "알림";
+  if (room.kind === "notice") return room.title?.trim() && room.title !== "알림" ? room.title : "알림"; // 세무 알림방(D-269)은 "○○ 알림"
   if (room.kind === "assistant") return `${BRAND.name} 도우미`;
   if (room.kind === "claim") return room.claim_title?.trim() ? `📄 ${room.claim_title}` : "📄 소명서 대화";
   if (room.title?.trim()) return room.title;

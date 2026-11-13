@@ -17,6 +17,8 @@ const sideName = (s: Side) => (s === "office" ? "세무사무소" : "회사");
 function statusChip(r: TaxRequest, me: Side): [string, string] {
   if (r.status === "resolved") return ["확인함", "bg-emerald-50 text-emerald-700"];
   if (r.status === "answered") return r.origin === me ? ["답변 옴", "bg-blue-50 text-blue-700"] : ["답변함", "bg-zinc-100 text-zinc-600"];
+  // D-269: 사무소가 보낸 요청을 회사가 세무 알림방에서 [확인했어요] 누름
+  if (r.origin === me && me === "office" && r.acked_by_name) return [`회사 확인함 · ${r.acked_by_name}`, "bg-brand-50 text-brand-700"];
   return r.origin === me ? ["답변 기다림", "bg-amber-50 text-amber-800"] : ["답변 필요", "bg-red-50 text-red-700"];
 }
 
