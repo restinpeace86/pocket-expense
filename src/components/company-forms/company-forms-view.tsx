@@ -4,7 +4,7 @@ import { Clock, FileStack, Monitor, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { deleteFormAction, editFormAction, requestSlotAction } from "@/app/workspace/[id]/admin/company-forms/actions";
+import { deleteFormAction, editFormAction } from "@/app/workspace/[id]/admin/company-forms/actions";
 import { inputCount, KIND_LABEL, type Field, type FormKind } from "@/lib/company-forms/model";
 import { draftDaysLeft, type DocModel } from "@/lib/doc-convert/model";
 import { AddFormDialog, type AddFormSource } from "./add-form-dialog";
@@ -34,7 +34,6 @@ export function CompanyFormsView({
   me,
   limit,
   used,
-  requested,
   forms,
   drafts,
 }: {
@@ -43,7 +42,6 @@ export function CompanyFormsView({
   me: string;
   limit: number;
   used: number;
-  requested: boolean;
   forms: ActiveForm[];
   drafts: DraftForm[];
 }) {
@@ -53,7 +51,6 @@ export function CompanyFormsView({
   const [preview, setPreview] = useState<ActiveForm | null>(null);
   const [pcNotice, setPcNotice] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [asked, setAsked] = useState(requested);
   const [busy, setBusy] = useState<string | null>(null);
   const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 100;
   const needPc = (fn: () => void) => (pc ? fn() : setPcNotice(true));
@@ -64,15 +61,6 @@ export function CompanyFormsView({
     setBusy(null);
     if (r.ok) router.push(`${ws}/admin/company-forms/${r.id}`);
     else setNotice(r.error);
-  };
-  const ask = async () => {
-    setBusy("ask");
-    const r = await requestSlotAction();
-    setBusy(null);
-    if (r.ok) {
-      setAsked(true);
-      setNotice("칸 추가 신청을 받았어요. 지금은 결제를 받지 않는 기간이라 운영자가 확인한 뒤 칸을 늘려 드려요.");
-    } else setNotice(r.error ?? "신청하지 못했어요.");
   };
   const remove = async (id: string, msg: string) => {
     if (!window.confirm(msg)) return;
@@ -104,14 +92,8 @@ export function CompanyFormsView({
         <div className="h-2 min-w-24 flex-1 overflow-hidden rounded-full bg-zinc-200" aria-hidden>
           <div className="h-full rounded-full bg-brand-600" style={{ width: `${pct}%` }} />
         </div>
-        <p className="text-[13px] text-zinc-600">더 필요하면 1장 2만 원(한 번 결제)</p>
-        {asked ? (
-          <span className="rounded-full bg-zinc-100 px-3 py-1.5 text-[13px] text-zinc-700" data-slot-requested>칸 추가 신청됨 · 운영자 확인 중</span>
-        ) : (
-          <button type="button" onClick={() => void ask()} disabled={busy === "ask"} className="h-10 rounded-xl border border-zinc-300 bg-white px-3.5 text-sm font-semibold hover:bg-zinc-50 disabled:opacity-50" data-slot-request-bar>
-            칸 추가 신청
-          </button>
-        )}
+        {/* D-271: 양식 추가 1장 2만 원 폐기 — 더 필요하면 상위 플랜(비즈니스 무제한) */}
+        <p className="text-[13px] text-zinc-600">{limit >= 1000 ? "AI 양식 변환 무제한 플랜이에요" : "더 필요하면 비즈니스 플랜(무제한)으로 바꿀 수 있어요"}</p>
       </section>
 
       {forms.length === 0 && drafts.length === 0 && (

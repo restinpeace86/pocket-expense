@@ -16,12 +16,11 @@ export function ChatFormSheet({ ws, companyId, me, message, onClose }: { ws: str
 
 function HoldSheet({ ws, message, onClose }: { ws: string; message: { id: string; name: string }; onClose: () => void }) {
   const [data, setData] = useState<FormDialogData | null>(null);
-  const [requested, setRequested] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    void formDialogDataAction().then((r) => r.ok && (setData(r.data), setRequested(r.data.requested)));
+    void formDialogDataAction().then((r) => r.ok && setData(r.data));
   }, []);
   const hold = async () => {
     setBusy(true);
@@ -48,7 +47,7 @@ function HoldSheet({ ws, message, onClose }: { ws: string; message: { id: string
           파일: <b>{message.name}</b>
         </p>
         {data && data.used >= data.limit && !data.forms.some((f) => f.kind === "leave") && (
-          <SlotFull used={data.used} limit={data.limit} requested={requested} onRequested={() => setRequested(true)} forms={data.forms} />
+          <SlotFull used={data.used} limit={data.limit} forms={data.forms} />
         )}
         {error && (
           <p role="alert" className="rounded-xl bg-red-50 px-3 py-2.5 text-[13px] text-red-800">

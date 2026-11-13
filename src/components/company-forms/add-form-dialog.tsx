@@ -4,7 +4,7 @@ import { AlertTriangle, FileUp, Loader2, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formDialogDataAction, readFormAction, requestSlotAction, startFormAction, type FormDialogData } from "@/app/workspace/[id]/admin/company-forms/actions";
+import { formDialogDataAction, readFormAction, startFormAction, type FormDialogData } from "@/app/workspace/[id]/admin/company-forms/actions";
 import { KIND_LABEL, type FormKind } from "@/lib/company-forms/model";
 import { CONVERT_MIMES, isConvertible } from "@/lib/doc-convert/model";
 import { createClient } from "@/lib/supabase/client";
@@ -40,11 +40,10 @@ export function AddFormDialog({
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [requested, setRequested] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    void formDialogDataAction().then((r) => (r.ok ? (setData(r.data), setRequested(r.data.requested)) : setError(r.error)));
+    void formDialogDataAction().then((r) => (r.ok ? setData(r.data) : setError(r.error)));
   }, []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !busy && onClose();
@@ -180,8 +179,6 @@ export function AddFormDialog({
           <SlotFull
             used={data!.used}
             limit={data!.limit}
-            requested={requested}
-            onRequested={() => setRequested(true)}
             forms={data!.forms}
             // 등록 대기 파일은 휴가신청서만 새 버전으로 옮겨진다(휴가를 고르면 자동) — 고르기·채팅 파일만 다른 양식으로 바꾸기
             onReplace={source.type === "held" ? undefined : (f) => (setGroup({ id: f.group_id, name: f.name, kind: f.kind }), setKind(f.kind))}
@@ -238,28 +235,15 @@ export function AddFormDialog({
 export function SlotFull({
   used,
   limit,
-  requested,
-  onRequested,
   forms,
   onReplace,
 }: {
   used: number;
   limit: number;
-  requested: boolean;
-  onRequested: () => void;
   forms: { group_id: string; name: string; kind: FormKind }[];
   onReplace?: (f: { group_id: string; name: string; kind: FormKind }) => void;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
   const [replacing, setReplacing] = useState(false);
-  const ask = async () => {
-    setBusy(true);
-    const r = await requestSlotAction();
-    setBusy(false);
-    if (r.ok) onRequested();
-    else setErr(r.error ?? "신청하지 못했어요.");
-  };
   return (
     <div className="flex flex-col gap-2.5 rounded-2xl border border-amber-300 bg-amber-50 p-3.5" data-slot-full>
       <p className="flex items-start gap-2 text-[14px] font-semibold text-amber-950">
@@ -267,22 +251,9 @@ export function SlotFull({
         회사 양식 등록 횟수를 다 썼어요({used}/{limit}장).
       </p>
       <p className="text-[13px] leading-relaxed text-amber-950">
-        양식을 더 등록하려면 추가 결제가 필요해요(1장 2만 원, 한 번 결제). 이미 등록한 양식을 고치거나 새 버전으로 바꾸는 것은 무료예요.
+        더 등록하려면 비즈니스 플랜(AI 양식 변환 무제한)으로 바꿔 주세요. 이미 등록한 양식을 고치거나 새 버전으로 바꾸는 것은 언제나 무료예요.
       </p>
-      {requested ? (
-        <p className="rounded-xl bg-white px-3 py-2 text-[13px] text-zinc-800" data-slot-requested>
-          추가 신청을 받았어요. 지금은 결제를 받지 않는 기간이라 운영자가 확인한 뒤 칸을 늘려 드려요.
-        </p>
-      ) : (
-        <p className="text-[12.5px] text-amber-900">지금은 결제를 받지 않는 기간이에요. [추가 신청]을 누르면 운영자가 칸을 늘려 드려요.</p>
-      )}
-      {err && <p className="text-[13px] text-red-800">{err}</p>}
       <div className="flex flex-wrap gap-2">
-        {!requested && (
-          <button type="button" onClick={() => void ask()} disabled={busy} className="h-10 rounded-xl bg-amber-900 px-4 text-sm font-bold text-white hover:bg-amber-950 disabled:opacity-60" data-slot-request>
-            추가 신청
-          </button>
-        )}
         {onReplace && forms.length > 0 && (
           <button type="button" onClick={() => setReplacing((v) => !v)} className="h-10 rounded-xl border border-amber-400 bg-white px-4 text-sm font-semibold text-amber-950 hover:bg-amber-100" data-slot-replace>
             등록된 양식 바꾸기

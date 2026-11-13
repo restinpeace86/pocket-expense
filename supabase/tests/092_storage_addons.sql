@@ -94,21 +94,22 @@ begin
   if (r ->> 'member_id')::uuid <> 'a9210000-0000-0000-0000-000000000001' then raise exception 'FAIL [grant returns member]'; end if;
   if (select extra_storage_gb from public.companies where id = 'c9200000-0000-0000-0000-00000000000a') <> 10 then raise exception 'FAIL [grant extra]'; end if;
   perform public._t_raises92(format('select public.storage_addon_grant(%L)', current_setting('t.req')), 'NOT_PENDING', 'grant twice');
-  -- 함께 쓰는 한도: 아무것도 안 썼으면 채팅·보관함 각자 1GB + 10GB
-  if private.chat_storage_limit('c9200000-0000-0000-0000-00000000000a') <> 11::bigint * 1024 * 1024 * 1024 then raise exception 'FAIL [chat limit 11GB]'; end if;
-  if private.vault_limit('c9200000-0000-0000-0000-00000000000a') <> 11::bigint * 1024 * 1024 * 1024 then raise exception 'FAIL [vault limit 11GB]'; end if;
-  -- B는 그대로 1GB
-  if private.chat_storage_limit('c9200000-0000-0000-0000-00000000000b') <> 1024::bigint * 1024 * 1024 then raise exception 'FAIL [B limit]'; end if;
+  -- 158(D-271) 공용 한도: 스타터 10GB + 추가 10GB = 20GB를 채팅·보관함이 함께
+  if private.storage_total_limit('c9200000-0000-0000-0000-00000000000a') <> 20::bigint * 1024 * 1024 * 1024 then raise exception 'FAIL [total 20GB]'; end if;
+  if private.chat_storage_limit('c9200000-0000-0000-0000-00000000000a') <> 20::bigint * 1024 * 1024 * 1024 then raise exception 'FAIL [chat limit 20GB]'; end if;
+  if private.vault_limit('c9200000-0000-0000-0000-00000000000a') <> 20::bigint * 1024 * 1024 * 1024 then raise exception 'FAIL [vault limit 20GB]'; end if;
+  -- B는 스타터 10GB
+  if private.chat_storage_limit('c9200000-0000-0000-0000-00000000000b') <> 10::bigint * 1024 * 1024 * 1024 then raise exception 'FAIL [B limit]'; end if;
 end;
 $$;
--- 보관함이 기본(1GB)보다 1.2GB 써서 0.2GB 넘김 → 채팅은 추가 공간에서 그만큼 덜 쓸 수 있음
+-- 보관함이 1.2GB 쓰면 채팅은 그만큼 덜 쓸 수 있음(한 통)
 insert into public.vault_files (company_id, owner_member_id, name, kind, size, path)
 select 'c9200000-0000-0000-0000-00000000000a', 'a9210000-0000-0000-0000-000000000002', 'f' || g, 'file', 20971520, 'c92a/t/' || g
 from generate_series(1, 60) g;
 do $$
-declare v_over bigint := 60::bigint * 20971520 - 1024::bigint * 1024 * 1024;
+declare v_over bigint := 60::bigint * 20971520;
 begin
-  if private.chat_storage_limit('c9200000-0000-0000-0000-00000000000a') <> 11::bigint * 1024 * 1024 * 1024 - v_over then raise exception 'FAIL [shared pool] %', private.chat_storage_limit('c9200000-0000-0000-0000-00000000000a'); end if;
+  if private.chat_storage_limit('c9200000-0000-0000-0000-00000000000a') <> 20::bigint * 1024 * 1024 * 1024 - v_over then raise exception 'FAIL [shared pool] %', private.chat_storage_limit('c9200000-0000-0000-0000-00000000000a'); end if;
 end;
 $$;
 
@@ -135,6 +136,7 @@ $$;
 do $$
 begin
   if (select recommended_size from public.billing_plans where code = 'starter') <> '직원 10명 이하 작은 회사·현장 팀' then raise exception 'FAIL [starter size]'; end if;
+  if (select string_agg(code || ':' || storage_mb || ':' || coalesce(max_members::text, '-'), ',' order by sort_order) from public.billing_plans) <> 'starter:10240:-,standard:51200:-,pro:204800:-' then raise exception 'FAIL [158 storage/members]'; end if;
 end;
 $$;
 

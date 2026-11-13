@@ -6,7 +6,7 @@ begin;
 do $$
 begin
   if (select string_agg(code || ':' || monthly_receipts || ':' || monthly_price || ':' || coalesce(annual_price::text, '-') || ':' || is_unlimited || ':' || is_featured, ',' order by sort_order) from public.billing_plans)
-     <> 'starter:150:29000:-:false:false,standard:400:49000:-:false:true,pro:800:89000:-:false:false' then
+     <> 'starter:150:29000:-:false:false,standard:400:49000:-:false:true,pro:1000:89000:-:true:false' then
     raise exception 'FAIL [PLANS] unexpected plans: %', (select string_agg(code, ',' order by sort_order) from public.billing_plans);
   end if;
   if exists (select 1 from public.billing_plans where is_purchasable) then raise exception 'FAIL [PLANS] purchasable before payment integration'; end if;

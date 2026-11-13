@@ -5,7 +5,8 @@
 -- 등록 → 버전 / 고치기 → 새 버전(칸 그대로) / 지우기 → 칸이 빔 / 읽기 범위(직원은 등록된 것만) / 회사 격리 / 서버 전용 함수 / 추가 신청·운영자 칸 늘리기
 -- =============================================================================
 begin;
-
+-- 158(D-271): 결제 연동 전 칸(프로)이 5장이 됐지만, 칸이 다 차는 흐름을 보려고 이 테스트 안에서만 1장
+update public.billing_plans set form_slots = 1 where code = 'standard';
 create function public._t_raises89(p_sql text, p_code text, p_label text)
 returns void language plpgsql as $$
 begin

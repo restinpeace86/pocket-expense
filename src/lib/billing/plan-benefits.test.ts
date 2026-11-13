@@ -33,7 +33,26 @@ describe("플랜 혜택", () => {
   });
   it("회사 저장 공간 한 줄(D-271): 10GB/20GB/40GB, 예전 두 줄 대신", () => {
     const b = planBenefits({ monthly_price: 29000, monthly_receipts: 150, max_members: null, chat_storage_mb: 1024, vault_storage_mb: 1024, storage_mb: 10240 });
-    expect(b.filter((x) => /저장|보관/.test(x.label)).map((x) => x.label)).toEqual(["회사 저장 공간 10GB"]);
+    expect(b.filter((x) => /저장|보관|용량/.test(x.label)).map((x) => x.label)).toEqual(["회사 공용 파일 용량 10GB"]);
     expect(storageLabel(40960)).toBe("40GB");
+  });
+  it("비교표(D-271): 비즈니스 = 영수증 무제한*·서류 300건·양식 무제한·예산·우선 응대", () => {
+    const biz = planBenefits({ monthly_price: 89000, monthly_receipts: 1000, is_unlimited: true, max_members: null, monthly_doc_converts: 300, doc_converts_unlimited: false, storage_mb: 204800, trash_days: 365, form_slots: 50, form_slots_unlimited: true, budget_alerts: true, support_label: "우선 응대 + 채팅" });
+    expect(biz.map((b) => b.label)).toEqual([
+      "AI 영수증 읽기 무제한*",
+      "서류 → 엑셀 변환 월 300건",
+      "회사 공용 파일 용량 200GB",
+      "지운 파일 복구 1년",
+      "AI 양식 변환 무제한",
+      "예산 한도·초과 알림",
+      "고객 지원: 우선 응대 + 채팅",
+      "모든 기능 포함",
+    ]);
+    expect(biz[0].sub).toBe("*공정 사용 기준 월 1,000장 · 넘어도 바로 막지 않아요");
+    const st = planBenefits({ monthly_price: 29000, monthly_receipts: 150, max_members: null, form_slots: 0, budget_alerts: false, support_label: "채팅" });
+    expect(st.map((b) => b.label)).toContain("회사 양식: 지출결의서");
+    expect(st.map((b) => b.label)).not.toContain("예산 한도·초과 알림");
+    const pro = planBenefits({ monthly_price: 49000, monthly_receipts: 400, max_members: null, form_slots: 5, storage_mb: 51200 });
+    expect(pro.map((b) => b.label)).toEqual(expect.arrayContaining(["AI 양식 변환 최대 5개", "회사 공용 파일 용량 50GB"]));
   });
 });

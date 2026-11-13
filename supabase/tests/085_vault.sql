@@ -54,6 +54,10 @@ insert into public.chat_messages (id, room_id, company_id, sender_member_id, kin
   ('c8630000-0000-0000-0000-000000000004', 'c8620000-0000-0000-0000-000000000001', 'c8600000-0000-0000-0000-00000000000a', 'a8610000-0000-0000-0000-000000000001', 'text', '안녕하세요', null, null, null, null, null, null, null);
 -- 한도를 1MB로(이 테스트 안에서만)
 update public.billing_plans set vault_storage_mb = 1 where code = 'starter';
+-- 158(D-271): 채팅·보관함이 한 통을 쓰므로, 이 테스트에서는 보관함 몫이 1MB가 되게 전체 = 1MB + 채팅 사용량(공용 한도 자체는 092)
+create or replace function private.storage_total_limit(p_company uuid) returns bigint language sql stable security definer set search_path = '' as $f$
+  select 1048576::bigint + private.chat_storage_used(p_company)
+$f$;
 
 -- ① 보관 확인
 select public._t_as85('a8600000-0000-0000-0000-000000000002');

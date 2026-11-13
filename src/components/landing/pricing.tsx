@@ -18,7 +18,11 @@ type Plan = {
   max_members: number | null;
   chat_storage_mb: number | null;
   vault_storage_mb: number | null;
-  storage_mb?: number | null;
+  storage_mb: number | null;
+  form_slots: number;
+  form_slots_unlimited: boolean;
+  budget_alerts: boolean;
+  support_label: string | null;
 };
 
 // 요금제는 billing_plans에서 읽는다(하드코딩 금지). 공용 데이터라 정적으로 캐시한다. (D-046, D-054, D-133)
@@ -33,7 +37,7 @@ export async function Pricing() {
     const [{ data }, { data: sa }] = await Promise.all([
       db
         .from("billing_plans")
-        .select("code, name, monthly_price, monthly_receipts, recommended_size, is_unlimited, is_featured, max_members, chat_storage_mb, vault_storage_mb, monthly_doc_converts, doc_converts_unlimited, trash_days")
+        .select("code, name, monthly_price, monthly_receipts, recommended_size, is_unlimited, is_featured, max_members, chat_storage_mb, vault_storage_mb, monthly_doc_converts, doc_converts_unlimited, trash_days, storage_mb, form_slots, form_slots_unlimited, budget_alerts, support_label")
         .order("sort_order"),
       db.from("storage_addons").select("code, storage_gb, monthly_price").order("sort_order"),
     ]);

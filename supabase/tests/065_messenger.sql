@@ -197,6 +197,9 @@ $$;
 reset role;
 
 -- ⑤-3 첨부 저장 한도·미리보기·보관 기간(D-204, migration 108)
+-- 158(D-271): 공용 한도를 1GB로 줄여 예전 기대값 그대로 확인(이 테스트 안에서만)
+reset role;
+update public.billing_plans set storage_mb = 1024 where code = 'starter';
 select public._t_as65('a6500000-0000-0000-0000-000000000001');
 set local role authenticated;
 do $$

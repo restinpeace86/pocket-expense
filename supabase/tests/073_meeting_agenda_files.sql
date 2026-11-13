@@ -87,7 +87,7 @@ $$;
 reset role;
 
 -- 저장 한도: 1MB로 줄이면(시험 안에서만) 3MB 파일은 STORAGE_FULL
-update public.billing_plans set chat_storage_mb = 2 where code = 'starter';
+update public.billing_plans set chat_storage_mb = 2, storage_mb = 2 where code = 'starter'; -- 158: 공용 한도
 select public._t_as73('a7300000-0000-0000-0000-000000000001');
 set local role authenticated;
 do $$
@@ -96,7 +96,7 @@ begin
 end;
 $$;
 reset role;
-update public.billing_plans set chat_storage_mb = 1024 where code = 'starter';
+update public.billing_plans set chat_storage_mb = 1024, storage_mb = 10240 where code = 'starter';
 
 -- ② 직원(참석자): 파일 보기 O, 올리기·지우기 X
 select public._t_as73('a7300000-0000-0000-0000-000000000002');

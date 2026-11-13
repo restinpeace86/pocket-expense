@@ -1068,6 +1068,7 @@ export type Database = {
           created_at: string
           doc_converts_unlimited: boolean
           form_slots: number
+          form_slots_unlimited: boolean
           id: string
           is_featured: boolean
           is_purchasable: boolean
@@ -1079,6 +1080,8 @@ export type Database = {
           name: string
           recommended_size: string | null
           sort_order: number
+          storage_mb: number | null
+          support_label: string | null
           trash_days: number | null
           updated_at: string
           vault_storage_mb: number | null
@@ -1091,6 +1094,7 @@ export type Database = {
           created_at?: string
           doc_converts_unlimited?: boolean
           form_slots?: number
+          form_slots_unlimited?: boolean
           id?: string
           is_featured?: boolean
           is_purchasable?: boolean
@@ -1102,6 +1106,8 @@ export type Database = {
           name: string
           recommended_size?: string | null
           sort_order?: number
+          storage_mb?: number | null
+          support_label?: string | null
           trash_days?: number | null
           updated_at?: string
           vault_storage_mb?: number | null
@@ -1114,6 +1120,7 @@ export type Database = {
           created_at?: string
           doc_converts_unlimited?: boolean
           form_slots?: number
+          form_slots_unlimited?: boolean
           id?: string
           is_featured?: boolean
           is_purchasable?: boolean
@@ -1125,6 +1132,8 @@ export type Database = {
           name?: string
           recommended_size?: string | null
           sort_order?: number
+          storage_mb?: number | null
+          support_label?: string | null
           trash_days?: number | null
           updated_at?: string
           vault_storage_mb?: number | null

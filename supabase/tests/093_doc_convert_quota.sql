@@ -39,7 +39,7 @@ do $$
 begin
   if (select monthly_doc_converts from public.billing_plans where code = 'starter') <> 20 then raise exception 'FAIL [starter 20]'; end if;
   if (select monthly_doc_converts from public.billing_plans where code = 'standard') <> 100 then raise exception 'FAIL [pro 100]'; end if;
-  if (select monthly_doc_converts from public.billing_plans where code = 'pro') <> 1000 or not (select doc_converts_unlimited from public.billing_plans where code = 'pro') then raise exception 'FAIL [business unlimited]'; end if;
+  if (select monthly_doc_converts from public.billing_plans where code = 'pro') <> 300 or (select doc_converts_unlimited from public.billing_plans where code = 'pro') then raise exception 'FAIL [business 300 (158)]'; end if;
   if (private.effective_plan('c9300000-0000-0000-0000-00000000000a')).code <> 'standard' then raise exception 'FAIL [effective = pro]'; end if;
 end;
 $$;

@@ -52,7 +52,6 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/co
       me={membership.member_id}
       limit={s.limit}
       used={s.used}
-      requested={s.requested}
       forms={forms}
       drafts={drafts}
     />
