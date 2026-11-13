@@ -32,6 +32,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { href: "/settings/meal", label: "식대 한도" },
       { href: "/settings/fuel", label: "자차 유류비" },
       { href: "/settings/per-diem", label: "출장 일비" },
+      { href: "/settings/budget", label: "예산" },
       { href: "/recurring", label: "정기 결제" },
       { href: "/settings/closing", label: "마감 일정" },
     ],

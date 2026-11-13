@@ -31,6 +31,7 @@ export function AdminClaimDetail({
   taxOffice = null,
   chat = null,
   eventLink = null,
+  budget = null,
 }: {
   detail: ClaimDetail;
   canAct: boolean;
@@ -44,6 +45,7 @@ export function AdminClaimDetail({
   taxOffice?: string | null; // 세무사무소가 계정과목을 관리하면 영수증별 조정 대신 세무사 확인 요청(D-156)
   chat?: React.ReactNode; // 사내 메신저 [이 건으로 대화](D-203) — 스위치가 켜진 회사만
   eventLink?: React.ReactNode; // 연결된 일정(D-210) — 캘린더에서 [경비 올리기]로 만든 결의서만
+  budget?: React.ReactNode; // 예산 80% 넘은 것(D-267) — 관리자만
 }) {
   const { claim, owner } = detail;
   const router = useRouter();
@@ -126,6 +128,7 @@ export function AdminClaimDetail({
           {owner.position && ` · ${owner.position}`} · 상신 {formatDateTimeKst(claim.submitted_at)}
         </p>
         {eventLink && <div className="mt-3">{eventLink}</div>}
+        {budget && <div className="mt-3">{budget}</div>}
         {(claim.category || claim.vehicle) && (
           <p className="mt-2 text-sm text-zinc-700">
             {claim.category && `📂 ${CATEGORY_LABEL[claim.category]}`}

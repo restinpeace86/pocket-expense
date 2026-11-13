@@ -15,6 +15,8 @@ import { AttendanceHomeCard } from "@/components/admin/attendance-home-card";
 import { attendancePendingCount } from "@/lib/attendance/server";
 import type { DayAdminData } from "@/lib/attendance/today";
 import { BRAND } from "@/lib/brand";
+import { BudgetHomeCard } from "@/components/admin/budget-home-card";
+import type { BudgetStatus } from "@/lib/budget/format";
 
 export const metadata = { title: `관리자 · ${BRAND.name}` };
 
@@ -36,7 +38,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
   const membership = await requireWorkspace(id, { admin: true });
   const supabase = await createClient();
   const weekAgo = daysAgoIso(7);
-  const [{ company }, credit, dashboard, notices, { count: titleChanges }, { count: openRequests }, { data: office }, { count: closedMonths }, attendancePending] = await Promise.all([
+  const [{ company }, credit, dashboard, notices, { count: titleChanges }, { count: openRequests }, { data: office }, { count: closedMonths }, attendancePending, { data: budget }] = await Promise.all([
     getCompanySummary(membership.company_id),
     getCreditStatus(membership.company_id),
     getDashboard(currentMonthKst()),
@@ -50,6 +52,8 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
     supabase.from("monthly_closings").select("company_id", { count: "exact", head: true }).eq("status", "closed"),
     // 근태 켠 회사만(D-242): null이면 근태 꺼짐
     attendancePendingCount(),
+    // 이번 달 예산(D-267)
+    supabase.rpc("budget_status", {}),
   ]);
   // 오늘 출근 카드(D-242)
   const attendanceDay =
@@ -107,6 +111,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
       titlesManagedBy={officeInfo?.registered ? (officeInfo.registered_name ?? "세무사무소") : null}
       notices={<NoticeStrip notices={notices} />}
       />
+      {budget && <BudgetHomeCard status={budget as unknown as BudgetStatus} href={`/workspace/${membership.company_id}/admin/settings/budget`} />}
     </>
   );
 }

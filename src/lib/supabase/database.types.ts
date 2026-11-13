@@ -1062,6 +1062,7 @@ export type Database = {
       billing_plans: {
         Row: {
           annual_price: number | null
+          budget_alerts: boolean
           chat_storage_mb: number | null
           code: string
           created_at: string
@@ -1084,6 +1085,7 @@ export type Database = {
         }
         Insert: {
           annual_price?: number | null
+          budget_alerts?: boolean
           chat_storage_mb?: number | null
           code: string
           created_at?: string
@@ -1106,6 +1108,7 @@ export type Database = {
         }
         Update: {
           annual_price?: number | null
+          budget_alerts?: boolean
           chat_storage_mb?: number | null
           code?: string
           created_at?: string
@@ -1127,6 +1130,38 @@ export type Database = {
           vault_storage_mb?: number | null
         }
         Relationships: []
+      }
+      budget_alert_logs: {
+        Row: {
+          account_title_id: string | null
+          company_id: string
+          created_at: string
+          level: number
+          month: string
+        }
+        Insert: {
+          account_title_id?: string | null
+          company_id: string
+          created_at?: string
+          level: number
+          month: string
+        }
+        Update: {
+          account_title_id?: string | null
+          company_id?: string
+          created_at?: string
+          level?: number
+          month?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_alert_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bus_alerts: {
         Row: {
@@ -2138,6 +2173,48 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      company_budgets: {
+        Row: {
+          account_title_id: string | null
+          company_id: string
+          id: string
+          monthly_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          account_title_id?: string | null
+          company_id: string
+          id?: string
+          monthly_amount: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          account_title_id?: string | null
+          company_id?: string
+          id?: string
+          monthly_amount?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_budgets_account_title_id_company_id_fkey"
+            columns: ["account_title_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "account_titles"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "company_budgets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_chat_settings: {
         Row: {
@@ -5221,6 +5298,12 @@ export type Database = {
         Returns: undefined
       }
       attendance_terminal_revoke: { Args: { p_id: string }; Returns: undefined }
+      budget_claim_impact: { Args: { p_claim: string }; Returns: Json }
+      budget_save: {
+        Args: { p_titles: Json; p_total: number }
+        Returns: undefined
+      }
+      budget_status: { Args: { p_month?: string }; Returns: Json }
       bus_alert_notify: {
         Args: {
           p_body: string
