@@ -66,7 +66,6 @@ async function Content({ params }: Pick<PageProps<"/workspace/[id]/admin/setting
         </div>
       </section>
       <BudgetForm
-        key={`${status.total_budget}:${status.titles.map((t) => t.budget ?? "").join(",")}`}
         total={status.total_budget}
         titles={(titles ?? []).map((t) => ({ id: t.id, name: t.name, budget: byId.get(t.id)?.budget ?? null, spent: byId.get(t.id)?.spent ?? 0 }))}
         disabled={!status.enabled}
