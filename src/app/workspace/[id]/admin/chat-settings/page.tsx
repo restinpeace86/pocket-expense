@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { ChatRetention, type RetentionStatus } from "@/components/admin/chat-retention";
 import { VaultUsageCard, type VaultUsage } from "@/components/admin/vault-usage";
@@ -26,7 +27,7 @@ export default function ChatSettingsPage({ params }: PageProps<"/workspace/[id]/
               <b>기준일</b>: 채팅은 보낸 날, 회의 자료는 회의가 끝난 날(미리 올린 자료가 회의 전에 지워지지 않게)부터 세요. 영수증·증빙(결의서 첨부)은 세무 보관 대상이라 지우지 않아요.
             </p>
             <p>
-              <b>보관 기간을 짧게</b> 하면 오래된 파일이 먼저 지워져 같은 저장 공간으로 더 많이 주고받을 수 있어요. 오래 남겨야 하는 자료(계약서 등)는 채팅에서 길게 누르거나 오른쪽 클릭 → <b>[영구 보관]</b>하면 [파일 보관함]에 지울 때까지 남아요(영구 보관함은 공간이 따로예요). 증빙 원본은 결의서에 첨부해 주세요.
+              <b>보관 기간을 짧게</b> 하면 오래된 파일이 먼저 지워져 같은 저장 공간으로 더 많이 주고받을 수 있어요. 오래 남겨야 하는 자료(계약서 등)는 채팅에서 길게 누르거나 오른쪽 클릭 → <b>[영구 보관]</b>하면 [파일 보관함]에 지울 때까지 남아요(영구 보관함은 기본 공간이 따로예요 — 요금제에서 늘린 추가 공간은 함께 써요). 증빙 원본은 결의서에 첨부해 주세요.
             </p>
             <p>채팅 색감은 사람마다 채팅 목록 위 팔레트 버튼이나 [내 정보]에서 고를 수 있어요.</p>
           </>
@@ -49,6 +50,10 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/ch
     <div className="flex flex-col gap-4">
       <ChatRetention status={data as unknown as RetentionStatus} />
       {vault.data && <VaultUsageCard usage={vault.data as unknown as VaultUsage} />}
+      {/* D-262: 공간이 모자라면 요금제에서 추가 공간 신청(관리자만 이 화면을 봄) */}
+      <Link href={`/workspace/${id}/admin/billing#storage`} className="inline-flex min-h-11 items-center gap-1 self-start rounded-xl border border-brand-300 bg-brand-50 px-4 text-sm font-semibold text-brand-800 hover:bg-brand-100" data-storage-more>
+        저장 공간 늘리기 →
+      </Link>
     </div>
   );
 }

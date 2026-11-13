@@ -2042,6 +2042,7 @@ export type Database = {
           created_at: string
           event_bonus_acknowledged_at: string | null
           extra_form_slots: number
+          extra_storage_gb: number
           first_purchase_at: string | null
           fuel_enabled: boolean
           fuel_rate_mode: string
@@ -2073,6 +2074,7 @@ export type Database = {
           created_at?: string
           event_bonus_acknowledged_at?: string | null
           extra_form_slots?: number
+          extra_storage_gb?: number
           first_purchase_at?: string | null
           fuel_enabled?: boolean
           fuel_rate_mode?: string
@@ -2104,6 +2106,7 @@ export type Database = {
           created_at?: string
           event_bonus_acknowledged_at?: string | null
           extra_form_slots?: number
+          extra_storage_gb?: number
           first_purchase_at?: string | null
           fuel_enabled?: boolean
           fuel_rate_mode?: string
@@ -4456,6 +4459,87 @@ export type Database = {
           },
         ]
       }
+      storage_addons: {
+        Row: {
+          code: string
+          is_active: boolean
+          monthly_price: number
+          sort_order: number
+          storage_gb: number
+        }
+        Insert: {
+          code: string
+          is_active?: boolean
+          monthly_price: number
+          sort_order?: number
+          storage_gb: number
+        }
+        Update: {
+          code?: string
+          is_active?: boolean
+          monthly_price?: number
+          sort_order?: number
+          storage_gb?: number
+        }
+        Relationships: []
+      }
+      storage_requests: {
+        Row: {
+          company_id: string
+          created_at: string
+          done_at: string | null
+          id: string
+          kind: string
+          member_id: string | null
+          monthly_price: number
+          reject_reason: string | null
+          requested_by_name: string | null
+          status: string
+          storage_gb: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          kind: string
+          member_id?: string | null
+          monthly_price?: number
+          reject_reason?: string | null
+          requested_by_name?: string | null
+          status?: string
+          storage_gb: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          kind?: string
+          member_id?: string | null
+          monthly_price?: number
+          reject_reason?: string | null
+          requested_by_name?: string | null
+          status?: string
+          storage_gb?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storage_requests_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       tax_export_downloads: {
         Row: {
           actor_kind: string
@@ -5725,6 +5809,14 @@ export type Database = {
         Args: { p_id: string; p_resolved: boolean }
         Returns: undefined
       }
+      storage_addon_grant: { Args: { p_request: string }; Returns: Json }
+      storage_addon_reject: {
+        Args: { p_reason: string; p_request: string }
+        Returns: Json
+      }
+      storage_addon_request: { Args: { p_gb: number }; Returns: string }
+      storage_addon_status: { Args: never; Returns: Json }
+      storage_addon_withdraw: { Args: never; Returns: undefined }
       storage_total_bytes: { Args: never; Returns: number }
       submit_claim: {
         Args: { p_claim_id: string }

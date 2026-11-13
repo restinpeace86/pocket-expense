@@ -1,7 +1,8 @@
 import { Check } from "lucide-react";
-import { formatWon } from "@/lib/format";
 import { COMMON_FEATURES, planBenefits, PRICING_RULES } from "@/lib/billing/plan-benefits";
 import { createPublicClient } from "@/lib/supabase/public";
+import { PlanStorage, PlanStorageChips, PlanStoragePrice } from "@/components/billing/plan-storage";
+import type { StorageAddon } from "@/lib/billing/storage";
 
 type Plan = {
   code: string;
@@ -18,15 +19,22 @@ type Plan = {
 
 // 요금제는 billing_plans에서 읽는다(하드코딩 금지). 공용 데이터라 정적으로 캐시한다. (D-046, D-054, D-133)
 // D-198: 영수증 장수만이 아니라 "이 가격에 받는 혜택" — 직원 수(1인당 가격)·AI 영수증 읽기·모든 기능, 카드 아래 모든 플랜 공통 기능
+// D-262: 카드마다 [저장 공간 추가] 체크(하나만) → 큰 가격이 요금제 + 추가 공간 합계로
 export async function Pricing() {
   "use cache";
   let plans: Plan[] = [];
+  let storageAddons: StorageAddon[] = [];
   try {
-    const { data } = await createPublicClient()
-      .from("billing_plans")
-      .select("code, name, monthly_price, monthly_receipts, recommended_size, is_unlimited, is_featured, max_members, chat_storage_mb, vault_storage_mb")
-      .order("sort_order");
+    const db = createPublicClient();
+    const [{ data }, { data: sa }] = await Promise.all([
+      db
+        .from("billing_plans")
+        .select("code, name, monthly_price, monthly_receipts, recommended_size, is_unlimited, is_featured, max_members, chat_storage_mb, vault_storage_mb")
+        .order("sort_order"),
+      db.from("storage_addons").select("code, storage_gb, monthly_price").order("sort_order"),
+    ]);
     plans = data ?? [];
+    storageAddons = sa ?? [];
   } catch {
     plans = [];
   }
@@ -43,8 +51,9 @@ export async function Pricing() {
       </div>
       <ul className="mx-auto mt-10 grid max-w-md gap-4 md:max-w-none md:grid-cols-3">
         {plans.map((plan) => (
+          <PlanStorage key={plan.code} addons={storageAddons} base={plan.monthly_price}>
           <li
-            key={plan.code}
+            data-plan={plan.code}
             className={`relative flex flex-col rounded-2xl border p-6 backdrop-blur ${plan.is_featured ? "border-emerald-400 bg-emerald-50/60 shadow-md" : "border-zinc-200 bg-white shadow-sm"}`}
           >
             {plan.is_featured && (
@@ -52,11 +61,7 @@ export async function Pricing() {
             )}
             <p className="break-keep text-sm text-zinc-500">{plan.recommended_size}</p>
             <h3 className="mt-1 text-xl font-semibold text-zinc-900">{plan.name}</h3>
-            <p className="mt-4 whitespace-nowrap text-3xl font-bold text-zinc-900">
-              {formatWon(plan.monthly_price)}
-              <span className="text-base font-normal text-zinc-500"> / 월</span>
-              <span className="ml-1 text-xs font-normal text-zinc-500">(VAT 별도)</span>
-            </p>
+            <PlanStoragePrice className="mt-4 whitespace-nowrap text-3xl font-bold tabular-nums text-zinc-900" unitClass="text-base font-normal text-zinc-500" vatClass="ml-1 text-xs font-normal text-zinc-500" />
             <p className="mt-5 text-xs font-medium text-zinc-500">이 가격에 포함</p>
             <ul className="mt-2 flex flex-col gap-2.5">
               {planBenefits(plan).map((b) => (
@@ -69,7 +74,9 @@ export async function Pricing() {
                 </li>
               ))}
             </ul>
+            <PlanStorageChips planName={plan.name} />
           </li>
+          </PlanStorage>
         ))}
       </ul>
       <div className="mx-auto mt-6 max-w-4xl rounded-2xl border border-zinc-200 bg-zinc-50 p-5">

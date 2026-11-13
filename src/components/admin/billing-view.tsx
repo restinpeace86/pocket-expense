@@ -5,6 +5,9 @@ import { checkoutPrice } from "@/lib/billing/checkout";
 import { COMMON_FEATURES, planBenefits, PRICING_RULES } from "@/lib/billing/plan-benefits";
 import { formatWon } from "@/lib/format";
 import { todayKst } from "@/lib/dates";
+import { PlanStorage, PlanStorageActions, PlanStorageChips, PlanStorageTotal } from "@/components/billing/plan-storage";
+import { StorageStatusCard } from "@/components/billing/storage-status";
+import type { StorageAddon, StorageStatus } from "@/lib/billing/storage";
 import { EventBonusBanner } from "./event-bonus-banner";
 import { SurveyButton } from "./survey-dialog";
 
@@ -50,9 +53,11 @@ function UsageCard({ s, preview, today }: { s: CreditStatus; preview: boolean; t
 const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
 
 // 후기 쿠폰(D-201)이 있으면 정가에 줄을 긋고 50% 할인가·부가세 포함 결제 금액을 보여 준다(월간만). 없으면 정가 + 쿠폰 안내
-function PlanCard({ plan, coupon }: { plan: BillingPlan; coupon: boolean }) {
+// D-262: 카드 아래 [저장 공간 추가] 체크(하나만) → 매월 결제 금액 = 요금제 + 추가 공간, 결제는 준비 중 · [지금 신청](결제 붙을 때까지 무료)
+function PlanCard({ plan, coupon, storage, storageAddons }: { plan: BillingPlan; coupon: boolean; storage: StorageStatus | null; storageAddons: StorageAddon[] }) {
   const c = checkoutPrice(plan.monthly_price, coupon);
   return (
+    <PlanStorage addons={storageAddons} base={plan.monthly_price} initial={storage?.extra_gb ?? 0}>
     <li className={`relative flex flex-col rounded-xl border bg-white p-5 ${plan.is_featured ? "border-brand-500 ring-1 ring-brand-500" : "border-zinc-200"}`}>
       {plan.is_featured && <span className="absolute -top-3 left-5 rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-semibold text-white">추천</span>}
       <label className="flex cursor-not-allowed items-center gap-2 text-zinc-400" title={DISABLED_TIP}>
@@ -96,12 +101,15 @@ function PlanCard({ plan, coupon }: { plan: BillingPlan; coupon: boolean }) {
           </li>
         ))}
       </ul>
-      <span className="mt-auto pt-4" title={DISABLED_TIP}>
-        <button type="button" disabled className="min-h-11 w-full cursor-not-allowed rounded-xl bg-zinc-200 px-4 text-sm font-semibold text-zinc-500">
-          이 플랜으로 결제하기
-        </button>
-      </span>
+      {storageAddons.length > 0 && (
+        <>
+          <PlanStorageChips planName={plan.name} />
+          <PlanStorageTotal />
+        </>
+      )}
+      <PlanStorageActions current={storage?.extra_gb ?? 0} pending={!!storage?.pending || !storage} tip={DISABLED_TIP} />
     </li>
+    </PlanStorage>
   );
 }
 
@@ -130,34 +138,6 @@ function AddonCard({ addons }: { addons: BillingAddon[] }) {
           </li>
         ))}
       </ul>
-    </section>
-  );
-}
-
-// 저장 용량 추가(D-248 요금, D-251 요금제 메뉴): 결제 연동 전이라 요금 안내만. 신청·켜기는 8-103 Spec 뒤
-const STORAGE_ADDONS = [
-  { gb: 10, price: 10000 },
-  { gb: 25, price: 20000 },
-  { gb: 50, price: 35000 },
-  { gb: 100, price: 40000 },
-];
-function StorageAddonCard() {
-  return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-5" aria-labelledby="storage-addon-title" data-storage-addon>
-      <h2 id="storage-addon-title" className="flex flex-wrap items-center gap-2 font-semibold text-zinc-900">
-        저장 용량 추가
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">준비 중</span>
-      </h2>
-      <p className="mt-1 text-sm text-zinc-700">채팅 사진·파일과 파일 보관함이 함께 쓰는 용량을 늘려요. 매달 요금이에요.</p>
-      <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {STORAGE_ADDONS.map((a) => (
-          <li key={a.gb} className="rounded-xl border border-zinc-200 px-3 py-2.5 text-center">
-            <b className="block text-[15px]">+{a.gb}GB</b>
-            <span className="block text-sm tabular-nums text-zinc-700">월 {formatWon(a.price)}</span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-xs text-zinc-500">VAT 별도. 결제가 열리면 여기서 바로 신청할 수 있어요.</p>
     </section>
   );
 }
@@ -198,7 +178,23 @@ function PaymentForm() {
   );
 }
 
-export function BillingView({ status, plans, addons = [], preview = false, today = todayKst() }: { status: CreditStatus; plans: BillingPlan[]; addons?: BillingAddon[]; preview?: boolean; today?: string }) {
+export function BillingView({
+  status,
+  plans,
+  addons = [],
+  storage = null,
+  storageAddons = [],
+  preview = false,
+  today = todayKst(),
+}: {
+  status: CreditStatus;
+  plans: BillingPlan[];
+  addons?: BillingAddon[];
+  storage?: StorageStatus | null;
+  storageAddons?: StorageAddon[];
+  preview?: boolean;
+  today?: string;
+}) {
   const exhausted = status.granted - status.used <= 0;
   return (
     <>
@@ -217,13 +213,14 @@ export function BillingView({ status, plans, addons = [], preview = false, today
         }
       />
       <UsageCard s={status} preview={preview} today={today} />
+      {storage && <StorageStatusCard status={storage} />}
       {exhausted && <AddonCard addons={addons} />}
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">정식 플랜</h2>
         <p className="-mt-1 break-keep text-sm text-zinc-600">모든 기능은 모든 플랜에 같아요. 직원 수와 AI 영수증 읽기 장수로 팀 규모에 맞춰 고르세요.</p>
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {plans.map((p) => (
-            <PlanCard key={p.code} plan={p} coupon={status.coupon} />
+            <PlanCard key={p.code} plan={p} coupon={status.coupon} storage={storage} storageAddons={storageAddons} />
           ))}
         </ul>
         <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
@@ -249,7 +246,6 @@ export function BillingView({ status, plans, addons = [], preview = false, today
           </ul>
         </div>
       </section>
-      <StorageAddonCard />
       <PaymentForm />
     </>
   );
