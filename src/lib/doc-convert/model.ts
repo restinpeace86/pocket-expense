@@ -162,6 +162,8 @@ export function draftDaysLeft(createdAt: string, now = Date.now()): number {
 }
 
 export function convertErrorMessage(message: string): string {
+  // D-265: 이번 달 무료 변환을 다 쓰고 크레딧도 없음 — 숫자·크레딧은 말하지 않는다
+  if (message.includes("CONVERT_LIMIT")) return "이번 달 서류 변환을 다 썼어요. 관리자에게 알려 주세요. 다음 달 1일에 다시 쓸 수 있어요.";
   if (message.includes("NO_CREDITS")) return "지금은 변환할 수 없어요. 관리자에게 문의해 주세요.";
   if (message.includes("TOO_MANY_PAGES")) return `한 번에 ${MAX_PAGES}쪽까지 변환할 수 있어요. 필요한 쪽만 나눠서 올려 주세요.`;
   if (message.includes("NOT_CONVERTIBLE")) return "사진(JPG·PNG)이나 PDF만 엑셀로 바꿀 수 있어요.";

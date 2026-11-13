@@ -31,7 +31,7 @@ describe("플랜 혜택", () => {
   });
   it("공통 기능은 지금 있는 기능만(7개), 요금 기준 7줄(D-199·D-201)", () => {
     expect(COMMON_FEATURES).toHaveLength(7);
-    expect(PRICING_RULES).toHaveLength(8); // D-262 저장 공간 추가 한 줄
+    expect(PRICING_RULES).toHaveLength(9); // D-262 저장 공간 추가 · D-265 서류 변환 무료 횟수
     expect(PRICING_RULES.join(" ")).toContain("영수증을 1장 이상 올린 사람만");
   });
 });

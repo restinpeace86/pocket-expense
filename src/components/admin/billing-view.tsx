@@ -8,6 +8,7 @@ import { todayKst } from "@/lib/dates";
 import { PlanStorage, PlanStorageActions, PlanStorageChips, PlanStorageTotal } from "@/components/billing/plan-storage";
 import { StorageStatusCard } from "@/components/billing/storage-status";
 import type { StorageAddon, StorageStatus } from "@/lib/billing/storage";
+import type { DocConvertQuota } from "@/lib/billing/doc-quota";
 import { EventBonusBanner } from "./event-bonus-banner";
 import { SurveyButton } from "./survey-dialog";
 
@@ -51,6 +52,32 @@ function UsageCard({ s, preview, today }: { s: CreditStatus; preview: boolean; t
   );
 }
 const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+
+// 이번 달 서류 → 엑셀 변환 무료 횟수(D-265) — 관리자만. 넘으면 크레딧으로 계속, 매월 1일 다시 채워짐
+function DocConvertQuotaCard({ q, today }: { q: DocConvertQuota; today: string }) {
+  const pct = q.unlimited ? 0 : q.limit ? Math.min(100, Math.round((q.used / q.limit) * 100)) : 100;
+  const over = !q.unlimited && q.used >= q.limit;
+  const [y, m] = today.slice(0, 7).split("-").map(Number);
+  const next = m === 12 ? `${y + 1}년 1월 1일` : `${m + 1}월 1일`;
+  return (
+    <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm" data-doc-quota={q.used}>
+      <p className="flex items-baseline justify-between gap-2 text-sm">
+        <b className="text-zinc-900">이번 달 서류 → 엑셀 변환</b>
+        <span className="tabular-nums text-zinc-700" data-doc-quota-text>
+          {q.used.toLocaleString("ko-KR")} / {q.unlimited ? "무제한" : `${q.limit.toLocaleString("ko-KR")}건`}
+        </span>
+      </p>
+      {!q.unlimited && (
+        <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-zinc-100" aria-hidden>
+          <div className={`h-full rounded-full ${over ? "bg-amber-500" : "bg-sky-600"}`} style={{ width: `${pct}%` }} />
+        </div>
+      )}
+      <p className="mt-2 break-keep text-xs text-zinc-600">
+        {q.plan} 기준 · {next}에 다시 채워져요. {over ? "이번 달 무료 횟수를 다 써서 지금은 크레딧으로 변환돼요(1쪽 1크레딧)." : "넘으면 크레딧으로 계속 변환돼요. 직원 화면에는 횟수가 보이지 않아요."}
+      </p>
+    </section>
+  );
+}
 
 // 후기 쿠폰(D-201)이 있으면 정가에 줄을 긋고 50% 할인가·부가세 포함 결제 금액을 보여 준다(월간만). 없으면 정가 + 쿠폰 안내
 // D-262: 카드 아래 [저장 공간 추가] 체크(하나만) → 매월 결제 금액 = 요금제 + 추가 공간, 결제는 준비 중 · [지금 신청](결제 붙을 때까지 무료)
@@ -184,6 +211,7 @@ export function BillingView({
   addons = [],
   storage = null,
   storageAddons = [],
+  docQuota = null,
   preview = false,
   today = todayKst(),
 }: {
@@ -192,6 +220,7 @@ export function BillingView({
   addons?: BillingAddon[];
   storage?: StorageStatus | null;
   storageAddons?: StorageAddon[];
+  docQuota?: DocConvertQuota | null;
   preview?: boolean;
   today?: string;
 }) {
@@ -213,6 +242,7 @@ export function BillingView({
         }
       />
       <UsageCard s={status} preview={preview} today={today} />
+      {docQuota && <DocConvertQuotaCard q={docQuota} today={today} />}
       {storage && <StorageStatusCard status={storage} />}
       {exhausted && <AddonCard addons={addons} />}
       <section className="flex flex-col gap-3">

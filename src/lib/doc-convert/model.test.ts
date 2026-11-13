@@ -90,6 +90,8 @@ describe("기타", () => {
   it("직원 안내에 크레딧 숫자 없음", () => {
     expect(convertErrorMessage("NO_CREDITS")).toBe("지금은 변환할 수 없어요. 관리자에게 문의해 주세요.");
     expect(convertErrorMessage("NO_CREDITS")).not.toMatch(/\d|크레딧/);
+    expect(convertErrorMessage("CONVERT_LIMIT")).toBe("이번 달 서류 변환을 다 썼어요. 관리자에게 알려 주세요. 다음 달 1일에 다시 쓸 수 있어요.");
+    expect(convertErrorMessage("CONVERT_LIMIT")).not.toMatch(/크레딧|\d+건/);
   });
   it("초안 남은 날·파일 이름", () => {
     const now = Date.parse("2026-11-11T00:00:00Z");

@@ -51,7 +51,7 @@ export function CreditUsageSection({ base, month, thisMonth, data }: { base: str
           )}
         </span>
       </div>
-      <p className="text-[13px] leading-relaxed text-zinc-600">직원 화면에는 크레딧이 보이지 않아요. 누가 언제 어디에 썼는지는 여기서만 볼 수 있어요. 서류 → 엑셀은 1쪽에 1크레딧, 표를 못 찾으면 돌려줘요.</p>
+      <p className="text-[13px] leading-relaxed text-zinc-600">직원 화면에는 크레딧이 보이지 않아요. 누가 언제 어디에 썼는지는 여기서만 볼 수 있어요. 서류 → 엑셀은 이번 달 무료 횟수를 넘은 것만 1쪽에 1크레딧이고, 표를 못 찾으면 돌려줘요.</p>
       {!data ? (
         <p className="text-sm text-zinc-600">내역을 불러오지 못했어요.</p>
       ) : (

@@ -1065,12 +1065,14 @@ export type Database = {
           chat_storage_mb: number | null
           code: string
           created_at: string
+          doc_converts_unlimited: boolean
           form_slots: number
           id: string
           is_featured: boolean
           is_purchasable: boolean
           is_unlimited: boolean
           max_members: number | null
+          monthly_doc_converts: number | null
           monthly_price: number
           monthly_receipts: number
           name: string
@@ -1084,12 +1086,14 @@ export type Database = {
           chat_storage_mb?: number | null
           code: string
           created_at?: string
+          doc_converts_unlimited?: boolean
           form_slots?: number
           id?: string
           is_featured?: boolean
           is_purchasable?: boolean
           is_unlimited?: boolean
           max_members?: number | null
+          monthly_doc_converts?: number | null
           monthly_price: number
           monthly_receipts: number
           name: string
@@ -1103,12 +1107,14 @@ export type Database = {
           chat_storage_mb?: number | null
           code?: string
           created_at?: string
+          doc_converts_unlimited?: boolean
           form_slots?: number
           id?: string
           is_featured?: boolean
           is_purchasable?: boolean
           is_unlimited?: boolean
           max_members?: number | null
+          monthly_doc_converts?: number | null
           monthly_price?: number
           monthly_receipts?: number
           name?: string
@@ -2690,6 +2696,7 @@ export type Database = {
           confirmed_at: string | null
           created_at: string
           credits: number
+          free: boolean
           id: string
           member_id: string
           mime: string
@@ -2707,6 +2714,7 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           credits?: number
+          free?: boolean
           id: string
           member_id: string
           mime: string
@@ -2724,6 +2732,7 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           credits?: number
+          free?: boolean
           id?: string
           member_id?: string
           mime?: string
@@ -2750,6 +2759,32 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      doc_convert_counts: {
+        Row: {
+          company_id: string
+          month: string
+          used: number
+        }
+        Insert: {
+          company_id: string
+          month: string
+          used?: number
+        }
+        Update: {
+          company_id?: string
+          month?: string
+          used?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doc_convert_counts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -5483,6 +5518,7 @@ export type Database = {
       doc_convert_delete: { Args: { p_id: string }; Returns: string }
       doc_convert_due: { Args: never; Returns: Json }
       doc_convert_fail: { Args: { p_id: string }; Returns: string }
+      doc_convert_quota: { Args: never; Returns: Json }
       doc_convert_ready: {
         Args: { p_id: string; p_sheets: Json }
         Returns: undefined

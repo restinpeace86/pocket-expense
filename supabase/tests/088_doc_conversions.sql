@@ -34,6 +34,9 @@ insert into public.companies (id, name, invite_code, business_number) values
   ('c8800000-0000-0000-0000-00000000000a', '변환A', 'DCAAAAAA', '1000000881'),
   ('c8800000-0000-0000-0000-00000000000b', '변환B', 'DCBBBBBB', '1000000882');
 update public.companies set receipt_credits_granted = 3, receipt_credits_used = 0 where id in ('c8800000-0000-0000-0000-00000000000a', 'c8800000-0000-0000-0000-00000000000b');
+-- 154(D-265): 이번 달 무료 변환을 다 쓴 상태로 두고 크레딧 경로를 본다(무료 횟수는 093)
+insert into public.doc_convert_counts (company_id, month, used)
+select id, to_char(now() at time zone 'Asia/Seoul', 'YYYY-MM'), 100000 from public.companies where id in ('c8800000-0000-0000-0000-00000000000a', 'c8800000-0000-0000-0000-00000000000b');
 insert into public.members (id, auth_user_id, company_id, name, phone, role, status, privacy_agreed_at, approved_at) values
   ('a8810000-0000-0000-0000-000000000001', 'a8800000-0000-0000-0000-000000000001', 'c8800000-0000-0000-0000-00000000000a', 'A대표', '01098801001', 'super_admin', 'approved', now(), now()),
   ('a8810000-0000-0000-0000-000000000002', 'a8800000-0000-0000-0000-000000000002', 'c8800000-0000-0000-0000-00000000000a', 'A직원', '01098801002', 'employee', 'approved', now(), now()),
@@ -85,7 +88,7 @@ begin
     'c8800000-0000-0000-0000-00000000000a/a8810000-0000-0000-0000-000000000002/d1.pdf', 2, 'c8830000-0000-0000-0000-000000000001');
   if (select receipt_credits_used from public.companies where id = 'c8800000-0000-0000-0000-00000000000a') <> 2 then raise exception 'FAIL [charged 2]'; end if;
   if (select note from public.credit_ledger where reason = 'doc_convert' and company_id = 'c8800000-0000-0000-0000-00000000000a') <> '휴가신청서.jpg (2쪽)' then raise exception 'FAIL [note]'; end if;
-  perform public._t_raises88($q$select public.doc_convert_begin(gen_random_uuid(), 'a8810000-0000-0000-0000-000000000002', 'b', 'image/png', 'c8800000-0000-0000-0000-00000000000a/a8810000-0000-0000-0000-000000000002/d2.png', 2, null)$q$, 'NO_CREDITS', 'no credits');
+  perform public._t_raises88($q$select public.doc_convert_begin(gen_random_uuid(), 'a8810000-0000-0000-0000-000000000002', 'b', 'image/png', 'c8800000-0000-0000-0000-00000000000a/a8810000-0000-0000-0000-000000000002/d2.png', 2, null)$q$, 'CONVERT_LIMIT', 'no credits');
   perform public._t_raises88($q$select public.doc_convert_begin(gen_random_uuid(), 'a8810000-0000-0000-0000-000000000002', 'b', 'image/png', 'c8800000-0000-0000-0000-00000000000a/a8810000-0000-0000-0000-000000000003/d2.png', 1, null)$q$, 'INVALID_FILE', 'other folder');
   perform public._t_raises88($q$select public.doc_convert_begin(gen_random_uuid(), 'a8810000-0000-0000-0000-000000000002', 'b', 'image/png', 'c8800000-0000-0000-0000-00000000000a/a8810000-0000-0000-0000-000000000002/d3.png', 6, null)$q$, 'TOO_MANY_PAGES', '6 pages');
   -- 실패 → 돌려줌 + 줄 지움
