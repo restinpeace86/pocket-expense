@@ -5,7 +5,7 @@ import { checkoutPrice } from "@/lib/billing/checkout";
 import { COMMON_FEATURES, planBenefits, PRICING_RULES } from "@/lib/billing/plan-benefits";
 import { formatWon } from "@/lib/format";
 import { todayKst } from "@/lib/dates";
-import { PlanStorage, PlanStorageActions, PlanStorageChips, PlanStorageTotal } from "@/components/billing/plan-storage";
+import { PlanPayButton, PlanStorage, PlanStorageTotal, StorageAddonPicker, StorageRequestButton } from "@/components/billing/plan-storage";
 import { StorageStatusCard } from "@/components/billing/storage-status";
 import type { StorageAddon, StorageStatus } from "@/lib/billing/storage";
 import type { DocConvertQuota } from "@/lib/billing/doc-quota";
@@ -80,11 +80,10 @@ function DocConvertQuotaCard({ q, today }: { q: DocConvertQuota; today: string }
 }
 
 // 후기 쿠폰(D-201)이 있으면 정가에 줄을 긋고 50% 할인가·부가세 포함 결제 금액을 보여 준다(월간만). 없으면 정가 + 쿠폰 안내
-// D-262: 카드 아래 [저장 공간 추가] 체크(하나만) → 매월 결제 금액 = 요금제 + 추가 공간, 결제는 준비 중 · [지금 신청](결제 붙을 때까지 무료)
-function PlanCard({ plan, coupon, storage, storageAddons }: { plan: BillingPlan; coupon: boolean; storage: StorageStatus | null; storageAddons: StorageAddon[] }) {
+// D-262 → D-270: 저장 공간 추가는 카드 밖 한 영역에서 고름 → 카드의 매월 결제 금액 = 요금제 + 추가 공간, 결제는 준비 중
+function PlanCard({ plan, coupon, hasAddons }: { plan: BillingPlan; coupon: boolean; hasAddons: boolean }) {
   const c = checkoutPrice(plan.monthly_price, coupon);
   return (
-    <PlanStorage addons={storageAddons} base={plan.monthly_price} initial={storage?.extra_gb ?? 0}>
     <li className={`relative flex flex-col rounded-xl border bg-white p-5 ${plan.is_featured ? "border-brand-500 ring-1 ring-brand-500" : "border-zinc-200"}`}>
       {plan.is_featured && <span className="absolute -top-3 left-5 rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-semibold text-white">추천</span>}
       <label className="flex cursor-not-allowed items-center gap-2 text-zinc-400" title={DISABLED_TIP}>
@@ -128,15 +127,9 @@ function PlanCard({ plan, coupon, storage, storageAddons }: { plan: BillingPlan;
           </li>
         ))}
       </ul>
-      {storageAddons.length > 0 && (
-        <>
-          <PlanStorageChips planName={plan.name} />
-          <PlanStorageTotal />
-        </>
-      )}
-      <PlanStorageActions current={storage?.extra_gb ?? 0} pending={!!storage?.pending || !storage} tip={DISABLED_TIP} />
+      {hasAddons && <PlanStorageTotal base={plan.monthly_price} />}
+      <PlanPayButton base={plan.monthly_price} tip={DISABLED_TIP} />
     </li>
-    </PlanStorage>
   );
 }
 
@@ -231,7 +224,7 @@ export function BillingView({
       <SectionHeading
         as="h1"
         title="요금제"
-        summary="모든 기능이 포함된 월 구독이에요. 직원 수와 AI 영수증 읽기 장수로 플랜을 골라요. 지금은 첫 월말 마감까지 무료 이용 기간이라 결제하지 않고 쓰실 수 있어요."
+        summary="모든 기능이 포함된 월 구독이에요. 인원 제한은 없고, AI 영수증 읽기 장수·저장 공간으로 플랜을 골라요. 지금은 첫 월말 마감까지 무료 이용 기간이라 결제하지 않고 쓰실 수 있어요."
         helpId="billing"
         help={
           <>
@@ -247,12 +240,17 @@ export function BillingView({
       {exhausted && <AddonCard addons={addons} />}
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">정식 플랜</h2>
-        <p className="-mt-1 break-keep text-sm text-zinc-600">모든 기능은 모든 플랜에 같아요. 직원 수와 AI 영수증 읽기 장수로 팀 규모에 맞춰 고르세요.</p>
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {plans.map((p) => (
-            <PlanCard key={p.code} plan={p} coupon={status.coupon} storage={storage} storageAddons={storageAddons} />
-          ))}
-        </ul>
+        <p className="-mt-1 break-keep text-sm text-zinc-600">모든 기능은 모든 플랜에 같고 인원 제한은 없어요. AI 영수증 읽기 장수·저장 공간으로 팀 규모에 맞춰 고르세요.</p>
+        <PlanStorage addons={storageAddons} initial={storage?.extra_gb ?? 0}>
+          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {plans.map((p) => (
+              <PlanCard key={p.code} plan={p} coupon={status.coupon} hasAddons={storageAddons.length > 0} />
+            ))}
+          </ul>
+          <StorageAddonPicker note="모든 플랜에 같은 가격으로 더할 수 있어요. 고르면 카드의 매월 결제 금액이 바뀌어요. 결제가 열릴 때까지는 [지금 신청]하면 무료로 켜 드려요.">
+            {storage && <StorageRequestButton current={storage.extra_gb} pending={!!storage.pending} />}
+          </StorageAddonPicker>
+        </PlanStorage>
         <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
           <p className="text-sm font-semibold">모든 플랜에 똑같이 포함</p>
           <ul className="mt-2 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">

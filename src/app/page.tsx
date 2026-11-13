@@ -12,6 +12,7 @@ import { Wordmark } from "@/components/brand/logo";
 import { BRAND, BRAND_JOSA } from "@/lib/brand";
 import { ACCENT, BRAND_BUTTON, type Accent } from "@/components/landing/accent";
 import { WhyArtwork, type WhyArt } from "@/components/landing/why-art";
+import { SectionNav } from "@/components/landing/section-nav";
 
 // 랜딩 페이지 (spec/screens/landing-page.md §0, D-255 §C 개편). 정적 화면 — 세션을 읽지 않는다.
 // 밝은 바탕 + [기능 미리 보기]만 진한 띠(시뮬레이션 7개 탭). CTA는 로그인 후 회사 생성 위저드로 간다.
@@ -122,11 +123,7 @@ export default function LandingPage() {
             <span className="hidden whitespace-nowrap rounded-full border border-zinc-300 px-2 py-0.5 text-xs text-zinc-600 md:inline">작은 회사 통합 운영관리</span>
           </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-            {SECTION_LINKS.map(({ href, label }) => (
-              <a key={href} href={href} className="hidden min-h-11 items-center whitespace-nowrap rounded-xl px-2.5 text-sm text-zinc-600 hover:text-zinc-900 lg:inline-flex">
-                {label}
-              </a>
-            ))}
+            <SectionNav links={SECTION_LINKS} />
             <Link href="/login" className="inline-flex min-h-11 items-center whitespace-nowrap rounded-xl px-2 text-sm text-zinc-700 hover:text-zinc-900 sm:px-3">
               로그인
             </Link>

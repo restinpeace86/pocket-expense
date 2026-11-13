@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
 import { COMMON_FEATURES, planBenefits, PRICING_RULES } from "@/lib/billing/plan-benefits";
 import { createPublicClient } from "@/lib/supabase/public";
-import { PlanStorage, PlanStorageChips, PlanStoragePrice } from "@/components/billing/plan-storage";
+import { PlanStorage, StorageAddonPicker, PlanStoragePrice } from "@/components/billing/plan-storage";
 import type { StorageAddon } from "@/lib/billing/storage";
 
 type Plan = {
@@ -47,12 +47,13 @@ export async function Pricing() {
           지금 가입하면 첫 월말 마감까지 무료
         </span>
         <h2 className="mt-4 text-balance break-keep text-3xl font-bold tracking-tight text-zinc-900">모든 기능은 같고, 팀 규모에 맞춰 고르세요</h2>
-        <p className="mt-2 text-balance break-keep text-zinc-600">플랜 안에서는 인원이 늘어도 같은 가격. 영수증부터 결재·정산·세무 마감까지 전부 포함, 도입비 0원.</p>
+        <p className="mt-2 text-balance break-keep text-zinc-600">모든 플랜 인원 제한 없음. 직원이 늘어도 요금은 그대로, 영수증부터 결재·정산·세무 마감까지 전부 포함, 도입비 0원.</p>
       </div>
+      <PlanStorage addons={storageAddons}>
       <ul className="mx-auto mt-10 grid max-w-md gap-4 md:max-w-none md:grid-cols-3">
         {plans.map((plan) => (
-          <PlanStorage key={plan.code} addons={storageAddons} base={plan.monthly_price}>
           <li
+            key={plan.code}
             data-plan={plan.code}
             className={`relative flex flex-col rounded-2xl border p-6 backdrop-blur ${plan.is_featured ? "border-emerald-400 bg-emerald-50/60 shadow-md" : "border-zinc-200 bg-white shadow-sm"}`}
           >
@@ -61,7 +62,7 @@ export async function Pricing() {
             )}
             <p className="break-keep text-sm text-zinc-500">{plan.recommended_size}</p>
             <h3 className="mt-1 text-xl font-semibold text-zinc-900">{plan.name}</h3>
-            <PlanStoragePrice className="mt-4 whitespace-nowrap text-3xl font-bold tabular-nums text-zinc-900" unitClass="text-base font-normal text-zinc-500" vatClass="ml-1 text-xs font-normal text-zinc-500" />
+            <PlanStoragePrice base={plan.monthly_price} className="mt-4 whitespace-nowrap text-3xl font-bold tabular-nums text-zinc-900" unitClass="text-base font-normal text-zinc-500" vatClass="ml-1 text-xs font-normal text-zinc-500" />
             <p className="mt-5 text-xs font-medium text-zinc-500">이 가격에 포함</p>
             <ul className="mt-2 flex flex-col gap-2.5">
               {planBenefits(plan).map((b) => (
@@ -74,11 +75,14 @@ export async function Pricing() {
                 </li>
               ))}
             </ul>
-            <PlanStorageChips planName={plan.name} />
           </li>
-          </PlanStorage>
         ))}
       </ul>
+      {/* 저장 공간 추가(D-270): 카드마다가 아니라 한 영역 — 고르면 세 카드 가격이 합계로 */}
+      <div className="mx-auto mt-4 max-w-md md:max-w-none">
+        <StorageAddonPicker />
+      </div>
+      </PlanStorage>
       <div className="mx-auto mt-6 max-w-4xl rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
         <p className="text-center text-sm font-semibold text-zinc-900">모든 플랜에 똑같이 포함</p>
         <ul className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
