@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, MessagesSquare, X } from "lucide-react";
+import { ChevronDown, ChevronRight, MessagesSquare, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listTimeLabel, type ChatKind, type ChatThread } from "@/lib/chat/format";
@@ -10,15 +10,27 @@ import { ChatOverlay } from "./overlay";
 
 type MyThread = ChatThread & { room_kind: ChatKind; room_title: string | null; room_members: number };
 
-// 채팅 목록 맨 위 [내 서브 대화](D-246): 내가 참여한 서브 대화(여러 방) — 새 글 수 배지, 누르면 모아보기
+// 서브 대화 열기: 그 방으로 가서 서브 대화를 연다. 이미 그 방이면 주소만 바뀌고 화면은 그대로라, 열라고 알려 줌
+function openThread(router: ReturnType<typeof useRouter>, base: string, t: MyThread) {
+  router.push(`${base}/${t.room_id}?thread=${t.id}`);
+  window.dispatchEvent(new CustomEvent(OPEN_THREAD_EVENT, { detail: { roomId: t.room_id, threadId: t.id } }));
+}
+
+const DROPDOWN_MAX = 8;
+
+// 채팅 목록 맨 위 [내 서브 대화](D-246 → 9-20 드롭다운): 목록 스크롤 밖이라 늘 위에 붙어 있다.
+// 누르면 그 자리에서 펼쳐져 내가 참여한 서브 대화(진행 중 최근 글 순 → 종결은 흐리게)와 방별 새 글 수. 고르면 열리고 접힘.
+// 8개가 넘으면 [모두 보기] = 예전 모아보기 창. 참여한 서브 대화가 하나도 없으면 줄 자체를 숨긴다
 export function MyThreadsRow({ base }: { base: string }) {
   const { supabase, useEvents, membership } = useChat();
-  const [count, setCount] = useState<number | null>(null);
-  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const [list, setList] = useState<MyThread[] | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [sheet, setSheet] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const load = useCallback(async () => {
-    const { data } = await supabase.rpc("chat_my_threads_new");
-    setCount(typeof data === "number" ? data : 0);
+    const { data } = await supabase.rpc("chat_my_threads");
+    setList((data as unknown as MyThread[]) ?? []);
   }, [supabase]);
   useEffect(() => {
     void Promise.resolve().then(load);
@@ -35,33 +47,96 @@ export function MyThreadsRow({ base }: { base: string }) {
       timer.current = setTimeout(() => void load(), 400);
     }
   });
+  useEffect(() => {
+    if (!expanded) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setExpanded(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [expanded]);
+  if (!list?.length) return null;
+  const count = list.reduce((n, t) => n + (t.status === "open" ? t.new : 0), 0);
+  const recent = (a: MyThread, b: MyThread) => (b.last_message_at ?? "").localeCompare(a.last_message_at ?? "");
+  const ordered = [...filterThreads(list, "open", "").sort(recent), ...filterThreads(list, "closed", "").sort(recent)];
+  const shown = ordered.slice(0, DROPDOWN_MAX);
   return (
-    <>
-      <button type="button" onClick={() => setOpen(true)} className="flex w-full items-center gap-3 border-b border-zinc-100 px-3 py-2.5 text-left hover:bg-zinc-50" data-my-threads>
+    <div className="border-b border-zinc-100" data-my-threads-wrap>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        aria-controls="my-threads-dropdown"
+        className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-zinc-50"
+        data-my-threads
+      >
         <span aria-hidden className="inline-flex size-12 shrink-0 items-center justify-center rounded-[38%] bg-brand-50 text-brand-700">
           <MessagesSquare className="size-6" />
         </span>
         <span className="min-w-0 flex-1">
           <b className="block text-[15px] text-zinc-900">내 서브 대화</b>
-          <span className="block truncate text-[13px] text-zinc-600">여러 방에서 내가 참여한 서브 대화 모아보기</span>
+          <span className="block truncate text-[13px] text-zinc-600">{expanded ? "고르면 바로 열려요" : `참여 중 ${list.filter((t) => t.status === "open").length}개 · 눌러서 펼치기`}</span>
         </span>
         {!!count && (
           <span className="rounded-full bg-red-500 px-1.5 text-xs font-bold text-white" data-my-threads-new>
             {count}
           </span>
         )}
-        <ChevronRight className="size-4 shrink-0 text-zinc-400" aria-hidden />
+        <ChevronDown className={`size-4 shrink-0 text-zinc-500 transition-transform ${expanded ? "rotate-180" : ""}`} aria-hidden />
       </button>
-      {open && (
+      {expanded && (
+        <ul id="my-threads-dropdown" className="max-h-[50dvh] overflow-y-auto border-t border-zinc-100 bg-zinc-50/60 py-1" aria-label="내 서브 대화 목록" data-my-threads-dropdown>
+          {shown.map((t) => (
+            <li key={t.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  setExpanded(false);
+                  openThread(router, base, t);
+                }}
+                className={`flex min-h-12 w-full items-center gap-2 px-4 py-2 text-left hover:bg-white ${t.status === "closed" ? "opacity-60" : ""}`}
+                data-my-thread={t.id}
+              >
+                <span className="min-w-0 flex-1">
+                  <b className="block truncate text-[14px] text-zinc-900">
+                    {t.title}
+                    {t.status === "closed" && <span className="ml-1 text-xs font-normal text-zinc-500">· 요약됨</span>}
+                  </b>
+                  <span className="block truncate text-xs text-zinc-600">
+                    {t.room_title ?? "채팅"} · {listTimeLabel(t.last_message_at)}
+                  </span>
+                </span>
+                {t.status === "open" && t.new > 0 && (
+                  <span className="shrink-0 rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white" aria-label={`새 글 ${t.new}개`}>
+                    {t.new}
+                  </span>
+                )}
+              </button>
+            </li>
+          ))}
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                setExpanded(false);
+                setSheet(true);
+              }}
+              className="flex min-h-11 w-full items-center justify-center gap-1 text-[13px] font-semibold text-brand-700 hover:bg-white"
+              data-my-threads-all
+            >
+              {ordered.length > DROPDOWN_MAX ? `모두 보기 (${ordered.length})` : "모아보기로 보기"} <ChevronRight className="size-4" aria-hidden />
+            </button>
+          </li>
+        </ul>
+      )}
+      {sheet && (
         <MyThreadsSheet
           base={base}
           onClose={() => {
-            setOpen(false);
+            setSheet(false);
             void load();
           }}
         />
       )}
-    </>
+    </div>
   );
 }
 
@@ -80,9 +155,7 @@ function MyThreadsSheet({ base, onClose }: { base: string; onClose: () => void }
   }, [onClose]);
   const go = (t: MyThread) => {
     onClose();
-    router.push(`${base}/${t.room_id}?thread=${t.id}`);
-    // 이미 그 방이면 주소만 바뀌고 화면은 그대로라, 열라고 알려 줌
-    window.dispatchEvent(new CustomEvent(OPEN_THREAD_EVENT, { detail: { roomId: t.room_id, threadId: t.id } }));
+    openThread(router, base, t);
   };
   const shown = filterThreads(list ?? [], tab, "");
   const openN = (list ?? []).filter((t) => t.status === "open").length;
