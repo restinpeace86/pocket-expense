@@ -16,6 +16,7 @@ export type BillingPlan = {
   monthly_doc_converts: number | null; // 서류 → 엑셀 변환 월 무료 횟수(D-265)
   doc_converts_unlimited: boolean; // 비즈니스 무제한*(공정 사용 기준 = monthly_doc_converts)
   trash_days: number | null; // 파일 보관함 휴지통 복구 기간(D-266)
+  storage_mb?: number | null; // 회사 공용 저장 공간(D-271, migration 158 뒤 조회)
 };
 
 export type CreditStatus = {

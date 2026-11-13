@@ -1,15 +1,18 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useState, useTransition, type ReactNode } from "react";
 import { requestStorageAction } from "@/app/workspace/[id]/admin/billing/actions";
-import { monthlyTotal, requestLabel, type StorageAddon } from "@/lib/billing/storage";
+import { addonPrice, requestLabel, type StorageAddon } from "@/lib/billing/storage";
 import { formatWon } from "@/lib/format";
 
-// [저장 공간 추가](8-103, D-262 → D-270): 카드 밖 한 영역에서 하나만 고르면(다시 누르면 해제) 모든 요금제 카드 가격이 합계로 바뀐다.
+// 요금 고르기(D-262 → D-270 → D-272): 플랜 카드 하나 고르기 + [저장 공간 추가] 체크(하나만) → 아래 [선택한 구성]에
+// "플랜 가격 + 저장 공간 가격 = 합계". 카드 가격은 바뀌지 않는다. 결제는 [선택한 구성]에서(지금은 결제 준비 중).
 // 랜딩 가격표와 관리자 요금제가 같이 쓴다
-type Ctx = { addons: StorageAddon[]; gb: number; setGb: (gb: number) => void };
+export type PlanOption = { code: string; name: string; price: number };
+type Ctx = { addons: StorageAddon[]; plans: PlanOption[]; plan: string; setPlan: (c: string) => void; gb: number; setGb: (gb: number) => void };
 const PlanStorageCtx = createContext<Ctx | null>(null);
 const use = () => {
   const c = useContext(PlanStorageCtx);
@@ -17,33 +20,31 @@ const use = () => {
   return c;
 };
 
-export function PlanStorage({ addons, initial = 0, children }: { addons: StorageAddon[]; initial?: number; children: ReactNode }) {
+export function PlanStorage({ addons, plans, initialPlan, initial = 0, children }: { addons: StorageAddon[]; plans: PlanOption[]; initialPlan: string; initial?: number; children: ReactNode }) {
   const [gb, setGb] = useState(initial);
-  return <PlanStorageCtx.Provider value={{ addons, gb, setGb }}>{children}</PlanStorageCtx.Provider>;
+  const [plan, setPlan] = useState(initialPlan);
+  return <PlanStorageCtx.Provider value={{ addons, plans, plan, setPlan, gb, setGb }}>{children}</PlanStorageCtx.Provider>;
 }
 
-// 큰 가격: 고르면 합계, 아래에 "29,000원 + 공간 10GB 10,000원"
-export function PlanStoragePrice({ base, className, unitClass, vatClass }: { base: number; className: string; unitClass: string; vatClass: string }) {
-  const { addons, gb } = use();
-  const total = monthlyTotal(base, addons, gb);
+// 플랜 카드(고를 수 있음): 카드 아무 데나 누르면 그 플랜. 맨 위 동그라미 + 테두리로 표시
+export function PlanChoice({ code, name, className, selectedClass, children }: { code: string; name: string; className: string; selectedClass: string; children: ReactNode }) {
+  const { plan, setPlan } = use();
+  const on = plan === code;
   return (
-    <>
-      <p className={className} data-plan-total={total}>
-        {formatWon(total)}
-        <span className={unitClass}> / 월</span>
-        <span className={vatClass}>(VAT 별도)</span>
-      </p>
-      {gb > 0 && (
-        <p className="mt-0.5 text-xs tabular-nums text-zinc-500" data-plan-calc>
-          {formatWon(base)} + 공간 {gb}GB {formatWon(total - base)}
-        </p>
-      )}
-    </>
+    <li className={`${className} ${on ? selectedClass : ""} cursor-pointer`} onClick={() => setPlan(code)} data-plan={code} data-plan-selected={on}>
+      <button type="button" role="radio" aria-checked={on} onClick={() => setPlan(code)} className="mb-2 flex min-h-9 items-center gap-2 self-start rounded-full text-sm font-semibold text-zinc-700" data-plan-pick={code}>
+        <span className={`flex size-5 items-center justify-center rounded-full border-2 ${on ? "border-brand-600 bg-brand-600 text-white" : "border-zinc-400 bg-white"}`} aria-hidden>
+          {on && <Check className="size-3.5" strokeWidth={3} />}
+        </span>
+        {on ? `${name} 선택됨` : `${name} 고르기`}
+      </button>
+      {children}
+    </li>
   );
 }
 
-// 저장 공간 추가 영역(카드 밖 하나) — 하나만, 다시 누르면 해제. children = 관리자 [지금 신청]
-export function StorageAddonPicker({ note, children }: { note?: string; children?: ReactNode }) {
+// 저장 공간 추가 영역(카드 밖 하나) — 체크 하나만, 다시 누르면 해제
+export function StorageAddonPicker({ note }: { note?: string }) {
   const { addons, gb, setGb } = use();
   if (!addons.length) return null;
   return (
@@ -51,7 +52,7 @@ export function StorageAddonPicker({ note, children }: { note?: string; children
       <h3 id="storage-addon-title" className="font-semibold text-zinc-900">
         저장 공간 추가 <span className="text-sm font-normal text-zinc-500">(선택)</span>
       </h3>
-      <p className="mt-1 break-keep text-sm text-zinc-600">{note ?? "모든 플랜에 같은 가격으로 더할 수 있어요. 고르면 위 카드 가격이 합계로 바뀌어요. 다시 누르면 해제돼요."}</p>
+      <p className="mt-1 break-keep text-sm text-zinc-600">{note ?? "모든 플랜에 같은 가격으로 더할 수 있어요. 체크하면 아래 합계에 더해져요. 다시 누르면 해제돼요."}</p>
       <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4" role="group" aria-label="저장 공간 추가">
         {addons.map((a) => {
           const on = gb === a.storage_gb;
@@ -76,32 +77,69 @@ export function StorageAddonPicker({ note, children }: { note?: string; children
           );
         })}
       </div>
+    </section>
+  );
+}
+
+// [선택한 구성]: 플랜 + 저장 공간 = 합계. 버튼 자리 — 랜딩(startHref): 이 구성으로 무료로 시작, 관리자(payTip): 결제하기(준비 중).
+// 결제가 붙으면 관리자 버튼을 여기서 켠다
+export function PlanSummary({ startHref, payTip, children }: { startHref?: string; payTip?: string; children?: ReactNode }) {
+  const { addons, plans, plan, gb } = use();
+  const p = plans.find((x) => x.code === plan) ?? plans[0];
+  if (!p) return null;
+  const extra = addonPrice(addons, gb);
+  const total = p.price + extra;
+  return (
+    <section className="rounded-2xl border-2 border-brand-200 bg-brand-50/50 p-4 md:p-5" aria-labelledby="plan-summary-title" data-plan-summary>
+      <h3 id="plan-summary-title" className="font-semibold text-zinc-900">
+        선택한 구성
+      </h3>
+      <dl className="mt-3 flex flex-col gap-1.5 text-sm tabular-nums">
+        <div className="flex justify-between gap-2">
+          <dt className="text-zinc-700">{p.name} 플랜</dt>
+          <dd className="text-zinc-900" data-summary-plan={p.price}>
+            {formatWon(p.price)}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt className="text-zinc-700">저장 공간 추가</dt>
+          <dd className="text-zinc-900" data-summary-storage={extra}>
+            {gb ? `+${gb}GB ${formatWon(extra)}` : "없음"}
+          </dd>
+        </div>
+        <div className="mt-1 flex items-baseline justify-between gap-2 border-t border-brand-200 pt-2">
+          <dt className="font-semibold text-zinc-900">매월 합계</dt>
+          <dd className="text-xl font-bold text-zinc-900" data-summary-total={total}>
+            {formatWon(total)} <span className="text-xs font-normal text-zinc-500">/ 월 (VAT 별도)</span>
+          </dd>
+        </div>
+      </dl>
+      <div className="mt-4">{startHref ? <SummaryStartLink href={startHref} total={total} planName={p.name} /> : <SummaryPayButton total={total} tip={payTip ?? ""} />}</div>
       {children}
     </section>
   );
 }
 
-// 관리자: 카드의 매월 결제 금액 줄
-export function PlanStorageTotal({ base }: { base: number }) {
-  const { addons, gb } = use();
-  const total = monthlyTotal(base, addons, gb);
+// 랜딩: [이 구성으로 무료로 시작하기] — 결제 정보 없이 시작(첫 월말 마감까지 무료)
+function SummaryStartLink({ href, total, planName }: { href: string; total: number; planName: string }) {
   return (
-    <p className="mt-3 flex items-baseline justify-between gap-2 text-sm" data-month-total={total}>
-      <span className="text-zinc-600">매월 결제 금액</span>
-      <b className="tabular-nums">
-        {formatWon(total)} <span className="text-xs font-normal text-zinc-500">VAT 별도</span>
-      </b>
-    </p>
+    <>
+      <Link href={href} className="flex min-h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 font-semibold text-white shadow-lg shadow-indigo-600/25 hover:from-indigo-500 hover:to-violet-500" data-summary-start>
+        이 구성으로 무료로 시작하기
+      </Link>
+      <p className="mt-2 break-keep text-center text-xs text-zinc-600">
+        첫 월말 마감까지 무료예요. 무료 기간 뒤 {planName} {formatWon(total)}/월(VAT 별도) — 결제 정보는 지금 필요 없어요.
+      </p>
+    </>
   );
 }
 
-// 관리자: 카드의 결제 버튼(결제 준비 중 — 결제가 붙을 때까지 막힘)
-export function PlanPayButton({ base, tip }: { base: number; tip: string }) {
-  const { addons, gb } = use();
+// 관리자: 결제 버튼(결제 준비 중 — 결제가 붙으면 여기서 결제)
+function SummaryPayButton({ total, tip }: { total: number; tip: string }) {
   return (
-    <span title={tip} className="mt-auto block pt-4">
-      <button type="button" disabled className="min-h-11 w-full cursor-not-allowed rounded-xl bg-zinc-200 px-4 text-sm font-semibold text-zinc-500">
-        {formatWon(monthlyTotal(base, addons, gb))} 결제하기 (결제 준비 중)
+    <span title={tip} className="block">
+      <button type="button" disabled className="min-h-12 w-full cursor-not-allowed rounded-xl bg-zinc-200 px-4 font-semibold text-zinc-500" data-summary-pay>
+        {formatWon(total)} 결제하기 (결제 준비 중)
       </button>
     </span>
   );
@@ -122,8 +160,10 @@ export function StorageRequestButton({ current, pending }: { current: number; pe
       setMsg({ ok: true, text: "신청했어요. 운영자가 확인하고 켜 드려요(보통 1영업일). 결제가 열릴 때까지는 무료예요." });
       router.refresh();
     });
+  if (!label && !msg) return null;
   return (
-    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+    <div className="mt-3 flex flex-col gap-2 border-t border-brand-200 pt-3">
+      <p className="break-keep text-xs text-zinc-600">결제가 열리기 전에는 저장 공간만 먼저 신청할 수 있어요(무료로 켜 드려요).</p>
       {label && (
         <button type="button" onClick={request} disabled={busy} className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-brand-600 bg-white px-4 text-sm font-semibold text-brand-700 hover:bg-brand-50 disabled:opacity-60" data-storage-request>
           {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}

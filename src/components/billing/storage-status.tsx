@@ -34,6 +34,21 @@ export function StorageStatusCard({ status }: { status: StorageStatus }) {
           {status.extra_gb ? `추가 공간 ${status.extra_gb}GB 사용 중` : "추가 공간 없음"}
         </span>
       </div>
+      {status.total_limit != null ? (
+        // D-271: 채팅 사진·파일과 파일 보관함이 한 통(요금제 공간 + 추가 공간)
+        <div className="mt-3" data-storage-total={status.total_limit}>
+          <div className="mb-1 flex justify-between text-sm text-zinc-600">
+            <span>회사 저장 공간</span>
+            <span className="tabular-nums">
+              <b className="text-zinc-900">{bytesLabel(status.total_used ?? status.chat_used + status.vault_used)}</b> / {bytesLabel(status.total_limit)}
+            </span>
+          </div>
+          <UsageBar used={status.total_used ?? status.chat_used + status.vault_used} limit={status.total_limit} />
+          <p className="mt-1 text-xs tabular-nums text-zinc-500">
+            채팅 사진·파일 {bytesLabel(status.chat_used)} · 파일 보관함 {bytesLabel(status.vault_used)}
+          </p>
+        </div>
+      ) : (
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {[
           ["채팅 사진·파일", status.chat_used, status.chat_limit],
@@ -50,8 +65,9 @@ export function StorageStatusCard({ status }: { status: StorageStatus }) {
           </div>
         ))}
       </div>
+      )}
       <p className="mt-2 break-keep text-xs text-zinc-500">
-        추가 공간은 채팅과 보관함이 함께 써요. 각자 기본 공간을 먼저 쓰고, 넘는 만큼 추가 공간에서 빠져요. 공간이 모자라면 아래 요금제 카드에서 [저장 공간 추가]를 골라 신청해 주세요.
+        채팅 사진·파일과 파일 보관함(휴지통 포함)이 회사 저장 공간 하나를 함께 써요. 모자라면 아래 [저장 공간 추가]에서 골라 신청해 주세요.
         {status.extra_gb > 0 && " 결제가 열릴 때까지는 무료로 쓰고, 열리면 요금제와 함께 매월 결제돼요(한 달 전에 알려 드려요)."}
       </p>
       {p && (

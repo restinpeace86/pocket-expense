@@ -10,6 +10,8 @@ export type StorageStatus = {
   chat_limit: number;
   vault_used: number;
   vault_limit: number;
+  total_used?: number; // D-271 회사 공용(채팅 + 보관함)
+  total_limit?: number;
 };
 
 // 고른 추가 공간(GB, 0 = 없음)의 월 가격
