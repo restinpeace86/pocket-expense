@@ -4,7 +4,7 @@ import { purgeChatFiles, purgeMeetingExpired, purgeMeetingOrphans } from "@/lib/
 import { purgeReceiptArchive } from "@/lib/receipts/purge";
 import { purgeLeaveProofs } from "@/lib/attendance/purge";
 import { syncSeoulBusStops } from "@/lib/bus/stops-sync";
-import { checkStorageTotal, purgeVaultLeavers } from "@/lib/vault/server";
+import { checkStorageTotal, purgeVaultLeavers, purgeVaultTrash } from "@/lib/vault/server";
 import { purgeFeedback } from "@/lib/feedback-desk/server";
 import { purgeConversions } from "@/lib/doc-convert/server";
 import { purgeFormDrafts } from "@/lib/company-forms/server";
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   const fail = (e: unknown) => ({ ok: false, error: String(e) });
   // ⑥ 서울 버스 정류장 위치(D-243) — 월요일 새벽만
   const monday = new Date(Date.now() + 9 * 3600_000).getUTCDay() === 1;
-  const [purge, oil, chat, meeting, meetingExpired, leaveProofs, busStops, vaultLeavers, storageTotal, feedback, docConvert, formDrafts] = await Promise.all([
+  const [purge, oil, chat, meeting, meetingExpired, leaveProofs, busStops, vaultLeavers, vaultTrash, storageTotal, feedback, docConvert, formDrafts] = await Promise.all([
     purgeReceiptArchive(admin).catch(fail),
     syncOilPrices(admin).catch(fail),
     purgeChatFiles(admin).catch(fail),
@@ -32,10 +32,11 @@ export async function GET(request: NextRequest) {
     purgeLeaveProofs(admin).catch(fail),
     monday ? syncSeoulBusStops(admin).catch(fail) : Promise.resolve(null),
     purgeVaultLeavers(admin).catch(fail),
+    purgeVaultTrash(admin).catch(fail), // D-266 휴지통 기간 지난 파일
     checkStorageTotal(admin).catch(fail),
     purgeFeedback(admin).catch(fail),
     purgeConversions(admin).catch(fail),
     purgeFormDrafts(admin).catch(fail),
   ]);
-  return NextResponse.json({ ok: true, purge, oil, chat, meeting, meetingExpired, leaveProofs, busStops, vaultLeavers, storageTotal, feedback, docConvert, formDrafts });
+  return NextResponse.json({ ok: true, purge, oil, chat, meeting, meetingExpired, leaveProofs, busStops, vaultLeavers, vaultTrash, storageTotal, feedback, docConvert, formDrafts });
 }

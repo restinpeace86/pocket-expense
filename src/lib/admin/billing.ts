@@ -15,6 +15,7 @@ export type BillingPlan = {
   vault_storage_mb: number | null; // 파일 영구 보관 한도(D-245)
   monthly_doc_converts: number | null; // 서류 → 엑셀 변환 월 무료 횟수(D-265)
   doc_converts_unlimited: boolean; // 비즈니스 무제한*(공정 사용 기준 = monthly_doc_converts)
+  trash_days: number | null; // 파일 보관함 휴지통 복구 기간(D-266)
 };
 
 export type CreditStatus = {
@@ -71,7 +72,7 @@ export async function getBillingPlans(): Promise<BillingPlan[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("billing_plans")
-    .select("code, name, monthly_price, monthly_receipts, recommended_size, is_featured, max_members, chat_storage_mb, vault_storage_mb, monthly_doc_converts, doc_converts_unlimited")
+    .select("code, name, monthly_price, monthly_receipts, recommended_size, is_featured, max_members, chat_storage_mb, vault_storage_mb, monthly_doc_converts, doc_converts_unlimited, trash_days")
     .order("sort_order");
   return data ?? [];
 }

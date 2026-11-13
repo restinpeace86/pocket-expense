@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fileBadge, filterVault, usagePct, usageTone, vaultErrorMessage, vaultPaths } from "./format";
+import { fileBadge, filterVault, trashDaysLeft, usagePct, usageTone, vaultErrorMessage, vaultPaths } from "./format";
 
 describe("파일 영구 보관 (D-245)", () => {
   it("사용률·색 단계", () => {
@@ -36,3 +36,13 @@ describe("파일 영구 보관 (D-245)", () => {
     expect(vaultErrorMessage("something")).toContain("처리하지 못했어요");
   });
 });
+
+describe("휴지통 남은 날 (D-266)", () => {
+  it("지운 날 = 기간 그대로, KST 날짜가 바뀌면 하루씩 줄고 0 아래로 안 내려감", () => {
+    const del = "2026-11-13T01:00:00Z"; // KST 10:00
+    expect(trashDaysLeft(del, 90, Date.parse("2026-11-13T14:00:00Z"))).toBe(90); // KST 23:00 같은 날
+    expect(trashDaysLeft(del, 90, Date.parse("2026-11-13T15:30:00Z"))).toBe(89); // KST 다음 날 00:30
+    expect(trashDaysLeft(del, 30, Date.parse("2027-01-01T00:00:00Z"))).toBe(0);
+  });
+});
+

@@ -1078,6 +1078,7 @@ export type Database = {
           name: string
           recommended_size: string | null
           sort_order: number
+          trash_days: number | null
           updated_at: string
           vault_storage_mb: number | null
         }
@@ -1099,6 +1100,7 @@ export type Database = {
           name: string
           recommended_size?: string | null
           sort_order?: number
+          trash_days?: number | null
           updated_at?: string
           vault_storage_mb?: number | null
         }
@@ -1120,6 +1122,7 @@ export type Database = {
           name?: string
           recommended_size?: string | null
           sort_order?: number
+          trash_days?: number | null
           updated_at?: string
           vault_storage_mb?: number | null
         }
@@ -4921,6 +4924,8 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           kind: string
           mime: string | null
@@ -4938,6 +4943,8 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           kind: string
           mime?: string | null
@@ -4955,6 +4962,8 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           kind?: string
           mime?: string | null
@@ -6012,15 +6021,19 @@ export type Database = {
         Returns: string
       }
       vault_delete: { Args: { p_id: string }; Returns: Json }
+      vault_empty_trash: { Args: never; Returns: Json }
       vault_files_remove: { Args: { p_ids: string[] }; Returns: number }
       vault_keep_check: { Args: { p_message: string }; Returns: Json }
       vault_leaver_files_due: { Args: never; Returns: Json }
       vault_member_usage: { Args: never; Returns: Json }
+      vault_purge: { Args: { p_id: string }; Returns: Json }
+      vault_restore: { Args: { p_id: string }; Returns: undefined }
       vault_set_scope: {
         Args: { p_id: string; p_scope: string }
         Returns: undefined
       }
       vault_status: { Args: never; Returns: Json }
+      vault_trash_due: { Args: never; Returns: Json }
     }
     Enums: {
       announcement_scope: "platform" | "company"

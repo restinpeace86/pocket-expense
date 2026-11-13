@@ -116,6 +116,7 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
       .from("vault_files")
       .select("source_message_id")
       .eq("source_room_id", roomId)
+      .is("deleted_at", null)
       .then(({ data }) => data && setKept(new Set(data.map((d) => d.source_message_id).filter((x): x is string => !!x))));
   }, [supabase, roomId]);
 

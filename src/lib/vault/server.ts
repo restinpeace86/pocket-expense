@@ -41,15 +41,45 @@ export async function keepChatFile(messageId: string, scope: VaultScope): Promis
   return { ok: true };
 }
 
-// 지우기: 권한·기록 삭제는 DB 함수(보관한 사람·관리자), 파일 삭제는 서버
-export async function deleteVaultFile(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
+// 지우기 = 휴지통으로(D-266): 파일은 그대로, 플랜 일수 안에 복구 가능
+export async function deleteVaultFile(id: string): Promise<{ ok: true; days: number } | { ok: false; error: string }> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("vault_delete", { p_id: id });
   if (error || !data) return { ok: false, error: vaultErrorMessage(error?.message ?? "") };
-  const d = data as unknown as { path: string; thumb_path: string | null };
+  return { ok: true, days: Number((data as unknown as { days?: number }).days ?? 30) };
+}
+
+type Paths = { path: string; thumb_path: string | null };
+const flat = (rows: Paths[]) => rows.flatMap((r) => [r.path, ...(r.thumb_path ? [r.thumb_path] : [])]);
+
+// 휴지통에서 영구 삭제(한 개·비우기): 권한·기록 삭제는 DB 함수, 파일 삭제는 서버
+export async function purgeVaultFile(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("vault_purge", { p_id: id });
+  if (error || !data) return { ok: false, error: vaultErrorMessage(error?.message ?? "") };
   const admin = createAdminClient();
-  if (admin) await admin.storage.from(VAULT_BUCKET).remove([d.path, ...(d.thumb_path ? [d.thumb_path] : [])]);
+  if (admin) await admin.storage.from(VAULT_BUCKET).remove(flat([data as unknown as Paths]));
   return { ok: true };
+}
+export async function emptyVaultTrash(): Promise<{ ok: true; removed: number } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("vault_empty_trash");
+  if (error) return { ok: false, error: vaultErrorMessage(error.message) };
+  const rows = (data as unknown as Paths[]) ?? [];
+  const admin = createAdminClient();
+  if (admin && rows.length) await admin.storage.from(VAULT_BUCKET).remove(flat(rows));
+  return { ok: true, removed: rows.length };
+}
+
+// 새벽 작업: 휴지통 기간(플랜별)이 지난 파일 영구 삭제
+export async function purgeVaultTrash(admin: Admin): Promise<{ removed: number }> {
+  const { data, error } = await admin.rpc("vault_trash_due");
+  if (error) throw new Error(error.message);
+  const due = (data as unknown as (Paths & { id: string })[]) ?? [];
+  if (!due.length) return { removed: 0 };
+  await admin.storage.from(VAULT_BUCKET).remove(flat(due));
+  const { data: n } = await admin.rpc("vault_files_remove", { p_ids: due.map((f) => f.id) });
+  return { removed: Number(n ?? 0) };
 }
 
 // 새벽 작업: 퇴사 30일 지난 사람의 나만 보기 파일 삭제(7일 전 안내는 DB 함수가 보냄)

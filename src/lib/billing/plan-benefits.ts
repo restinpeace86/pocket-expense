@@ -9,6 +9,7 @@ export type PlanLike = {
   vault_storage_mb?: number | null;
   monthly_doc_converts?: number | null;
   doc_converts_unlimited?: boolean | null;
+  trash_days?: number | null;
 };
 
 // 서류 → 엑셀 변환 월 무료 횟수(D-265): 비즈니스는 무제한*(공정 사용 기준 월 n건)
@@ -58,6 +59,8 @@ export function planBenefits(p: PlanLike): { label: string; sub?: string }[] {
     ...(docConvertLabel(p) ? [docConvertLabel(p)!] : []),
     ...(p.chat_storage_mb ? [{ label: `사내 채팅 사진·파일 저장 ${storageLabel(p.chat_storage_mb)}`, sub: "사진·파일 보관 30·60·90일 중 선택" }] : []),
     ...(p.vault_storage_mb ? [{ label: `파일 영구 보관 ${storageLabel(p.vault_storage_mb)}`, sub: "채팅 파일 중 [영구 보관]한 것은 지울 때까지" }] : []),
+    // D-266 휴지통: 지운 보관 파일 복구 기간
+    ...(p.trash_days ? [{ label: `지운 파일 복구 ${p.trash_days >= 365 ? `${Math.round(p.trash_days / 365)}년` : `${p.trash_days}일`}`, sub: "파일 보관함 휴지통에서 되돌리기" }] : []),
     { label: "모든 기능 포함", sub: "결재·정산·세무 마감·세무사무소 연결" },
   ];
 }

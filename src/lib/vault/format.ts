@@ -14,14 +14,16 @@ export type VaultFile = {
   source_room_id: string | null;
   source_message_id: string | null;
   created_at: string;
+  deleted_at?: string | null; // 휴지통(D-266)
 };
-export type VaultStatus = { used: number; limit: number; company_count: number; mine_private: number };
+export type VaultStatus = { used: number; limit: number; company_count: number; mine_private: number; trash_days?: number; trash_count?: number; trash_bytes?: number };
 
 export const VAULT_BUCKET = "vault-files";
 export const VAULT_CACHE = "vault-files-v1"; // 기기 저장(Cache Storage) 이름 — 로그아웃 때 지움
 
 export const VAULT_ERROR: Record<string, string> = {
   VAULT_FULL: "회사 보관 공간이 다 찼어요. [파일 보관함]에서 필요 없는 파일을 지워 공간을 비워 주세요.",
+  IN_TRASH: "휴지통에 있는 파일이에요. [파일 보관함 › 휴지통]에서 복구해 주세요.",
   ALREADY_KEPT: "이미 보관한 파일이에요. [파일 보관함]에서 볼 수 있어요.",
   EXPIRED: "보관 기간이 지났거나 지워진 파일이라 보관할 수 없어요.",
   NOT_FILE: "사진·파일만 보관할 수 있어요.",
@@ -41,6 +43,12 @@ export function usagePct(used: number, limit: number): number {
 }
 export function usageTone(pct: number): "ok" | "warn" | "full" {
   return pct >= 90 ? "full" : pct >= 70 ? "warn" : "ok";
+}
+
+// 휴지통에서 영구 삭제까지 남은 날(KST 날짜 차이, 0 이상)
+export function trashDaysLeft(deletedAt: string, days: number, now = Date.now()): number {
+  const kst = (t: number) => Math.floor((t + 9 * 3600_000) / 86_400_000);
+  return Math.max(0, days - (kst(now) - kst(new Date(deletedAt).getTime())));
 }
 
 // 목록 아이콘 글자: 확장자 우선(PDF·XLSX·HWP 등), 없으면 "파일"

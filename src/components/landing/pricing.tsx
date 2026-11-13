@@ -29,7 +29,7 @@ export async function Pricing() {
     const [{ data }, { data: sa }] = await Promise.all([
       db
         .from("billing_plans")
-        .select("code, name, monthly_price, monthly_receipts, recommended_size, is_unlimited, is_featured, max_members, chat_storage_mb, vault_storage_mb, monthly_doc_converts, doc_converts_unlimited")
+        .select("code, name, monthly_price, monthly_receipts, recommended_size, is_unlimited, is_featured, max_members, chat_storage_mb, vault_storage_mb, monthly_doc_converts, doc_converts_unlimited, trash_days")
         .order("sort_order"),
       db.from("storage_addons").select("code, storage_gb, monthly_price").order("sort_order"),
     ]);

@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowUpRight, ChevronLeft, Download, Eye, Loader2, Lock, MoreVertical, Search, Trash2, Users, X } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, Download, Eye, Loader2, Lock, MoreVertical, RotateCcw, Search, Trash2, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { deleteVaultFileAction, setVaultScopeAction } from "@/app/workspace/[id]/employee/vault/actions";
+import { deleteVaultFileAction, emptyVaultTrashAction, purgeVaultFileAction, restoreVaultFileAction, setVaultScopeAction } from "@/app/workspace/[id]/employee/vault/actions";
 import { signedUrls } from "@/components/chat/signed-urls";
 import { bytesLabel, fileSizeLabel } from "@/lib/chat/format";
 import { createClient } from "@/lib/supabase/client";
-import { fileBadge, filterVault, VAULT_BUCKET, VAULT_CACHE, type VaultFile, type VaultScope, type VaultStatus } from "@/lib/vault/format";
+import { fileBadge, filterVault, trashDaysLeft, VAULT_BUCKET, VAULT_CACHE, type VaultFile, type VaultScope, type VaultStatus } from "@/lib/vault/format";
 import { UsageBar } from "./usage-bar";
 
 export type VaultRoom = { id: string; kind: string; title: string | null };
@@ -40,6 +40,7 @@ export function VaultView({
   me,
   admin,
   files,
+  trash = [],
   status,
   people,
   rooms,
@@ -48,6 +49,7 @@ export function VaultView({
   me: string;
   admin: boolean;
   files: VaultFile[];
+  trash?: VaultFile[];
   status: VaultStatus;
   people: Record<string, string>;
   rooms: Record<string, VaultRoom>;
@@ -59,6 +61,8 @@ export function VaultView({
   const [menu, setMenu] = useState<VaultFile | null>(null);
   const [viewer, setViewer] = useState<{ name: string; url: string } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [trashOpen, setTrashOpen] = useState(false);
+  const trashDays = status.trash_days ?? 30;
   const who = (id: string) => people[id] ?? "알 수 없음";
   const shown = filterVault(files, tab, query, who);
   const counts = { company: files.filter((f) => f.scope === "company").length, private: files.filter((f) => f.scope === "private").length };
@@ -86,6 +90,10 @@ export function VaultView({
           <ChevronLeft className="size-6" />
         </Link>
         <h1 className="text-xl font-bold md:text-2xl">파일 보관함</h1>
+        {/* 휴지통(D-266): 지운 파일은 플랜 일수 동안 복구할 수 있어요 */}
+        <button type="button" onClick={() => setTrashOpen(true)} className="ml-auto flex min-h-10 items-center gap-1.5 rounded-lg px-2.5 text-sm text-zinc-700 hover:bg-zinc-100" data-vault-trash-open>
+          <Trash2 className="size-4" aria-hidden /> 휴지통{trash.length > 0 && <b className="text-brand-700">{trash.length}</b>}
+        </button>
       </div>
       <div role="tablist" aria-label="보관 범위" className="grid grid-cols-2 rounded-xl bg-zinc-200 p-1">
         {(
@@ -160,10 +168,23 @@ export function VaultView({
           owner={who(menu.owner_member_id)}
           room={menu.source_room_id ? rooms[menu.source_room_id] : undefined}
           supabase={supabase}
+          trashDays={trashDays}
           onClose={() => setMenu(null)}
           onView={(v) => setViewer(v)}
           onDone={(msg) => {
             setMenu(null);
+            setNotice(msg);
+          }}
+        />
+      )}
+      {trashOpen && (
+        <TrashSheet
+          files={trash}
+          days={trashDays}
+          me={me}
+          who={who}
+          onClose={() => setTrashOpen(false)}
+          onDone={(msg) => {
             setNotice(msg);
           }}
         />
@@ -192,6 +213,7 @@ function FileMenu({
   owner,
   room,
   supabase,
+  trashDays,
   onClose,
   onView,
   onDone,
@@ -203,6 +225,7 @@ function FileMenu({
   owner: string;
   room: VaultRoom | undefined;
   supabase: ReturnType<typeof createClient>;
+  trashDays: number;
   onClose: () => void;
   onView: (v: { name: string; url: string }) => void;
   onDone: (msg: string) => void;
@@ -266,7 +289,7 @@ function FileMenu({
       try {
         await (await caches.open(VAULT_CACHE)).delete(cacheKey(f.id));
       } catch {}
-      onDone("보관함에서 지웠어요.");
+      onDone(`휴지통으로 옮겼어요. ${r.days}일 안에 복구할 수 있어요.`);
     });
   const item = "flex min-h-13 w-full items-center gap-3 px-4 py-2.5 text-left text-[15px] hover:bg-zinc-50 disabled:opacity-60";
   return (
@@ -286,7 +309,7 @@ function FileMenu({
         {confirmDelete ? (
           <div className="flex flex-col gap-3 p-4" data-delete-confirm>
             <p className="text-[15px] leading-relaxed">
-              <b>{f.name}</b>을(를) 보관함에서 지울까요? 지우면 되돌릴 수 없어요. 채팅의 원본은 보관 기간까지는 그대로 있어요.
+              <b>{f.name}</b>을(를) 휴지통으로 옮길까요? {trashDays}일 안에는 [휴지통]에서 복구할 수 있고, 그 뒤 영구 삭제돼요. 휴지통 파일도 영구 삭제 전까지 보관 공간을 차지해요.
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setConfirmDelete(false)} className="h-12 rounded-xl border border-zinc-300 font-semibold">
@@ -294,7 +317,7 @@ function FileMenu({
               </button>
               <button type="button" onClick={remove} disabled={busy} className="flex h-12 items-center justify-center gap-1.5 rounded-xl bg-red-600 font-semibold text-white disabled:opacity-70" data-delete-yes>
                 {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
-                지우기
+                휴지통으로
               </button>
             </div>
           </div>
@@ -329,7 +352,7 @@ function FileMenu({
               <button type="button" onClick={() => setConfirmDelete(true)} className={`${item} text-red-700`} data-vault-delete>
                 <Trash2 className="size-4" />
                 <span className="flex-1">
-                  보관함에서 지우기<span className="block text-xs text-zinc-600">{mine ? "채팅의 원본은 그대로예요(기간 지나면 지워짐)" : "관리자로 지워요 · 회사 공유 파일"}</span>
+                  지우기(휴지통으로)<span className="block text-xs text-zinc-600">{trashDays}일 안에 복구할 수 있어요{mine ? "" : " · 관리자로 지워요"}</span>
                 </span>
               </button>
             )}
@@ -342,6 +365,123 @@ function FileMenu({
               닫기
             </button>
           </>
+        )}
+      </section>
+    </div>
+  );
+}
+
+// 휴지통(D-266): 내가 복구할 수 있는 파일(내 것 + 관리자는 회사 공유). 복구 · 영구 삭제 · 비우기
+function TrashSheet({ files, days, me, who, onClose, onDone }: { files: VaultFile[]; days: number; me: string; who: (id: string) => string; onClose: () => void; onDone: (msg: string) => void }) {
+  const [busy, start] = useTransition();
+  const [confirm, setConfirm] = useState<VaultFile | "all" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const bytes = files.reduce((n, f) => n + f.size + f.thumb_size, 0);
+  const run = (fn: () => Promise<{ ok: boolean; error?: string }>, msg: string) =>
+    start(async () => {
+      setError(null);
+      const r = await fn();
+      if (!r.ok) return setError(r.error ?? "처리하지 못했어요.");
+      setConfirm(null);
+      onDone(msg);
+    });
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 md:items-center" onClick={onClose}>
+      <section role="dialog" aria-modal="true" aria-labelledby="vault-trash-title" onClick={(e) => e.stopPropagation()} className="flex max-h-[85dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] md:rounded-3xl" data-vault-trash>
+        <div className="flex items-center gap-2 border-b border-zinc-100 px-4 pb-3 pt-4">
+          <h2 id="vault-trash-title" className="text-lg font-bold">
+            휴지통
+          </h2>
+          <span className="text-xs text-zinc-600">지운 날부터 {days}일 보관</span>
+          <button type="button" onClick={onClose} aria-label="닫기" className="ml-auto flex size-10 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100">
+            <X className="size-5" />
+          </button>
+        </div>
+        {files.length === 0 ? (
+          <p className="px-4 py-10 text-center text-sm leading-relaxed text-zinc-600" data-vault-trash-empty>
+            휴지통이 비어 있어요.
+            <span className="mt-1 block text-[13px]">보관함에서 지운 파일은 {days}일 동안 여기서 복구할 수 있어요.</span>
+          </p>
+        ) : (
+          <ul className="min-h-0 flex-1 overflow-y-auto" aria-label="휴지통 파일">
+            {files.map((f) => {
+              const left = f.deleted_at ? trashDaysLeft(f.deleted_at, days) : days;
+              return (
+                <li key={f.id} className="flex items-center gap-3 border-b border-zinc-100 px-4 py-3" data-vault-trash-file={f.name}>
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-[11px] font-bold text-zinc-700">{fileBadge(f.name, f.kind)}</span>
+                  <span className="min-w-0 flex-1">
+                    <b className="block truncate text-sm">{f.name}</b>
+                    <span className="block truncate text-xs text-zinc-600">
+                      {f.scope === "company" ? "회사 공유" : "나만 보기"}
+                      {f.owner_member_id !== me && ` · ${who(f.owner_member_id)}`} · {f.deleted_at ? dateLabel(f.deleted_at) : ""} 지움
+                    </span>
+                    <b className={`block text-xs ${left <= 3 ? "text-red-700" : "text-zinc-800"}`} data-trash-left>
+                      {left}일 남음
+                    </b>
+                  </span>
+                  <button type="button" disabled={busy} onClick={() => run(() => restoreVaultFileAction(f.id), `${f.name}을(를) 보관함으로 되돌렸어요.`)} className="flex min-h-10 shrink-0 items-center gap-1 rounded-lg border border-brand-200 px-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50 disabled:opacity-60" data-vault-restore>
+                    <RotateCcw className="size-4" aria-hidden /> 복구
+                  </button>
+                  <button type="button" disabled={busy} onClick={() => setConfirm(f)} aria-label={`${f.name} 영구 삭제`} className="flex size-10 shrink-0 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 disabled:opacity-60" data-vault-purge>
+                    <Trash2 className="size-4" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {files.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-zinc-100 px-4 py-3">
+            {confirm ? (
+              <div className="flex flex-col gap-2" data-vault-purge-confirm>
+                <p className="text-sm leading-relaxed">
+                  {confirm === "all" ? (
+                    <>
+                      휴지통 파일 <b>{files.length}개</b>를 영구 삭제할까요? 되돌릴 수 없어요.
+                    </>
+                  ) : (
+                    <>
+                      <b>{confirm.name}</b>을(를) 영구 삭제할까요? 되돌릴 수 없어요.
+                    </>
+                  )}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setConfirm(null)} className="h-11 rounded-xl border border-zinc-300 font-semibold">
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => (confirm === "all" ? run(emptyVaultTrashAction, "휴지통을 비웠어요.") : run(() => purgeVaultFileAction(confirm.id), "영구 삭제했어요."))}
+                    className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-red-600 font-semibold text-white disabled:opacity-70"
+                    data-vault-purge-yes
+                  >
+                    {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                    영구 삭제
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="flex items-center gap-2 text-xs leading-relaxed text-zinc-600">
+                <span className="flex-1">
+                  휴지통 파일 {files.length}개({bytesLabel(bytes)})도 영구 삭제 전까지 보관 공간에 들어가요.
+                </span>
+                <button type="button" onClick={() => setConfirm("all")} className="min-h-10 shrink-0 rounded-lg px-2.5 text-sm font-semibold text-red-700 hover:bg-red-50" data-vault-empty-trash>
+                  휴지통 비우기
+                </button>
+              </p>
+            )}
+            {error && (
+              <p role="alert" className="text-sm font-semibold text-red-700">
+                {error}
+              </p>
+            )}
+          </div>
         )}
       </section>
     </div>

@@ -146,8 +146,11 @@ set local role authenticated;
 do $$
 declare d jsonb;
 begin
+  -- 155(D-266): 지우기 = 휴지통 → 영구 삭제에서 경로
   d := public.vault_delete(current_setting('t.v1')::uuid);
-  if d ->> 'path' <> 'c8600000-0000-0000-0000-00000000000a/v1.pdf' or (select count(*) from public.vault_files) <> 0 then raise exception 'FAIL [admin delete shared %]', d; end if;
+  if not (d ->> 'trashed')::boolean or (select count(*) from public.vault_files where deleted_at is null) <> 0 then raise exception 'FAIL [admin delete shared -> trash %]', d; end if;
+  d := public.vault_purge(current_setting('t.v1')::uuid);
+  if d ->> 'path' <> 'c8600000-0000-0000-0000-00000000000a/v1.pdf' or (select count(*) from public.vault_files) <> 0 then raise exception 'FAIL [admin purge shared %]', d; end if;
 end;
 $$;
 reset role;
