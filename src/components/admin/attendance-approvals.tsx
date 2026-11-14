@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, X } from "lucide-react";
+import { FormDocButtons } from "@/components/company-forms/leave-doc-buttons";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { decideAttendanceRequest } from "@/app/workspace/[id]/admin/attendance/actions";
@@ -117,6 +118,7 @@ export function AttendanceApprovals({
                     {r.reject_reason && <span className="block">반려 사유 · {r.reject_reason}</span>}
                   </span>
                 )}
+                {r.form_id && <FormDocButtons target={{ kind: r.kind, id: r.id }} compact />}
                 {error?.id === r.id && (
                   <span role="alert" className="text-[13px] font-semibold text-red-700">
                     {error.text}

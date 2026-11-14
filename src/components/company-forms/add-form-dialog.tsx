@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formDialogDataAction, readFormAction, startFormAction, type FormDialogData } from "@/app/workspace/[id]/admin/company-forms/actions";
-import { KIND_LABEL, type FormKind } from "@/lib/company-forms/model";
+import { isAttendanceKind, KIND_LABEL, type FormKind } from "@/lib/company-forms/model";
 import { CONVERT_MIMES, isConvertible } from "@/lib/doc-convert/model";
 import { createClient } from "@/lib/supabase/client";
 
@@ -51,11 +51,14 @@ export function AddFormDialog({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, busy]);
 
-  const leave = data?.forms.find((f) => f.kind === "leave") ?? null;
+  // 근태 양식(휴가·근태 정정·휴일근무)은 회사에 종류마다 하나 — 이미 있으면 그 양식의 새 버전(9-33c)
+  const one = (k: FormKind) => (isAttendanceKind(k) ? (data?.forms.find((f) => f.kind === k) ?? null) : null);
+  const leave = one("leave");
+  const existing = one(kind);
   const heldGroup = source.type === "held" ? source.group : null;
   // 이 파일이 들어갈 양식: 새 버전 대상 / 이미 있는 휴가신청서(휴가는 하나) / 새 양식(칸 하나 씀)
   const held = heldGroup ? data?.forms.find((f) => f.group_id === heldGroup) : undefined;
-  const target = group ?? (held ? { id: held.group_id, name: held.name, kind: held.kind } : null) ?? (kind === "leave" && leave ? { id: leave.group_id, name: leave.name, kind: "leave" as const } : null);
+  const target = group ?? (held ? { id: held.group_id, name: held.name, kind: held.kind } : null) ?? (existing ? { id: existing.group_id, name: existing.name, kind: existing.kind } : null);
   const full = !!data && !target && data.used >= data.limit;
   const sourceName = source.type === "pick" ? (file?.name ?? null) : source.name;
 
@@ -165,13 +168,15 @@ export function AddFormDialog({
           <div role="radiogroup" aria-label="어떤 문서인가요?" className="flex flex-col gap-2">
             <b className="text-[14px]">어떤 문서인가요?</b>
             {option("leave", "휴가신청서", leave ? `이미 등록된 '${leave.name}'의 새 버전으로 올려요(무료, 칸 그대로).` : "직원은 지금 휴가 신청 화면 그대로, 결재 뒤 이 모양으로 나와요.")}
+            {option("correction", "근태 정정 신청서", one("correction") ? `이미 등록된 '${one("correction")!.name}'의 새 버전으로 올려요(무료).` : "출퇴근 기록 수정 요청서 — 직원은 지금 정정 신청 화면 그대로, 승인 뒤 이 모양으로 나와요.")}
+            {option("holiday", "휴일·연장근무 신청서", one("holiday") ? `이미 등록된 '${one("holiday")!.name}'의 새 버전으로 올려요(무료).` : "직원은 지금 휴일 근무 상신 화면 그대로, 승인 뒤 이 모양으로 나와요.")}
             {option("general", "일반 결재 문서", "품의서·구매요청서·시말서 등 — 양식으로 입력 화면을 만들어요(쓰기는 다음 단계에서 열려요).", "2단계")}
             {option("expense", "지출결의서", "지출결의서는 [설정 › 양식·결재 › 지출결의서 양식]에서 따로 등록해요(칸 안 씀).")}
           </div>
         )}
-        {target && !group && kind === "leave" && (
+        {target && !group && isAttendanceKind(kind) && (
           <p className="rounded-xl bg-brand-50 px-3 py-2 text-[13px] text-brand-900" data-new-version>
-            휴가신청서는 회사에 하나예요. &lsquo;{target.name}&rsquo;의 새 버전으로 올려요(무료). 이미 낸 신청서는 그때 버전 모양으로 나와요.
+            {KIND_LABEL[kind]}는 회사에 하나예요. &lsquo;{target.name}&rsquo;의 새 버전으로 올려요(무료). 이미 낸 신청서는 그때 버전 모양으로 나와요.
           </p>
         )}
 

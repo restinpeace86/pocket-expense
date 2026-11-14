@@ -6,6 +6,8 @@ import { createAttendanceRequest } from "@/app/workspace/[id]/employee/attendanc
 import { minutesLabel, type MonthRow } from "@/lib/attendance/month";
 import { applyChip, minutesBetween, REASON_CHIPS, REASON_MAX, validateRequest } from "@/lib/attendance/request";
 import { kstTime } from "@/lib/attendance/rules";
+import type { LeaveInputs } from "@/lib/company-forms/leave-inputs";
+import { LeaveCustomFields, missingRequired } from "./leave-custom-fields";
 
 // 정정 신청 · 휴일 근무 상신 쓰기(spec/features/attendance.md §6, D-239 → D-257: [근태] 그날 상세 창 안에서)
 // D-258: 시각 칸 위에 [정규 출근/퇴근 09:00]·[지금](그날이 오늘일 때만) 한 번 누르기, 다른 시각은 시각 칸에서
@@ -16,7 +18,9 @@ export function RequestPanel({
   defaults,
   onBack,
   onDone,
+  custom = null,
 }: {
+  custom?: LeaveInputs | null; // 회사 근태 양식의 직원 입력 칸(9-33c)
   kind: "correction" | "holiday";
   row: MonthRow;
   today: string;
@@ -30,6 +34,7 @@ export function RequestPanel({
   const [newOut, setNewOut] = useState(row.outTime ?? defaults.out);
   const [editTimes, setEditTimes] = useState(!holiday);
   const [reason, setReason] = useState("");
+  const [values, setValues] = useState<Record<string, string>>(() => custom?.last ?? {});
   const [error, setError] = useState<string | null>(null);
   const [busy, start] = useTransition();
 
@@ -37,9 +42,11 @@ export function RequestPanel({
   const validTimes = /^\d{2}:\d{2}$/.test(newIn) && /^\d{2}:\d{2}$/.test(newOut) && newIn < newOut;
   const oldMins = row.inTime && row.outTime ? minutesBetween(row.inTime, row.outTime) : null;
   const submit = () => {
-    const input = { date: row.date, kind, newIn, newOut, reason };
+    const input = { date: row.date, kind, newIn, newOut, reason, ...(custom ? { custom: values } : {}) };
     const msg = validateRequest(input, before, today, kstTime(new Date()));
     if (msg) return setError(msg);
+    const miss = custom ? missingRequired(custom.fields, values) : null;
+    if (miss) return setError(`회사 추가 항목 '${miss.label}'을(를) 채워 주세요.`);
     setError(null);
     start(async () => {
       const res = await createAttendanceRequest(input);
@@ -175,6 +182,7 @@ export function RequestPanel({
           정정 신청은 <b>이번 달 기록만</b> 할 수 있어요(말일까지). 자정 넘은 시각은 넣을 수 없어요(23:59까지). 관리자가 승인하면 바뀌고, 원래 기록은 그대로 남아요.
         </p>
       )}
+      {custom && <LeaveCustomFields formName={custom.formName} fields={custom.fields} values={values} onChange={(k, v) => (setValues((x) => ({ ...x, [k]: v })), setError(null))} members={custom.members} />}
       {error && (
         <p role="alert" className="text-sm font-semibold text-red-700">
           {error}

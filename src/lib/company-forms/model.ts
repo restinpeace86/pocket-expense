@@ -3,8 +3,12 @@
 // - data: 우리 데이터(B-3) / input: 신청할 때 직원이 입력 / fixed: 고정 값 / blank: 비워 두기(수기) / drop: 빼기(등록할 때 양식에서 지움) / pending: 정해 주세요
 import { anchorOf, sheetFromAi, type AiCell, type AiPage, type DocModel, type Sheet, MAX_CELL, MAX_PAGES } from "@/lib/doc-convert/model";
 
-export type FormKind = "leave" | "general";
-export const KIND_LABEL: Record<FormKind, string> = { leave: "휴가신청서", general: "일반 결재 문서" };
+export type FormKind = "leave" | "correction" | "holiday" | "general";
+export const KIND_LABEL: Record<FormKind, string> = { leave: "휴가신청서", correction: "근태 정정 신청서", holiday: "휴일·연장근무 신청서", general: "일반 결재 문서" };
+// 근태 양식(9-33c, D-279): 직원은 앱 신청 화면 그대로, 회사 양식은 결재 끝난 문서 모양 + [회사 추가 항목]. 회사에 종류마다 하나
+export const ATTENDANCE_KINDS = ["leave", "correction", "holiday"] as const;
+export const isAttendanceKind = (k: FormKind | null | undefined): k is "leave" | "correction" | "holiday" => !!k && (ATTENDANCE_KINDS as readonly string[]).includes(k);
+export const isFormKind = (k: unknown): k is FormKind => typeof k === "string" && k in KIND_LABEL;
 
 // 우리 데이터(B-3). 결재란은 결재라인 순서대로 이름·직급·날짜(서명 이미지는 이번 범위 아님)
 export const COMMON_DATA = {
@@ -32,16 +36,41 @@ export const LEAVE_DATA = {
   "leave.remaining": "남은 연차(신청할 때)",
   "leave.proof": "증빙 첨부 여부",
 } as const;
-export type DataKey = keyof typeof COMMON_DATA | keyof typeof LEAVE_DATA;
-export const DATA_LABEL: Record<DataKey, string> = { ...COMMON_DATA, ...LEAVE_DATA };
+export const CORRECTION_DATA = {
+  "correction.date": "정정 날짜",
+  "correction.before": "변경 전 출퇴근(09:00 ~ 18:00)",
+  "correction.after": "변경 후 출퇴근(09:00 ~ 18:00)",
+  "correction.before_in": "변경 전 출근",
+  "correction.before_out": "변경 전 퇴근",
+  "correction.after_in": "변경 후 출근",
+  "correction.after_out": "변경 후 퇴근",
+  "correction.reason": "정정 사유",
+  "correction.stay": "정정 후 머문 시간",
+} as const;
+export const HOLIDAY_DATA = {
+  "holiday.date": "근무 날짜",
+  "holiday.time": "근무 시간대(09:00 ~ 18:00)",
+  "holiday.in": "출근 시각",
+  "holiday.out": "퇴근 시각",
+  "holiday.hours": "근무 시간(합계)",
+  "holiday.work": "한 일",
+} as const;
+export type DataKey = keyof typeof COMMON_DATA | keyof typeof LEAVE_DATA | keyof typeof CORRECTION_DATA | keyof typeof HOLIDAY_DATA;
+export const DATA_LABEL: Record<DataKey, string> = { ...COMMON_DATA, ...LEAVE_DATA, ...CORRECTION_DATA, ...HOLIDAY_DATA };
+const KIND_DATA: Record<FormKind, readonly DataKey[]> = {
+  leave: Object.keys(LEAVE_DATA) as DataKey[],
+  correction: Object.keys(CORRECTION_DATA) as DataKey[],
+  holiday: Object.keys(HOLIDAY_DATA) as DataKey[],
+  general: [],
+};
 export function dataKeysFor(kind: FormKind): DataKey[] {
-  return [...(Object.keys(COMMON_DATA) as DataKey[]), ...(kind === "leave" ? (Object.keys(LEAVE_DATA) as DataKey[]) : [])];
+  return [...(Object.keys(COMMON_DATA) as DataKey[]), ...KIND_DATA[kind]];
 }
 export const isDataKey = (k: unknown, kind: FormKind): k is DataKey => typeof k === "string" && (dataKeysFor(kind) as string[]).includes(k);
 
 export type InputType = "text" | "long" | "date" | "number" | "choice" | "member";
 export const INPUT_LABEL: Record<InputType, string> = { text: "글", long: "긴 글", date: "날짜", number: "숫자", choice: "선택지", member: "직원 고르기" };
-export const MAX_INPUTS: Record<FormKind, number> = { leave: 5, general: 15 };
+export const MAX_INPUTS: Record<FormKind, number> = { leave: 5, correction: 5, holiday: 5, general: 15 };
 export const MAX_OPTIONS = 10;
 
 export type Binding =
@@ -234,7 +263,7 @@ export function formErrorMessage(message: string): string {
   if (message.includes("FIELDS_PENDING")) return "'정해 주세요' 칸을 모두 정해야 등록할 수 있어요.";
   if (message.includes("TOO_MANY_INPUTS")) return "직원 입력 칸이 너무 많아요(휴가신청서 5개, 일반 결재 문서 15개까지).";
   if (message.includes("DRAFTS_FULL")) return "등록 대기 중인 양식이 많아요. 대기 중인 양식을 먼저 등록하거나 지워 주세요.";
-  if (message.includes("LEAVE_EXISTS")) return "휴가신청서는 회사에 하나만 둘 수 있어요. 기존 휴가신청서의 새 버전으로 올려 주세요.";
+  if (message.includes("LEAVE_EXISTS")) return "근태 양식(휴가·근태 정정·휴일근무)은 종류마다 하나만 둘 수 있어요. 이미 있는 양식의 새 버전으로 올려 주세요.";
   if (message.includes("KIND_MISMATCH")) return "다른 종류의 문서로 바꿀 수 없어요. 새 양식으로 추가해 주세요.";
   if (message.includes("NOT_READ")) return "아직 AI가 양식을 읽지 않았어요.";
   if (message.includes("INVALID_NAME")) return "양식 이름을 1~60자로 적어 주세요.";

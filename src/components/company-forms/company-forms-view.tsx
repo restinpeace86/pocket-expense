@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { deleteFormAction as deleteFormActionRaw, editFormAction as editFormActionRaw } from "@/app/workspace/[id]/admin/company-forms/actions";
-import { inputCount, KIND_LABEL, type Field, type FormKind } from "@/lib/company-forms/model";
+import { inputCount, KIND_LABEL, type Field, type FormKind, isAttendanceKind } from "@/lib/company-forms/model";
 import { draftDaysLeft, type DocModel } from "@/lib/doc-convert/model";
 import { AddFormDialog, type AddFormSource } from "./add-form-dialog";
 import { SheetView } from "./sheet-view";
@@ -125,8 +125,8 @@ export function CompanyFormsView({
                     v{f.version} · {dateLabel(f.published_at)} {f.created_by_name ?? ""}
                   </span>
                 </span>
-                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-medium ${f.kind === "leave" ? "bg-emerald-50 text-emerald-800" : "bg-zinc-100 text-zinc-700"}`}>
-                  {f.kind === "leave" ? "등록됨" : "2단계 준비 중"}
+                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-medium ${isAttendanceKind(f.kind) ? "bg-emerald-50 text-emerald-800" : "bg-zinc-100 text-zinc-700"}`}>
+                  {isAttendanceKind(f.kind) ? "등록됨" : "2단계 준비 중"}
                 </span>
                 <span className="flex w-full flex-wrap items-center gap-x-2 gap-y-1 md:w-auto">
                   <button type="button" onClick={() => setPreview(f)} className={link} data-form-preview>

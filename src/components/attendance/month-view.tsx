@@ -9,6 +9,8 @@ import { minutesLabel, monthLabel, type MonthRow, type MonthSummary, type RowBad
 import { changeLines } from "@/lib/attendance/request";
 import { kstTime } from "@/lib/attendance/rules";
 import { RequestPanel } from "./request-form";
+import { FormDocButtons } from "@/components/company-forms/leave-doc-buttons";
+import type { RequestInputs } from "@/lib/company-forms/leave-inputs";
 
 // 월 근태 현황(spec/features/attendance.md §5 D-237, §6 D-239): 요약 + 날짜 목록(최근 위) + 날짜 누르면 그날 상세(정정 신청·휴일 근무 상신)
 // D-257: 그날 상세·신청 칸은 한 화면 안의 창. 주소 ?date=…&kind=…로 열어 휴대폰 [뒤로]가 창만 닫는다
@@ -79,7 +81,7 @@ export function MonthView({
   backLabel?: string;
   monthPrefix?: string; // 달 이동 주소 앞부분(서버에서 넘김 — 함수는 못 넘김)
   // 직원 화면: 창 안 신청 칸에 쓸 오늘 날짜·정규 출퇴근 시각(관리자 보기는 없음)
-  request?: { today: string; defaults: { in: string; out: string } };
+  request?: { today: string; defaults: { in: string; out: string }; custom?: RequestInputs };
 }) {
   const mHref = (m: string) => `${monthPrefix ?? `${base}/attendance?month=`}${m}`;
   // 날짜는 주소에서(취소 뒤 목록이 새로 오면 열린 날도 새 값)
@@ -221,7 +223,7 @@ function DaySheet({
   row: MonthRow;
   readOnly: boolean;
   kind: "correction" | "holiday" | null;
-  request?: { today: string; defaults: { in: string; out: string } };
+  request?: { today: string; defaults: { in: string; out: string }; custom?: RequestInputs };
   onClose: () => void;
   onForm: (k: "correction" | "holiday") => void;
   onBack: () => void;
@@ -251,7 +253,7 @@ function DaySheet({
         data-day-sheet={row.date}
       >
         {kind && request ? (
-          <RequestPanel key={kind} kind={kind} row={row} today={request.today} defaults={request.defaults} onBack={onBack} onDone={(self) => onFinish(self ? "self" : "pending")} />
+          <RequestPanel key={kind} kind={kind} row={row} today={request.today} defaults={request.defaults} custom={request.custom?.[kind] ?? null} onBack={onBack} onDone={(self) => onFinish(self ? "self" : "pending")} />
         ) : (
         <>
         <div className="flex items-center gap-2">
@@ -310,6 +312,11 @@ function DaySheet({
                   신청 {kstTime(c.created_at)} · {c.kind === "holiday" ? "한 일" : "사유"} &quot;{c.reason}&quot;
                 </span>
                 <span className="block text-indigo-800">{c.self_approved ? "대표 본인 승인" : `승인 ${c.decided_at ? kstTime(c.decided_at) : ""} · ${c.decided_by_name ?? ""}`}</span>
+                {c.form_id && (
+                  <div className="mt-2">
+                    <FormDocButtons target={{ kind: c.kind, id: c.id }} compact />
+                  </div>
+                )}
               </div>
             ))}
           </section>
@@ -328,6 +335,11 @@ function DaySheet({
             <span className="block">
               {row.pending.kind === "holiday" ? "한 일" : "사유"}: {row.pending.reason}
             </span>
+            {row.pending.form_id && (
+              <div className="mt-2">
+                <FormDocButtons target={{ kind: row.pending.kind, id: row.pending.id }} compact />
+              </div>
+            )}
             {!readOnly && (
               <button type="button" disabled={busy} onClick={() => cancel(row.pending!.id)} className="mt-2 flex h-10 items-center gap-1.5 rounded-lg border border-amber-400 bg-white px-3 text-sm font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-70">
                 {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}

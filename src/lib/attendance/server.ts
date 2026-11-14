@@ -66,6 +66,7 @@ export type AdminRequest = {
   created_at: string;
   mine: boolean;
   can_decide: boolean;
+  form_id?: string | null; // 회사 양식으로 낸 신청(9-33c)
 };
 export async function getAttendanceRequestsAdmin(): Promise<{ pending: AdminRequest[]; done: AdminRequest[] }> {
   const supabase = await createClient();

@@ -527,7 +527,7 @@ function FieldSetDialog({
           {radio(
             "input",
             "신청할 때 직원이 입력",
-            kind === "leave" ? "휴가 신청 화면 아래 [회사 추가 항목]에 칸이 생겨요" : "결재 문서 입력 화면에 칸이 생겨요",
+            kind === "leave" ? "휴가 신청 화면 아래 [회사 추가 항목]에 칸이 생겨요" : kind === "correction" ? "정정 신청 화면 아래 [회사 추가 항목]에 칸이 생겨요" : kind === "holiday" ? "휴일 근무 상신 화면 아래 [회사 추가 항목]에 칸이 생겨요" : "결재 문서 입력 화면에 칸이 생겨요",
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap gap-1.5">
                 {(Object.keys(INPUT_LABEL) as InputType[]).map((t) => (

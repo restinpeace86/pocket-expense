@@ -853,9 +853,11 @@ export type Database = {
           before: Json
           company_id: string
           created_at: string
+          custom_payload: Json
           decided_at: string | null
           decided_by: string | null
           decided_by_name: string | null
+          form_id: string | null
           id: string
           kind: string
           member_id: string
@@ -873,9 +875,11 @@ export type Database = {
           before: Json
           company_id: string
           created_at?: string
+          custom_payload?: Json
           decided_at?: string | null
           decided_by?: string | null
           decided_by_name?: string | null
+          form_id?: string | null
           id?: string
           kind: string
           member_id: string
@@ -893,9 +897,11 @@ export type Database = {
           before?: Json
           company_id?: string
           created_at?: string
+          custom_payload?: Json
           decided_at?: string | null
           decided_by?: string | null
           decided_by_name?: string | null
+          form_id?: string | null
           id?: string
           kind?: string
           member_id?: string
@@ -916,6 +922,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_requests_form_fk"
+            columns: ["form_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "company_forms"
+            referencedColumns: ["id", "company_id"]
           },
           {
             foreignKeyName: "attendance_requests_member_id_company_id_fkey"
@@ -5389,6 +5402,7 @@ export type Database = {
       attendance_request_cancel: { Args: { p_id: string }; Returns: undefined }
       attendance_request_create: {
         Args: {
+          p_custom?: Json
           p_date: string
           p_in: string
           p_kind: string

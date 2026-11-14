@@ -28,6 +28,7 @@ export type AttendanceRequest = {
   decided_at: string | null;
   reject_reason: string | null;
   created_at: string;
+  form_id?: string | null; // 회사 양식으로 낸 신청(9-33c) → [신청서 PDF]
 };
 export type MonthLeave = { id: string; type_name: string; unit: "day" | "hour"; start_date: string; end_date: string; start_time: string | null; hours: number | null };
 export type MonthData = {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DocModel } from "@/lib/doc-convert/model";
-import { dataValue, fillForm, leaveDocNumber, type LeaveDocData } from "./fill";
+import { dataValue, fillForm, formDocNumber, leaveDocNumber, type LeaveDocData } from "./fill";
 import type { Field } from "./model";
 
 const doc: DocModel = {
@@ -40,11 +40,35 @@ describe("휴가신청서 채우기", () => {
   it("승인 전·반려, 시간 단위, 남은 연차·문서 번호", () => {
     expect(dataValue("approval.2", { ...data, approver: "pending" })).toBe("결재 전");
     expect(dataValue("approval.2", { ...data, approver: "rejected" })).toBe("반려");
-    const h = { ...data, leave: { ...data.leave, unit: "hour" as const, end: "2026-11-14", startTime: "14:00:00", hours: 2 } };
+    const h = { ...data, leave: { ...data.leave!, unit: "hour" as const, end: "2026-11-14", startTime: "14:00:00", hours: 2 } };
     expect(dataValue("leave.period", h)).toBe("2026.11.14 14:00부터 2시간");
     expect(dataValue("leave.days", h)).toBe("2시간");
     expect(dataValue("leave.half", h)).toBe("오후");
     expect(dataValue("leave.remaining", data)).toBe("9.5일");
     expect(leaveDocNumber("abcdef12-3456-7890-abcd-ef1234567890", "2026-11-11")).toBe("휴가-20261111-ABCDEF");
+  });
+});
+
+describe("근태 정정·휴일근무 신청서 채우기(9-33c)", () => {
+  const req: LeaveDocData = { ...data, leave: undefined, request: { date: "2026-11-13", beforeIn: "09:02", beforeOut: "18:00", newIn: "09:02", newOut: "20:30", reason: "퇴근 뒤 더 일했어요" } };
+  it("변경 전·후·사유·머문 시간", () => {
+    expect(dataValue("correction.date", req)).toBe("2026.11.13");
+    expect(dataValue("correction.before", req)).toBe("09:02 ~ 18:00");
+    expect(dataValue("correction.after", req)).toBe("09:02 ~ 20:30");
+    expect(dataValue("correction.after_out", req)).toBe("20:30");
+    expect(dataValue("correction.reason", req)).toBe("퇴근 뒤 더 일했어요");
+    expect(dataValue("correction.stay", req)).toBe("11시간 28분");
+  });
+  it("기록이 없던 날·휴일 근무 칸·휴가 칸은 비움", () => {
+    const none = { ...req, request: { ...req.request!, beforeIn: null, beforeOut: null } };
+    expect(dataValue("correction.before", none)).toBe("기록 없음");
+    expect(dataValue("correction.before_in", none)).toBe("");
+    const hw = { ...req, request: { date: "2026-11-08", beforeIn: "10:00", beforeOut: "15:00", newIn: "10:00", newOut: "15:00", reason: "주말 고객 대응" } };
+    expect(dataValue("holiday.time", hw)).toBe("10:00 ~ 15:00");
+    expect(dataValue("holiday.hours", hw)).toBe("5시간");
+    expect(dataValue("holiday.work", hw)).toBe("주말 고객 대응");
+    expect(dataValue("leave.period", req)).toBe("");
+    expect(dataValue("correction.date", data)).toBe("");
+    expect(formDocNumber("정정", "abcdef12-3456-7890-abcd-ef1234567890", "2026-11-13")).toBe("정정-20261113-ABCDEF");
   });
 });

@@ -5,6 +5,8 @@ import { buildMonth, monthEndNotice, shiftMonth, type MonthData } from "@/lib/at
 import { attendanceEnabled } from "@/lib/attendance/server";
 import { currentMonthKst, todayKst } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
+import { requireWorkspace } from "@/lib/auth/guards";
+import { getRequestInputs } from "@/lib/company-forms/leave-inputs";
 import { BRAND } from "@/lib/brand";
 
 export const metadata = { title: `출퇴근 기록 · ${BRAND.name}` };
@@ -27,10 +29,12 @@ async function Month({ params, searchParams }: Pick<PageProps<"/workspace/[id]/e
   const current = currentMonthKst();
   const asked = typeof sp.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(sp.month) ? sp.month : current;
   if (asked > current) redirect(`${base}/attendance`);
+  const membership = await requireWorkspace(id);
   const supabase = await createClient();
-  const [{ data, error }, { data: settings }] = await Promise.all([
+  const [{ data, error }, { data: settings }, custom] = await Promise.all([
     supabase.rpc("my_attendance_month", { p_month: asked }),
     supabase.from("attendance_settings").select("work_start, work_end").maybeSingle(),
+    getRequestInputs(membership.member_id),
   ]);
   if (error || !data) throw new Error(error?.message ?? "my_attendance_month");
   const month = data as unknown as MonthData;
@@ -46,7 +50,7 @@ async function Month({ params, searchParams }: Pick<PageProps<"/workspace/[id]/e
       summary={summary}
       monthEnd={asked === current ? monthEndNotice(todayKst()) : null}
       flash={flash}
-      request={{ today: month.today, defaults: { in: settings?.work_start?.slice(0, 5) ?? "", out: settings?.work_end?.slice(0, 5) ?? "" } }}
+      request={{ today: month.today, defaults: { in: settings?.work_start?.slice(0, 5) ?? "", out: settings?.work_end?.slice(0, 5) ?? "" }, custom }}
     />
   );
 }

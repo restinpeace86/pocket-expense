@@ -16,7 +16,7 @@ export function minutesBetween(inHm: string, outHm: string): number {
   return toMin(outHm) - toMin(inHm);
 }
 
-export type RequestInput = { date: string; kind: "correction" | "holiday"; newIn: string; newOut: string; reason: string };
+export type RequestInput = { date: string; kind: "correction" | "holiday"; newIn: string; newOut: string; reason: string; custom?: Record<string, string> };
 
 // 화면 검사(서버도 같은 규칙으로 다시 검사). before = 지금 그날 기록(없으면 null)
 export function validateRequest(input: RequestInput, before: { inTime: string | null; outTime: string | null }, today: string, nowHm: string): string | null {

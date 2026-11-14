@@ -10,7 +10,9 @@ export type LeaveDocData = {
   member: { name: string; department: string | null; position: string | null; employee_number: string | null };
   docDate: string; // YYYY-MM-DD(신청일)
   docNumber: string;
-  leave: { type: string; start: string; end: string; unit: "day" | "hour"; startTime: string | null; hours: number | null; workdays: number; reason: string | null; remaining: number | null; proof: boolean };
+  leave?: { type: string; start: string; end: string; unit: "day" | "hour"; startTime: string | null; hours: number | null; workdays: number; reason: string | null; remaining: number | null; proof: boolean };
+  // 근태 정정·휴일 근무(9-33c): 시각은 HH:MM, 변경 전 기록이 없으면 null
+  request?: { date: string; beforeIn: string | null; beforeOut: string | null; newIn: string; newOut: string; reason: string };
   applicant: Signer;
   approver: Signer | "pending" | "rejected";
   custom: Record<string, string>;
@@ -18,10 +20,21 @@ export type LeaveDocData = {
 
 const dot = (d: string) => d.replaceAll("-", ".");
 const num = (n: number) => (Number.isInteger(n) ? String(n) : String(Math.round(n * 1000) / 1000));
+// 머문 시간: 출근~퇴근 차이(앱 [출퇴근 기록]의 머문 시간과 같음)
+function stayLabel(from: string, to: string): string {
+  const m = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+  const d = m(to) - m(from);
+  if (!(d > 0)) return "";
+  return `${Math.floor(d / 60)}시간${d % 60 ? ` ${d % 60}분` : ""}`;
+}
+const range = (a: string | null, b: string | null) => (a || b ? `${a ?? "-"} ~ ${b ?? "-"}` : "기록 없음");
 const signer = (s: Signer) => (s ? [s.name, s.position, s.date ? dot(s.date).slice(5) : null].filter(Boolean).join("\n") : "");
 
 export function dataValue(key: DataKey, d: LeaveDocData): string {
-  const l = d.leave;
+  if (key.startsWith("leave.") && !d.leave) return "";
+  if ((key.startsWith("correction.") || key.startsWith("holiday.")) && !d.request) return "";
+  const l = d.leave!;
+  const q = d.request!;
   switch (key) {
     case "company.name":
       return d.company;
@@ -65,6 +78,30 @@ export function dataValue(key: DataKey, d: LeaveDocData): string {
       return l.remaining === null ? "" : `${num(l.remaining)}일`;
     case "leave.proof":
       return l.proof ? "있음" : "없음";
+    case "correction.date":
+    case "holiday.date":
+      return dot(q.date);
+    case "correction.before":
+      return range(q.beforeIn, q.beforeOut);
+    case "correction.after":
+    case "holiday.time":
+      return range(q.newIn, q.newOut);
+    case "correction.before_in":
+      return q.beforeIn ?? "";
+    case "correction.before_out":
+      return q.beforeOut ?? "";
+    case "correction.after_in":
+    case "holiday.in":
+      return q.newIn;
+    case "correction.after_out":
+    case "holiday.out":
+      return q.newOut;
+    case "correction.reason":
+    case "holiday.work":
+      return q.reason;
+    case "correction.stay":
+    case "holiday.hours":
+      return stayLabel(q.newIn, q.newOut);
   }
 }
 
@@ -84,5 +121,9 @@ export function fillForm(doc: DocModel, fields: Field[], d: LeaveDocData): DocMo
 
 // 문서 번호: 신청일 + 신청 id 앞 6자리(회사 안에서 겹치지 않음)
 export function leaveDocNumber(id: string, date: string): string {
-  return `휴가-${date.replaceAll("-", "")}-${id.replaceAll("-", "").slice(0, 6).toUpperCase()}`;
+  return formDocNumber("휴가", id, date);
+}
+// 문서 번호: 종류-신청일-앞 6자리(휴가·정정·휴일)
+export function formDocNumber(prefix: string, id: string, date: string): string {
+  return `${prefix}-${date.replaceAll("-", "")}-${id.replaceAll("-", "").slice(0, 6).toUpperCase()}`;
 }

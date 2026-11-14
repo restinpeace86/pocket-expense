@@ -14,6 +14,7 @@ export async function createAttendanceRequest(input: RequestInput): Promise<Requ
     p_in: input.newIn,
     p_out: input.newOut,
     p_reason: input.reason,
+    ...(input.custom ? { p_custom: input.custom } : {}),
   });
   if (error) return { ok: false, error: requestErrorText(error.message) };
   return { ok: true, selfApproved: (data as { self_approved?: boolean } | null)?.self_approved === true };

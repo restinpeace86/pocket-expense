@@ -1,14 +1,14 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { applyDrops, formErrorMessage, validFields, type Field, type FormKind } from "@/lib/company-forms/model";
+import { applyDrops, formErrorMessage, isFormKind, validFields, type Field, type FormKind } from "@/lib/company-forms/model";
 import { deleteForm, readForm, startFormFromChat, startFormFromUpload } from "@/lib/company-forms/server";
 import { validDoc } from "@/lib/doc-convert/model";
 import { createClient } from "@/lib/supabase/server";
 
 // 회사 양식 등록(8-104 B). 권한은 DB 함수가 관리자만 허용한다
 type Source = { chat: string } | { upload: { id: string; name: string; mime: string } };
-const isKind = (k: unknown): k is FormKind => k === "leave" || k === "general";
+const isKind = (k: unknown): k is FormKind => isFormKind(k);
 
 // 시작: 파일 → 초안 → (종류가 있으면) AI로 읽기. 읽기가 실패해도 초안은 [등록 대기]에 남는다
 export async function startFormAction(source: Source, group: string | null, kind: FormKind) {
