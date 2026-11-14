@@ -404,6 +404,9 @@
   - [x] 9-14c 입력 칸 개선 ⑤ 일정 길이 칩 ⑥ 회의실 이번 주 날짜 띠 ⑦ 관리자 결의서 날짜 거르기 칩(9-12 검토안)
   - [x] 9-14d 고장 난 테스트 정리(e2e-vacation·e2e-attendance 관리자 설정 선택자, install-next-step lint)
 
+## 2026-11-14 양식 설정 PC 전용
+- [x] 9-32 [지출결의서 양식] 편집 휴대폰에서 숨김 + PC 안내(D-278) — `form-template-mobile.tsx`, e2e-form-template 휴대폰 확인 추가, 편집 테스트는 900px
+
 ## 2026-11-14 비정상 사용 점검
 - [x] 9-31 주소 조작·연타·두 탭·로그아웃 뒤·비활성화·이상한 입력·몽키·인터넷 끊김 점검(`chaos-urls`·`chaos-actions`·`chaos-monkey`), 앱 버그 2개 고침(D-277, `implementation/2026-11-14_chaos-check.md`)
 

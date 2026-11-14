@@ -1,9 +1,10 @@
 import { Suspense } from "react";
+import { FormTemplateMobile } from "@/components/admin/form-template-mobile";
 import { FormTemplateView } from "@/components/admin/form-template-view";
 import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { getActiveForm } from "@/lib/forms/active";
-import { DEFAULT_LAYOUT, SAMPLE_DOC } from "@/lib/forms/layout";
+import { DEFAULT_LAYOUT, PRESETS, SAMPLE_DOC } from "@/lib/forms/layout";
 import { createClient } from "@/lib/supabase/server";
 import { getClaimDocsByIds } from "@/lib/tax/claim-docs";
 import { BRAND } from "@/lib/brand";
@@ -34,14 +35,22 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/fo
   ]);
   const docs = latest.data ? await getClaimDocsByIds(membership.company_id, [latest.data.id]) : [];
   const doc = docs[0]?.items.length ? docs[0] : null;
+  const layout = form?.layout ?? DEFAULT_LAYOUT;
+  const activeName = form ? (layout.base === "custom" ? "우리 회사 맞춤 양식" : PRESETS[layout.base].name) : "기본 양식";
   return (
-    <FormTemplateView
-      companyId={membership.company_id}
-      companyName={company.data?.name ?? ""}
-      active={form ? { version: form.version, createdAt: form.createdAt } : null}
-      initialLayout={form?.layout ?? DEFAULT_LAYOUT}
-      previewDoc={doc ?? SAMPLE_DOC}
-      previewLabel={doc ? `최근 결의서 '${doc.title}'` : "예시 결의서"}
-    />
+    <>
+      {/* 휴대폰: 지금 양식만 + PC 안내(D-278) / PC: 편집 화면 */}
+      <FormTemplateMobile activeName={activeName} version={form?.version ?? null} />
+      <div className="hidden md:block">
+        <FormTemplateView
+          companyId={membership.company_id}
+          companyName={company.data?.name ?? ""}
+          active={form ? { version: form.version, createdAt: form.createdAt } : null}
+          initialLayout={layout}
+          previewDoc={doc ?? SAMPLE_DOC}
+          previewLabel={doc ? `최근 결의서 '${doc.title}'` : "예시 결의서"}
+        />
+      </div>
+    </>
   );
 }
