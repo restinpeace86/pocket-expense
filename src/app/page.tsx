@@ -1,4 +1,4 @@
-import { ArrowRight, Briefcase, Building2, CalendarCheck, CalendarDays, Camera, CheckCircle2, CreditCard, Crown, DoorOpen, FileSpreadsheet, FileText, Landmark, Layers, Link2, MessageCircle, MessagesSquare, ReceiptText, ScanLine, Smartphone, Sparkles, Wallet } from "lucide-react";
+import { ArrowRight, Briefcase, Building2, Camera, CheckCircle2, Crown, FileText, Landmark, Layers, Smartphone, Sparkles, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Faq } from "@/components/landing/faq";
@@ -9,13 +9,15 @@ import { Testimonials } from "@/components/landing/testimonials";
 import { OPERATOR, SHOW_FULL_BUSINESS_INFO } from "@/components/legal/documents";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 import { Wordmark } from "@/components/brand/logo";
-import { BRAND, BRAND_JOSA } from "@/lib/brand";
+import { BRAND } from "@/lib/brand";
 import { ACCENT, BRAND_BUTTON, type Accent } from "@/components/landing/accent";
 import { WhyArtwork, type WhyArt } from "@/components/landing/why-art";
 import { SectionNav } from "@/components/landing/section-nav";
+import { MobileStartBar } from "@/components/landing/mobile-start-bar";
+import { FEATURE_GROUPS } from "@/lib/landing/features";
 
 // 랜딩 페이지 (spec/screens/landing-page.md §0, D-255 §C 개편). 정적 화면 — 세션을 읽지 않는다.
-// 밝은 바탕 + [기능 미리 보기]만 진한 띠(시뮬레이션 7개 탭). CTA는 로그인 후 회사 생성 위저드로 간다.
+// 밝은 바탕 + [기능 미리 보기]만 진한 띠(시뮬레이션 8개 탭). D-273: 구역마다 박히는 한 줄 + 뒷받침 한 줄, 중간 구역 합침. CTA는 로그인 후 회사 생성 위저드로 간다.
 // 검색 결과에 대표 주소로 잡히게(7차 개선사항 6) — 제목·설명·공유 이미지는 루트 layout 기본값
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
@@ -31,87 +33,51 @@ const SECTION_LINKS = [
 const START_HREF = `/login?next=${encodeURIComponent("/onboarding/create-company")}`;
 
 // Moa-on이 다른 점(D-255 §C) — 지금 있는 기능만(D-200 원칙)
-// 색 보완(9-15, D-263): accent = 구역 보조색, art = 카드 안 작은 화면 그림
+// D-273 랜딩 다시 짜기: 구역마다 박히는 한 줄 + 뒷받침 한 줄. 비슷한 카드가 이어지던 중간(이어짐·경비 더 깊게·한 달 흐름)은 [한 달 흐름] 하나로.
+// [다른 점] 큰 글씨 4장 + 아래 [기능] 벽(모든 플랜 공통 기능을 구역별 칩으로 — 기능이 안 보이지 않게)
 const WHY: { icon: typeof Layers; big: string; body: string; accent: Accent; art: WhyArt }[] = [
-  { icon: Layers, big: "도구 여럿 → 구독 하나", body: "경비·결재, 근태·휴가, 사내 채팅·캘린더·회의실, 서류 변환까지. 따로 가입하고 따로 결제하던 걸 한 곳에서.", accent: "attend", art: "bundle" },
-  { icon: Sparkles, big: "AI가 먼저 채워요", body: "영수증은 결의서로, 종이 표는 엑셀로. 사람은 맞는지 확인만 하면 돼요.", accent: "expense", art: "ai" },
-  { icon: FileText, big: "우리 회사 양식 그대로", body: "쓰던 지출결의서·휴가신청서 양식에 그대로 채워서 PDF·엑셀로 받아요. 양식을 바꿀 필요가 없어요.", accent: "docs", art: "form" },
-  { icon: Landmark, big: "세무사무소까지 이어져요", body: "승인된 지출만 모여 월말에 세무사무소 무료 전용 화면으로. 메일·압축 파일이 없어요.", accent: "tax", art: "tax" },
+  { icon: Layers, big: "앱 다섯 개 → 하나", body: "경비·근태·채팅·캘린더·서류를 한 구독으로.", accent: "attend", art: "bundle" },
+  { icon: Sparkles, big: "찍으면 결의서", body: "AI가 채우고, 사람은 확인만.", accent: "expense", art: "ai" },
+  { icon: FileText, big: "쓰던 양식 그대로", body: "우리 회사 결의서·휴가신청서에 그대로 채워요.", accent: "docs", art: "form" },
+  { icon: Landmark, big: "세무사무소까지 한 번에", body: "월말 마감 파일이 메일 없이 넘어가요.", accent: "tax", art: "tax" },
 ];
 
-// 다섯 기둥(D-255 §C). sim = [기능 미리 보기] 탭 키
-const PILLARS: { icon: typeof Layers; title: string; sim: string; accent: Accent; points: string[] }[] = [
-  { icon: ReceiptText, title: "경비·결재", sim: "receipt", accent: "expense", points: ["영수증 사진 → AI가 지출결의서 채움", "알림 받고 휴대폰에서 결재", "직원 사비 정산 · 법인카드 내역 대조"] },
-  { icon: CalendarCheck, title: "근태·휴가", sim: "qr", accent: "attend", points: ["입구 QR을 휴대폰으로 찍는 출퇴근", "휴가 신청 · 남은 연차 미리 보기", "정정 신청 · 월 근태 한눈에"] },
-  { icon: MessagesSquare, title: "협업", sim: "rooms", accent: "collab", points: ["사내 채팅 · 서브 대화 · 파일 보관함", "일정 공유 캘린더 · 출장·외근", "회의실 예약 · 안건·자료 · 10분 전 알림"] },
-  { icon: FileSpreadsheet, title: "문서·양식", sim: "convert", accent: "docs", points: ["종이·PDF 서류 → 표 모양 그대로 엑셀", "회사 양식 휴가신청서 · 지출결의서", "PDF·엑셀로 바로 받기"] },
-  { icon: Landmark, title: "세무 연계", sim: "closing", accent: "tax", points: ["월말 마감 파일(장부·영수증·결의서 PDF)", "세무사무소는 무료 전용 화면에서 받음", "더존 위하고 일반전표 엑셀 그대로"] },
+// 한 달 흐름(4단계) + 이어지는 점(칩) — 예전 [이어져서 편해요]·[경비 처리는 더 깊게]를 칩으로
+const FLOW: { verb: string; when: string; body: string; accent: Accent; icon: typeof Layers }[] = [
+  { verb: "찍는다", when: "매일 · 직원", body: "AI가 결의서를 채워요", accent: "expense", icon: Camera },
+  { verb: "누른다", when: "수시로 · 대표", body: "알림 받고 휴대폰에서 승인", accent: "attend", icon: CheckCircle2 },
+  { verb: "모인다", when: "월말 · 경리", body: "정산·카드 대조·마감 파일 자동", accent: "docs", icon: Wallet },
+  { verb: "넘어간다", when: "마감 뒤 · 세무사무소", body: "메일·압축 파일 없이 바로", accent: "tax", icon: Landmark },
+];
+const LINKS = ["출장 일정 → 결의서 자동 채움", "결의서마다 바로 대화", "회의실 예약 = 참석자 일정", "QR 한 번 → 월 근태", "휴가 승인 → 회사 휴가신청서", "법인카드 내역 자동 대조", "우리 회사 양식 그대로 PDF·엑셀"];
+
+const ROLES: { who: string; line: string; accent: Accent; icon: typeof Layers }[] = [
+  { who: "대표", line: "결재는 휴대폰으로", accent: "expense", icon: Crown },
+  { who: "경리·관리자", line: "월말 취합 끝", accent: "collab", icon: Briefcase },
+  { who: "직원", line: "휴대폰 하나로 다", accent: "attend", icon: Smartphone },
+  { who: "세무사무소", line: "자료가 알아서 와요", accent: "tax", icon: Landmark },
 ];
 
-// 따로 쓰던 도구를 묶으면 생기는 것 — 기능끼리 이어진 부분(D-210·D-216·D-217·D-203·D-236·8-104C)
-const LINKS: { icon: typeof Layers; title: string; body: string; accent: Accent }[] = [
-  { icon: CalendarDays, title: "출장 일정 → 결의서 자동 채움", body: "캘린더에 적어 둔 출장을 결의서에서 누르면 출장지·기간·목적이 들어가요. 두 번 적지 않아요.", accent: "collab" },
-  { icon: DoorOpen, title: "회의실 예약 = 참석자 일정", body: "예약하면 참석자 캘린더에 회의로 잡히고, 안건·자료가 붙고, 10분 전에 채팅 알림이 가요.", accent: "collab" },
-  { icon: MessageCircle, title: "결의서마다 바로 대화", body: "궁금한 결의서는 그 자리에서 [이 건으로 대화] — 카톡에 캡처해 보낼 필요가 없어요.", accent: "expense" },
-  { icon: CalendarCheck, title: "휴가 승인 → 회사 휴가신청서", body: "대표가 승인하면 결재란까지 채운 우리 회사 양식 휴가신청서가 PDF·엑셀로 나와요.", accent: "docs" },
-  { icon: ScanLine, title: "QR 한 번 → 월 근태", body: "출퇴근을 찍는 순간 월 근태에 쌓이고, 빠진 날은 정정 신청으로 대표 승인을 받아요.", accent: "attend" },
-  { icon: Link2, title: "승인된 경비는 세무사무소로", body: "대표가 승인한 지출만 모여 월말에 세무사무소 화면으로 넘어가요. 메일·압축 파일이 없어요.", accent: "tax" },
-];
-
-const FEATURES = [
-  {
-    icon: ScanLine,
-    title: "우리 회사 양식 그대로",
-    body: "쓰던 지출결의서 사진 한 장이면 웹 양식으로 자동 변환. 영수증을 찍으면 그 양식에 알아서 채워집니다.",
-  },
-  {
-    icon: MessageCircle,
-    title: "카카오톡 원클릭 결재",
-    body: "앱 설치 없이 알림톡 링크로 영수증 원본과 내역을 보고 바로 승인합니다.",
-  },
-  {
-    icon: FileSpreadsheet,
-    title: "월말 마감, 세무사무소에 바로",
-    body: "지출내역 엑셀 + 영수증 원본 + 지출결의서 PDF를 한 번에. 압축해서 이메일로 보낼 필요 없이, 세무사무소는 무료 전용 화면에서 바로 보고 내려받습니다.",
-  },
-  // 법인카드 내역 대조(D-111·D-154). 홈택스 파일 대조는 아직 아니라(8-12 보류) '카드사 사용 내역'이라고만 쓴다(D-181)
-  {
-    icon: CreditCard,
-    title: "법인카드 내역 자동 대조",
-    body: "월말에 카드사 사용 내역 파일(엑셀·CSV)만 올리세요. 직원이 올린 영수증과 날짜·금액·카드 끝 4자리로 맞춰, 결의서 없는 카드 결제와 사비로 잘못 올린 법인카드 결제를 찾아냅니다.",
-  },
-];
-
-// 한 달이 이렇게 흘러가요(D-200) — 지금 있는 기능만. 알림톡은 연결을 전제로 쓴다(사용자 결정 2026-11-05, B-3)
-const FLOW: { icon: typeof Layers; when: string; who: string; title: string; body: string; accent: Accent }[] = [
-  { icon: Camera, when: "매일", who: "직원", title: "영수증을 찍으면 결의서가 채워져요", body: "AI가 가맹점·금액·부가세·계정과목을 읽어 결의서에 넣어요. 직원은 확인하고 결재만 올리면 돼요.", accent: "expense" },
-  { icon: CheckCircle2, when: "수시로", who: "대표·팀장", title: "알림 받고 휴대폰에서 바로 승인", body: "카카오톡·앱 알림을 누르면 영수증 원본과 내역이 열려요. 기본은 대표 직통 승인, 필요하면 팀장 사전 검토만 더해요.", accent: "attend" },
-  { icon: Wallet, when: "월말", who: "경리·관리자", title: "정산·카드 대조·마감을 한 화면에서", body: "직원별 정산 지급, 법인카드 내역 대조, 세무 마감 파일(엑셀 장부·영수증·지출결의서 PDF)을 한 번에 끝내요.", accent: "docs" },
-  { icon: Landmark, when: "마감 뒤", who: "세무사무소", title: "세무사무소가 바로 받아요", body: "무료 전용 화면에서 장부와 영수증을 보고, 더존 위하고 일반전표 엑셀로 그대로 올려요. 메일로 압축 파일을 보낼 필요가 없어요.", accent: "tax" },
-];
-
-// 누구에게 좋은가(D-200)
-const ROLES: { icon: typeof Layers; who: string; body: string; accent: Accent }[] = [
-  { icon: Crown, who: "대표", body: "결재·휴가 승인은 휴대폰으로 몇 초. 이번 달 지출은 계정과목별로, 직원 출퇴근·일정·회의실은 한눈에 봐요. 도구 여러 개를 따로 결제하지 않아도 돼요.", accent: "expense" },
-  { icon: Briefcase, who: "경리·관리자", body: "영수증 풀칠·엑셀 취합 없이 승인된 것만 모여요. 정산 지급 목록, 월 근태, 세무 마감 파일이 자동으로 만들어져요.", accent: "collab" },
-  { icon: Smartphone, who: "직원", body: "링크로 가입하고 휴대폰 하나로 다 해요. 영수증은 찍기만, 출퇴근은 QR로, 휴가 신청·회의실 예약·사내 채팅도 같은 곳에서.", accent: "attend" },
-  { icon: Landmark, who: "세무사무소", body: "고객사 자료를 무료 전용 화면에서 바로 받아요. 확인할 영수증은 표시되어 오고, 궁금한 건 영수증에 바로 물어봐요.", accent: "tax" },
-];
-
-const card = "rounded-2xl border border-zinc-200 bg-white shadow-sm";
-
-// 섹션 제목 — 위에 작은 인디고 소제목(eyebrow)을 두어 흐름이 읽히게(D-263)
-function Heading({ id, eyebrow, title, sub }: { id: string; eyebrow: string; title: string; sub: string }) {
+// 큰 제목 + 뒷받침 한 줄(D-273)
+function Heading({ id, eyebrow, title, accent, sub }: { id: string; eyebrow: string; title: string; accent?: string; sub: string }) {
   return (
     <>
       <p className="text-center text-sm font-bold text-indigo-600">{eyebrow}</p>
-      <h2 id={id} className="mt-1.5 text-balance break-keep text-center text-3xl font-bold tracking-tight text-zinc-900">
+      <h2 id={id} className="mt-2 text-balance break-keep text-center text-[2rem] font-extrabold leading-tight tracking-tight text-zinc-900 sm:text-[2.6rem]">
         {title}
+        {accent && (
+          <>
+            <br />
+            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">{accent}</span>
+          </>
+        )}
       </h2>
-      <p className="mx-auto mt-2 max-w-2xl text-balance break-keep text-center text-zinc-600">{sub}</p>
+      <p className="mx-auto mt-3 max-w-2xl text-balance break-keep text-center text-lg text-zinc-600">{sub}</p>
     </>
   );
 }
+
+const card = "rounded-2xl border border-zinc-200 bg-white shadow-sm";
 
 export default function LandingPage() {
   return (
@@ -149,10 +115,10 @@ export default function LandingPage() {
             <h1 className="mt-5 break-keep text-[2.5rem] font-extrabold leading-[1.15] tracking-tight sm:text-6xl lg:text-[3.5rem]">
               작은 회사 운영,
               <br />
-              <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">{BRAND.name}</span> 하나로.
+              <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">{BRAND.name}</span> 하나로 끝.
             </h1>
             <p className="mt-5 max-w-md text-balance break-keep text-lg leading-relaxed text-zinc-600 sm:text-xl">
-              경비·결재, 출퇴근·휴가, 사내 채팅·캘린더·회의실, 세무사무소 전달까지. 따로 쓰던 업무 도구를 한 구독으로 묶고 서로 이어 놨어요.
+              경비·결재, 근태·휴가, 사내 채팅·캘린더, 세무사무소 전달까지. 따로 쓰던 앱을 하나로.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link href={START_HREF} className={`inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-xl px-6 font-semibold ${BRAND_BUTTON}`}>
@@ -169,22 +135,20 @@ export default function LandingPage() {
       </header>
 
       <section id="why" className="mx-auto max-w-5xl scroll-mt-20 px-4 py-16" aria-labelledby="why-title">
-        <Heading id="why-title" eyebrow="무엇이 다른가요" title={`${BRAND_JOSA.i} 다른 점`} sub="기능을 모아 놓기만 한 게 아니라, 작은 회사에서 손이 가장 많이 가는 일을 대신해요." />
-        {/* 구역색 벤토(D-263): 카드마다 색 바탕 + 작은 화면 그림 */}
+        <Heading id="why-title" eyebrow="무엇이 다른가요" title="회사 운영에 필요한 기능," accent="전부 들어 있어요." sub="따로 쓰던 앱은 하나로, 손 가는 일은 AI가 대신." />
+        {/* 큰 글씨 4장(D-273) — 뒷받침은 한 줄 */}
         <ul className="mt-10 grid gap-4 md:grid-cols-2">
-          {WHY.map(({ icon: Icon, big, body, accent, art }, i) => (
+          {WHY.map(({ icon: Icon, big, body, accent, art }) => (
             <li key={big} className={`flex flex-col gap-4 overflow-hidden rounded-3xl bg-gradient-to-br p-6 lg:flex-row lg:items-end lg:justify-between ${ACCENT[accent].card}`} data-why={accent}>
               <div className="flex min-w-0 flex-col self-start">
-                <span className="flex items-center gap-3">
-                  <span className={`flex size-11 items-center justify-center rounded-xl ${ACCENT[accent].tile}`}>
-                    <Icon className="size-6" aria-hidden />
-                  </span>
-                  <span className={`text-sm font-bold tabular-nums ${ACCENT[accent].text}`}>0{i + 1}</span>
+                <span className={`flex size-11 items-center justify-center rounded-xl ${ACCENT[accent].tile}`}>
+                  <Icon className="size-6" aria-hidden />
                 </span>
-                <h3 className="mt-4 break-keep text-xl font-bold">{big}</h3>
-                <p className="mt-2 break-keep text-sm leading-relaxed text-zinc-700">{body}</p>
+                <h3 className="mt-4 break-keep text-[1.7rem] font-extrabold leading-tight tracking-tight">{big}</h3>
+                <p className="mt-2 break-keep text-zinc-700">{body}</p>
               </div>
-              <div className="shrink-0">
+              {/* 휴대폰에서는 그림을 빼 길이를 줄임(D-273) */}
+              <div className="hidden shrink-0 sm:block">
                 <WhyArtwork art={art} />
               </div>
             </li>
@@ -192,34 +156,31 @@ export default function LandingPage() {
         </ul>
       </section>
 
+      {/* 기능 벽(D-273): 모든 플랜 공통 기능을 구역별 칩으로 — 무엇이 있는지 한눈에. [▶ 화면으로 보기] = 그 미리 보기 탭 */}
       <section id="pillars" className="scroll-mt-16 bg-zinc-50 py-16" aria-labelledby="pillars-title">
         <div className="mx-auto max-w-5xl px-4">
-          <Heading id="pillars-title" eyebrow="한곳에서" title="회사 운영에 필요한 것, 한곳에서" sub="메신저·캘린더·경비·근태 앱을 따로 쓰고 따로 결제하던 일을 하나로." />
-          {/* 카드 위 색 띠 + 색 아이콘 타일 — 구역마다 다름(D-263) */}
+          <Heading id="pillars-title" eyebrow="기능" title="이게 다 들어 있어요." sub="기능마다 따로 결제하지 않아요. 안 쓰는 건 꺼 두면 메뉴에서 사라져요." />
           <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {PILLARS.map(({ icon: Icon, title, sim, accent, points }) => (
-              <li key={title} className={`${card} relative flex flex-col overflow-hidden p-6`} data-pillar={title} data-accent={accent}>
-                <span className={`absolute inset-x-0 top-0 h-1.5 ${ACCENT[accent].band}`} aria-hidden />
-                <span className={`flex size-11 items-center justify-center rounded-xl ${ACCENT[accent].tile}`}>
-                  <Icon className="size-6" aria-hidden />
-                </span>
-                <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-                <ul className="mt-3 flex flex-1 flex-col gap-2">
-                  {points.map((t) => (
-                    <li key={t} className="flex gap-2 break-keep text-sm leading-relaxed text-zinc-700">
-                      <CheckCircle2 className={`mt-0.5 size-4 shrink-0 ${ACCENT[accent].check}`} aria-hidden />
+            {FEATURE_GROUPS.map((g) => (
+              <li key={g.key} className={`${card} relative flex flex-col overflow-hidden p-5`} data-pillar={g.title} data-accent={g.accent}>
+                <span className={`absolute inset-x-0 top-0 h-1.5 ${ACCENT[g.accent].band}`} aria-hidden />
+                <p className={`text-sm font-bold ${ACCENT[g.accent].text}`}>{g.title}</p>
+                <h3 className="mt-1 break-keep text-xl font-extrabold tracking-tight">{g.one}</h3>
+                <ul className="mt-3 flex flex-1 flex-wrap content-start gap-1.5" aria-label={`${g.title} 기능`}>
+                  {g.items.map((t) => (
+                    <li key={t} className={`rounded-full px-2.5 py-1 text-[13px] font-medium ${ACCENT[g.accent].chip}`}>
                       {t}
                     </li>
                   ))}
                 </ul>
-                <a href={`#preview-${sim}`} className={`mt-4 inline-flex min-h-10 items-center gap-1 self-start rounded-lg text-sm font-semibold hover:underline ${ACCENT[accent].text}`} data-pillar-sim={sim}>
+                <a href={`#preview-${g.sim}`} className={`mt-4 inline-flex min-h-10 items-center gap-1 self-start rounded-lg text-sm font-semibold hover:underline ${ACCENT[g.accent].text}`} data-pillar-sim={g.sim}>
                   ▶ 화면으로 보기 <ArrowRight className="size-4" aria-hidden />
                 </a>
               </li>
             ))}
             <li className="flex flex-col justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 p-6 text-white shadow-lg shadow-indigo-600/20">
-              <p className="break-keep text-lg font-bold">모든 플랜에 전부 포함</p>
-              <p className="mt-2 break-keep text-sm leading-relaxed text-white/85">기능마다 따로 결제하지 않아요. 쓰지 않는 기능은 설정에서 끄면 메뉴에서 사라져요.</p>
+              <p className="break-keep text-2xl font-extrabold leading-tight">모든 플랜에<br />전부 포함</p>
+              <p className="mt-2 break-keep text-sm leading-relaxed text-white/85">플랜은 사용량만 달라요. 인원은 무제한이에요.</p>
               <a href="#pricing" className="mt-4 inline-flex min-h-10 items-center gap-1 self-start rounded-lg bg-white px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">
                 요금제 보기 <ArrowRight className="size-4" aria-hidden />
               </a>
@@ -230,78 +191,50 @@ export default function LandingPage() {
 
       <FeaturePreview startHref={START_HREF} />
 
-      <section className="mx-auto max-w-5xl px-4 py-16" aria-labelledby="links-title">
-        <Heading id="links-title" eyebrow="이어져서 편해요" title="하나로 묶어서, 이어지니까 편해요" sub="기능을 모아 놓기만 한 게 아니라 서로 이어져 있어서 손이 덜 가요." />
-        <ul className="mt-10 grid gap-4 md:grid-cols-2">
-          {LINKS.map(({ icon: Icon, title, body, accent }) => (
-            <li key={title} className={`${card} flex gap-4 p-5`}>
-              <span className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${ACCENT[accent].soft}`}>
+      {/* 한 달 흐름(D-273): 예전 [이어져서 편해요]·[경비 처리는 더 깊게]·[한 달 흐름]을 하나로 */}
+      <section className="mx-auto max-w-5xl px-4 py-16" aria-labelledby="flow-title">
+        <Heading id="flow-title" eyebrow="한 달 흐름" title="영수증 한 장이" accent="세무사무소까지, 손 안 대고." sub="찍는 순간부터 세무사무소가 받기까지, 옮겨 적는 단계가 없어요." />
+        <ol className="mt-10 grid gap-3 md:grid-cols-4" data-flow>
+          {FLOW.map(({ verb, when, body, accent, icon: Icon }, i) => (
+            <li key={verb} className={`${card} relative flex flex-col gap-1.5 p-5`}>
+              <span className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
+                <span className="flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 tabular-nums text-white">{i + 1}</span>
+                {when}
+              </span>
+              <span className={`mt-2 flex size-11 items-center justify-center rounded-xl ${ACCENT[accent].soft}`}>
                 <Icon className="size-6" aria-hidden />
               </span>
-              <span className="min-w-0">
-                <span className="block break-keep font-semibold">{title}</span>
-                <span className="mt-1 block break-keep text-sm leading-relaxed text-zinc-600">{body}</span>
-              </span>
+              <h3 className="mt-1 text-3xl font-extrabold tracking-tight">{verb}</h3>
+              <p className="break-keep text-zinc-700">{body}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-8 text-center text-sm font-bold text-zinc-500">서로 이어져 있어서 손이 덜 가요</p>
+        <ul className="mt-3 flex flex-wrap justify-center gap-2" aria-label="이어지는 기능">
+          {LINKS.map((t) => (
+            <li key={t} className="rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-800">
+              {t}
             </li>
           ))}
         </ul>
       </section>
 
-      <section className="bg-zinc-50 py-16" aria-labelledby="expense-title">
-        <div className="mx-auto max-w-5xl px-4">
-          <Heading id="expense-title" eyebrow="경비·결재" title="경비 처리는 더 깊게" sub="작은 회사에서 손이 가장 많이 가는 경비·결재는 AI가 대신 채우고 맞춰요." />
-          <ul className="mt-10 grid gap-4 md:grid-cols-2">
-            {FEATURES.map(({ icon: Icon, title, body }) => (
-              <li key={title} className={`${card} border-l-4 border-l-indigo-500 p-6`}>
-                <span className={`flex size-11 items-center justify-center rounded-xl ${ACCENT.expense.tile}`}>
-                  <Icon className="size-6" aria-hidden />
-                </span>
-                <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-                <p className="mt-2 break-keep text-sm leading-relaxed text-zinc-600">{body}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-5xl px-4 py-16" aria-labelledby="flow-title">
-        <Heading id="flow-title" eyebrow="한 달 흐름" title="경비는 한 달이 이렇게 흘러가요" sub="영수증을 찍는 순간부터 세무사무소가 받기까지, 손으로 옮기는 단계가 없어요." />
-        <ol className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {FLOW.map(({ icon: Icon, when, who, title, body, accent }, i) => (
-            <li key={title} className={`${card} relative flex flex-col p-5`}>
-              <span className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
-                <span className="flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 tabular-nums text-white">{i + 1}</span>
-                {when} · {who}
-              </span>
-              <span className={`mt-4 flex size-11 items-center justify-center rounded-xl ${ACCENT[accent].soft}`}>
-                <Icon className="size-6" aria-hidden />
-              </span>
-              <h3 className="mt-3 break-keep font-semibold">{title}</h3>
-              <p className="mt-2 break-keep text-sm leading-relaxed text-zinc-600">{body}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
       <section className="bg-zinc-50 py-16" aria-labelledby="roles-title">
         <div className="mx-auto max-w-5xl px-4">
-          <Heading id="roles-title" eyebrow="누구에게" title="누구에게 좋은가요?" sub="5인 회사에도 과하지 않게. 쓰는 사람마다 편해지는 게 달라요." />
-          <ul className="mt-10 grid gap-4 sm:grid-cols-2">
-            {ROLES.map(({ icon: Icon, who, body, accent }) => (
-              <li key={who} className={`${card} flex gap-4 p-5`}>
-                <span className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${ACCENT[accent].tile}`}>
-                  <Icon className="size-6" aria-hidden />
+          <Heading id="roles-title" eyebrow="누구에게" title="모두가 덜 일해요." sub="5인 회사에도 과하지 않게." />
+          <ul className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
+            {ROLES.map(({ who, line, accent, icon: Icon }) => (
+              <li key={who} className={`${card} flex flex-col gap-2 p-5`}>
+                <span className={`flex size-10 items-center justify-center rounded-xl ${ACCENT[accent].tile}`}>
+                  <Icon className="size-5" aria-hidden />
                 </span>
-                <span className="min-w-0">
-                  <span className="block font-semibold">{who}</span>
-                  <span className="mt-1 block break-keep text-sm leading-relaxed text-zinc-600">{body}</span>
-                </span>
+                <span className="text-sm font-semibold text-zinc-500">{who}</span>
+                <b className="break-keep text-xl font-extrabold leading-tight tracking-tight">{line}</b>
               </li>
             ))}
           </ul>
         </div>
       </section>
-
       <Pricing />
 
       <Testimonials />
@@ -310,8 +243,12 @@ export default function LandingPage() {
 
       <section className="bg-gradient-to-b from-white via-indigo-50 to-violet-100/70 px-4 pb-28 pt-10 text-center">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-balance break-keep text-3xl font-bold tracking-tight">회사 운영, 이제 {BRAND.name} 하나로 시작하세요.</h2>
-          <p className="mt-3 text-balance break-keep text-zinc-600">경비부터 결재, 출퇴근·휴가, 사내 소통, 일정까지. 초기 도입비 없이 월 구독 하나로.</p>
+          <h2 className="text-balance break-keep text-[2rem] font-extrabold leading-tight tracking-tight sm:text-[2.6rem]">
+            다음 달 월말은
+            <br />
+            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">다르게.</span>
+          </h2>
+          <p className="mt-3 text-balance break-keep text-lg text-zinc-600">첫 월말 마감까지 무료. 결제 정보는 필요 없어요.</p>
           <Link href={START_HREF} className={`mt-8 inline-flex min-h-14 items-center justify-center whitespace-nowrap rounded-xl px-8 text-lg font-semibold ${BRAND_BUTTON}`}>
             🏢 우리 회사 무료로 시작하기
           </Link>
@@ -340,6 +277,7 @@ export default function LandingPage() {
         <BusinessInfo />
         <p>© 다모은랩 · {BRAND.name}</p>
       </footer>
+      <MobileStartBar href={START_HREF} />
     </div>
   );
 }

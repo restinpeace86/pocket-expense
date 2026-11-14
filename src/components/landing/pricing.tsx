@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
-import { COMMON_FEATURES, planBenefits, PRICING_RULES } from "@/lib/billing/plan-benefits";
+import { planCompareRows, planCore, PRICING_RULES } from "@/lib/billing/plan-benefits";
+import { FEATURE_GROUPS } from "@/lib/landing/features";
 import { createPublicClient } from "@/lib/supabase/public";
 import { PlanChoice, PlanStorage, PlanSummary, StorageAddonPicker } from "@/components/billing/plan-storage";
 import { formatWon } from "@/lib/format";
@@ -54,8 +55,13 @@ export async function Pricing() {
         <span className="inline-block text-balance rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-800">
           지금 가입하면 첫 월말 마감까지 무료
         </span>
-        <h2 className="mt-4 text-balance break-keep text-3xl font-bold tracking-tight text-zinc-900">모든 기능은 같고, 팀 규모에 맞춰 고르세요</h2>
-        <p className="mt-2 text-balance break-keep text-zinc-600">모든 플랜 인원 제한 없음. 직원이 늘어도 요금은 그대로, 영수증부터 결재·정산·세무 마감까지 전부 포함, 도입비 0원.</p>
+        {/* D-273: 박히는 한 줄 + 뒷받침 한 줄 */}
+        <h2 className="mt-4 text-balance break-keep text-[2rem] font-extrabold leading-tight tracking-tight text-zinc-900 sm:text-[2.6rem]">
+          기능은 전부, 인원은 무제한.
+          <br />
+          <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">규모만 고르세요.</span>
+        </h2>
+        <p className="mt-3 text-balance break-keep text-lg text-zinc-600">직원이 늘어도 요금은 그대로. 도입비 0원.</p>
       </div>
       {/* D-272: 카드 하나 고르기 + 저장 공간 체크 → 아래 [선택한 구성]에 합계(카드 가격은 그대로) */}
       <PlanStorage addons={storageAddons} plans={plans.map((p) => ({ code: p.code, name: p.name, price: p.monthly_price }))} initialPlan={(plans.find((p) => p.is_featured) ?? plans[0]).code}>
@@ -80,7 +86,7 @@ export async function Pricing() {
             </p>
             <p className="mt-5 text-xs font-medium text-zinc-500">이 가격에 포함</p>
             <ul className="mt-2 flex flex-col gap-2.5">
-              {planBenefits(plan).map((b) => (
+              {planCore(plan).map((b) => (
                 <li key={b.label} className="flex gap-2">
                   <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
                   <span className="min-w-0">
@@ -98,20 +104,62 @@ export async function Pricing() {
         <PlanSummary startHref={START_HREF} />
       </div>
       </PlanStorage>
-      <div className="mx-auto mt-6 max-w-4xl rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
-        <p className="text-center text-sm font-semibold text-zinc-900">모든 플랜에 똑같이 포함</p>
-        <ul className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
-          {COMMON_FEATURES.map((f) => (
-            <li key={f} className="flex gap-2 text-sm text-zinc-700">
-              <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
-              <span className="break-keep">{f}</span>
-            </li>
+      {/* [플랜 자세히 비교](D-273): 카드엔 핵심 줄만, 나머지는 펼쳐서 */}
+      <details className="group mx-auto mt-6 max-w-4xl rounded-2xl border border-zinc-200 bg-white" data-plan-compare>
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-center gap-1.5 px-4 font-semibold text-indigo-700 [&::-webkit-details-marker]:hidden">
+          플랜 자세히 비교 <span aria-hidden className="transition-transform group-open:rotate-180">▾</span>
+        </summary>
+        <div className="overflow-x-auto border-t border-zinc-100 px-2 pb-3">
+          <table className="w-full min-w-[520px] text-sm">
+            <thead>
+              <tr className="text-left text-xs text-zinc-500">
+                <th className="px-2 py-2 font-semibold">항목</th>
+                {plans.map((p) => (
+                  <th key={p.code} className="px-2 py-2 font-semibold">
+                    {p.name} <span className="font-normal tabular-nums">{formatWon(p.monthly_price)}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {planCompareRows(plans).map((r) => (
+                <tr key={r.label} className="border-t border-zinc-100">
+                  <td className="px-2 py-2 text-zinc-600">{r.label}</td>
+                  {r.values.map((v, i) => (
+                    <td key={i} className="break-keep px-2 py-2 font-medium text-zinc-900">
+                      {v}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
+      {/* 모든 플랜 기본 기능(D-273) — 랜딩 [기능] 벽과 같은 목록 */}
+      <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-zinc-200 bg-zinc-50 p-5" data-common-features>
+        <p className="text-center font-bold text-zinc-900">모든 플랜 기본 기능</p>
+        <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 lg:grid-cols-5">
+          {FEATURE_GROUPS.map((g) => (
+            <div key={g.key}>
+              <p className="text-sm font-bold text-zinc-900">{g.title}</p>
+              <ul className="mt-1.5 flex flex-col gap-1">
+                {g.items.map((t) => (
+                  <li key={t} className="flex gap-1.5 text-[13px] text-zinc-700">
+                    <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600" aria-hidden />
+                    <span className="break-keep">{t}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
-      {/* 요금 기준(D-199) — 문의·분쟁을 줄이려고 한 줄씩. 연간 선결제는 월간 결제로 먼저 선보인 뒤 다시 정한다(D-133) */}
-      <div className="mx-auto mt-4 max-w-4xl px-1">
-        <p className="text-sm font-semibold text-zinc-700">요금 기준</p>
+      {/* 요금 기준(D-199) — 접어 둠(D-273) */}
+      <details className="group mx-auto mt-4 max-w-4xl px-1" data-pricing-rules>
+        <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-1 text-sm font-semibold text-zinc-700 [&::-webkit-details-marker]:hidden">
+          요금 기준 보기 <span aria-hidden className="transition-transform group-open:rotate-180">▾</span>
+        </summary>
         <ul className="mt-2 flex flex-col gap-1.5">
           {PRICING_RULES.map((r) => (
             <li key={r} className="break-keep text-sm text-zinc-500">
@@ -119,7 +167,7 @@ export async function Pricing() {
             </li>
           ))}
         </ul>
-      </div>
+      </details>
     </section>
   );
 }

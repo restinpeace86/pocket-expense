@@ -28,15 +28,7 @@ export function docConvertLabel(p: PlanLike): { label: string; sub: string } | n
 // 사내 채팅 사진·파일 저장 한도(D-204): 1024 → "1GB"
 export const storageLabel = (mb: number) => (mb >= 1024 ? `${Math.round((mb / 1024) * 10) / 10}GB` : `${mb}MB`);
 
-export const COMMON_FEATURES = [
-  "AI 영수증 자동 입력(가맹점·사업자번호·공급가액·부가세)",
-  "모바일 결재라인·사전 검토",
-  "직원 정산 지급 관리",
-  "법인카드 내역 자동 대조",
-  "세무 마감 한 번에(엑셀 장부·영수증·지출결의서 PDF)",
-  "더존 위하고 일반전표 엑셀",
-  "세무사무소 전용 화면 무료 연결",
-];
+// 모든 플랜 공통 기능 목록은 src/lib/landing/features.ts(FEATURE_GROUPS, D-273)
 
 // 요금 기준 — 요금제 화면·랜딩 카드 아래와 FAQ에 같은 문장(D-199). 약관 제9조(구독 해지: 데이터 유지)·제17조(계약 해지: 30일 뒤 파기)와 맞춤
 export const PRICING_RULES = [
@@ -80,3 +72,23 @@ export function planBenefits(p: PlanLike): { label: string; sub?: string }[] {
     { label: "모든 기능 포함", sub: "결재·정산·세무 마감·세무사무소 연결" },
   ];
 }
+
+// 요금 카드에는 핵심 줄만(D-273): 영수증·서류 변환·파일 용량·회사 양식. 나머지는 [플랜 자세히 비교]
+export function planCore(p: PlanLike): { label: string; sub?: string }[] {
+  return planBenefits(p).filter((b) => !/^(지운 파일|예산|고객 지원|모든 기능)/.test(b.label));
+}
+
+// [플랜 자세히 비교] 표(D-273) — 줄 이름 + 플랜마다 값
+export function planCompareRows(plans: PlanLike[]): { label: string; values: string[] }[] {
+  const yes = (v: boolean | null | undefined) => (v ? "✓" : "–");
+  return [
+    { label: "회사 공용 파일 용량(누적 합산)", values: plans.map((p) => (p.storage_mb ? storageLabel(p.storage_mb) : "–")) },
+    { label: "AI 영수증 읽기", values: plans.map((p) => (p.is_unlimited ? `무제한*(공정 월 ${p.monthly_receipts.toLocaleString("ko-KR")}장)` : `월 ${p.monthly_receipts.toLocaleString("ko-KR")}장`)) },
+    { label: "서류 → 엑셀 변환", values: plans.map((p) => (p.monthly_doc_converts == null ? "–" : `월 ${p.monthly_doc_converts.toLocaleString("ko-KR")}건`)) },
+    { label: "회사 양식", values: plans.map((p) => (p.form_slots_unlimited ? "AI 양식 변환 무제한" : p.form_slots ? `AI 양식 변환 최대 ${p.form_slots}개` : "지출결의서")) },
+    { label: "예산 한도·초과 알림", values: plans.map((p) => yes(p.budget_alerts)) },
+    { label: "삭제 파일 복구", values: plans.map((p) => (p.trash_days ? (p.trash_days >= 365 ? `${Math.round(p.trash_days / 365)}년` : `${p.trash_days}일`) : "–")) },
+    { label: "고객 지원", values: plans.map((p) => p.support_label ?? "–") },
+  ];
+}
+

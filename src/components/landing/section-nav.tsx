@@ -13,7 +13,11 @@ export function SectionNav({ links }: { links: { href: string; label: string }[]
       (entries) => {
         const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
         if (hit) setActive(`#${hit.target.id}`);
-        else if (window.scrollY < 200) setActive(null);
+        else {
+          // 메뉴에 없는 구역(한 달 흐름·누구에게)으로 넘어가면 표시를 끈다
+          const left = entries.filter((e) => !e.isIntersecting).map((e) => `#${e.target.id}`);
+          setActive((cur) => (cur && left.includes(cur) ? null : window.scrollY < 200 ? null : cur));
+        }
       },
       { rootMargin: "-45% 0px -50% 0px" },
     );

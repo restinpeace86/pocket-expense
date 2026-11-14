@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { COMMON_FEATURES, planBenefits, PRICING_RULES, storageLabel } from "./plan-benefits";
+import { FEATURE_GROUPS } from "@/lib/landing/features";
+import { planBenefits, planCompareRows, planCore, PRICING_RULES, storageLabel } from "./plan-benefits";
 
 // 요금 카드 혜택 구조(D-198)
 describe("플랜 혜택", () => {
@@ -27,7 +28,8 @@ describe("플랜 혜택", () => {
     expect(starter[2]).toEqual({ label: "파일 영구 보관 1GB", sub: "채팅 파일 중 [영구 보관]한 것은 지울 때까지" });
   });
   it("공통 기능은 지금 있는 기능만(7개), 요금 기준 7줄(D-199·D-201)", () => {
-    expect(COMMON_FEATURES).toHaveLength(7);
+    expect(FEATURE_GROUPS.map((g) => g.title)).toEqual(["경비·결재", "근태·휴가", "협업", "문서·양식", "세무 연계"]); // D-273
+    expect(FEATURE_GROUPS.find((g) => g.key === "collab")?.items).toContain("주제별 서브 대화");
     expect(PRICING_RULES).toHaveLength(7); // D-270 인원 3줄 → 1줄
     expect(PRICING_RULES.join(" ")).toContain("인원 제한이 없어요");
   });
@@ -54,5 +56,11 @@ describe("플랜 혜택", () => {
     expect(st.map((b) => b.label)).not.toContain("예산 한도·초과 알림");
     const pro = planBenefits({ monthly_price: 49000, monthly_receipts: 400, max_members: null, form_slots: 5, storage_mb: 51200 });
     expect(pro.map((b) => b.label)).toEqual(expect.arrayContaining(["AI 양식 변환 최대 5개", "회사 공용 파일 용량 50GB"]));
+  });
+  it("카드 핵심 줄·비교표(D-273)", () => {
+    const pro = { monthly_price: 49000, monthly_receipts: 400, max_members: null, monthly_doc_converts: 100, storage_mb: 51200, trash_days: 90, form_slots: 5, budget_alerts: true, support_label: "채팅" };
+    expect(planCore(pro).map((b) => b.label)).toEqual(["AI 영수증 읽기 월 최대 400장 지원", "서류 → 엑셀 변환 월 100건", "회사 공용 파일 용량 50GB", "AI 양식 변환 최대 5개"]);
+    const rows = planCompareRows([pro]);
+    expect(rows.map((r) => `${r.label}:${r.values[0]}`)).toEqual(["회사 공용 파일 용량(누적 합산):50GB", "AI 영수증 읽기:월 400장", "서류 → 엑셀 변환:월 100건", "회사 양식:AI 양식 변환 최대 5개", "예산 한도·초과 알림:✓", "삭제 파일 복구:90일", "고객 지원:채팅"]);
   });
 });

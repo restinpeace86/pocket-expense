@@ -1,11 +1,11 @@
 "use client";
 
-import { Archive, CalendarCheck, DoorOpen, FileSpreadsheet, Landmark, ReceiptText, ScanLine, type LucideIcon } from "lucide-react";
+import { Archive, CalendarCheck, DoorOpen, FileSpreadsheet, Landmark, MessagesSquare, ReceiptText, ScanLine, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Sim } from "@/components/sims";
 
-// 랜딩 [기능 미리 보기](D-255 §C): 탭 7개(영수증 + 새 6개), 탭을 누르면 그 시뮬레이션 재생. 도움말과 같은 components/sims를 쓴다.
+// 랜딩 [기능 미리 보기](D-255 §C → D-273): 탭 8개(서브 대화 추가), 탭을 누르면 그 시뮬레이션 재생. 도움말과 같은 components/sims를 쓴다.
 // 다섯 기둥 카드의 [▶ 화면으로 보기]는 #preview-{키}로 와서 그 탭을 연다
 const TABS: { key: string; label: string; icon: LucideIcon; head: string; sub: string }[] = [
   { key: "receipt", label: "영수증", icon: ReceiptText, head: "구겨진 영수증도 AI가 읽어 결의서를 채워요", sub: "단순 글자 인식이 아니라 AI LLM이 거래 맥락까지 읽어요. 직원은 찍고 올리기만, 결재자는 알림 받고 승인만." },
@@ -13,6 +13,7 @@ const TABS: { key: string; label: string; icon: LucideIcon; head: string; sub: s
   { key: "leave", label: "휴가 · 회사 양식", icon: CalendarCheck, head: "휴가 신청부터 우리 회사 휴가신청서까지", sub: "남은 연차를 미리 보고 신청, 대표는 휴대폰으로 승인. 결재란까지 채운 회사 양식이 PDF·엑셀로 나와요." },
   { key: "convert", label: "서류 → 엑셀", icon: FileSpreadsheet, head: "종이 표 사진 한 장이 엑셀로", sub: "칸·합친 칸·굵은 글씨까지 표 모양 그대로. 잘못 읽은 글자는 앱에서 바로 고쳐요." },
   { key: "rooms", label: "회의실", icon: DoorOpen, head: "빈 시간을 누르면 회의실 예약 끝", sub: "참석자 캘린더에 회의로 잡히고, 안건·자료가 붙고, 10분 전에 채팅 알림 카드가 와요." },
+  { key: "threads", label: "서브 대화", icon: MessagesSquare, head: "카톡처럼 편하게, 대화는 섞이지 않게", sub: "주제가 생기면 서브 대화로 따로 이야기하고, 메인 방에는 AI 요약 카드만 남아요." },
   { key: "chat", label: "채팅 · 보관", icon: Archive, head: "업무 대화는 그 건에 붙여서", sub: "결의서에서 바로 대화, 한 주제는 서브 대화로, 중요한 파일은 영구 보관." },
   { key: "closing", label: "월말 마감", icon: Landmark, head: "월말 마감 파일이 세무사무소로 바로", sub: "카드 내역 대조로 빠진 영수증을 찾고, 장부·증빙·결의서 PDF를 한 번에 넘겨요." },
 ];

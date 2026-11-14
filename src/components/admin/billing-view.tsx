@@ -2,7 +2,8 @@ import { Check, Lock } from "lucide-react";
 import { SectionHeading } from "@/components/ui/help";
 import type { BillingAddon, BillingPlan, CreditStatus } from "@/lib/admin/billing";
 import { checkoutPrice } from "@/lib/billing/checkout";
-import { COMMON_FEATURES, planBenefits, PRICING_RULES } from "@/lib/billing/plan-benefits";
+import { planBenefits, PRICING_RULES } from "@/lib/billing/plan-benefits";
+import { FEATURE_GROUPS } from "@/lib/landing/features";
 import { formatWon } from "@/lib/format";
 import { todayKst } from "@/lib/dates";
 import { PlanChoice, PlanStorage, PlanSummary, StorageAddonPicker, StorageRequestButton } from "@/components/billing/plan-storage";
@@ -259,15 +260,23 @@ export function BillingView({
           </div>
         </PlanStorage>
         <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-          <p className="text-sm font-semibold">모든 플랜에 똑같이 포함</p>
-          <ul className="mt-2 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
-            {COMMON_FEATURES.map((f) => (
-              <li key={f} className="flex gap-2 text-sm text-zinc-700">
-                <Check className="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden />
-                <span className="break-keep">{f}</span>
-              </li>
+          <p className="text-sm font-semibold">모든 플랜 기본 기능</p>
+          {/* D-273: 랜딩과 같은 목록(구역별) */}
+          <div className="mt-2 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {FEATURE_GROUPS.map((g) => (
+              <div key={g.key}>
+                <p className="text-sm font-semibold text-zinc-900">{g.title}</p>
+                <ul className="mt-1 flex flex-col gap-1">
+                  {g.items.map((t) => (
+                    <li key={t} className="flex gap-1.5 text-[13px] text-zinc-700">
+                      <Check className="mt-0.5 size-3.5 shrink-0 text-brand-600" aria-hidden />
+                      <span className="break-keep">{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
         {/* 요금 기준(D-199) */}
         <div>
