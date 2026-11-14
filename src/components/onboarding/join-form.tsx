@@ -2,6 +2,10 @@
 
 import { useActionState } from "react";
 import { joinAction, type FormState } from "@/app/onboarding/actions";
+import { guardedForm } from "@/lib/action-guard";
+
+// 인터넷 끊김에도 화면 전체 오류 대신 안내 + 친 값 유지(비정상 사용 점검 2026-11-14)
+const joinActionSafe = guardedForm(joinAction);
 import { buttonPrimary, inputClass } from "@/components/ui/page-shell";
 import { todayKst } from "@/lib/dates";
 import { Field, FormError } from "./field";
@@ -26,7 +30,7 @@ export function JoinForm({
   token?: string;
   prefill?: Prefill;
 }) {
-  const [state, formAction, pending] = useActionState(joinAction, initial);
+  const [state, formAction, pending] = useActionState(joinActionSafe, initial);
 
   return (
     <form action={formAction} className="flex flex-col gap-5">

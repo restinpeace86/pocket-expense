@@ -4,11 +4,17 @@ import { Bell, BellOff, Bus as BusIcon, ChevronDown, ChevronLeft, Loader2, Rotat
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { offBusAlertAction, setBusAlertAction, stationArrivalsAction } from "@/app/workspace/[id]/employee/bus/actions";
+import { offBusAlertAction as offBusAlertActionRaw, setBusAlertAction as setBusAlertActionRaw, stationArrivalsAction as stationArrivalsActionRaw } from "@/app/workspace/[id]/employee/bus/actions";
 import type { NearStop, StationData } from "@/lib/bus/server";
 import { StopsMap, type MapStop } from "./stops-map";
 import { arrivalLabel, CONGESTION, remainingSec, ROUTE_TYPE, stopsAway, type BusRoute } from "@/lib/bus/arrivals";
 import { TAGO_ROUTE_TYPE } from "@/lib/bus/tago";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const offBusAlertAction = guarded(offBusAlertActionRaw);
+const setBusAlertAction = guarded(setBusAlertActionRaw);
+const stationArrivalsAction = guarded(stationArrivalsActionRaw);
 
 // 노선 종류 색: 서울(숫자 코드) · 서울 밖 TAGO("tago:직행좌석버스")
 const routeType = (t: string) => (t.startsWith("tago:") ? TAGO_ROUTE_TYPE[t.slice(5)] : ROUTE_TYPE[t]) ?? { label: "", cls: "bg-zinc-700" };
@@ -104,7 +110,15 @@ function StopRow({ stop, open, onToggle, alert }: { stop: NearStop; open: boolea
   const [picking, setPicking] = useState<BusRoute | null>(null);
   const now = useNow(15_000);
   const panel = `stop-${stop.ars_id}`;
-  const load = useCallback(() => start(async () => setData(await stationArrivalsAction(stop.ars_id))), [stop.ars_id]);
+  const load = useCallback(
+    () =>
+      start(async () => {
+        const r = await stationArrivalsAction(stop.ars_id);
+        // 연결이 끊겨 못 가져오면 같은 자리에 안내(화면 전체 오류 대신)
+        setData(r && "ok" in r ? { ars_id: stop.ars_id, station_name: null, routes: [], fetched_at: null, error: r.error } : r);
+      }),
+    [stop.ars_id],
+  );
   // 펼칠 때만 가져온다(목록·지도 마커 어느 쪽으로 열어도). 3분 안이면 서버가 저장된 값을 돌려줌. 펼친 동안 3분마다 새로
   useEffect(() => {
     if (!open) return;

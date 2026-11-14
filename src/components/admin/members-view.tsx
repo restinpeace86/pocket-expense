@@ -4,11 +4,16 @@ import { useSendReminders, type ReminderCandidate } from "./reminder-panel";
 import { Bell, ChevronRight, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
-import { approveMemberAction, rejectMemberAction } from "@/app/workspace/[id]/admin/actions";
+import { approveMemberAction as approveMemberActionRaw, rejectMemberAction as rejectMemberActionRaw } from "@/app/workspace/[id]/admin/actions";
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import { formatPhone } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const approveMemberAction = guarded(approveMemberActionRaw);
+const rejectMemberAction = guarded(rejectMemberActionRaw);
 
 export type MemberRow = {
   id: string;

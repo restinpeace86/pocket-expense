@@ -3,10 +3,14 @@
 import { ChevronLeft, ChevronRight, FileSpreadsheet, Lock, Upload, Users } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { convertUploadAction } from "@/app/workspace/[id]/employee/convert/actions";
+import { convertUploadAction as convertUploadActionRaw } from "@/app/workspace/[id]/employee/convert/actions";
 import { CONVERT_MIMES, draftDaysLeft, isConvertible } from "@/lib/doc-convert/model";
 import { createClient } from "@/lib/supabase/client";
 import { ConvertSheet } from "./convert-sheet";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const convertUploadAction = guarded(convertUploadActionRaw);
 
 export type ConversionRow = { id: string; member_id: string; name: string; mime: string; status: "draft" | "confirmed"; scope: "private" | "company"; pages: number; created_at: string };
 

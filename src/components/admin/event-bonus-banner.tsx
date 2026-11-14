@@ -2,7 +2,11 @@
 
 import { Gift, Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
-import { acknowledgeEventBonusAction } from "@/app/workspace/[id]/admin/billing/actions";
+import { acknowledgeEventBonusAction as acknowledgeEventBonusActionRaw } from "@/app/workspace/[id]/admin/billing/actions";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const acknowledgeEventBonusAction = guarded(acknowledgeEventBonusActionRaw);
 
 // 이벤트 추가 지급 안내 (pricing-policy.md §5): 관리자 홈·요금제 화면 상단. [확인]하면 다음 지급 때까지 숨김
 export function EventBonusBanner({ amount, count, total, preview = false }: { amount: number; count: number; total: number; preview?: boolean }) {

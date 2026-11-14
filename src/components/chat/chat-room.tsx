@@ -24,6 +24,9 @@ import { MemberPicker } from "./member-picker";
 import { signedUrls } from "./signed-urls";
 import { closeNativeNotifications } from "@/components/push/native";
 import { BRAND } from "@/lib/brand";
+import { isNetworkFailure } from "@/lib/action-guard";
+
+const OFFLINE_NOTICE = "인터넷 연결이 끊겼어요. 보던 대화는 그대로예요 — 다시 연결되면 이어서 불러와요.";
 import { OfficeRequestActions } from "./office-request-actions";
 
 type Detail = {
@@ -89,16 +92,25 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
   const fileInput = useRef<HTMLInputElement>(null);
 
   // ── 불러오기 ──
+  // 인터넷이 끊겨 못 불러온 것은 '방 없음'이 아니다(비정상 사용 점검 2026-11-14): 보던 대화·쓰던 글은 그대로 두고 안내만,
+  // 다시 연결되면(아래 online·reconnect) 빠진 것을 채운다
+  const offlineFail = useCallback((e: { message?: string } | null) => {
+    if (!isNetworkFailure(e)) return false;
+    setNotice(OFFLINE_NOTICE);
+    return true;
+  }, []);
   const loadDetail = useCallback(async () => {
     const { data, error } = await supabase.rpc("chat_room_detail", { p_room: roomId });
+    if (error && offlineFail(error)) return;
     if (error || !data) return setMissing(true);
     setDetail(data as unknown as Detail);
     if (tid) {
       const { data: t, error: te } = await supabase.rpc("chat_thread_detail", { p_thread: tid });
+      if (te && offlineFail(te)) return;
       if (te || !t) return setMissing(true);
       setTinfo(t as unknown as ThreadDetail);
     }
-  }, [supabase, roomId, tid]);
+  }, [supabase, roomId, tid, offlineFail]);
   // 메시지 쪽: 메인 = 방 글(서브 대화 글 빼고), 서브 대화 모드 = 그 서브 대화 글
   const page = useCallback(
     (args: { p_before?: string; p_after?: string; p_limit: number }) =>
@@ -133,13 +145,14 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
 
   const loadLatest = useCallback(async () => {
     const { data, error } = await page({ p_limit: PAGE });
+    if (error && offlineFail(error)) return;
     if (error) return setMissing(true);
     const list = ((data as unknown as ChatMessage[]) ?? []).reverse();
     setMessages((m) => mergeMessages(m, list));
     setHasMore(list.length === PAGE);
     setLoaded(true);
     markRead();
-  }, [page, markRead]);
+  }, [page, markRead, offlineFail]);
 
   // 방에 들어오면 이 방 알림(상단 배너)을 치운다 — 카톡처럼(D-214)
   useEffect(() => {
@@ -198,6 +211,16 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
     void loadThreadCount();
     markRead();
   }, [messages, page, loadDetail, loadThreadCount, markRead]);
+
+  // 기기 인터넷이 돌아오면: 끊김 안내를 치우고 빠진 것을 채운다(실시간 연결의 reconnect보다 먼저 올 수 있음)
+  useEffect(() => {
+    const onOnline = () => {
+      setNotice((n) => (n === OFFLINE_NOTICE ? null : n));
+      void fillGap();
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [fillGap]);
 
   useEvents((e) => {
     if (e.event === "reconnect") return void fillGap();

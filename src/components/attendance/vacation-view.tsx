@@ -8,12 +8,17 @@ import { useEffect, useState, useTransition } from "react";
 import { useUrlSheet } from "@/components/ui/use-url-sheet";
 import type { LeaveInputs } from "@/lib/company-forms/leave-inputs";
 import { VacationForm } from "./vacation-form";
-import { cancelLeaveAction, removeLeaveFileAction } from "@/app/workspace/[id]/employee/vacation/actions";
+import { cancelLeaveAction as cancelLeaveActionRaw, removeLeaveFileAction as removeLeaveFileActionRaw } from "@/app/workspace/[id]/employee/vacation/actions";
 import { daysLabel } from "@/lib/attendance/leave";
 import { leaveAmountLabel, leaveBadge, leaveDateLabel, PROOF_MAX_FILES, yearSummary, type Leave, type VacationData } from "@/lib/attendance/vacation";
 import type { ProcessedProof } from "@/lib/attendance/proof-image";
 import { kstTime } from "@/lib/attendance/rules";
 import { openProof, ProofPicker, uploadProofs } from "./proof-picker";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const cancelLeaveAction = guarded(cancelLeaveActionRaw);
+const removeLeaveFileAction = guarded(removeLeaveFileActionRaw);
 
 // 직원 [휴가](spec/features/attendance.md §8-2, D-241): 남은 연차 · [휴가 신청] · 내역 · 누르면 상세(취소 · 취소 신청 · 증빙)
 const FLASH: Record<string, string> = {

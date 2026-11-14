@@ -2,8 +2,12 @@
 
 import { Bell, Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
-import { sendRemindersAction } from "@/app/workspace/[id]/admin/members/reminder-actions";
+import { sendRemindersAction as sendRemindersActionRaw } from "@/app/workspace/[id]/admin/members/reminder-actions";
 import { measureAction } from "@/lib/perf/client";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const sendRemindersAction = guarded(sendRemindersActionRaw);
 
 // 미제출자 독촉 (admin-team-members.md §E, D-043, D-094): 아직 상신하지 않은 결의서(작성중·반려)가 있는 활성 멤버에게 알림톡 REMINDER.
 // 같은 멤버는 하루 1회. 보낸 기록은 [알림 이력]에 남는다.

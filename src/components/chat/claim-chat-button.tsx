@@ -3,7 +3,11 @@
 import { Loader2, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { openClaimChatAction } from "@/app/workspace/[id]/chat/actions";
+import { openClaimChatAction as openClaimChatActionRaw } from "@/app/workspace/[id]/chat/actions";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const openClaimChatAction = guarded(openClaimChatActionRaw);
 
 // 소명서 화면 [대화하기](D-203): 이 소명서에 붙은 대화방으로(없으면 만들고 나 + 작성자가 들어감)
 export function ClaimChatButton({ companyId, claimId }: { companyId: string; claimId: string }) {

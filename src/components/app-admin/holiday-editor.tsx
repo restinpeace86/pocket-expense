@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addHolidayAction, deleteHolidayAction } from "@/app/app-admin/holidays/actions";
+import { addHolidayAction as addHolidayActionRaw, deleteHolidayAction as deleteHolidayActionRaw } from "@/app/app-admin/holidays/actions";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const addHolidayAction = guarded(addHolidayActionRaw);
+const deleteHolidayAction = guarded(deleteHolidayActionRaw);
 
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 

@@ -2,17 +2,19 @@
 
 import { ArrowDown, ArrowUp, Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState, useTransition } from "react";
-import {
-  addDepartmentAction,
-  deleteDepartmentAction,
-  renameDepartmentAction,
-  reorderDepartmentsAction,
-} from "@/app/workspace/[id]/admin/departments/actions";
+import { addDepartmentAction as addDepartmentActionRaw, deleteDepartmentAction as deleteDepartmentActionRaw, renameDepartmentAction as renameDepartmentActionRaw, reorderDepartmentsAction as reorderDepartmentsActionRaw } from "@/app/workspace/[id]/admin/departments/actions";
 import { FormError } from "@/components/onboarding/field";
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { DepartmentRow } from "@/lib/admin/queries";
 import { measureAction } from "@/lib/perf/client";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const addDepartmentAction = guarded(addDepartmentActionRaw);
+const deleteDepartmentAction = guarded(deleteDepartmentActionRaw);
+const renameDepartmentAction = guarded(renameDepartmentActionRaw);
+const reorderDepartmentsAction = guarded(reorderDepartmentsActionRaw);
 
 type Result = { error: string | null };
 

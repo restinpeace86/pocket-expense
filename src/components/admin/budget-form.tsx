@@ -2,8 +2,12 @@
 
 import { Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
-import { saveBudgetAction } from "@/app/workspace/[id]/admin/settings/budget/actions";
+import { saveBudgetAction as saveBudgetActionRaw } from "@/app/workspace/[id]/admin/settings/budget/actions";
 import { parseBudgetInput } from "@/lib/budget/format";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const saveBudgetAction = guarded(saveBudgetActionRaw);
 
 type Title = { id: string; name: string; budget: number | null; spent: number };
 

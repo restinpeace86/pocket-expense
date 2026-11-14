@@ -3,9 +3,14 @@
 import { AlertTriangle, Loader2, Plus, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useTransition } from "react";
-import { saveLeaveShortageAction, saveLeaveTypeAction, type LeaveTypeInput } from "@/app/workspace/[id]/admin/attendance-settings/vacation-types/actions";
+import { saveLeaveShortageAction as saveLeaveShortageActionRaw, saveLeaveTypeAction as saveLeaveTypeActionRaw, type LeaveTypeInput } from "@/app/workspace/[id]/admin/attendance-settings/vacation-types/actions";
 import type { LeaveTypeRow, LeaveTypesAdmin } from "@/lib/attendance/server";
 import { PAID_LABEL } from "@/lib/attendance/vacation";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const saveLeaveShortageAction = guarded(saveLeaveShortageActionRaw);
+const saveLeaveTypeAction = guarded(saveLeaveTypeActionRaw);
 
 // 휴가 종류(D-241, spec/features/attendance.md §8-1·§8-6): 연차는 항상 켜짐, 나머지는 회사가 켜고 끈다.
 // 앱은 막지 않는다 — 법정 휴가를 끌 때 "앱에서 신청만 못 할 뿐, 법상 의무는 그대로"를 확인 창으로 분명히 알린다

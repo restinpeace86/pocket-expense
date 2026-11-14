@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { saveCompanySettingsAction } from "@/app/workspace/[id]/admin/settings/actions";
+import { saveCompanySettingsAction as saveCompanySettingsActionRaw } from "@/app/workspace/[id]/admin/settings/actions";
 import { FixedClosingSection, type ClosingDates } from "./fixed-closing-section";
 import { Field, FormError } from "@/components/onboarding/field";
 import { AmountInput } from "@/components/ui/amount-input";
@@ -11,6 +11,10 @@ import { inputClass } from "@/components/ui/page-shell";
 import type { CompanySettings } from "@/lib/admin/queries";
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const saveCompanySettingsAction = guarded(saveCompanySettingsActionRaw);
 
 const card = "rounded-xl border border-zinc-200 bg-white p-5 shadow-sm";
 const formatBizNo = (v: string) => v.replace(/^(\d{3})(\d{2})(\d{5})$/, "$1-$2-$3");

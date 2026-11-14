@@ -3,6 +3,10 @@
 import { Building2, Landmark } from "lucide-react";
 import { useActionState } from "react";
 import { registerTaxOfficeAction, type OfficeFormState } from "@/app/tax-office/actions";
+import { guardedForm } from "@/lib/action-guard";
+
+// 인터넷 끊김에도 화면 전체 오류 대신 안내 + 친 값 유지(비정상 사용 점검 2026-11-14)
+const registerTaxOfficeActionSafe = guardedForm(registerTaxOfficeAction);
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ConsentSection } from "@/components/legal/consent-section";
 import { Field, FormError } from "@/components/onboarding/field";
@@ -14,7 +18,7 @@ const initial: OfficeFormState = { error: null };
 // 세무사무소 구성원이 아닌 계정: 연결 요청 확인 → 세무사무소 등록(관리자). 소속 세무사는 초대 링크로만 합류 (D-149, D-183)
 // connect: 고객사 연결 링크로 들어온 경우(D-173) — 등록하면 그 고객사와 바로 연결
 export function TaxOfficeOnboarding({ email, requests, connect = null }: { email: string | null; requests: Request[]; connect?: { code: string; companyName: string } | null }) {
-  const [state, formAction, pending] = useActionState(registerTaxOfficeAction, initial);
+  const [state, formAction, pending] = useActionState(registerTaxOfficeActionSafe, initial);
   const suggested = requests[0]?.office_name ?? "";
 
   return (

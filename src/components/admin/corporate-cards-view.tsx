@@ -2,11 +2,7 @@
 
 import { CreditCard, Pencil, Plus } from "lucide-react";
 import { useState, useTransition } from "react";
-import {
-  addCardAction,
-  setCardActiveAction,
-  updateCardAction,
-} from "@/app/workspace/[id]/admin/corporate-cards/actions";
+import { addCardAction as addCardActionRaw, setCardActiveAction as setCardActiveActionRaw, updateCardAction as updateCardActionRaw } from "@/app/workspace/[id]/admin/corporate-cards/actions";
 import { CardNumberInput } from "@/components/admin/card-number-input";
 import { Field, FormError } from "@/components/onboarding/field";
 import { SectionHeading } from "@/components/ui/help";
@@ -15,6 +11,12 @@ import type { CorporateCardRow } from "@/lib/admin/queries";
 import { formatCardNumber } from "@/lib/cards/match";
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const addCardAction = guarded(addCardActionRaw);
+const setCardActiveAction = guarded(setCardActiveActionRaw);
+const updateCardAction = guarded(updateCardActionRaw);
 
 type Result = { error: string | null };
 type MemberOption = { id: string; name: string };

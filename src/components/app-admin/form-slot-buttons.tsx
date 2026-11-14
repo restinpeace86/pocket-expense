@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { grantFormSlotAction } from "@/app/app-admin/form-slots/actions";
+import { grantFormSlotAction as grantFormSlotActionRaw } from "@/app/app-admin/form-slots/actions";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const grantFormSlotAction = guarded(grantFormSlotActionRaw);
 
 // 회사 양식 추가 칸 +1 / −1 (8-104 B-4)
 export function FormSlotButtons({ companyId, extra }: { companyId: string; extra: number }) {

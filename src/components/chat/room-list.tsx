@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listTimeLabel, previewText, roomTitle, type ChatRoomSummary } from "@/lib/chat/format";
 import { PushHelp, usePushSubscription } from "@/components/push/push-toggle";
-import { openAssistantRoomAction } from "@/app/workspace/[id]/chat/actions";
+import { openAssistantRoomAction as openAssistantRoomActionRaw } from "@/app/workspace/[id]/chat/actions";
 import { LogoMark } from "@/components/brand/logo";
 import { RoomAvatar } from "./avatar";
 import { useChat } from "./chat-app";
@@ -15,6 +15,10 @@ import { MyThreadsRow } from "./my-threads";
 import { openChatPopup, useChatPopup } from "./popup";
 import { MemberPicker } from "./member-picker";
 import { BRAND } from "@/lib/brand";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const openAssistantRoomAction = guarded(openAssistantRoomActionRaw);
 
 // 채팅 목록(카톡 '채팅' 탭): 최근 대화 순, 마지막 메시지·시각·안 읽은 수. 새 메시지가 오면 다시 불러온다
 export function RoomList({ base }: { base: string }) {

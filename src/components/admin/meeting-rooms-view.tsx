@@ -3,10 +3,16 @@
 import { ArrowDown, ArrowUp, Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { deleteMeetingRoomAction, reorderMeetingRoomsAction, saveMeetingRoomAction } from "@/app/workspace/[id]/admin/calendar-settings/actions";
+import { deleteMeetingRoomAction as deleteMeetingRoomActionRaw, reorderMeetingRoomsAction as reorderMeetingRoomsActionRaw, saveMeetingRoomAction as saveMeetingRoomActionRaw } from "@/app/workspace/[id]/admin/calendar-settings/actions";
 import { FormError } from "@/components/onboarding/field";
 import { inputClass } from "@/components/ui/page-shell";
 import type { MeetingRoom } from "@/lib/calendar/calendar";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const deleteMeetingRoomAction = guarded(deleteMeetingRoomActionRaw);
+const reorderMeetingRoomsAction = guarded(reorderMeetingRoomsActionRaw);
+const saveMeetingRoomAction = guarded(saveMeetingRoomActionRaw);
 
 type Result = { error: string | null };
 

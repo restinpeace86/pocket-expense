@@ -3,11 +3,15 @@
 import { Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
-import { keepChatFileAction } from "@/app/workspace/[id]/employee/vault/actions";
+import { keepChatFileAction as keepChatFileActionRaw } from "@/app/workspace/[id]/employee/vault/actions";
 import { bytesLabel, fileSizeLabel } from "@/lib/chat/format";
 import type { createClient } from "@/lib/supabase/client";
 import { fileBadge, usagePct, type VaultScope, type VaultStatus } from "@/lib/vault/format";
 import { UsageBar } from "./usage-bar";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const keepChatFileAction = guarded(keepChatFileActionRaw);
 
 // 영구 보관 시트(D-245, 시안 ②⑤): 누가 볼 수 있나(나만 보기 기본) · 개인정보 경고 · 회사 보관 공간 · 다 찼을 때 안내
 export function KeepSheet({

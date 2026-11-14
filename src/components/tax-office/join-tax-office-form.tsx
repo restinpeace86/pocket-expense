@@ -2,6 +2,10 @@
 
 import { useActionState } from "react";
 import { joinTaxOfficeAction, type OfficeFormState } from "@/app/tax-office/actions";
+import { guardedForm } from "@/lib/action-guard";
+
+// 인터넷 끊김에도 화면 전체 오류 대신 안내 + 친 값 유지(비정상 사용 점검 2026-11-14)
+const joinTaxOfficeActionSafe = guardedForm(joinTaxOfficeAction);
 import { ConsentSection } from "@/components/legal/consent-section";
 import { Field, FormError } from "@/components/onboarding/field";
 import { buttonPrimary, inputClass } from "@/components/ui/page-shell";
@@ -10,7 +14,7 @@ const initial: OfficeFormState = { error: null };
 
 // 소속 세무사 합류 입력 (D-149)
 export function JoinTaxOfficeForm({ code }: { code: string }) {
-  const [state, formAction, pending] = useActionState(joinTaxOfficeAction, initial);
+  const [state, formAction, pending] = useActionState(joinTaxOfficeActionSafe, initial);
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="code" value={code} />

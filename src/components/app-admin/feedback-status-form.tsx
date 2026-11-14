@@ -1,8 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateFeedbackAction } from "@/app/app-admin/feedback/actions";
+import { updateFeedbackAction as updateFeedbackActionRaw } from "@/app/app-admin/feedback/actions";
 import { FEEDBACK_STATUS_LABEL, type FeedbackStatus } from "@/lib/feedback-desk/format";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const updateFeedbackAction = guarded(updateFeedbackActionRaw);
 
 // 운영자: 의견 상태·메모 바꾸기 (D-246)
 export function FeedbackStatusForm({ id, status, note }: { id: string; status: FeedbackStatus; note: string | null }) {

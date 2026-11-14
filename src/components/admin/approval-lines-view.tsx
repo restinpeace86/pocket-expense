@@ -3,11 +3,15 @@
 import { ArrowDown, ArrowUp, Loader2, Lock, Plus, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { saveApprovalLineAction } from "@/app/workspace/[id]/admin/approval-lines/actions";
+import { saveApprovalLineAction as saveApprovalLineActionRaw } from "@/app/workspace/[id]/admin/approval-lines/actions";
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { ApprovalLineView, LineMember } from "@/lib/admin/approval-lines";
 import { measureAction } from "@/lib/perf/client";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const saveApprovalLineAction = guarded(saveApprovalLineActionRaw);
 
 // 화면 ⑥ 사전 검토 결재라인 (admin-dashboard.md ⑥, approval-workflow.md §2) — 선택 기능, 기본은 관리자 직통
 const MAX_REVIEWERS = 4;

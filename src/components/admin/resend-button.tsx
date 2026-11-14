@@ -2,8 +2,12 @@
 
 import { Loader2, RotateCw } from "lucide-react";
 import { useState, useTransition } from "react";
-import { resendNotificationAction } from "@/app/workspace/[id]/admin/notifications/actions";
+import { resendNotificationAction as resendNotificationActionRaw } from "@/app/workspace/[id]/admin/notifications/actions";
 import { measureAction } from "@/lib/perf/client";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const resendNotificationAction = guarded(resendNotificationActionRaw);
 
 // 실패한 알림 [재발송] (T11-4)
 export function ResendButton({ logId }: { logId: string }) {

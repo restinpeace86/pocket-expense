@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { saveVisualAlertAction } from "@/app/workspace/theme-actions";
+import { saveVisualAlertAction as saveVisualAlertActionRaw } from "@/app/workspace/theme-actions";
 import { VISUAL_ALERT_EVENT } from "@/lib/chat/visual-alert";
 import { createClient } from "@/lib/supabase/client";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const saveVisualAlertAction = guarded(saveVisualAlertActionRaw);
 
 // PC 화면 알림 켜기/끄기(D-246): [내 정보] 카드(직원)·채팅 목록 위 설정(관리자). 계정에 저장, 바꾸면 열린 화면에 바로 반영
 export function VisualAlertToggle({ compact = false }: { compact?: boolean }) {

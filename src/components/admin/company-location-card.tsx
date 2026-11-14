@@ -2,10 +2,14 @@
 
 import { Loader2, MapPin, Search } from "lucide-react";
 import { useCallback, useMemo, useState, useTransition } from "react";
-import { saveCompanyLocationAction, type LocationResult } from "@/app/workspace/[id]/admin/settings/location-actions";
+import { saveCompanyLocationAction as saveCompanyLocationActionRaw, type LocationResult } from "@/app/workspace/[id]/admin/settings/location-actions";
 import type { Nearby } from "@/lib/bus/server";
 import { StopsMap, type MapStop } from "@/components/bus/stops-map";
 import { PostcodeDialog, type PostcodePick } from "./postcode-dialog";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const saveCompanyLocationAction = guarded(saveCompanyLocationActionRaw);
 
 // 회사 위치(D-243 → D-251 개선사항 2): [주소 검색] → 우편번호 창에서 고르면 바로 저장(도로명·지번·우편번호 + 서버가 좌표)
 // 직원 [주변 버스]가 이 위치 200m 안 정류장을 보여 준다. 서울 = 서울시, 그 밖 = 국토교통부 TAGO(D-254)

@@ -3,8 +3,12 @@
 import { CalendarCheck, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { setMyHireDateAction } from "@/app/workspace/[id]/employee/attendance/actions";
+import { setMyHireDateAction as setMyHireDateActionRaw } from "@/app/workspace/[id]/employee/attendance/actions";
 import { todayKst } from "@/lib/dates";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const setMyHireDateAction = guarded(setMyHireDateActionRaw);
 
 // 직원 홈: 근태 켠 회사에서 입사일이 비어 있으면 한 번 안내(D-240). 저장하면 사라진다
 export function HireDatePrompt() {

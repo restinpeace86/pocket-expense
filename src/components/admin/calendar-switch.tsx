@@ -3,8 +3,12 @@
 import { CalendarDays, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { setCalendarEnabledAction } from "@/app/workspace/[id]/admin/calendar-settings/actions";
+import { setCalendarEnabledAction as setCalendarEnabledActionRaw } from "@/app/workspace/[id]/admin/calendar-settings/actions";
 import { FormError } from "@/components/onboarding/field";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const setCalendarEnabledAction = guarded(setCalendarEnabledActionRaw);
 
 // 사내 캘린더 켜기·끄기(D-208)
 export function CalendarSwitch({ enabled, calendarHref }: { enabled: boolean; calendarHref: string }) {

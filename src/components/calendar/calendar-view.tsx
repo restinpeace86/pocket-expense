@@ -3,7 +3,7 @@
 import { AlarmClock, Check, TreePalm, ChevronDown, ChevronLeft, ChevronRight, DoorOpen, Loader2, MapPin, Plus, Receipt, Search, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import { createClaimFromEventAction } from "@/app/workspace/[id]/calendar/actions";
+import { createClaimFromEventAction as createClaimFromEventActionRaw } from "@/app/workspace/[id]/calendar/actions";
 import { claimStatusBadge } from "@/lib/expense/status";
 import { formatWon } from "@/lib/format";
 import {
@@ -46,6 +46,10 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { deleteMeetingFile, MeetingFilesEdit, MeetingFilesView, uploadMeetingFiles } from "./meeting-files";
 import { RoomsPanel } from "./rooms-panel";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const createClaimFromEventAction = guarded(createClaimFromEventActionRaw);
 
 // 사내 캘린더(D-206, spec/features/calendar.md)
 // - PC(md 이상) = 월 달력(월요일 시작), 휴대폰 = 그 달 날짜별 목록. 같은 데이터를 CSS로만 바꿔 보여 준다(local-open-spaces 파트너 월간 화면과 같은 방식)

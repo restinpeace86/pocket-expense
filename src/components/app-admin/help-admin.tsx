@@ -2,8 +2,14 @@
 
 import { ArrowDown, ArrowUp, ImagePlus, Loader2, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
-import { deleteHelpArticleAction, saveHelpArticleAction, uploadHelpImageAction, type AdminArticle } from "@/app/app-admin/help/actions";
+import { deleteHelpArticleAction as deleteHelpArticleActionRaw, saveHelpArticleAction as saveHelpArticleActionRaw, uploadHelpImageAction as uploadHelpImageActionRaw, type AdminArticle } from "@/app/app-admin/help/actions";
 import { HELP_CATEGORIES } from "@/lib/help/guides";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const deleteHelpArticleAction = guarded(deleteHelpArticleActionRaw);
+const saveHelpArticleAction = guarded(saveHelpArticleActionRaw);
+const uploadHelpImageAction = guarded(uploadHelpImageActionRaw);
 
 // 운영자 도움말 글 고치기(D-255 §A-5, 시안 ③): 왼쪽 목록(카테고리 필터) + 오른쪽 글 고치기(기본 정보 · 단계 글/그림 · 공개)
 const FEATURES = [

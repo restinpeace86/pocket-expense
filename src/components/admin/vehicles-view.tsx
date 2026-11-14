@@ -2,13 +2,19 @@
 
 import { Car, Pencil, Plus } from "lucide-react";
 import { useState, useTransition } from "react";
-import { addVehicleAction, setVehicleActiveAction, updateVehicleAction } from "@/app/workspace/[id]/admin/vehicles/actions";
+import { addVehicleAction as addVehicleActionRaw, setVehicleActiveAction as setVehicleActiveActionRaw, updateVehicleAction as updateVehicleActionRaw } from "@/app/workspace/[id]/admin/vehicles/actions";
 import { Field, FormError } from "@/components/onboarding/field";
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { CompanyVehicleRow } from "@/lib/admin/queries";
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const addVehicleAction = guarded(addVehicleActionRaw);
+const setVehicleActiveAction = guarded(setVehicleActiveActionRaw);
+const updateVehicleAction = guarded(updateVehicleActionRaw);
 
 // 회사차량 설정 (D-105) — 법인카드 설정과 같은 모양
 type Result = { error: string | null };

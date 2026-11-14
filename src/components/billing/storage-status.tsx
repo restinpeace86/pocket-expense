@@ -3,11 +3,15 @@
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { withdrawStorageAction } from "@/app/workspace/[id]/admin/billing/actions";
+import { withdrawStorageAction as withdrawStorageActionRaw } from "@/app/workspace/[id]/admin/billing/actions";
 import { UsageBar } from "@/components/vault/usage-bar";
 import { KIND_LABEL, type StorageStatus } from "@/lib/billing/storage";
 import { bytesLabel } from "@/lib/chat/format";
 import { formatWon } from "@/lib/format";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const withdrawStorageAction = guarded(withdrawStorageActionRaw);
 
 // 관리자 요금제 › 저장 공간(8-103, D-262): 지금 쓰는 양 · 추가 공간 · 확인 중인 신청([신청 취소]) · 지난 결과
 // 신청·바꾸기·해지는 아래 요금제 카드의 [저장 공간 추가] 체크에서

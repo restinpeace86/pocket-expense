@@ -4,11 +4,15 @@ import { LeaveDocButtons } from "@/components/company-forms/leave-doc-buttons";
 import { FileText, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { decideLeaveAction } from "@/app/workspace/[id]/admin/attendance/actions";
+import { decideLeaveAction as decideLeaveActionRaw } from "@/app/workspace/[id]/admin/attendance/actions";
 import { openProof } from "@/components/attendance/proof-picker";
 import { daysLabel } from "@/lib/attendance/leave";
 import { kstTime } from "@/lib/attendance/rules";
 import { leaveAmountLabel, leaveDateLabel, type Leave } from "@/lib/attendance/vacation";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const decideLeaveAction = guarded(decideLeaveActionRaw);
 
 // 근태 승인 안 휴가 · 휴가 취소 줄(D-241): 증빙 보기 · 증빙 없으면 승인 버튼 대신 안내 · 남은 연차 미리 보기 · 반려 사유 필수
 export function LeaveApprovals({ items, dailyHours, done }: { items: Leave[]; dailyHours: number; done: boolean }) {

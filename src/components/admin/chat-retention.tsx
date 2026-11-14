@@ -2,9 +2,13 @@
 
 import { Check, HardDrive, Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
-import { setChatAttachmentDaysAction } from "@/app/workspace/[id]/admin/chat-settings/actions";
+import { setChatAttachmentDaysAction as setChatAttachmentDaysActionRaw } from "@/app/workspace/[id]/admin/chat-settings/actions";
 import { FormError } from "@/components/onboarding/field";
 import { bytesLabel } from "@/lib/chat/format";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const setChatAttachmentDaysAction = guarded(setChatAttachmentDaysActionRaw);
 
 export type RetentionStatus = { used: number; limit: number; days: number; older_than_30: number; older_than_60: number };
 

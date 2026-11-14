@@ -3,6 +3,10 @@
 import { X } from "lucide-react";
 import { useActionState, useState, type KeyboardEvent } from "react";
 import { createCompanyAction, type FormState } from "@/app/onboarding/actions";
+import { guardedForm } from "@/lib/action-guard";
+
+// 인터넷 끊김에도 화면 전체 오류 대신 안내 + 친 값 유지(비정상 사용 점검 2026-11-14)
+const createCompanyActionSafe = guardedForm(createCompanyAction);
 import { buttonPrimary, inputClass } from "@/components/ui/page-shell";
 import { Field, FormError } from "./field";
 import { ConsentSection } from "@/components/legal/consent-section";
@@ -13,7 +17,7 @@ export const NO_DEPARTMENT = "__none__";
 
 // 회사 생성 위저드 Step 2 (spec/screens/admin-onboarding.md)
 export function CreateCompanyForm() {
-  const [state, formAction, pending] = useActionState(createCompanyAction, initial);
+  const [state, formAction, pending] = useActionState(createCompanyActionSafe, initial);
   const [departments, setDepartments] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [myDepartment, setMyDepartment] = useState("");

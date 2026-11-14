@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { setReviewDisplayedAction, setReviewFeaturedAction } from "@/app/app-admin/reviews/actions";
+import { setReviewDisplayedAction as setReviewDisplayedActionRaw, setReviewFeaturedAction as setReviewFeaturedActionRaw } from "@/app/app-admin/reviews/actions";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const setReviewDisplayedAction = guarded(setReviewDisplayedActionRaw);
+const setReviewFeaturedAction = guarded(setReviewFeaturedActionRaw);
 
 // 랜딩 후기 대표로 올리기/내리기(D-135) · 보이기/숨기기(D-130). eligible: 랜딩에 보일 수 있는 후기(10자 이상)
 export function ReviewToggle({ id, displayed, featured, eligible }: { id: string; displayed: boolean; featured: boolean; eligible: boolean }) {

@@ -4,11 +4,16 @@ import { Clock, FileStack, Monitor, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { deleteFormAction, editFormAction } from "@/app/workspace/[id]/admin/company-forms/actions";
+import { deleteFormAction as deleteFormActionRaw, editFormAction as editFormActionRaw } from "@/app/workspace/[id]/admin/company-forms/actions";
 import { inputCount, KIND_LABEL, type Field, type FormKind } from "@/lib/company-forms/model";
 import { draftDaysLeft, type DocModel } from "@/lib/doc-convert/model";
 import { AddFormDialog, type AddFormSource } from "./add-form-dialog";
 import { SheetView } from "./sheet-view";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const deleteFormAction = guarded(deleteFormActionRaw);
+const editFormAction = guarded(editFormActionRaw);
 
 export type ActiveForm = { id: string; group_id: string; name: string; kind: FormKind; version: number; fields: Field[]; sheets: DocModel; published_at: string; created_by_name: string | null };
 export type DraftForm = { id: string; group_id: string; name: string; kind: FormKind | null; read: boolean; source_name: string | null; updated_at: string; created_by_name: string | null; replaces: string | null };

@@ -4,7 +4,7 @@ import { AlertTriangle, Check, ChevronLeft, Loader2, Minus, Monitor, Plus, Rotat
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { deleteFormAction, publishFormAction, readFormAction, saveFormAction } from "@/app/workspace/[id]/admin/company-forms/actions";
+import { deleteFormAction as deleteFormActionRaw, publishFormAction as publishFormActionRaw, readFormAction as readFormActionRaw, saveFormAction as saveFormActionRaw } from "@/app/workspace/[id]/admin/company-forms/actions";
 import {
   bindingSummary,
   cellHint,
@@ -30,6 +30,13 @@ import {
 import { addRowBelow, cellAddress, deleteRow, mergeAt, type DocModel, type Sheet } from "@/lib/doc-convert/model";
 import { useSheetGrid, type CellLook } from "@/components/doc-convert/use-sheet-grid";
 import { SheetView } from "./sheet-view";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const deleteFormAction = guarded(deleteFormActionRaw);
+const publishFormAction = guarded(publishFormActionRaw);
+const readFormAction = guarded(readFormActionRaw);
+const saveFormAction = guarded(saveFormActionRaw);
 
 export type EditorForm = { id: string; group_id: string; name: string; kind: FormKind; sheets: DocModel; fields: Field[]; reads: number; mime: string; replaces: string | null };
 type State = { doc: DocModel; fields: Field[] };

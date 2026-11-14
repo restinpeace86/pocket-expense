@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { setFormatRequestDoneAction } from "@/app/app-admin/format-requests/actions";
+import { setFormatRequestDoneAction as setFormatRequestDoneActionRaw } from "@/app/app-admin/format-requests/actions";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const setFormatRequestDoneAction = guarded(setFormatRequestDoneActionRaw);
 
 // 회계 양식 접수 '준비 완료' 표시·되돌리기 (D-180)
 export function FormatRequestToggle({ id, done }: { id: string; done: boolean }) {

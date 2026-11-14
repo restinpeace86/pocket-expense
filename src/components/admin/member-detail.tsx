@@ -3,15 +3,7 @@
 import { ArrowLeft, Crown, ShieldCheck, UserCheck, UserMinus } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import {
-  deactivateMemberAction,
-  deactivationCheckAction,
-  reactivateMemberAction,
-  setMemberRoleAction,
-  transferSuperAdminAction,
-  updateMemberAction,
-  type DeactivationCheck,
-} from "@/app/workspace/[id]/admin/actions";
+import { deactivateMemberAction as deactivateMemberActionRaw, deactivationCheckAction as deactivationCheckActionRaw, reactivateMemberAction as reactivateMemberActionRaw, setMemberRoleAction as setMemberRoleActionRaw, transferSuperAdminAction as transferSuperAdminActionRaw, updateMemberAction as updateMemberActionRaw, type DeactivationCheck } from "@/app/workspace/[id]/admin/actions";
 import { Field, FormError } from "@/components/onboarding/field";
 import { HelpDetails, SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
@@ -20,6 +12,15 @@ import type { MemberDetail } from "@/lib/admin/queries";
 import { formatPhone, formatWon } from "@/lib/format";
 import { AmountInput } from "@/components/ui/amount-input";
 import { measureAction } from "@/lib/perf/client";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const deactivateMemberAction = guarded(deactivateMemberActionRaw);
+const deactivationCheckAction = guarded(deactivationCheckActionRaw);
+const reactivateMemberAction = guarded(reactivateMemberActionRaw);
+const setMemberRoleAction = guarded(setMemberRoleActionRaw);
+const transferSuperAdminAction = guarded(transferSuperAdminActionRaw);
+const updateMemberAction = guarded(updateMemberActionRaw);
 
 const ROLE_LABEL = { super_admin: "최고 관리자", admin: "관리자", employee: "일반 멤버" } as const;
 const STATUS_LABEL = { pending: "가입 승인 대기", approved: "활성", inactive: "비활성(퇴사)" } as const;
@@ -112,7 +113,7 @@ export function MemberDetailView({
     startTransition(async () => {
       const r = await deactivationCheckAction(m.id);
       if (r.error) setError(r.error);
-      else setCheck(r.check ?? null);
+      else setCheck("check" in r ? (r.check ?? null) : null);
     });
   }
 

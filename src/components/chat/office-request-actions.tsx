@@ -3,7 +3,12 @@
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { ackOfficeRequestAction, replyOfficeRequestAction } from "@/app/workspace/[id]/chat/office-actions";
+import { ackOfficeRequestAction as ackOfficeRequestActionRaw, replyOfficeRequestAction as replyOfficeRequestActionRaw } from "@/app/workspace/[id]/chat/office-actions";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const ackOfficeRequestAction = guarded(ackOfficeRequestActionRaw);
+const replyOfficeRequestAction = guarded(replyOfficeRequestActionRaw);
 
 export type OfficeRequestRef = { id: string; status: "open" | "answered" | "resolved"; origin: "office" | "company"; month: string; acked_by_name: string | null; answer: string | null };
 

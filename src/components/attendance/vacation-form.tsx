@@ -2,7 +2,7 @@
 
 import { Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { createLeaveAction } from "@/app/workspace/[id]/employee/vacation/actions";
+import { createLeaveAction as createLeaveActionRaw } from "@/app/workspace/[id]/employee/vacation/actions";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { daysLabel } from "@/lib/attendance/leave";
 import { dayLabel } from "@/lib/attendance/month";
@@ -11,6 +11,10 @@ import { halfDayStart, leaveMarks, offDayReason, PAID_LABEL, preview, workdaysBe
 import type { LeaveInputs } from "@/lib/company-forms/leave-inputs";
 import { LeaveCustomFields, missingRequired } from "./leave-custom-fields";
 import { ProofPicker, uploadProofs } from "./proof-picker";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const createLeaveAction = guarded(createLeaveActionRaw);
 
 // 휴가 신청(spec/features/attendance.md §8-3, D-241): 종류 → 단위 → 날짜 → 미리 보기(근무일·남은 연차) → 사유(선택) → 증빙(필수 종류)
 // D-257: [휴가 및 근태 신청] 위로 올라오는 창(휴대폰은 위쪽 남은 연차 줄이 보이게 거의 전체 높이, PC는 가운데)

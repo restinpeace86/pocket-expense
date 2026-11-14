@@ -4,9 +4,13 @@ import { Check, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useState, useTransition, type ReactNode } from "react";
-import { requestStorageAction } from "@/app/workspace/[id]/admin/billing/actions";
+import { requestStorageAction as requestStorageActionRaw } from "@/app/workspace/[id]/admin/billing/actions";
 import { addonPrice, requestLabel, type StorageAddon } from "@/lib/billing/storage";
 import { formatWon } from "@/lib/format";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const requestStorageAction = guarded(requestStorageActionRaw);
 
 // 요금 고르기(D-262 → D-270 → D-272): 플랜 카드 하나 고르기 + [저장 공간 추가] 체크(하나만) → 아래 [선택한 구성]에
 // "플랜 가격 + 저장 공간 가격 = 합계". 카드 가격은 바뀌지 않는다. 결제는 [선택한 구성]에서(지금은 결제 준비 중).

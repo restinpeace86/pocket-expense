@@ -2,10 +2,14 @@
 
 import { Gift, Loader2, Star, X } from "lucide-react";
 import { useState, useTransition } from "react";
-import { submitFeedbackSurveyAction } from "@/app/workspace/[id]/admin/billing/actions";
+import { submitFeedbackSurveyAction as submitFeedbackSurveyActionRaw } from "@/app/workspace/[id]/admin/billing/actions";
 import { measureAction } from "@/lib/perf/client";
 import { COMPANY_SIZES, INDUSTRIES, JOB_ROLES, REVIEW_DISPLAY_MIN, REVIEW_MAX, REVIEW_STARTERS, SURVEY_REWARD, USEFUL_FEATURES, isDisplayableReview, reviewLength } from "@/lib/feedback-survey";
 import { BRAND_JOSA } from "@/lib/brand";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const submitFeedbackSurveyAction = guarded(submitFeedbackSurveyActionRaw);
 
 // 후기·설문 → 첫 결제 50% 할인 쿠폰 (7차 개선사항 7, D-130 → D-201). 관리자 이상, 회사당 1회.
 // done: 이미 참여한 회사면 버튼 대신 "참여 완료". preview: 반응형 점검용(제출하지 않음)
@@ -57,7 +61,7 @@ function SurveyDialog({ onClose, onDone, preview }: { onClose: () => void; onDon
       if (preview) return setError("미리보기에서는 제출하지 않아요.");
       const r = await measureAction("billing.submit_survey", () => submitFeedbackSurveyAction({ rating, usefulFeature, industry, companySize, jobRole, review, displayConsent }));
       if (r.error) return setError(r.error);
-      onDone(r.left ?? 0);
+      onDone("left" in r ? (r.left ?? 0) : 0);
       onClose();
     });
 

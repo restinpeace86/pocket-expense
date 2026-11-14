@@ -2,7 +2,7 @@
 
 import { Pencil, Plus, Repeat } from "lucide-react";
 import { useState, useTransition } from "react";
-import { addRecurringAction, setRecurringActiveAction, updateRecurringAction, type RecurringInput } from "@/app/workspace/[id]/admin/recurring/actions";
+import { addRecurringAction as addRecurringActionRaw, setRecurringActiveAction as setRecurringActiveActionRaw, updateRecurringAction as updateRecurringActionRaw, type RecurringInput } from "@/app/workspace/[id]/admin/recurring/actions";
 import { Field, FormError } from "@/components/onboarding/field";
 import { AmountInput } from "@/components/ui/amount-input";
 import { SectionHeading } from "@/components/ui/help";
@@ -12,6 +12,12 @@ import { claimStatusBadge } from "@/lib/expense/status";
 import { formatWon } from "@/lib/format";
 import { measureAction } from "@/lib/perf/client";
 import { nextBillingDate, scheduleLabel } from "@/lib/recurring/schedule";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const addRecurringAction = guarded(addRecurringActionRaw);
+const setRecurringActiveAction = guarded(setRecurringActiveActionRaw);
+const updateRecurringAction = guarded(updateRecurringActionRaw);
 
 // 정기 결제 설정 (D-110, D-171): 매달 나가는 것 목록 — 법인카드 정기 결제는 카드 내역 대조에서 실제 결제와 맞으면 결의서, 개인카드는 결제일 알림
 type Result = { error: string | null };

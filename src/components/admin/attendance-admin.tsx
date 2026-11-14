@@ -3,17 +3,19 @@
 import { Clock, Loader2, MonitorSmartphone } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
-import {
-  createPairCodeAction,
-  refreshAttendanceAction,
-  renameTerminalAction,
-  revokeTerminalAction,
-  saveAttendanceSettingsAction,
-  setAttendanceEnabledAction,
-} from "@/app/workspace/[id]/admin/attendance-settings/actions";
+import { createPairCodeAction as createPairCodeActionRaw, refreshAttendanceAction as refreshAttendanceActionRaw, renameTerminalAction as renameTerminalActionRaw, revokeTerminalAction as revokeTerminalActionRaw, saveAttendanceSettingsAction as saveAttendanceSettingsActionRaw, setAttendanceEnabledAction as setAttendanceEnabledActionRaw } from "@/app/workspace/[id]/admin/attendance-settings/actions";
 import { FormError } from "@/components/onboarding/field";
 import { ALERT_OPTIONS, alertLabel, TIME_OPTIONS, WEEKDAYS, type AttendanceSettings } from "@/lib/attendance/rules";
 import type { AttendanceAdminView } from "@/lib/attendance/server";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const createPairCodeAction = guarded(createPairCodeActionRaw);
+const refreshAttendanceAction = guarded(refreshAttendanceActionRaw);
+const renameTerminalAction = guarded(renameTerminalActionRaw);
+const revokeTerminalAction = guarded(revokeTerminalActionRaw);
+const saveAttendanceSettingsAction = guarded(saveAttendanceSettingsActionRaw);
+const setAttendanceEnabledAction = guarded(setAttendanceEnabledActionRaw);
 
 // 근태 설정 화면 본문(D-236, attendance.md §1·§2-1): 켜기 · 설정 · 출근 단말 · 변경 이력
 const fmt = (iso: string) =>
@@ -242,7 +244,7 @@ function Terminals({ terminals }: { terminals: AttendanceAdminView["terminals"] 
     setError(null);
     start(async () => {
       const r = await createPairCodeAction(name);
-      if (r.error || !r.code) return setError(r.error ?? "코드를 만들지 못했어요.");
+      if (r.error || !("code" in r) || !r.code) return setError(r.error ?? "코드를 만들지 못했어요.");
       setPair({ code: r.code, expiresAt: r.expiresAt!, terminalUrl: r.terminalUrl!, name: name.trim() });
       setName("");
     });

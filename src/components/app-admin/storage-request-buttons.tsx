@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { grantStorageAction, rejectStorageAction } from "@/app/app-admin/storage/actions";
+import { grantStorageAction as grantStorageActionRaw, rejectStorageAction as rejectStorageActionRaw } from "@/app/app-admin/storage/actions";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const grantStorageAction = guarded(grantStorageActionRaw);
+const rejectStorageAction = guarded(rejectStorageActionRaw);
 
 // 운영자: 저장 공간 신청 [켜기]·[반려](사유) — 8-103
 export function StorageRequestButtons({ id, label }: { id: string; label: string }) {

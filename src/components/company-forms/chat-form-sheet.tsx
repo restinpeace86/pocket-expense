@@ -3,8 +3,13 @@
 import { Check, Loader2, Monitor, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { formDialogDataAction, holdChatFormAction, type FormDialogData } from "@/app/workspace/[id]/admin/company-forms/actions";
+import { formDialogDataAction as formDialogDataActionRaw, holdChatFormAction as holdChatFormActionRaw, type FormDialogData } from "@/app/workspace/[id]/admin/company-forms/actions";
 import { AddFormDialog, SlotFull } from "./add-form-dialog";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const formDialogDataAction = guarded(formDialogDataActionRaw);
+const holdChatFormAction = guarded(holdChatFormActionRaw);
 
 // 채팅 사진·PDF 메뉴 [회사 양식으로 등록](관리자만, 8-104 B-1). PC = 어떤 문서인가요 창, 휴대폰 = B⓪ PC에서 해 주세요 + 담아 두기
 export function ChatFormSheet({ ws, companyId, me, message, onClose }: { ws: string; companyId: string; me: string; message: { id: string; name: string }; onClose: () => void }) {

@@ -2,18 +2,20 @@
 
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState, useTransition } from "react";
-import {
-  addAccountTitleAction,
-  deleteAccountTitleAction,
-  setMappingAction,
-  updateAccountTitleAction,
-} from "@/app/workspace/[id]/admin/account-titles/actions";
+import { addAccountTitleAction as addAccountTitleActionRaw, deleteAccountTitleAction as deleteAccountTitleActionRaw, setMappingAction as setMappingActionRaw, updateAccountTitleAction as updateAccountTitleActionRaw } from "@/app/workspace/[id]/admin/account-titles/actions";
 import { FormError } from "@/components/onboarding/field";
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { AccountTitleRow, MappingRow } from "@/lib/admin/queries";
 import { classificationLabel, MAPPING_ROWS, type Classification } from "@/lib/expense/categories";
 import { measureAction } from "@/lib/perf/client";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const addAccountTitleAction = guarded(addAccountTitleActionRaw);
+const deleteAccountTitleAction = guarded(deleteAccountTitleActionRaw);
+const setMappingAction = guarded(setMappingActionRaw);
+const updateAccountTitleAction = guarded(updateAccountTitleActionRaw);
 
 type Result = { error: string | null };
 // 세무사 화면(D-148)은 같은 화면에 세무사용 작업을 넘긴다(삭제 없음)

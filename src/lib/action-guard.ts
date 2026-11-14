@@ -22,3 +22,32 @@ export async function guardAction<T>(run: () => Promise<T>): Promise<T | { ok: f
     return { ok: false, error: thrownActionMessage() };
   }
 }
+
+// Supabase 호출이 '서버가 거절'한 게 아니라 '인터넷이 안 돼서' 실패했는지(비정상 사용 점검 2026-11-14).
+// 끊김을 '없는 방·권한 없음'으로 보여 주면 사용자가 보던 화면·쓰던 글을 잃는다
+export function isNetworkFailure(e: { message?: string } | null | undefined): boolean {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return true;
+  return /failed to fetch|networkerror|load failed|network request failed|fetch failed/i.test(e?.message ?? "");
+}
+
+// 감싼 서버 작업(guarded): import한 작업을 그대로 바꿔 끼워, 인터넷 끊김·서버 응답 없음이 화면 전체 오류가 되지 않게 한다
+export function guarded<A extends unknown[], R>(fn: (...args: A) => Promise<R>): (...args: A) => Promise<R | { ok: false; error: string }> {
+  return (...args: A) => guardAction(() => fn(...args));
+}
+
+// <form action>(useActionState)용: 실패하면 안내 + 사용자가 친 값을 그대로 돌려줘 칸이 비지 않게 한다
+type FormLikeState = { error: string | null; values?: Record<string, string> };
+export function guardedForm<S extends FormLikeState>(fn: (prev: S, form: FormData) => Promise<S>): (prev: S, form: FormData) => Promise<S> {
+  return async (prev, form) => {
+    try {
+      return await fn(prev, form);
+    } catch (e) {
+      if (isNavigationSignal(e)) throw e;
+      const values: Record<string, string> = {};
+      form.forEach((v, k) => {
+        if (typeof v === "string" && !k.startsWith("$ACTION")) values[k] = v;
+      });
+      return { ...prev, error: thrownActionMessage(), values };
+    }
+  };
+}

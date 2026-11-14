@@ -4,8 +4,14 @@ import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, Loader2, X } fro
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { confirmLeaveAction, saveLeaveSettingsAction, setHireDateAction, type LeaveConfirmItem } from "@/app/workspace/[id]/admin/attendance-settings/leave/actions";
+import { confirmLeaveAction as confirmLeaveActionRaw, saveLeaveSettingsAction as saveLeaveSettingsActionRaw, setHireDateAction as setHireDateActionRaw, type LeaveConfirmItem } from "@/app/workspace/[id]/admin/attendance-settings/leave/actions";
 import { buildLeaveRows, daysLabel, ROUNDING_LABEL, type LeaveAdminData, type LeaveRow, type LeaveSettings, type LeaveStatus } from "@/lib/attendance/leave";
+import { guarded } from "@/lib/action-guard";
+
+// 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
+const confirmLeaveAction = guarded(confirmLeaveActionRaw);
+const saveLeaveSettingsAction = guarded(saveLeaveSettingsActionRaw);
+const setHireDateAction = guarded(setHireDateActionRaw);
 
 // 직원별 연차(D-240, spec/features/attendance.md §7-2): 연도 · 연도 기준 · 시간차 · 소수점 · 직원 목록(법 기준 추천·확정·계산 근거) · 확정 창
 const card = "rounded-2xl border border-zinc-200 bg-white";
