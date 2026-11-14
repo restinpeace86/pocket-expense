@@ -254,7 +254,7 @@ export function BillingView({
               <PlanCard key={p.code} plan={p} coupon={status.coupon} />
             ))}
           </ul>
-          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             <StorageAddonPicker note="모든 플랜에 같은 가격으로 더할 수 있어요. 체크하면 [선택한 구성] 합계에 더해져요. 다시 누르면 해제돼요." />
             <PlanSummary payTip={DISABLED_TIP}>{storage && <StorageRequestButton current={storage.extra_gb} pending={!!storage.pending} />}</PlanSummary>
           </div>

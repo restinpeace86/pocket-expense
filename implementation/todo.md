@@ -405,6 +405,7 @@
   - [x] 9-14d 고장 난 테스트 정리(e2e-vacation·e2e-attendance 관리자 설정 선택자, install-next-step lint)
 
 ## 2026-11-14 서비스 이름 RealOn
+- [x] 9-30 저장 공간 추가 상자 높이 = 선택한 구성(D-275, PC 277px = 277px)
 - [x] 9-29 이름 RealOn·로고 A(켜짐 버튼)·슬로건 "진짜 일에만 집중하세요." (D-274, `implementation/2026-11-14_realon.md`)
 - [x] 9-29a migration 159 적용(2026-11-14 사용자 승인) — 약관·처리방침 버전 2026-11-14(다시 동의 없음), 도우미 방 이름 RealOn, LEGAL_VERSION·시행일 2026-11-14
 - [x] 9-29b 안드로이드 APK 1.0.3(versionCode 4, 이름 RealOn) 빌드·저장소 올림, 받기 링크 버전 1.0.3

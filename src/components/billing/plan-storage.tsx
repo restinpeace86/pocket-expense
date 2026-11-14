@@ -48,12 +48,13 @@ export function StorageAddonPicker({ note }: { note?: string }) {
   const { addons, gb, setGb } = use();
   if (!addons.length) return null;
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm md:p-5" aria-labelledby="storage-addon-title" data-storage-picker>
+    // 오른쪽 [선택한 구성]과 높이를 맞춘다(D-275): 상자는 칸 높이만큼 늘고, 남는 높이는 체크 칸이 나눠 채운다
+    <section className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm md:p-5" aria-labelledby="storage-addon-title" data-storage-picker>
       <h3 id="storage-addon-title" className="font-semibold text-zinc-900">
         저장 공간 추가 <span className="text-sm font-normal text-zinc-500">(선택)</span>
       </h3>
       <p className="mt-1 break-keep text-sm text-zinc-600">{note ?? "모든 플랜에 같은 가격으로 더할 수 있어요. 체크하면 아래 합계에 더해져요. 다시 누르면 해제돼요."}</p>
-      <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4" role="group" aria-label="저장 공간 추가">
+      <div className="mt-3 grid flex-1 auto-rows-fr grid-cols-2 gap-2" role="group" aria-label="저장 공간 추가">
         {addons.map((a) => {
           const on = gb === a.storage_gb;
           return (
@@ -63,15 +64,15 @@ export function StorageAddonPicker({ note }: { note?: string }) {
               role="checkbox"
               aria-checked={on}
               onClick={() => setGb(on ? 0 : a.storage_gb)}
-              className={`flex min-h-12 items-center gap-2 rounded-xl border px-3 text-left tabular-nums ${on ? "border-brand-600 bg-brand-50 font-semibold text-brand-900" : "border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"}`}
+              className={`flex min-h-14 items-center gap-3 rounded-xl border px-4 text-left tabular-nums ${on ? "border-brand-600 bg-brand-50 font-semibold text-brand-900" : "border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"}`}
               data-storage-chip={a.storage_gb}
             >
               <span className={`flex size-4 shrink-0 items-center justify-center rounded border text-[11px] ${on ? "border-brand-600 bg-brand-600 text-white" : "border-zinc-400"}`} aria-hidden>
                 {on && "✓"}
               </span>
               <span className="min-w-0">
-                <b className="block text-sm">+{a.storage_gb}GB</b>
-                <span className="block text-xs text-zinc-600">월 {formatWon(a.monthly_price)}</span>
+                <b className="block text-base">+{a.storage_gb}GB</b>
+                <span className="block text-sm text-zinc-600">월 {formatWon(a.monthly_price)}</span>
               </span>
             </button>
           );

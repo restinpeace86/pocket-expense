@@ -99,7 +99,7 @@ export async function Pricing() {
           </PlanChoice>
         ))}
       </ul>
-      <div className="mx-auto mt-4 grid max-w-md items-start gap-4 md:max-w-none md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="mx-auto mt-4 grid max-w-md gap-4 md:max-w-none md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <StorageAddonPicker />
         <PlanSummary startHref={START_HREF} />
       </div>
