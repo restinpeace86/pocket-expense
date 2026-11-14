@@ -194,8 +194,16 @@ export function OfficeDashboard({ rows, month, isAdmin, staff }: { rows: ClientR
                 </span>
                 {todo.length > 0 && <p className="break-keep text-xs text-zinc-700">{todo.join(" · ")}</p>}
                 <p className="text-xs text-zinc-500">
-                  마지막 올림 {md(r.status?.last_upload_at)} · 담당 {r.assigned_name ?? "–"}
+                  마지막 올림 {md(r.status?.last_upload_at)}
+                  {!isAdmin && ` · 담당 ${r.assigned_name ?? "–"}`}
                 </p>
+                {/* 사무소 관리자는 휴대폰에서도 담당 배정·고객사 해제(PC 표와 같은 기능) */}
+                {isAdmin && (
+                  <div className="flex flex-col gap-1">
+                    <AssignSelect companyId={r.company_id} companyName={r.company_name} value={r.assigned_member_id} staff={staff} />
+                    <ReleaseClientButton companyId={r.company_id} companyName={r.company_name} />
+                  </div>
+                )}
                 <CheckButton companyId={r.company_id} month={month} at={r.status?.office_checked_at ?? null} by={r.status?.office_checked_by ?? null} />
               </div>
             </li>
