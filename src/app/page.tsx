@@ -9,7 +9,7 @@ import { Testimonials } from "@/components/landing/testimonials";
 import { OPERATOR, SHOW_FULL_BUSINESS_INFO } from "@/components/legal/documents";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 import { Wordmark } from "@/components/brand/logo";
-import { BRAND } from "@/lib/brand";
+import { BRAND, BRAND_JOSA } from "@/lib/brand";
 import { ACCENT, BRAND_BUTTON, type Accent } from "@/components/landing/accent";
 import { WhyArtwork, type WhyArt } from "@/components/landing/why-art";
 import { SectionNav } from "@/components/landing/section-nav";
@@ -32,7 +32,7 @@ const SECTION_LINKS = [
 
 const START_HREF = `/login?next=${encodeURIComponent("/onboarding/create-company")}`;
 
-// Moa-on이 다른 점(D-255 §C) — 지금 있는 기능만(D-200 원칙)
+// 다른 점(D-255 §C) — 지금 있는 기능만(D-200 원칙)
 // D-273 랜딩 다시 짜기: 구역마다 박히는 한 줄 + 뒷받침 한 줄. 비슷한 카드가 이어지던 중간(이어짐·경비 더 깊게·한 달 흐름)은 [한 달 흐름] 하나로.
 // [다른 점] 큰 글씨 4장 + 아래 [기능] 벽(모든 플랜 공통 기능을 구역별 칩으로 — 기능이 안 보이지 않게)
 const WHY: { icon: typeof Layers; big: string; body: string; accent: Accent; art: WhyArt }[] = [
@@ -113,12 +113,13 @@ export default function LandingPage() {
             <p className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-700">✦ 5~20인 작은 회사를 위한 통합 운영관리</p>
             {/* 메인 카피는 두 줄로 고정(휴대폰에서도 어절 중간에서 끊기지 않게 break-keep) */}
             <h1 className="mt-5 break-keep text-[2.5rem] font-extrabold leading-[1.15] tracking-tight sm:text-6xl lg:text-[3.5rem]">
-              작은 회사 운영,
+              {/* D-274 슬로건: 진짜 일에만 / 집중하세요. */}
+              진짜 일에만
               <br />
-              <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">{BRAND.name}</span> 하나로 끝.
+              <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">집중하세요.</span>
             </h1>
             <p className="mt-5 max-w-md text-balance break-keep text-lg leading-relaxed text-zinc-600 sm:text-xl">
-              경비·결재, 근태·휴가, 사내 채팅·캘린더, 세무사무소 전달까지. 따로 쓰던 앱을 하나로.
+              {BRAND.sloganSub} 결재·근태부터 채팅·일정·회의실까지, 회사 생활은 {BRAND_JOSA.i} 챙겨요.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link href={START_HREF} className={`inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-xl px-6 font-semibold ${BRAND_BUTTON}`}>

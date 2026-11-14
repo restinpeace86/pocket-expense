@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Moa-on</string>
-    <string name="title_activity_main">Moa-on</string>
+    <string name="app_name">RealOn</string>
+    <string name="title_activity_main">RealOn</string>
     <string name="package_name">kr.damounlab.app</string>
     <string name="custom_url_scheme">kr.damounlab.app</string>
 </resources>
