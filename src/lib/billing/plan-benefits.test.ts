@@ -45,7 +45,7 @@ describe("플랜 혜택", () => {
       "서류 → 엑셀 변환 월 300건",
       "회사 공용 파일 용량 200GB",
       "지운 파일 복구 1년",
-      "AI 양식 변환 무제한",
+      "회사 양식: 지출결의서·휴가신청서",
       "예산 한도·초과 알림",
       "고객 지원: 우선 응대 + 채팅",
       "모든 기능 포함",
@@ -55,12 +55,12 @@ describe("플랜 혜택", () => {
     expect(st.map((b) => b.label)).toContain("회사 양식: 지출결의서");
     expect(st.map((b) => b.label)).not.toContain("예산 한도·초과 알림");
     const pro = planBenefits({ monthly_price: 49000, monthly_receipts: 400, max_members: null, form_slots: 5, storage_mb: 51200 });
-    expect(pro.map((b) => b.label)).toEqual(expect.arrayContaining(["AI 양식 변환 최대 5개", "회사 공용 파일 용량 50GB"]));
+    expect(pro.map((b) => b.label)).toEqual(expect.arrayContaining(["회사 양식: 지출결의서·휴가신청서", "회사 공용 파일 용량 50GB"]));
   });
   it("카드 핵심 줄·비교표(D-273)", () => {
     const pro = { monthly_price: 49000, monthly_receipts: 400, max_members: null, monthly_doc_converts: 100, storage_mb: 51200, trash_days: 90, form_slots: 5, budget_alerts: true, support_label: "채팅" };
-    expect(planCore(pro).map((b) => b.label)).toEqual(["AI 영수증 읽기 월 최대 400장 지원", "서류 → 엑셀 변환 월 100건", "회사 공용 파일 용량 50GB", "AI 양식 변환 최대 5개"]);
+    expect(planCore(pro).map((b) => b.label)).toEqual(["AI 영수증 읽기 월 최대 400장 지원", "서류 → 엑셀 변환 월 100건", "회사 공용 파일 용량 50GB", "회사 양식: 지출결의서·휴가신청서"]);
     const rows = planCompareRows([pro]);
-    expect(rows.map((r) => `${r.label}:${r.values[0]}`)).toEqual(["회사 공용 파일 용량(누적 합산):50GB", "AI 영수증 읽기:월 400장", "서류 → 엑셀 변환:월 100건", "회사 양식:AI 양식 변환 최대 5개", "예산 한도·초과 알림:✓", "삭제 파일 복구:90일", "고객 지원:채팅"]);
+    expect(rows.map((r) => `${r.label}:${r.values[0]}`)).toEqual(["회사 공용 파일 용량(누적 합산):50GB", "AI 영수증 읽기:월 400장", "서류 → 엑셀 변환:월 100건", "회사 양식:지출결의서·휴가신청서", "예산 한도·초과 알림:✓", "삭제 파일 복구:90일", "고객 지원:채팅"]);
   });
 });

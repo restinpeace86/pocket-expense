@@ -60,11 +60,10 @@ export function planBenefits(p: PlanLike): { label: string; sub?: string }[] {
     // D-266 휴지통: 지운 보관 파일 복구 기간
     ...(p.trash_days ? [{ label: `지운 파일 복구 ${p.trash_days >= 365 ? `${Math.round(p.trash_days / 365)}년` : `${p.trash_days}일`}`, sub: "파일 보관함 휴지통에서 되돌리기" }] : []),
     // D-271 비교표: 회사 양식 · 예산 알림 · 고객 지원
-    ...(p.form_slots_unlimited
-      ? [{ label: "AI 양식 변환 무제한", sub: "회사 양식을 앱 양식으로 · 도입 시 지원" }]
-      : p.form_slots
-        ? [{ label: `AI 양식 변환 최대 ${p.form_slots}개`, sub: "회사 양식을 앱 양식으로 · 도입 시 지원" }]
-        : p.form_slots === 0
+    // D-279: 지금 실제로 쓰는 회사 양식만 적는다(결재 문서 3·5개는 [결재 문서] 화면이 생긴 뒤에)
+    ...(p.form_slots_unlimited || p.form_slots
+      ? [{ label: FORM_LABEL_PAID, sub: "쓰던 종이 양식 모양 그대로 · 등록은 PC에서" }]
+      : p.form_slots === 0
           ? [{ label: "회사 양식: 지출결의서", sub: "기본 지출결의서 양식" }]
           : []),
     ...(p.budget_alerts ? [{ label: "예산 한도·초과 알림", sub: "80%·100%를 넘으면 관리자에게" }] : []),
@@ -72,6 +71,8 @@ export function planBenefits(p: PlanLike): { label: string; sub?: string }[] {
     { label: "모든 기능 포함", sub: "결재·정산·세무 마감·세무사무소 연결" },
   ];
 }
+
+const FORM_LABEL_PAID = "회사 양식: 지출결의서·휴가신청서";
 
 // 요금 카드에는 핵심 줄만(D-273): 영수증·서류 변환·파일 용량·회사 양식. 나머지는 [플랜 자세히 비교]
 export function planCore(p: PlanLike): { label: string; sub?: string }[] {
@@ -85,7 +86,7 @@ export function planCompareRows(plans: PlanLike[]): { label: string; values: str
     { label: "회사 공용 파일 용량(누적 합산)", values: plans.map((p) => (p.storage_mb ? storageLabel(p.storage_mb) : "–")) },
     { label: "AI 영수증 읽기", values: plans.map((p) => (p.is_unlimited ? `무제한*(공정 월 ${p.monthly_receipts.toLocaleString("ko-KR")}장)` : `월 ${p.monthly_receipts.toLocaleString("ko-KR")}장`)) },
     { label: "서류 → 엑셀 변환", values: plans.map((p) => (p.monthly_doc_converts == null ? "–" : `월 ${p.monthly_doc_converts.toLocaleString("ko-KR")}건`)) },
-    { label: "회사 양식", values: plans.map((p) => (p.form_slots_unlimited ? "AI 양식 변환 무제한" : p.form_slots ? `AI 양식 변환 최대 ${p.form_slots}개` : "지출결의서")) },
+    { label: "회사 양식", values: plans.map((p) => (p.form_slots_unlimited || p.form_slots ? "지출결의서·휴가신청서" : "지출결의서")) },
     { label: "예산 한도·초과 알림", values: plans.map((p) => yes(p.budget_alerts)) },
     { label: "삭제 파일 복구", values: plans.map((p) => (p.trash_days ? (p.trash_days >= 365 ? `${Math.round(p.trash_days / 365)}년` : `${p.trash_days}일`) : "–")) },
     { label: "고객 지원", values: plans.map((p) => p.support_label ?? "–") },
