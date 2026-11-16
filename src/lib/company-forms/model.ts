@@ -1,6 +1,7 @@
 // 회사 양식 등록의 칸 모델 (8-104 B, spec/features/company-forms.md §B)
 // 표 모양은 서류 → 엑셀과 같은 DocModel. 값이 들어갈 칸마다 Field 하나: 어느 칸(s 쪽·r 행·c 열)인지 + 어떻게 채우는지(b)
 // - data: 우리 데이터(B-3) / input: 신청할 때 직원이 입력 / fixed: 고정 값 / blank: 비워 두기(수기) / drop: 빼기(등록할 때 양식에서 지움) / pending: 정해 주세요
+import { guessDocType, guessInputType, isDocType, stdField, type DocTypeCode } from "./doc-types";
 import { anchorOf, sheetFromAi, type AiCell, type AiPage, type DocModel, type Sheet, MAX_CELL, MAX_PAGES } from "@/lib/doc-convert/model";
 
 export type FormKind = "leave" | "correction" | "holiday" | "general";
@@ -68,15 +69,18 @@ export function dataKeysFor(kind: FormKind): DataKey[] {
 }
 export const isDataKey = (k: unknown, kind: FormKind): k is DataKey => typeof k === "string" && (dataKeysFor(kind) as string[]).includes(k);
 
-export type InputType = "text" | "long" | "date" | "number" | "choice" | "member";
-export const INPUT_LABEL: Record<InputType, string> = { text: "글", long: "긴 글", date: "날짜", number: "숫자", choice: "선택지", member: "직원 고르기" };
+export type InputType = "text" | "long" | "date" | "number" | "choice" | "member" | "money" | "period" | "time_range";
+export const INPUT_LABEL: Record<InputType, string> = { text: "글", long: "긴 글", date: "날짜", number: "숫자", choice: "선택지", member: "직원 고르기", money: "금액", period: "기간", time_range: "시각(부터~까지)" };
+// 금액·기간·시각 범위는 결재 문서(9-33d)에서만 — 근태 양식의 [회사 추가 항목]은 기존 6가지
+export const GENERAL_ONLY_TYPES: InputType[] = ["money", "period", "time_range"];
+export const inputTypesFor = (kind: FormKind) => (Object.keys(INPUT_LABEL) as InputType[]).filter((t) => kind === "general" || !GENERAL_ONLY_TYPES.includes(t));
 export const MAX_INPUTS: Record<FormKind, number> = { leave: 5, correction: 5, holiday: 5, general: 15 };
 export const MAX_OPTIONS = 10;
 
 export type Binding =
   | { k: "pending" }
   | { k: "data"; src: DataKey }
-  | { k: "input"; type: InputType; required: boolean; options?: string[] }
+  | { k: "input"; type: InputType; required: boolean; options?: string[]; std?: string } // std: 결재 문서 표준 칸 키(9-33d, doc-types)
   | { k: "fixed"; value: string }
   | { k: "blank" }
   | { k: "drop" };
@@ -104,7 +108,7 @@ export function bindingSummary(b: Binding): string {
     case "data":
       return DATA_LABEL[b.src] ?? "우리 데이터";
     case "input":
-      return `직원 입력 · ${INPUT_LABEL[b.type]}${b.required ? " · 필수" : ""}`;
+      return `${b.std ? "RealOn 칸" : "직원 입력"} · ${INPUT_LABEL[b.type]}${b.required ? " · 필수" : ""}`;
     case "fixed":
       return `고정 값 · ${b.value || "(빈 글)"}`;
     case "blank":
@@ -135,7 +139,7 @@ export function cellHint(b: Binding, label: string): string {
 
 // ── AI 결과 → 표 + 칸 ─────────────────────────────────────────────────────
 export type AiFormCell = AiCell & { slot_label?: string | null; slot_data?: string | null };
-export type AiFormPage = Omit<AiPage, "rows"> & { rows?: { height?: number | null; cells?: AiFormCell[] | null }[] | null };
+export type AiFormPage = Omit<AiPage, "rows"> & { doc_type?: string | null; rows?: { height?: number | null; cells?: AiFormCell[] | null }[] | null };
 
 // 같은 행에서 왼쪽으로 가장 가까운 글자 있는 칸(라벨)
 function labelLeft(sheet: Sheet, r: number, c: number): { r: number; c: number } | null {
@@ -147,7 +151,11 @@ function labelLeft(sheet: Sheet, r: number, c: number): { r: number; c: number }
 }
 const cleanLabel = (s: string) => s.replace(/\s+/g, " ").replace(/[:：]\s*$/, "").trim().slice(0, MAX_LABEL);
 
-export function formFromAi(pages: AiFormPage[], kind: FormKind): { doc: DocModel; fields: Field[]; title: string | null } | null {
+export function formFromAi(pages: AiFormPage[], kind: FormKind): { doc: DocModel; fields: Field[]; title: string | null; docType: DocTypeCode | null } | null {
+  // 결재 문서(9-33d): AI가 고른 종류(없으면 제목으로 짐작) — 그 종류의 표준 칸만 짝짓고, 짝 없는 칸은 직원 입력(방식 짐작)
+  const aiType = pages.find((p) => isDocType(p.doc_type))?.doc_type as DocTypeCode | undefined;
+  const firstTitle = pages.find((p) => p.title?.trim())?.title ?? null;
+  const docType: DocTypeCode | null = kind === "general" ? (aiType ?? guessDocType(firstTitle)) : null;
   const sheets: Sheet[] = [];
   const fields: Field[] = [];
   let title: string | null = null;
@@ -166,19 +174,27 @@ export function formFromAi(pages: AiFormPage[], kind: FormKind): { doc: DocModel
       if (fields.some((f) => f.s === s && f.r === slot.r && f.c === slot.c)) continue;
       const lab = labelLeft(sheet, slot.r, slot.c);
       const label = cleanLabel(slot.label) || (lab ? cleanLabel(sheet.cells[lab.r][lab.c].t) : "") || "칸";
-      const b: Binding = isDataKey(slot.data, kind) ? { k: "data", src: slot.data } : { k: "pending" };
+      const std = docType && slot.data?.startsWith(`${docType}.`) ? stdField(docType, slot.data.slice(docType.length + 1)) : null;
+      const b: Binding = isDataKey(slot.data, kind)
+        ? { k: "data", src: slot.data }
+        : std
+          ? { k: "input", type: std.type, required: std.required, ...(std.options ? { options: std.options } : {}), std: std.key }
+          : kind === "general" && !sheet.cells[slot.r]?.[slot.c]?.t.trim() // 글자가 있는 칸(라벨·결재란 머리)은 직원 입력으로 짐작하지 않음
+            ? { k: "input", type: guessInputType(label), required: false }
+            : { k: "pending" };
       fields.push({ key: newKey(fields), label, s, r: slot.r, c: slot.c, ...(lab ? { lr: lab.r, lc: lab.c } : {}), b });
     }
   }
   if (!sheets.length) return null;
-  // 같은 데이터가 여러 칸이면 처음 것만 자동 연결(나머지는 정해 주세요) — 결재란은 번호가 달라 겹치지 않음
+  // 같은 데이터·표준 칸이 여러 칸이면 처음 것만 자동 연결(나머지는 정해 주세요) — 결재란은 번호가 달라 겹치지 않음
   const seen = new Set<string>();
   for (const f of fields) {
-    if (f.b.k !== "data") continue;
-    if (seen.has(f.b.src)) f.b = { k: "pending" };
-    else seen.add(f.b.src);
+    const id = f.b.k === "data" ? f.b.src : f.b.k === "input" && f.b.std ? `std:${f.b.std}` : null;
+    if (!id) continue;
+    if (seen.has(id)) f.b = { k: "pending" };
+    else seen.add(id);
   }
-  return { doc: { v: 1, sheets }, fields, title: title ? title.slice(0, 60) : null };
+  return { doc: { v: 1, sheets }, fields, title: title ? title.slice(0, 60) : null, docType };
 }
 
 // ── 레이아웃을 고칠 때 칸 위치 따라가기 ───────────────────────────────────
@@ -249,7 +265,8 @@ export function validFields(x: unknown, doc: DocModel, kind: FormKind | null): x
           b.type in INPUT_LABEL &&
           typeof b.required === "boolean" &&
           (b.options === undefined || (Array.isArray(b.options) && b.options.length <= MAX_OPTIONS && b.options.every((o) => typeof o === "string" && o.trim().length > 0 && o.length <= 40))) &&
-          (b.type !== "choice" || (b.options?.length ?? 0) >= 2)
+          (b.type !== "choice" || (b.options?.length ?? 0) >= 2) &&
+          (b.std === undefined || (typeof b.std === "string" && /^[a-z_]{1,20}$/.test(b.std)))
         );
       default:
         return false;

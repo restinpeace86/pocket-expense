@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { deleteFormAction as deleteFormActionRaw, editFormAction as editFormActionRaw } from "@/app/workspace/[id]/admin/company-forms/actions";
 import { inputCount, KIND_LABEL, type Field, type FormKind, isAttendanceKind } from "@/lib/company-forms/model";
+import { docTypeLabel } from "@/lib/company-forms/doc-types";
 import { draftDaysLeft, type DocModel } from "@/lib/doc-convert/model";
 import { AddFormDialog, type AddFormSource } from "./add-form-dialog";
 import { SheetView } from "./sheet-view";
@@ -15,7 +16,7 @@ import { guarded } from "@/lib/action-guard";
 const deleteFormAction = guarded(deleteFormActionRaw);
 const editFormAction = guarded(editFormActionRaw);
 
-export type ActiveForm = { id: string; group_id: string; name: string; kind: FormKind; version: number; fields: Field[]; sheets: DocModel; published_at: string; created_by_name: string | null };
+export type ActiveForm = { id: string; group_id: string; name: string; kind: FormKind; docType?: string | null; version: number; fields: Field[]; sheets: DocModel; published_at: string; created_by_name: string | null };
 export type DraftForm = { id: string; group_id: string; name: string; kind: FormKind | null; read: boolean; source_name: string | null; updated_at: string; created_by_name: string | null; replaces: string | null };
 
 const dateLabel = (iso: string) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric" }).format(new Date(iso));
@@ -119,7 +120,7 @@ export function CompanyFormsView({
                 <span className="min-w-0 flex-1">
                   <b className="block truncate text-[15px]">{f.name}</b>
                   <span className="block truncate text-[13px] text-zinc-600">
-                    {KIND_LABEL[f.kind]} · 직원 입력 칸 {inputCount(f.fields)}개{inputs.length ? `(${inputs.map((x) => x.label).join("·")})` : ""}
+                    {f.kind === "general" ? `결재 문서 · ${docTypeLabel(f.docType)}` : KIND_LABEL[f.kind]} · 직원 입력 칸 {inputCount(f.fields)}개{inputs.length ? `(${inputs.map((x) => x.label).join("·")})` : ""}
                   </span>
                   <span className="block text-[12px] text-zinc-500">
                     v{f.version} · {dateLabel(f.published_at)} {f.created_by_name ?? ""}

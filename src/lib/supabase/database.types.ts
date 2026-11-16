@@ -2329,6 +2329,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           created_by_name: string | null
+          doc_type: string | null
           fields: Json
           group_id: string
           id: string
@@ -2349,6 +2350,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           created_by_name?: string | null
+          doc_type?: string | null
           fields?: Json
           group_id: string
           id: string
@@ -2369,6 +2371,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           created_by_name?: string | null
+          doc_type?: string | null
           fields?: Json
           group_id?: string
           id?: string
@@ -5624,11 +5627,23 @@ export type Database = {
         Returns: Json
       }
       company_form_read_done: {
-        Args: { p_fields: Json; p_id: string; p_name: string; p_sheets: Json }
+        Args: {
+          p_doc_type?: string
+          p_fields: Json
+          p_id: string
+          p_name: string
+          p_sheets: Json
+        }
         Returns: undefined
       }
       company_form_save: {
-        Args: { p_fields: Json; p_id: string; p_name: string; p_sheets: Json }
+        Args: {
+          p_doc_type?: string
+          p_fields: Json
+          p_id: string
+          p_name: string
+          p_sheets: Json
+        }
         Returns: undefined
       }
       company_form_slots: { Args: never; Returns: Json }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { deleteFormAction as deleteFormActionRaw, publishFormAction as publishFormActionRaw, readFormAction as readFormActionRaw, saveFormAction as saveFormActionRaw } from "@/app/workspace/[id]/admin/company-forms/actions";
 import {
+  inputTypesFor,
   bindingSummary,
   cellHint,
   DATA_LABEL,
@@ -31,6 +32,7 @@ import { addRowBelow, cellAddress, deleteRow, mergeAt, type DocModel, type Sheet
 import { useSheetGrid, type CellLook } from "@/components/doc-convert/use-sheet-grid";
 import { SheetView } from "./sheet-view";
 import { guarded } from "@/lib/action-guard";
+import { DOC_TYPES, docTypeOf, stdField, type DocTypeCode } from "@/lib/company-forms/doc-types";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
 const deleteFormAction = guarded(deleteFormActionRaw);
@@ -38,13 +40,16 @@ const publishFormAction = guarded(publishFormActionRaw);
 const readFormAction = guarded(readFormActionRaw);
 const saveFormAction = guarded(saveFormActionRaw);
 
-export type EditorForm = { id: string; group_id: string; name: string; kind: FormKind; sheets: DocModel; fields: Field[]; reads: number; mime: string; replaces: string | null };
+export type EditorForm = { id: string; group_id: string; name: string; kind: FormKind; sheets: DocModel; fields: Field[]; reads: number; mime: string; replaces: string | null; docType?: DocTypeCode | null };
 type State = { doc: DocModel; fields: Field[] };
 
 // B② PC 회사 양식 등록: [레이아웃] 글자·행 고치기 / [칸 연결] 칸마다 채우는 방법 정하기 → 이름 → [등록하기]
 export function FormEditor({ ws, form, src }: { ws: string; form: EditorForm; src: string | null }) {
   const router = useRouter();
   const [st, setSt] = useState<State>({ doc: form.sheets, fields: form.fields });
+  // 결재 문서 종류(9-33d): 바꾸면 그 종류의 표준 칸만 남기고, 다른 종류 표준 칸은 직원 입력으로
+  const [docType, setDocType] = useState<DocTypeCode | null>(form.docType ?? (form.kind === "general" ? "other" : null));
+  const docTypeRef = useRef(docType);
   const [history, setHistory] = useState<State[]>([]);
   const [name, setName] = useState(form.name);
   const [step, setStep] = useState<"layout" | "fields">("fields");
@@ -73,7 +78,7 @@ export function FormEditor({ ws, form, src }: { ws: string; form: EditorForm; sr
     if (!p) return true;
     pending.current = null;
     setSave("saving");
-    const r = await saveFormAction(form.id, p.name, p.s.doc, p.s.fields);
+    const r = await saveFormAction(form.id, p.name, p.s.doc, p.s.fields, docTypeRef.current);
     setSave(r.ok ? "saved" : "error");
     if (!r.ok) setNotice(r.error ?? "저장하지 못했어요.");
     return r.ok;
@@ -83,6 +88,16 @@ export function FormEditor({ ws, form, src }: { ws: string; form: EditorForm; sr
     setSave("saving");
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => void flush(), 800);
+  };
+  const changeDocType = (code: DocTypeCode) => {
+    if (code === docType) return;
+    docTypeRef.current = code;
+    setDocType(code);
+    const allowed = new Set(docTypeOf(code).fields.map((x) => x.key));
+    change({
+      ...st,
+      fields: st.fields.map((f) => (f.b.k === "input" && f.b.std && !allowed.has(f.b.std) ? { ...f, b: { k: "input", type: f.b.type, required: f.b.required, ...(f.b.options ? { options: f.b.options } : {}) } } : f)),
+    });
   };
   const change = (next: State) => {
     setHistory((h) => [...h.slice(-49), st]);
@@ -179,7 +194,7 @@ export function FormEditor({ ws, form, src }: { ws: string; form: EditorForm; sr
     grid.commit();
     if (!(await flush())) return;
     setBusy("publish");
-    const r = await publishFormAction(form.id, name, st.doc, st.fields);
+    const r = await publishFormAction(form.id, name, st.doc, st.fields, docType);
     setBusy(null);
     if (!r.ok) return setNotice(r.error ?? "등록하지 못했어요.");
     router.push(`${ws}/admin/company-forms`);
@@ -244,6 +259,21 @@ export function FormEditor({ ws, form, src }: { ws: string; form: EditorForm; sr
           {save === "saving" ? "저장 중…" : save === "error" ? "저장 못 함" : "저장됨"}
         </span>
       </header>
+
+      {form.kind === "general" && docType && (
+        <section aria-labelledby="doc-type-title" className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2.5" data-doc-types>
+          <p id="doc-type-title" className="text-[13px]">
+            <b>어떤 결재 문서인가요?</b> <span className="text-zinc-600">AI가 제목을 보고 골라 뒀어요. 바꾸면 그 종류의 RealOn 칸으로 다시 짝지어요(다른 종류 칸은 직원 입력으로 바뀌어요).</span>
+          </p>
+          <div role="radiogroup" aria-label="결재 문서 종류" className="flex flex-wrap gap-1.5">
+            {DOC_TYPES.map((d) => (
+              <button key={d.code} type="button" role="radio" aria-checked={docType === d.code} onClick={() => changeDocType(d.code)} className={`h-8 rounded-full px-3 text-[13px] ${docType === d.code ? "bg-brand-600 font-semibold text-white" : "border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"}`} data-doc-type={d.code}>
+                {d.label}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2">
         {pendingN > 0 ? (
@@ -397,6 +427,7 @@ export function FormEditor({ ws, form, src }: { ws: string; form: EditorForm; sr
         <FieldSetDialog
           field={current}
           kind={form.kind}
+          docType={docType}
           othersInputs={st.fields.filter((f) => f.key !== current.key && f.b.k === "input").length}
           onClose={() => setSetting(null)}
           onSave={(label, b) => {
@@ -440,6 +471,7 @@ const isPendingFirst = (f: Field) => f.b.k === "pending";
 function FieldSetDialog({
   field,
   kind,
+  docType,
   othersInputs,
   onClose,
   onSave,
@@ -447,6 +479,7 @@ function FieldSetDialog({
 }: {
   field: Field;
   kind: FormKind;
+  docType: DocTypeCode | null;
   othersInputs: number;
   onClose: () => void;
   onSave: (label: string, b: Binding) => void;
@@ -454,7 +487,10 @@ function FieldSetDialog({
 }) {
   const b0 = field.b;
   const [label, setLabel] = useState(field.label);
-  const [k, setK] = useState<Binding["k"]>(b0.k === "pending" ? "input" : b0.k);
+  // std = RealOn 표준 칸(결재 문서 종류의 칸, 9-33d) — 저장은 직원 입력 + 표준 칸 키
+  const stdList = kind === "general" ? docTypeOf(docType).fields : [];
+  const [k, setK] = useState<Binding["k"] | "std">(b0.k === "input" && b0.std && stdField(docType, b0.std) ? "std" : b0.k === "pending" ? (stdList.length ? "std" : "input") : b0.k);
+  const [std, setStd] = useState<string>((b0.k === "input" && b0.std) || stdList[0]?.key || "");
   const [src, setSrc] = useState<DataKey>(b0.k === "data" ? b0.src : dataKeysFor(kind)[0]);
   const [type, setType] = useState<InputType>(b0.k === "input" ? b0.type : "text");
   const [required, setRequired] = useState(b0.k === "input" ? b0.required : true);
@@ -471,12 +507,17 @@ function FieldSetDialog({
     .filter(Boolean)
     .slice(0, MAX_OPTIONS);
   const max = MAX_INPUTS[kind];
-  const inputFull = k === "input" && b0.k !== "input" && othersInputs >= max;
+  const inputFull = (k === "input" || k === "std") && b0.k !== "input" && othersInputs >= max;
   const invalid = !label.trim() || inputFull || (k === "input" && type === "choice" && opts.length < 2) || (k === "fixed" && !fixed.trim());
-  const build = (): Binding =>
-    k === "data" ? { k, src } : k === "input" ? { k, type, required, ...(type === "choice" ? { options: opts.map((o) => o.slice(0, 40)) } : {}) } : k === "fixed" ? { k, value: fixed.trim() } : k === "blank" ? { k } : { k: "drop" };
+  const build = (): Binding => {
+    if (k === "std") {
+      const x = stdField(docType, std)!;
+      return { k: "input", type: x.type, required: x.required, ...(x.options ? { options: x.options } : {}), std: x.key };
+    }
+    return k === "data" ? { k, src } : k === "input" ? { k, type, required, ...(type === "choice" ? { options: opts.map((o) => o.slice(0, 40)) } : {}) } : k === "fixed" ? { k, value: fixed.trim() } : k === "blank" ? { k } : { k: "drop" };
+  };
 
-  const radio = (v: Binding["k"], title: string, desc: string, extra?: React.ReactNode) => (
+  const radio = (v: Binding["k"] | "std", title: string, desc: string, extra?: React.ReactNode) => (
     <div className={`rounded-2xl p-3.5 ${k === v ? "border-2 border-brand-600 bg-brand-50/60" : "border border-zinc-200"}`}>
       <button type="button" role="radio" aria-checked={k === v} onClick={() => setK(v)} className="flex w-full items-start gap-3 text-left" data-binding={v}>
         <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${k === v ? "border-brand-600" : "border-zinc-300"}`} aria-hidden>
@@ -512,6 +553,20 @@ function FieldSetDialog({
           <input value={label} maxLength={MAX_LABEL} onChange={(e) => setLabel(e.target.value)} className="h-9 min-w-0 flex-1 rounded-lg border border-zinc-300 px-2.5 text-[14px]" data-field-label />
         </label>
         <div role="radiogroup" aria-label="채우는 방법" className="flex flex-col gap-2">
+          {stdList.length > 0 &&
+            radio(
+              "std",
+              "RealOn 칸(표준)",
+              `${docTypeOf(docType).label}의 정해진 칸이에요. 쓰기 화면에서 맞는 입력 방식(금액·기간 등)으로 나와요`,
+              <select value={std} onChange={(e) => setStd(e.target.value)} className="h-10 w-full rounded-lg border border-zinc-300 px-2 text-[14px]" data-std-field>
+                {stdList.map((x) => (
+                  <option key={x.key} value={x.key}>
+                    {x.label} · {INPUT_LABEL[x.type]}
+                    {x.required ? " · 필수" : ""}
+                  </option>
+                ))}
+              </select>,
+            )}
           {radio(
             "data",
             "우리 데이터로 채움",
@@ -530,7 +585,7 @@ function FieldSetDialog({
             kind === "leave" ? "휴가 신청 화면 아래 [회사 추가 항목]에 칸이 생겨요" : kind === "correction" ? "정정 신청 화면 아래 [회사 추가 항목]에 칸이 생겨요" : kind === "holiday" ? "휴일 근무 상신 화면 아래 [회사 추가 항목]에 칸이 생겨요" : "결재 문서 입력 화면에 칸이 생겨요",
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap gap-1.5">
-                {(Object.keys(INPUT_LABEL) as InputType[]).map((t) => (
+                {inputTypesFor(kind).map((t) => (
                   <button key={t} type="button" onClick={() => setType(t)} className={`h-8 rounded-full px-3 text-[13px] ${type === t ? "bg-zinc-900 font-semibold text-white" : "border border-zinc-300 bg-white text-zinc-700"}`} data-input-type={t}>
                     {INPUT_LABEL[t]}
                   </button>

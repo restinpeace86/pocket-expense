@@ -28,7 +28,7 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/co
     supabase.rpc("company_form_slots"),
     supabase
       .from("company_forms")
-      .select("id, group_id, name, kind, version, status, fields, sheets, source_name, published_at, updated_at, created_by_name")
+      .select("id, group_id, name, kind, doc_type, version, status, fields, sheets, source_name, published_at, updated_at, created_by_name")
       .in("status", ["active", "draft"])
       .order("created_at", { ascending: true }),
   ]);
@@ -36,7 +36,7 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/co
   const list = rows.data ?? [];
   const active = list.filter((r) => r.status === "active");
   const forms: ActiveForm[] = active.map((r) => ({
-    id: r.id, group_id: r.group_id, name: r.name, kind: r.kind as FormKind, version: r.version, fields: r.fields as unknown as ActiveForm["fields"],
+    id: r.id, group_id: r.group_id, name: r.name, kind: r.kind as FormKind, docType: r.doc_type, version: r.version, fields: r.fields as unknown as ActiveForm["fields"],
     sheets: r.sheets as unknown as ActiveForm["sheets"], published_at: r.published_at ?? r.updated_at, created_by_name: r.created_by_name,
   }));
   const drafts: DraftForm[] = list

@@ -7,7 +7,7 @@ import { isConvertible, MAX_PAGES } from "@/lib/doc-convert/model";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { readFormWithGemini } from "./gemini";
-import { formErrorMessage, formFromAi, type FormKind } from "./model";
+import { formErrorMessage, formFromAi, isFormKind, type FormKind } from "./model";
 
 // 회사 양식 등록 서버 흐름(8-104 B). 권한·기록은 DB 함수(관리자), 파일 복사·삭제와 AI 읽기는 서버(운영 키)
 type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
@@ -80,7 +80,7 @@ async function pageCount(data: ArrayBuffer, mime: string): Promise<number> {
 
 // AI로 읽기(처음·다시 읽기): 종류 정하기 + 칸 확인(DB) → 파일 읽기 → 표·칸 저장. 실패하면 읽은 횟수는 그대로
 export async function readForm(id: string, kind: FormKind): Promise<Result> {
-  if (!UUID.test(id) || (kind !== "leave" && kind !== "general")) return { ok: false, error: formErrorMessage("NOT_FOUND") };
+  if (!UUID.test(id) || !isFormKind(kind)) return { ok: false, error: formErrorMessage("NOT_FOUND") };
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("company_form_read_begin", { p_id: id, p_kind: kind });
   if (error || !data) return { ok: false, error: formErrorMessage(error?.message ?? "") };
@@ -101,7 +101,7 @@ export async function readForm(id: string, kind: FormKind): Promise<Result> {
   const read = pages ? formFromAi(pages, kind) : null;
   if (!read) return { ok: false, error: formErrorMessage("NO_TABLE") };
   const { error: doneError } = await supabase.rpc("company_form_read_done", {
-    p_id: id, p_name: read.title ?? "", p_sheets: read.doc as never, p_fields: read.fields as never,
+    p_id: id, p_name: read.title ?? "", p_sheets: read.doc as never, p_fields: read.fields as never, ...(read.docType ? { p_doc_type: read.docType } : {}),
   });
   if (doneError) return { ok: false, error: formErrorMessage(doneError.message) };
   return { ok: true, id };

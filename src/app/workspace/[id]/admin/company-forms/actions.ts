@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { applyDrops, formErrorMessage, isFormKind, validFields, type Field, type FormKind } from "@/lib/company-forms/model";
 import { deleteForm, readForm, startFormFromChat, startFormFromUpload } from "@/lib/company-forms/server";
 import { validDoc } from "@/lib/doc-convert/model";
+import { isDocType } from "@/lib/company-forms/doc-types";
 import { createClient } from "@/lib/supabase/server";
 
 // 회사 양식 등록(8-104 B). 권한은 DB 함수가 관리자만 허용한다
@@ -42,21 +43,22 @@ async function kindOf(id: string): Promise<FormKind | null> {
   return (data?.kind as FormKind | null) ?? null;
 }
 
-export async function saveFormAction(id: string, name: string, sheets: unknown, fields: unknown): Promise<{ ok: boolean; error?: string }> {
+// docType: 결재 문서 종류(9-33d) — 안 넘기면 그대로
+export async function saveFormAction(id: string, name: string, sheets: unknown, fields: unknown, docType?: string | null): Promise<{ ok: boolean; error?: string }> {
   if (!validDoc(sheets) || !validFields(fields, sheets, await kindOf(id))) return { ok: false, error: "양식 모양이 올바르지 않아요. 새로고침한 뒤 다시 고쳐 주세요." };
   const supabase = await createClient();
-  const { error } = await supabase.rpc("company_form_save", { p_id: id, p_name: String(name ?? ""), p_sheets: sheets as never, p_fields: fields as never });
+  const { error } = await supabase.rpc("company_form_save", { p_id: id, p_name: String(name ?? ""), p_sheets: sheets as never, p_fields: fields as never, ...(isDocType(docType) ? { p_doc_type: docType } : {}) });
   if (error) return { ok: false, error: formErrorMessage(error.message) };
   return { ok: true };
 }
 
 // 등록: 빼기 칸을 양식에서 지운 뒤 저장 → 등록(새 버전)
-export async function publishFormAction(id: string, name: string, sheets: unknown, fields: unknown): Promise<{ ok: boolean; error?: string }> {
+export async function publishFormAction(id: string, name: string, sheets: unknown, fields: unknown, docType?: string | null): Promise<{ ok: boolean; error?: string }> {
   const kind = await kindOf(id);
   if (!validDoc(sheets) || !validFields(fields, sheets, kind)) return { ok: false, error: "양식 모양이 올바르지 않아요. 새로고침한 뒤 다시 고쳐 주세요." };
   const done = applyDrops(sheets, fields as Field[]);
   const supabase = await createClient();
-  const saved = await supabase.rpc("company_form_save", { p_id: id, p_name: String(name ?? ""), p_sheets: done.doc as never, p_fields: done.fields as never });
+  const saved = await supabase.rpc("company_form_save", { p_id: id, p_name: String(name ?? ""), p_sheets: done.doc as never, p_fields: done.fields as never, ...(isDocType(docType) ? { p_doc_type: docType } : {}) });
   if (saved.error) return { ok: false, error: formErrorMessage(saved.error.message) };
   const { error } = await supabase.rpc("company_form_publish", { p_id: id });
   if (error) return { ok: false, error: formErrorMessage(error.message) };
@@ -91,7 +93,7 @@ export async function formDialogDataAction(): Promise<{ ok: true; data: FormDial
   const supabase = await createClient();
   const [slots, forms] = await Promise.all([
     supabase.rpc("company_form_slots"),
-    supabase.from("company_forms").select("group_id, name, kind").eq("status", "active").order("published_at", { ascending: true }),
+    supabase.from("company_forms").select("group_id, name, kind, doc_type").eq("status", "active").order("published_at", { ascending: true }),
   ]);
   if (slots.error || !slots.data) return { ok: false, error: formErrorMessage(slots.error?.message ?? "") };
   const s = slots.data as unknown as { limit: number; used: number; requested: boolean };
