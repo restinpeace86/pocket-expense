@@ -172,6 +172,7 @@
 - 관리자: [결재 문서] 목록 — 종류·달·상태·사람 필터, 검색.
 - 데이터: `approval_documents(id, company_id, member_id, form_id, form_version, doc_type, title, payload jsonb, status draft|submitted|approved|rejected, current_round, submitted_at, decided_at)`, `approval_document_steps(document_id, company_id, round, step_order, approver_member_id, status, reason, acted_at)`, `approval_document_files`. 모두 company_id 복합 FK·RLS 강제·쓰기는 함수, 격리 테스트 필수.
 - 쓸 수 있는 사람: 처음엔 모든 직원(부서 제한은 나중).
+- **G-3 결정(D-284, 2026-11-17)**: 결재선 = 지출결의서 결재라인 그대로(사전 검토 → 관리자 최종, 올릴 때 단계 복사·고정), 직원 결재선 변경 없음, 회수 = 첫 결재자 처리 전까지(→ 작성 중), 참조자 없음. 휴가·근태 승인 목록과 직원 화면에 **[양식 보기]**(채운 표 데이터만 열 때 받아 그림 — PDF·이미지 아님), PDF·엑셀 버튼 그대로.
 
 ### G-4. 4단계 — 요금·랜딩·맞춤 지원 안내
 - 요금(운영 DB 승인 필요): 스타터 = 지출결의서만 / 프로 = 근태 양식 + 결재 문서 3개 / 비즈니스 = 근태 양식 + 결재 문서 5개. `form_slots` 3·5, `form_slots_unlimited` 끔, 칸 수는 결재 문서만 센다.
