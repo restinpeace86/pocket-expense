@@ -21,8 +21,8 @@ export const BRAND = {
   batchim: true,
   // 브랜드 색(웹 화면 색은 src/app/globals.css의 --color-brand-* 토큰 — 바꾸면 같이 맞춘다)
   color: { main: "#4f46e5", deep: "#312e81", ink: "#1e1b4b" },
-  // 로고 표시(D-274 시안 A "켜짐 버튼"): 44×44 판에 열린 고리 하나 + 위 점 — 진짜 일을 켠다(On)
-  mark: { viewBox: 44, path: "M14.5 14.5a13 13 0 1 0 15 0", stroke: 5.5, dot: { cx: 22, cy: 8, r: 4 } },
+  // 로고 표시(D-283 시안 C "모이는 빛"): 켜짐 고리 + 양쪽에서 위 점으로 모이는 선 두 개 — 다 모아(다모) 켠다(온)
+  mark: { viewBox: 44, path: "M14.5 16.5a12 12 0 1 0 15 0 M8.5 9.5l4 3.5 M35.5 9.5l-4 3.5", stroke: 5.5, dot: { cx: 22, cy: 7, r: 3.8 } },
 } as const;
 
 // 이름 + 조사(예: "Moa-on을 써요") — 이름이 바뀌어도 조사가 맞게
