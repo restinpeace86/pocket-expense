@@ -41,7 +41,7 @@ describe("AI 결과 → 결재 문서 칸", () => {
       { cells: [cell("담당", ["담당", "none"]), cell("대표")] },
     ],
   };
-  it("종류의 표준 칸 → RealOn 칸, 다른 종류·짝 없음 → 직원 입력(방식 짐작), 같은 표준 칸 두 번째는 정해 주세요", () => {
+  it("종류의 표준 칸 → 우리 표준 칸, 다른 종류·짝 없음 → 직원 입력(방식 짐작), 같은 표준 칸 두 번째는 정해 주세요", () => {
     const r = formFromAi([page], "general")!;
     expect(r.docType).toBe("pumui");
     const by = Object.fromEntries(r.fields.map((f) => [f.label, f.b]));

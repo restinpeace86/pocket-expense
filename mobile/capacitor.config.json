@@ -1,6 +1,6 @@
 {
   "appId": "kr.damounlab.app",
-  "appName": "RealOn",
+  "appName": "다모온",
   "webDir": "www",
   "server": {
     "url": "https://pocket-expense-ruby.vercel.app",

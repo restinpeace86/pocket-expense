@@ -45,7 +45,7 @@ export default async function OpengraphImage() {
         ) : (
           <div style={{ marginTop: 44, display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: 76, fontWeight: 800, lineHeight: 1.15 }}>Focus on the real work.</div>
-            <div style={{ display: "flex", fontSize: 76, fontWeight: 800, lineHeight: 1.15, color: "#a5b4fc" }}>{BRAND.name} handles the rest.</div>
+            <div style={{ display: "flex", fontSize: 76, fontWeight: 800, lineHeight: 1.15, color: "#a5b4fc" }}>{BRAND.nameEn} handles the rest.</div>
           </div>
         )}
       </div>

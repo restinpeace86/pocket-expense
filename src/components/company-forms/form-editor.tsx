@@ -32,6 +32,7 @@ import { addRowBelow, cellAddress, deleteRow, mergeAt, type DocModel, type Sheet
 import { useSheetGrid, type CellLook } from "@/components/doc-convert/use-sheet-grid";
 import { SheetView } from "./sheet-view";
 import { guarded } from "@/lib/action-guard";
+import { BRAND } from "@/lib/brand";
 import { DOC_TYPES, docTypeOf, stdField, type DocTypeCode } from "@/lib/company-forms/doc-types";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
@@ -263,7 +264,7 @@ export function FormEditor({ ws, form, src }: { ws: string; form: EditorForm; sr
       {form.kind === "general" && docType && (
         <section aria-labelledby="doc-type-title" className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2.5" data-doc-types>
           <p id="doc-type-title" className="text-[13px]">
-            <b>어떤 결재 문서인가요?</b> <span className="text-zinc-600">AI가 제목을 보고 골라 뒀어요. 바꾸면 그 종류의 RealOn 칸으로 다시 짝지어요(다른 종류 칸은 직원 입력으로 바뀌어요).</span>
+            <b>어떤 결재 문서인가요?</b> <span className="text-zinc-600">AI가 제목을 보고 골라 뒀어요. 바꾸면 그 종류의 {BRAND.name} 칸으로 다시 짝지어요(다른 종류 칸은 직원 입력으로 바뀌어요).</span>
           </p>
           <div role="radiogroup" aria-label="결재 문서 종류" className="flex flex-wrap gap-1.5">
             {DOC_TYPES.map((d) => (
@@ -487,7 +488,7 @@ function FieldSetDialog({
 }) {
   const b0 = field.b;
   const [label, setLabel] = useState(field.label);
-  // std = RealOn 표준 칸(결재 문서 종류의 칸, 9-33d) — 저장은 직원 입력 + 표준 칸 키
+  // std = 우리(BRAND) 표준 칸(결재 문서 종류의 칸, 9-33d) — 저장은 직원 입력 + 표준 칸 키
   const stdList = kind === "general" ? docTypeOf(docType).fields : [];
   const [k, setK] = useState<Binding["k"] | "std">(b0.k === "input" && b0.std && stdField(docType, b0.std) ? "std" : b0.k === "pending" ? (stdList.length ? "std" : "input") : b0.k);
   const [std, setStd] = useState<string>((b0.k === "input" && b0.std) || stdList[0]?.key || "");
@@ -556,7 +557,7 @@ function FieldSetDialog({
           {stdList.length > 0 &&
             radio(
               "std",
-              "RealOn 칸(표준)",
+              `${BRAND.name} 칸(표준)`,
               `${docTypeOf(docType).label}의 정해진 칸이에요. 쓰기 화면에서 맞는 입력 방식(금액·기간 등)으로 나와요`,
               <select value={std} onChange={(e) => setStd(e.target.value)} className="h-10 w-full rounded-lg border border-zinc-300 px-2 text-[14px]" data-std-field>
                 {stdList.map((x) => (

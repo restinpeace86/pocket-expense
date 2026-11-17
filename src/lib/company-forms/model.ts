@@ -1,6 +1,7 @@
 // 회사 양식 등록의 칸 모델 (8-104 B, spec/features/company-forms.md §B)
 // 표 모양은 서류 → 엑셀과 같은 DocModel. 값이 들어갈 칸마다 Field 하나: 어느 칸(s 쪽·r 행·c 열)인지 + 어떻게 채우는지(b)
 // - data: 우리 데이터(B-3) / input: 신청할 때 직원이 입력 / fixed: 고정 값 / blank: 비워 두기(수기) / drop: 빼기(등록할 때 양식에서 지움) / pending: 정해 주세요
+import { BRAND } from "@/lib/brand";
 import { guessDocType, guessInputType, isDocType, stdField, type DocTypeCode } from "./doc-types";
 import { anchorOf, sheetFromAi, type AiCell, type AiPage, type DocModel, type Sheet, MAX_CELL, MAX_PAGES } from "@/lib/doc-convert/model";
 
@@ -108,7 +109,7 @@ export function bindingSummary(b: Binding): string {
     case "data":
       return DATA_LABEL[b.src] ?? "우리 데이터";
     case "input":
-      return `${b.std ? "RealOn 칸" : "직원 입력"} · ${INPUT_LABEL[b.type]}${b.required ? " · 필수" : ""}`;
+      return `${b.std ? `${BRAND.name} 칸` : "직원 입력"} · ${INPUT_LABEL[b.type]}${b.required ? " · 필수" : ""}`;
     case "fixed":
       return `고정 값 · ${b.value || "(빈 글)"}`;
     case "blank":
