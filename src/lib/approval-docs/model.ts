@@ -37,6 +37,8 @@ export type DocRow = {
   submitted_at: string | null;
   decided_at: string | null;
   updated_at: string;
+  files_purged: number; // 저장 공간 정리로 지운 첨부 수(D-291)
+  files_purged_at: string | null;
   form_name: string;
   form_group: string; // 양식 묶음(버전이 바뀌어도 같은 탭)
   amount: number | null; // 표준 칸 금액(있을 때 목록에 보임)

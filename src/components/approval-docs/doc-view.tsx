@@ -130,10 +130,15 @@ export function DocView({
         </dl>
       </section>
 
-      {files.length > 0 && (
+      {(files.length > 0 || doc.files_purged > 0) && (
         <section aria-label="첨부" className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold">첨부 {files.length}개</h2>
+          <h2 className="text-sm font-semibold">첨부{files.length > 0 && ` ${files.length}개`}</h2>
           <DocFileList files={files} />
+          {doc.files_purged > 0 && (
+            <p className="rounded-lg bg-zinc-50 px-2.5 py-1.5 text-[13px] text-zinc-600" data-doc-purged>
+              첨부 {doc.files_purged}개는 {doc.files_purged_at ? `${new Date(new Date(doc.files_purged_at).getTime() + 9 * 3600_000).toISOString().slice(0, 10)}에 ` : ""}관리자가 저장 공간 정리로 지웠어요. 문서 내용과 결재 기록은 그대로예요.
+            </p>
+          )}
         </section>
       )}
 

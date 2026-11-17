@@ -402,6 +402,8 @@ export type Database = {
           current_round: number
           decided_at: string | null
           doc_type: string
+          files_purged: number
+          files_purged_at: string | null
           form_id: string
           id: string
           member_id: string
@@ -420,6 +422,8 @@ export type Database = {
           current_round?: number
           decided_at?: string | null
           doc_type: string
+          files_purged?: number
+          files_purged_at?: string | null
           form_id: string
           id?: string
           member_id: string
@@ -438,6 +442,8 @@ export type Database = {
           current_round?: number
           decided_at?: string | null
           doc_type?: string
+          files_purged?: number
+          files_purged_at?: string | null
           form_id?: string
           id?: string
           member_id?: string
@@ -5544,6 +5550,9 @@ export type Database = {
         Returns: string
       }
       approval_doc_file_remove: { Args: { p_file: string }; Returns: string }
+      approval_doc_purge_done: { Args: { p_paths: string[] }; Returns: number }
+      approval_doc_purge_list: { Args: { p_months: number }; Returns: string[] }
+      approval_doc_purge_status: { Args: never; Returns: Json }
       approval_doc_recall: { Args: { p_id: string }; Returns: undefined }
       approval_doc_reject: {
         Args: { p_id: string; p_reason: string }

@@ -12,7 +12,7 @@ import { displayValue, inputFields, progressLine, type DocFile, type DocRow, typ
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 export type DocForm = { id: string; group_id: string; name: string; doc_type: string; fields: Field[] };
 
-const DOC_COLS = "id, member_id, member_name, form_id, doc_type, title, status, current_round, self_approved, rejection_reason, submitted_at, decided_at, updated_at, payload";
+const DOC_COLS = "id, member_id, member_name, form_id, doc_type, title, status, current_round, self_approved, rejection_reason, submitted_at, decided_at, updated_at, files_purged, files_purged_at, payload";
 type RawDoc = Omit<DocRow, "form_name" | "form_group" | "amount" | "progress"> & { payload: unknown };
 
 // 지금 쓸 수 있는(등록된) 결재 문서 양식 — 탭 순서 = 등록 순
