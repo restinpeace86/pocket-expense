@@ -260,6 +260,220 @@ export type Database = {
         }
         Relationships: []
       }
+      approval_document_files: {
+        Row: {
+          company_id: string
+          created_at: string
+          document_id: string
+          id: string
+          member_id: string
+          mime: string
+          name: string
+          path: string
+          size: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          document_id: string
+          id?: string
+          member_id: string
+          mime: string
+          name: string
+          path: string
+          size: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          member_id?: string
+          mime?: string
+          name?: string
+          path?: string
+          size?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_document_files_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approval_document_files_document_id_company_id_fkey"
+            columns: ["document_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "approval_documents"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "approval_document_files_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      approval_document_steps: {
+        Row: {
+          acted_at: string | null
+          acted_by_member_id: string | null
+          acted_by_name: string | null
+          approver_member_id: string | null
+          comment: string | null
+          company_id: string
+          created_at: string
+          document_id: string
+          id: string
+          round: number
+          status: Database["public"]["Enums"]["approval_step_status"]
+          step_kind: Database["public"]["Enums"]["approval_step_kind"]
+          step_order: number
+        }
+        Insert: {
+          acted_at?: string | null
+          acted_by_member_id?: string | null
+          acted_by_name?: string | null
+          approver_member_id?: string | null
+          comment?: string | null
+          company_id: string
+          created_at?: string
+          document_id: string
+          id?: string
+          round: number
+          status: Database["public"]["Enums"]["approval_step_status"]
+          step_kind: Database["public"]["Enums"]["approval_step_kind"]
+          step_order: number
+        }
+        Update: {
+          acted_at?: string | null
+          acted_by_member_id?: string | null
+          acted_by_name?: string | null
+          approver_member_id?: string | null
+          comment?: string | null
+          company_id?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          round?: number
+          status?: Database["public"]["Enums"]["approval_step_status"]
+          step_kind?: Database["public"]["Enums"]["approval_step_kind"]
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_document_steps_acted_by_member_id_company_id_fkey"
+            columns: ["acted_by_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "approval_document_steps_approver_member_id_company_id_fkey"
+            columns: ["approver_member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "approval_document_steps_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approval_document_steps_document_id_company_id_fkey"
+            columns: ["document_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "approval_documents"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
+      approval_documents: {
+        Row: {
+          company_id: string
+          created_at: string
+          current_round: number
+          decided_at: string | null
+          doc_type: string
+          form_id: string
+          id: string
+          member_id: string
+          member_name: string
+          payload: Json
+          rejection_reason: string | null
+          self_approved: boolean
+          status: string
+          submitted_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          current_round?: number
+          decided_at?: string | null
+          doc_type: string
+          form_id: string
+          id?: string
+          member_id: string
+          member_name: string
+          payload?: Json
+          rejection_reason?: string | null
+          self_approved?: boolean
+          status?: string
+          submitted_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          current_round?: number
+          decided_at?: string | null
+          doc_type?: string
+          form_id?: string
+          id?: string
+          member_id?: string
+          member_name?: string
+          payload?: Json
+          rejection_reason?: string | null
+          self_approved?: boolean
+          status?: string
+          submitted_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approval_documents_form_id_company_id_fkey"
+            columns: ["form_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "company_forms"
+            referencedColumns: ["id", "company_id"]
+          },
+          {
+            foreignKeyName: "approval_documents_member_id_company_id_fkey"
+            columns: ["member_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "company_id"]
+          },
+        ]
+      }
       approval_line_steps: {
         Row: {
           approval_line_id: string
@@ -5313,6 +5527,33 @@ export type Database = {
         Args: { p_company_ids: string[] }
         Returns: Json
       }
+      approval_doc_approve: {
+        Args: { p_comment?: string; p_id: string }
+        Returns: string
+      }
+      approval_doc_create: { Args: { p_form: string }; Returns: string }
+      approval_doc_delete: { Args: { p_id: string }; Returns: string[] }
+      approval_doc_file_add: {
+        Args: {
+          p_id: string
+          p_mime: string
+          p_name: string
+          p_path: string
+          p_size: number
+        }
+        Returns: string
+      }
+      approval_doc_file_remove: { Args: { p_file: string }; Returns: string }
+      approval_doc_recall: { Args: { p_id: string }; Returns: undefined }
+      approval_doc_reject: {
+        Args: { p_id: string; p_reason: string }
+        Returns: string
+      }
+      approval_doc_save: {
+        Args: { p_id: string; p_payload: Json; p_title: string }
+        Returns: string
+      }
+      approval_doc_submit: { Args: { p_id: string }; Returns: string }
       approve_claim: {
         Args: { p_claim_id: string; p_comment?: string }
         Returns: Database["public"]["Enums"]["claim_status"]

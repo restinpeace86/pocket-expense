@@ -15,6 +15,8 @@ import { getInboxBadge } from "@/lib/claims/inbox";
 import { todayKst } from "@/lib/dates";
 import { getMyRequests, getMySummary } from "@/lib/employee/queries";
 import { BRAND } from "@/lib/brand";
+import { hasDocForms } from "@/lib/approval-docs/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: `홈 · ${BRAND.name}` };
 
@@ -38,7 +40,7 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
 
   const membership = await requireWorkspace(id);
   const today = todayKst();
-  const [summary, notices, inbox, calendar, attendance, hireMissing, nearby, chat] = await Promise.all([getMySummary(), getRecentNotices(), getInboxBadge(membership), calendarEnabled(), getMyAttendanceToday(), myHireDateMissing(), getCompanyNearby(), chatEnabled()]);
+  const [summary, notices, inbox, calendar, attendance, hireMissing, nearby, chat, docs] = await Promise.all([getMySummary(), getRecentNotices(), getInboxBadge(membership), calendarEnabled(), getMyAttendanceToday(), myHireDateMissing(), getCompanyNearby(), chatEnabled(), myDocsBadge(membership.member_id)]);
   const [[rooms, events], requests] = await Promise.all([
     calendar ? Promise.all([getMeetingRooms(), getCalendarEvents(today, today, [membership.member_id])]) : Promise.resolve([[], []] as [Awaited<ReturnType<typeof getMeetingRooms>>, Awaited<ReturnType<typeof getCalendarEvents>>]),
     getMyRequests(ws, membership.member_id, attendance !== null),
@@ -52,7 +54,7 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
     <EmployeeHub
       ws={ws}
       today={today}
-      tiles={hubTiles(ws, { inbox, rooms: rooms.length > 0, today, attendance: attendance !== null, bus: !!nearby?.bus, vault: chat })}
+      tiles={hubTiles(ws, { inbox, rooms: rooms.length > 0, today, attendance: attendance !== null, bus: !!nearby?.bus, vault: chat, docs })}
       rooms={todayRooms}
       otherEvents={todayEvents.filter((e) => !e.room_id).length}
       requests={requests}
@@ -68,4 +70,12 @@ async function EmployeeHome({ params, searchParams }: Pick<PageProps<"/workspace
       attendance={attendance}
     />
   );
+}
+
+// [결재 문서] 칸(9-33e): 회사가 결재 문서 양식을 등록했을 때만, 배지 = 반려된 내 문서
+async function myDocsBadge(memberId: string): Promise<{ rejected: number } | null> {
+  if (!(await hasDocForms())) return null;
+  const supabase = await createClient();
+  const { count } = await supabase.from("approval_documents").select("id", { count: "exact", head: true }).eq("member_id", memberId).eq("status", "rejected");
+  return { rejected: count ?? 0 };
 }

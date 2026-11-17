@@ -4,6 +4,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { attendancePendingCount } from "@/lib/attendance/server";
 import { calendarEnabled } from "@/lib/calendar/server";
 import { chatUnreadTotal } from "@/lib/chat/server";
+import { adminDocsBadge } from "@/lib/approval-docs/server";
 
 // 관리자 워크스페이스 공통 레이아웃. 세션 읽기는 Suspense 안에서 (cacheComponents 규칙)
 export default function AdminLayout({ children, params }: LayoutProps<"/workspace/[id]/admin">) {
@@ -17,9 +18,9 @@ export default function AdminLayout({ children, params }: LayoutProps<"/workspac
 async function Guarded({ params, children }: { params: LayoutProps<"/workspace/[id]/admin">["params"]; children: React.ReactNode }) {
   const { id } = await params;
   const membership = await requireWorkspace(id, { admin: true });
-  const [chat, calendar, attendance] = await Promise.all([chatUnreadTotal(), calendarEnabled(), attendancePendingCount()]);
+  const [chat, calendar, attendance, docs] = await Promise.all([chatUnreadTotal(), calendarEnabled(), attendancePendingCount(), adminDocsBadge(membership.member_id)]);
   return (
-    <AdminShell membership={membership} chat={chat} calendar={calendar} attendance={attendance}>
+    <AdminShell membership={membership} chat={chat} calendar={calendar} attendance={attendance} docs={docs}>
       {children}
     </AdminShell>
   );

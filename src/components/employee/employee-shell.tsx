@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Home, Loader2, MessageCircle, Plus, ScanLine, UserRound, type LucideIcon } from "lucide-react";
+import { CalendarDays, FileSignature, Home, Loader2, MessageCircle, Plus, ReceiptText, ScanLine, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
@@ -56,6 +56,7 @@ export function EmployeeTabBar({
   chatUnread,
   calendar = false,
   attendance = false,
+  docs = false,
   fixed = false,
 }: {
   ws: string;
@@ -63,6 +64,7 @@ export function EmployeeTabBar({
   chatUnread?: number | null;
   calendar?: boolean; // [캘린더] 탭(D-209): 회사 캘린더 스위치가 켜졌을 때만
   attendance?: boolean; // 근태 켠 회사(D-236): 가운데 버튼 = [QR 출퇴근]
+  docs?: boolean; // 결재 문서 양식이 있는 회사(9-33e): [+]를 누르면 고르기
   fixed?: boolean;
 }) {
   const left: Tab[] = [
@@ -90,7 +92,7 @@ export function EmployeeTabBar({
     <nav aria-label="직원 메뉴" className={`kb-hide ${fixed ? "fixed inset-x-0 bottom-0 z-30" : "shrink-0"} border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)]`}>
       <ul className="mx-auto grid h-16 max-w-md" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
         {left.map(tab)}
-        <li>{attendance ? <QrButton href={`${ws}/employee/attend`} /> : <NewClaimButton />}</li>
+        <li>{attendance ? <QrButton href={`${ws}/employee/attend`} /> : <NewClaimButton docsHref={docs ? `${ws}/employee/docs` : null} />}</li>
         {right.map(tab)}
       </ul>
     </nav>
@@ -110,15 +112,19 @@ function QrButton({ href }: { href: string }) {
 }
 
 // 가운데 큰 [+ 결의서 쓰기]: 어느 화면에서든 새 결의서를 만들고 바로 촬영/선택 시트로(worker-dashboard.md §3)
-function NewClaimButton() {
+// 결재 문서 양식이 있는 회사(9-33e, D-280)는 누르면 작은 고르기: [지출결의 쓰기] · [결재 문서 쓰기]. 없으면 지금처럼 바로 결의서
+function NewClaimButton({ docsHref = null }: { docsHref?: string | null }) {
   const [busy, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const create = () =>
+  const [menu, setMenu] = useState(false);
+  const createClaim = () =>
     start(async () => {
       setError(null);
+      setMenu(false);
       const res = await guardAction(() => measureAction("employee.create_claim", () => createDraftClaimAction()));
       if (res && "error" in res) setError(res.error);
     });
+  const create = () => (docsHref ? setMenu((v) => !v) : createClaim());
   return (
     <div className="relative flex h-full flex-col items-center justify-end pb-1.5">
       {error && (
@@ -126,17 +132,34 @@ function NewClaimButton() {
           {error}
         </p>
       )}
+      {menu && docsHref && (
+        <>
+          <button type="button" aria-label="닫기" className="fixed inset-0 z-0 cursor-default" onClick={() => setMenu(false)} />
+          <div role="menu" aria-label="새로 쓰기" className="absolute bottom-[calc(100%+2.75rem)] left-1/2 z-10 flex w-64 -translate-x-1/2 flex-col gap-1 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-xl" data-plus-menu>
+            <button type="button" role="menuitem" onClick={createClaim} className="flex h-12 items-center gap-2.5 rounded-xl px-3 text-left text-[15px] font-medium hover:bg-zinc-50" data-plus-claim>
+              <ReceiptText className="size-5 text-brand-600" aria-hidden />
+              <span className="whitespace-nowrap">지출결의 쓰기</span>
+            </button>
+            <Link role="menuitem" href={docsHref} onClick={() => setMenu(false)} className="flex h-12 items-center gap-2.5 rounded-xl px-3 text-[15px] font-medium hover:bg-zinc-50" data-plus-docs>
+              <FileSignature className="size-5 text-brand-600" aria-hidden />
+              <span className="whitespace-nowrap">결재 문서 쓰기</span>
+              <span className="ml-auto whitespace-nowrap text-xs font-normal text-zinc-500">품의서 등</span>
+            </Link>
+          </div>
+        </>
+      )}
       <button
         type="button"
         onClick={create}
         disabled={busy}
-        aria-label="결의서 쓰기"
+        aria-label={docsHref ? "새로 쓰기" : "결의서 쓰기"}
+        aria-expanded={docsHref ? menu : undefined}
         className="absolute -top-5 inline-flex size-14 items-center justify-center rounded-full border-4 border-white bg-brand-600 text-white shadow-[0_4px_12px_rgba(79,70,229,0.35)] hover:bg-brand-700 disabled:opacity-80"
       >
         {busy ? <Loader2 className="size-6 animate-spin" /> : <Plus className="size-7" strokeWidth={2.2} />}
       </button>
       <span aria-hidden className="text-xs font-semibold text-brand-700">
-        결의서 쓰기
+        {docsHref ? "새로 쓰기" : "결의서 쓰기"}
       </span>
     </div>
   );

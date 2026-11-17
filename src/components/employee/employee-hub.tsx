@@ -1,4 +1,4 @@
-import { Archive, Bus, Check, Clock, DoorOpen, FileSpreadsheet, Inbox, ReceiptText, TreePalm, Wallet, type LucideIcon } from "lucide-react";
+import { Archive, Bus, Check, Clock, DoorOpen, FileSignature, FileSpreadsheet, Inbox, ReceiptText, TreePalm, Wallet, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { kstTime, stayLabel } from "@/lib/attendance/rules";
@@ -11,10 +11,12 @@ import { HelpSearchBox } from "@/components/help/help-search-box";
 // 메뉴 칸(맨 위 고정, 아이콘+이름, 처리할 것만 배지) → 나의 신청함(D-251, 상태는 여기 한 곳) → 공지(있을 때만)
 export type HubTile = { key: string; href: string; label: string; icon: LucideIcon; badge?: number };
 
-export function hubTiles(ws: string, o: { inbox: { waiting: number } | null; rooms: boolean; today: string; attendance?: boolean; bus?: boolean; vault?: boolean }): HubTile[] {
+export function hubTiles(ws: string, o: { inbox: { waiting: number } | null; rooms: boolean; today: string; attendance?: boolean; bus?: boolean; vault?: boolean; docs?: { rejected: number } | null }): HubTile[] {
   return [
     { key: "claims", href: `${ws}/employee/claims`, label: "지출결의", icon: ReceiptText },
     { key: "settlements", href: `${ws}/employee/settlements`, label: "정산", icon: Wallet },
+    // 결재 문서(9-33e): 회사가 결재 문서 양식을 등록했을 때만. 배지 = 내 반려된 문서
+    ...(o.docs ? [{ key: "docs", href: `${ws}/employee/docs`, label: "결재 문서", icon: FileSignature, badge: o.docs.rejected }] : []),
     ...(o.inbox ? [{ key: "approvals", href: `${ws}/approvals`, label: "결재함", icon: Inbox, badge: o.inbox.waiting }] : []),
     // 근태 켠 회사(D-237): [출퇴근 기록] = 월 근태 현황, [휴가 및 근태 신청] = 남은 연차·휴가 신청(D-241). 이름은 D-251 개선사항 5
     ...(o.attendance

@@ -16,7 +16,11 @@ export type LeaveDocData = {
   applicant: Signer;
   approver: Signer | "pending" | "rejected";
   custom: Record<string, string>;
+  // [결재 문서](9-33e): 결재란 여러 칸 — 0번 = 쓴 사람, 다음부터 검토자 → 최종 승인자(양식 결재란 수에 맞춰 줄인 것). 있으면 approval.1~5를 이걸로 채움
+  signers?: SignCell[];
 };
+export type SignCell = Signer | "pending" | "rejected";
+const signCell = (s: SignCell | undefined) => (s === undefined ? "" : s === "pending" ? "결재 전" : s === "rejected" ? "반려" : signer(s));
 
 const dot = (d: string) => d.replaceAll("-", ".");
 const num = (n: number) => (Number.isInteger(n) ? String(n) : String(Math.round(n * 1000) / 1000));
@@ -51,13 +55,14 @@ export function dataValue(key: DataKey, d: LeaveDocData): string {
     case "doc.number":
       return d.docNumber;
     case "approval.1":
-      return signer(d.applicant);
+      return d.signers ? signCell(d.signers[0]) : signer(d.applicant);
     case "approval.2":
+      if (d.signers) return signCell(d.signers[1]);
       return d.approver === "pending" ? "결재 전" : d.approver === "rejected" ? "반려" : signer(d.approver);
     case "approval.3":
     case "approval.4":
     case "approval.5":
-      return "";
+      return d.signers ? signCell(d.signers[Number(key.slice(-1)) - 1]) : "";
     case "leave.type":
       return l.type;
     case "leave.period":
@@ -117,6 +122,12 @@ export function fillForm(doc: DocModel, fields: Field[], d: LeaveDocData): DocMo
     else if (b.k === "blank") cell.t = "";
   }
   return out;
+}
+
+// 결재란 칸 수(양식에 있는 approval.N 중 가장 큰 N)에 맞춰 줄이기: 넘치면 앞 칸들 + 마지막 칸 = 최종 승인자(9-33e)
+export function fitSigners(all: SignCell[], slots: number): SignCell[] {
+  if (slots <= 0 || all.length <= slots) return all;
+  return [...all.slice(0, slots - 1), all[all.length - 1]];
 }
 
 // 문서 번호: 신청일 + 신청 id 앞 6자리(회사 안에서 겹치지 않음)

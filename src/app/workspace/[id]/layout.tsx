@@ -5,6 +5,7 @@ import { PushAutoPrompt } from "@/components/push/push-auto-prompt";
 import { getMembership } from "@/lib/auth/session";
 import { viewMode } from "@/lib/auth/view-mode";
 import { attendanceEnabled } from "@/lib/attendance/server";
+import { hasDocForms } from "@/lib/approval-docs/server";
 import { calendarEnabled } from "@/lib/calendar/server";
 import { chatUnreadTotal } from "@/lib/chat/server";
 
@@ -26,10 +27,10 @@ async function NavSlot({ params }: { params: LayoutProps<"/workspace/[id]">["par
   const { id } = await params;
   const membership = await getMembership();
   if (!membership || membership.status !== "approved" || membership.company_id !== id) return null;
-  const [serverMode, chat, calendar, attendance] = await Promise.all([viewMode(membership), chatUnreadTotal(), calendarEnabled(), attendanceEnabled()]);
+  const [serverMode, chat, calendar, attendance, docs] = await Promise.all([viewMode(membership), chatUnreadTotal(), calendarEnabled(), attendanceEnabled(), hasDocForms()]);
   return (
     <>
-      <EmployeeBottomNav membership={membership} serverMode={serverMode} chat={chat} calendar={calendar} attendance={attendance} />
+      <EmployeeBottomNav membership={membership} serverMode={serverMode} chat={chat} calendar={calendar} attendance={attendance} docs={docs} />
       {/* PC 무소음 시각 알림(D-246): 메신저가 켜진 회사, 관리자·직원 모두 */}
       {chat !== null && <ChatVisualAlert memberId={membership.member_id} companyId={membership.company_id} initialOn={membership.chat_visual_alert !== false} />}
       {/* 알림 기본 켜기 안내(D-213): 관리자·직원 모두 */}

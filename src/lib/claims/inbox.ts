@@ -29,11 +29,14 @@ export async function getReviewerInbox(companyId: string, memberId: string, tab:
 // 하단 메뉴 [결재함] 표시 여부와 대기 건수: 결재라인에 검토자로 들어 있거나 검토 차례가 있는 사람
 export async function getReviewerBadge(companyId: string, memberId: string): Promise<{ isReviewer: boolean; waiting: number }> {
   const supabase = await createClient();
-  const [{ count: waiting }, { count: inLine }] = await Promise.all([
+  // 결재 문서(9-33e) 검토 차례도 같은 결재함에서 센다
+  const [{ count: waiting }, { count: inLine }, { count: docs }] = await Promise.all([
     supabase.from("claim_approvals").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("approver_member_id", memberId).eq("status", "pending"),
     supabase.from("approval_line_steps").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("approver_member_id", memberId),
+    supabase.from("approval_document_steps").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("approver_member_id", memberId).eq("status", "pending"),
   ]);
-  return { isReviewer: (waiting ?? 0) > 0 || (inLine ?? 0) > 0, waiting: waiting ?? 0 };
+  const all = (waiting ?? 0) + (docs ?? 0);
+  return { isReviewer: all > 0 || (inLine ?? 0) > 0, waiting: all };
 }
 
 // 직원 하단 메뉴 [결재함] 표시 (D-082): 관리자 이상이 아닌 사전 검토자만, 내 검토 차례 건수.
