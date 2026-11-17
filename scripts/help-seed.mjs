@@ -2,6 +2,7 @@
 // --force 를 붙이면 seed.ts 내용으로 덮어쓴다(운영자 수정도 사라짐 — 처음 정리할 때만)
 // 키는 .env.local의 NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY(화면에 출력하지 않음)
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import { createJiti } from "jiti";
 import { createClient } from "@supabase/supabase-js";
 
@@ -13,7 +14,8 @@ const env = Object.fromEntries(
     .map((l) => [l.slice(0, l.indexOf("=")).trim(), l.slice(l.indexOf("=") + 1).trim().replace(/^"|"$/g, "")]),
 );
 const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-const jiti = createJiti(import.meta.url);
+// seed.ts가 @/lib/brand를 읽으므로 @ = src
+const jiti = createJiti(import.meta.url, { alias: { "@": fileURLToPath(new URL("../src", import.meta.url)) } });
 const { HELP_SEED } = await jiti.import("../src/lib/help/seed.ts");
 const force = process.argv.includes("--force");
 
