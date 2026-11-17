@@ -3,7 +3,7 @@
   "appName": "다모온",
   "webDir": "www",
   "server": {
-    "url": "https://pocket-expense-ruby.vercel.app",
+    "url": "https://damo-on.com",
     "androidScheme": "https",
     "errorPath": "index.html"
   },
