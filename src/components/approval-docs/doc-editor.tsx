@@ -3,7 +3,7 @@
 import { Loader2, Paperclip, Trash2, X } from "lucide-react";
 import { uploadFailText } from "@/lib/storage/room";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { addDocFileAction, deleteDocAction, removeDocFileAction, saveDocAction, submitDocAction } from "@/app/workspace/[id]/employee/docs/actions";
 import { guarded } from "@/lib/action-guard";
 import { processProof } from "@/lib/attendance/proof-image";
@@ -55,7 +55,7 @@ export function DocEditor({
   const latest = useRef({ title, values });
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const flush = useCallback(async (): Promise<boolean> => {
+  const flush = async (): Promise<boolean> => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
     const t = latest.current.title.trim();
@@ -73,7 +73,7 @@ export function DocEditor({
     setState("saved");
     setError(null);
     return true;
-  }, [doc.id]);
+  };
 
   const changed = () => {
     setState("dirty");
