@@ -1,4 +1,5 @@
 import "server-only";
+import { tryGemini } from "@/lib/ai/gemini-retry";
 import { PDFDocument } from "pdf-lib";
 import { getMembership } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -46,12 +47,12 @@ async function run(admin: Admin, o: { id: string; memberId: string; name: string
     await admin.storage.from(DOC_BUCKET).remove([o.path]);
     return { ok: false, error: convertErrorMessage(beginError.message) };
   }
-  const read = await readTablesWithGemini({ data, mimeType: o.mime });
+  const { pages: read, busy } = await readTablesWithGemini({ data, mimeType: o.mime });
   const doc = read ? docFromAi(read) : null;
   if (!doc) {
     await admin.rpc("doc_convert_fail", { p_id: o.id });
     await admin.storage.from(DOC_BUCKET).remove([o.path]);
-    return { ok: false, error: convertErrorMessage("NO_TABLE") };
+    return { ok: false, error: convertErrorMessage(busy ? "AI_BUSY" : "NO_TABLE") };
   }
   const { error } = await admin.rpc("doc_convert_ready", { p_id: o.id, p_sheets: doc as never });
   if (error) {

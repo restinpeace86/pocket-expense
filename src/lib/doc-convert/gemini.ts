@@ -1,4 +1,5 @@
 import "server-only";
+import { tryGemini } from "@/lib/ai/gemini-retry";
 import type { AiPage } from "./model";
 
 // 서류 사진·PDF → 쪽마다 표(행·칸·합친 칸) (8-104 A). 양식 읽기(forms/gemini-form.ts)와 같은 방식: JSON 스키마 강제, 다른 모델로 1회 재시도
@@ -64,24 +65,22 @@ async function callOnce(model: string, apiKey: string, body: unknown): Promise<A
 }
 
 // 사진·PDF + 지시문 + 응답 스키마(pages 배열) → 쪽 목록. 회사 양식 읽기(company-forms/gemini.ts)도 같이 쓴다
-export async function readPagesWithGemini(file: { data: ArrayBuffer; mimeType: string }, prompt: string, schema: unknown): Promise<AiPage[] | null> {
+// busy = Google AI가 몰려(503 등) 끝내 못 읽음 — "다시 찍어 주세요"가 아니라 "잠시 뒤 다시"로 안내
+export async function readPagesDetailed(file: { data: ArrayBuffer; mimeType: string }, prompt: string, schema: unknown): Promise<{ pages: AiPage[] | null; busy: boolean }> {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) return { pages: null, busy: false };
   const body = {
     contents: [{ parts: [{ inline_data: { mime_type: file.mimeType, data: Buffer.from(file.data).toString("base64") } }, { text: prompt }] }],
     generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0 },
   };
-  for (const model of [PRIMARY_MODEL, FALLBACK_MODEL]) {
-    try {
-      return await callOnce(model, apiKey, body);
-    } catch {
-      // 다음 모델로 1회 재시도
-    }
-  }
-  return null;
+  const r = await tryGemini([PRIMARY_MODEL, FALLBACK_MODEL], (model) => callOnce(model, apiKey, body), "doc");
+  return r.ok ? { pages: r.value, busy: false } : { pages: null, busy: r.busy };
+}
+export async function readPagesWithGemini(file: { data: ArrayBuffer; mimeType: string }, prompt: string, schema: unknown): Promise<AiPage[] | null> {
+  return (await readPagesDetailed(file, prompt, schema)).pages;
 }
 
 // 실패하면 null(키 미설정 포함) → 크레딧을 돌려주고 "표를 찾지 못했어요"
-export async function readTablesWithGemini(file: { data: ArrayBuffer; mimeType: string }): Promise<AiPage[] | null> {
-  return readPagesWithGemini(file, PROMPT, RESPONSE_SCHEMA);
+export async function readTablesWithGemini(file: { data: ArrayBuffer; mimeType: string }): Promise<{ pages: AiPage[] | null; busy: boolean }> {
+  return readPagesDetailed(file, PROMPT, RESPONSE_SCHEMA);
 }

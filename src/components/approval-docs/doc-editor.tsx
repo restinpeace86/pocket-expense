@@ -115,10 +115,13 @@ export function DocEditor({
     changed();
   };
 
+  // 첨부를 붙이거나 빼면 화면을 새로 읽는다 — 그 전에 아직 저장 안 된 입력을 먼저 저장(안 그러면 방금 쓴 내용이 사라짐)
+  const saveFirst = async () => (timer.current || state === "dirty" ? flush() : true);
   const pickFiles = async (list: FileList | null) => {
     if (!list?.length) return;
     setBusy("file");
     setError(null);
+    if (!(await saveFirst())) return setBusy(null);
     const supabase = createClient();
     let left = MAX_FILES - files.length;
     for (const file of Array.from(list)) {
@@ -220,6 +223,7 @@ export function DocEditor({
         <DocFileList
           files={files}
           onRemove={async (f) => {
+            if (!(await saveFirst())) return;
             const r = await guarded(removeDocFileAction)(f.id);
             if (!r.ok) setError(r.error);
           }}

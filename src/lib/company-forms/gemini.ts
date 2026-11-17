@@ -1,5 +1,6 @@
 import "server-only";
-import { CELL, PROMPT as TABLE_PROMPT, readPagesWithGemini } from "@/lib/doc-convert/gemini";
+import { tryGemini } from "@/lib/ai/gemini-retry";
+import { CELL, PROMPT as TABLE_PROMPT, readPagesDetailed } from "@/lib/doc-convert/gemini";
 import { ALL_STD_KEYS, DOC_TYPE_CODES, DOC_TYPES, stdKey } from "./doc-types";
 import { dataKeysFor, DATA_LABEL, INPUT_LABEL, type AiFormPage, type FormKind, KIND_LABEL } from "./model";
 
@@ -63,6 +64,7 @@ ${DOC_TYPES.filter((d) => d.code !== "other")
   .join(String.fromCharCode(10))}
 - 값 칸의 slot_data는 위 우리 데이터 키, 또는 **고른 doc_type의 표준 칸 키**(예: 품의서의 금액 칸 → pumui.amount). 다른 종류의 표준 칸 키는 쓰지 마세요. 뜻이 맞는 것이 없으면 none`;
 
-export async function readFormWithGemini(file: { data: ArrayBuffer; mimeType: string }, kind: FormKind): Promise<AiFormPage[] | null> {
-  return (await readPagesWithGemini(file, prompt(kind), schema(kind))) as AiFormPage[] | null;
+export async function readFormWithGemini(file: { data: ArrayBuffer; mimeType: string }, kind: FormKind): Promise<{ pages: AiFormPage[] | null; busy: boolean }> {
+  const r = await readPagesDetailed(file, prompt(kind), schema(kind));
+  return { pages: r.pages as AiFormPage[] | null, busy: r.busy };
 }

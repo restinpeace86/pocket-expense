@@ -143,7 +143,7 @@ export function DocFormButtons({ companyId, docId, before, xlsx = true }: { comp
       setBusy(null);
     }
   };
-  const btn = "inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 disabled:opacity-60";
+  const btn = "inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-xl border border-zinc-300 bg-white px-2 text-[13px] font-semibold text-zinc-800 hover:bg-zinc-50 disabled:opacity-60 sm:gap-1.5 sm:px-3 sm:text-sm";
   return (
     <div className="flex flex-col gap-1">
       <div className="flex gap-2">

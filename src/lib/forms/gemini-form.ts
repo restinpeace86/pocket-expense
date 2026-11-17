@@ -1,4 +1,5 @@
 import "server-only";
+import { tryGemini } from "@/lib/ai/gemini-retry";
 import { COLUMN_CATALOG, FIELD_CATALOG } from "./layout";
 import { bindingGuide, type AiFormRead } from "./ai-layout";
 
@@ -62,12 +63,7 @@ export async function readFormWithGemini(file: { data: ArrayBuffer; mimeType: st
     contents: [{ parts: [{ inline_data: { mime_type: file.mimeType, data: Buffer.from(file.data).toString("base64") } }, { text: PROMPT }] }],
     generationConfig: { responseMimeType: "application/json", responseSchema: RESPONSE_SCHEMA, temperature: 0 },
   };
-  for (const model of [PRIMARY_MODEL, FALLBACK_MODEL]) {
-    try {
-      return await callOnce(model, apiKey, body);
-    } catch {
-      // 다음 모델로 1회 재시도
-    }
-  }
-  return null;
+  // AI가 바쁨(503 등)이면 잠깐 쉬고 한 번 더, 그다음 대체 모델(2026-11-18)
+  const r = await tryGemini([PRIMARY_MODEL, FALLBACK_MODEL], (model) => callOnce(model, apiKey, body), "expense-form");
+  return r.ok ? r.value : null;
 }

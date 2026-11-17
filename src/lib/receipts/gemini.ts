@@ -1,4 +1,5 @@
 import "server-only";
+import { tryGemini } from "@/lib/ai/gemini-retry";
 import { todayKst } from "@/lib/dates";
 import { normalizeParsed, type ParsedReceipt } from "./parse-result";
 
@@ -95,12 +96,7 @@ export async function parseReceiptWithGemini(file: { data: ArrayBuffer; mimeType
     ],
     generationConfig: { responseMimeType: "application/json", responseSchema: RESPONSE_SCHEMA, temperature: 0 },
   };
-  for (const model of [PRIMARY_MODEL, FALLBACK_MODEL]) {
-    try {
-      return normalizeParsed(await callOnce(model, apiKey, body), today);
-    } catch {
-      // 다음 모델로 1회 재시도
-    }
-  }
-  return null;
+  // AI가 바쁨(503 등)이면 잠깐 쉬고 한 번 더, 그다음 대체 모델(2026-11-18)
+  const r = await tryGemini([PRIMARY_MODEL, FALLBACK_MODEL], async (model) => normalizeParsed(await callOnce(model, apiKey, body), today), "receipt");
+  return r.ok ? r.value : null;
 }

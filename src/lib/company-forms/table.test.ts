@@ -66,3 +66,13 @@ describe("AI 결과에서 표 자동(9-33e7)", () => {
     expect(t.b.k === "input" && t.b.type === "table" && t.b.rows === 3 && t.b.cols?.length === 5).toBe(true);
   });
 });
+
+describe("양식 제목 띄움 정리", () => {
+  it("낱글자 띄움만 붙이고 단어 띄어쓰기는 그대로", async () => {
+    const { tidyTitle } = await import("./model");
+    expect(tidyTitle("구 매 요 청 서")).toBe("구매요청서");
+    expect(tidyTitle(" 휴  가 신 청 서 ")).toBe("휴가신청서");
+    expect(tidyTitle("출장 신청서")).toBe("출장 신청서");
+    expect(tidyTitle("품의서")).toBe("품의서");
+  });
+});

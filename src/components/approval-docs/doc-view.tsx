@@ -94,11 +94,11 @@ export function DocView({
               <dt className="text-zinc-600">{r.label}</dt>
               {r.table ? (
                 <dd className="col-span-2 overflow-x-auto" data-view-table>
-                  <table className="w-full min-w-[20rem] border-collapse text-[13px]">
+                  <table className="w-full border-collapse text-[12.5px] sm:text-[13px]">
                     <thead>
                       <tr>
                         {r.table.cols.map((k) => (
-                          <th key={k.c} className="border-b border-zinc-200 px-1.5 py-1 text-left font-medium text-zinc-600">
+                          <th key={k.c} className={`border-b border-zinc-200 px-1 py-1 font-medium text-zinc-600 sm:px-1.5 ${k.type !== "text" ? "text-right" : "text-left"}`}>
                             {k.label}
                           </th>
                         ))}
@@ -108,7 +108,7 @@ export function DocView({
                       {r.table.rows.map((row, y) => (
                         <tr key={y}>
                           {r.table!.cols.map((k, i) => (
-                            <td key={k.c} className={`border-b border-zinc-100 px-1.5 py-1 ${k.type !== "text" ? "text-right tabular-nums" : ""}`}>
+                            <td key={k.c} className={`border-b border-zinc-100 px-1 py-1 sm:px-1.5 ${k.type !== "text" ? "whitespace-nowrap text-right tabular-nums" : "break-words"}`}>
                               {tableCellText(k.type, row[i] ?? "")}
                             </td>
                           ))}

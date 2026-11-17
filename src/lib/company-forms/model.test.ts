@@ -17,7 +17,7 @@ const page: AiFormPage = {
 describe("formFromAi", () => {
   const read = formFromAi([page], "leave")!;
   it("표 + 값 칸, 우리 데이터 짝짓기, 없으면 정해 주세요", () => {
-    expect(read.title).toBe("휴 가 신 청 서");
+    expect(read.title).toBe("휴가신청서"); // 낱글자 띄움은 붙임(tidyTitle)
     expect(read.doc.sheets[0].cells.length).toBe(4);
     const byLabel = Object.fromEntries(read.fields.map((f) => [f.label, f]));
     expect(byLabel["성명"]).toMatchObject({ r: 1, c: 1, lr: 1, lc: 0, b: { k: "data", src: "member.name" } });

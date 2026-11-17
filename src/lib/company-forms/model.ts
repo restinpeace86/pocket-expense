@@ -2,6 +2,7 @@
 // 표 모양은 서류 → 엑셀과 같은 DocModel. 값이 들어갈 칸마다 Field 하나: 어느 칸(s 쪽·r 행·c 열)인지 + 어떻게 채우는지(b)
 // - data: 우리 데이터(B-3) / input: 신청할 때 직원이 입력 / fixed: 고정 값 / blank: 비워 두기(수기) / drop: 빼기(등록할 때 양식에서 지움) / pending: 정해 주세요
 import { BRAND } from "@/lib/brand";
+import { tryGemini } from "@/lib/ai/gemini-retry";
 import { guessDocType, guessInputType, isDocType, stdField, type DocTypeCode } from "./doc-types";
 import { detectTable, MAX_TABLE_COLS, MAX_TABLE_ROWS, TABLE_COL_LABEL, tableCells, type TableCol } from "./table";
 import { anchorOf, sheetFromAi, type AiCell, type AiPage, type DocModel, type Sheet, MAX_CELL, MAX_PAGES } from "@/lib/doc-convert/model";
@@ -198,7 +199,13 @@ export function formFromAi(pages: AiFormPage[], kind: FormKind): { doc: DocModel
     else seen.add(id);
   }
   const out = kind === "general" ? autoTables(sheets, fields) : fields;
-  return { doc: { v: 1, sheets }, fields: out, title: title ? title.slice(0, 60) : null, docType };
+  return { doc: { v: 1, sheets }, fields: out, title: title ? tidyTitle(title).slice(0, 60) : null, docType };
+}
+
+// 양식 제목의 글자 사이 띄움("구 매 요 청 서") → "구매요청서". 낱글자로만 띄운 제목일 때만("출장 신청서"처럼 단어 띄어쓰기는 그대로)
+export function tidyTitle(t: string): string {
+  const s = t.trim().replace(/\s+/g, " ");
+  return /^(\S )+\S$/.test(s) && s.split(" ").every((w) => [...w].length === 1) ? s.replace(/ /g, "") : s;
 }
 
 // 결재 문서: 머리글 아래 빈 줄이 2줄 이상·2열 이상인 표 안에 AI가 값 칸을 3개 이상 찍었으면(예: 품목 표) 표 칸 하나로 바꾼다(9-33e7)
@@ -320,6 +327,7 @@ export function formErrorMessage(message: string): string {
   if (message.includes("EXPIRED")) return "보관 기간이 지났거나 지워진 파일이에요.";
   if (message.includes("TOO_LARGE")) return "20MB보다 작은 파일만 올릴 수 있어요.";
   if (message.includes("TOO_MANY_PAGES")) return `한 번에 ${MAX_PAGES}쪽까지 읽을 수 있어요. 양식 쪽만 올려 주세요.`;
+  if (message.includes("AI_BUSY")) return "지금 AI가 몰려 있어 양식을 읽지 못했어요. 1~2분 뒤 [AI로 양식 읽기]를 다시 눌러 주세요(다시 읽기 횟수는 그대로예요).";
   if (message.includes("NO_TABLE")) return "양식에서 표를 찾지 못했어요. 표가 잘 보이게 다시 찍어 주세요.";
   if (message.includes("NOT_ALLOWED") || message.includes("42501")) return "관리자만 회사 양식을 등록할 수 있어요.";
   if (message.includes("NOT_FOUND")) return "양식을 찾을 수 없어요. 새로고침해 주세요.";

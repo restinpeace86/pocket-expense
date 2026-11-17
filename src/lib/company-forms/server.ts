@@ -1,4 +1,5 @@
 import "server-only";
+import { tryGemini } from "@/lib/ai/gemini-retry";
 import { PDFDocument } from "pdf-lib";
 import { getMembership } from "@/lib/auth/session";
 import { isAdminRole } from "@/lib/auth/paths";
@@ -97,9 +98,13 @@ export async function readForm(id: string, kind: FormKind): Promise<Result> {
   } catch {
     return { ok: false, error: "PDF를 열 수 없어요. 암호가 걸려 있으면 풀고 다시 올려 주세요." };
   }
-  const pages = await readFormWithGemini({ data: bytes, mimeType: b.mime }, kind);
+  const { pages, busy } = await readFormWithGemini({ data: bytes, mimeType: b.mime }, kind);
+  if (busy) return { ok: false, error: formErrorMessage("AI_BUSY") }; // 읽은 횟수는 그대로(read_done 전)
   const read = pages ? formFromAi(pages, kind) : null;
-  if (!read) return { ok: false, error: formErrorMessage("NO_TABLE") };
+  if (!read) {
+    console.warn(`[company-forms] 표 못 찾음: AI 응답 ${pages === null ? "없음" : `${pages.length}쪽`}`);
+    return { ok: false, error: formErrorMessage("NO_TABLE") };
+  }
   const { error: doneError } = await supabase.rpc("company_form_read_done", {
     p_id: id, p_name: read.title ?? "", p_sheets: read.doc as never, p_fields: read.fields as never, ...(read.docType ? { p_doc_type: read.docType } : {}),
   });
