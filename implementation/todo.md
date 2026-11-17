@@ -427,7 +427,7 @@
 ## 2026-11-17 서비스 이름 다모온
 - [x] 9-34 이름 RealOn → 다모온(영문 DamoOn)·로고 A 그대로·슬로건 그대로 (D-283, `implementation/2026-11-17_damoon.md`)
 - [x] 9-34a migration 162 적용(2026-11-17 사용자 승인) — 약관·처리방침 버전 2026-11-17, 도우미 방 이름 다모온
-- [ ] 9-34b 안드로이드 APK 1.0.4(versionCode 5, 이름 다모온) 빌드·올리기
+- [x] 9-34b 안드로이드 APK 1.0.4(versionCode 5, 이름 다모온) 빌드·올리기 — aapt 이름 다모온·kr.damounlab.app 확인, 4.1MB 올림(200), ANDROID_APP_VERSION 1.0.4
 - [ ] 9-34c 도메인 damo-on.com(대표)·damo-on.kr — 사용자가 구입·Vercel 연결 뒤: Supabase site_url·리디렉트(인증 설정 = 사용자 확인 후), 카카오·구글 리디렉트 주소, NEXT_PUBLIC_SITE_URL, 설치 앱 server.url. 옛 주소(pocket-expense-ruby.vercel.app)는 당분간 그대로 열림
 - [ ] 9-34d (사용자) 카카오 디벨로퍼스·구글 OAuth 동의 화면 앱 이름 → 다모온 · 상표 출원(다모온·DamoOn, 9·35·42류)
 - [ ] 9-34e 아이폰 앱 빌드 — 9-13e 준비 뒤(이름 파일은 이미 다모온)
