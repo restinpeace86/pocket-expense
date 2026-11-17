@@ -38,7 +38,7 @@ const START_HREF = `/login?next=${encodeURIComponent("/onboarding/create-company
 const WHY: { icon: typeof Layers; big: string; body: string; accent: Accent; art: WhyArt }[] = [
   { icon: Layers, big: "앱 다섯 개 → 하나", body: "경비·근태·채팅·캘린더·서류를 한 구독으로.", accent: "attend", art: "bundle" },
   { icon: Sparkles, big: "찍으면 결의서", body: "AI가 채우고, 사람은 확인만.", accent: "expense", art: "ai" },
-  { icon: FileText, big: "쓰던 양식 그대로", body: "우리 회사 결의서·휴가신청서에 그대로 채워요.", accent: "docs", art: "form" },
+  { icon: FileText, big: "쓰던 양식 그대로", body: "결의서·휴가·근태 신청서, 품의서·구매요청서까지 우리 회사 양식 그대로 채워요.", accent: "docs", art: "form" },
   { icon: Landmark, big: "세무사무소까지 한 번에", body: "월말 마감 파일이 메일 없이 넘어가요.", accent: "tax", art: "tax" },
 ];
 

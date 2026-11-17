@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fillForm, fitSigners, formDocNumber, type LeaveDocData, type SignCell } from "@/lib/company-forms/fill";
 import type { Field } from "@/lib/company-forms/model";
 import { docTypeOf } from "@/lib/company-forms/doc-types";
+import { tableTotal } from "@/lib/company-forms/table";
 import { displayValue, inputFields, progressLine, type DocFile, type DocRow, type DocStatus, type DocStep, type Payload } from "./model";
 
 // [결재 문서] 읽기(9-33e). 볼 수 있는지는 RLS(쓴 사람·결재선 검토자·관리자는 올린 뒤부터)가 먼저 정한다
@@ -42,11 +43,14 @@ async function toRows(supabase: Supabase, docs: RawDoc[]): Promise<DocRow[]> {
     const amountKey = f?.fields.find((x) => x.b.k === "input" && x.b.std === "amount")?.key;
     const p = (d.payload ?? {}) as Payload;
     const raw = amountKey ? p[amountKey] : undefined;
-    const n = typeof raw === "string" ? Number(raw.replace(/[^0-9]/g, "")) : NaN;
+    // 금액 표준 칸이 없으면 표(품목 표)의 금액 합계(9-33e7)
+    const tf = !amountKey ? f?.fields.find((x) => x.b.k === "input" && x.b.type === "table" && x.b.cols?.some((k) => k.type === "money")) : undefined;
+    const tsum = tf && tf.b.k === "input" && Array.isArray(p[tf.key]) ? tableTotal(tf.b.cols ?? [], p[tf.key] as string[][]) : null;
+    const n = typeof raw === "string" ? Number(raw.replace(/[^0-9]/g, "")) : (tsum ?? NaN);
     const st = (steps ?? []).filter((s) => s.document_id === d.id).map((s) => ({ ...s, step_kind: s.step_kind as DocStep["step_kind"], status: s.status as DocStep["status"], approver_name: s.approver_member_id ? (names.get(s.approver_member_id) ?? null) : null }));
     const { payload: _p, ...rest } = d;
     void _p;
-    return { ...rest, form_name: f?.name ?? docTypeOf(d.doc_type).label, form_group: f?.group ?? d.form_id, amount: Number.isFinite(n) && typeof raw === "string" && raw.trim() ? n : null, progress: progressLine(d.status as DocStatus, st, d.current_round, d.self_approved) };
+    return { ...rest, form_name: f?.name ?? docTypeOf(d.doc_type).label, form_group: f?.group ?? d.form_id, amount: Number.isFinite(n) && ((typeof raw === "string" && raw.trim()) || tsum !== null) ? n : null, progress: progressLine(d.status as DocStatus, st, d.current_round, d.self_approved) };
   });
 }
 
@@ -222,7 +226,12 @@ export async function getApprovalDocModel(docId: string): Promise<{ doc: DocMode
   const slots = Math.max(0, ...fields.filter((f) => f.b.k === "data" && f.b.src.startsWith("approval.")).map((f) => (f.b.k === "data" ? Number(f.b.src.slice(-1)) : 0)));
   const payload = (d.payload ?? {}) as Payload;
   const custom: Record<string, string> = {};
-  for (const f of inputFields(fields)) if (f.b.k === "input") custom[f.key] = displayValue(f.b.type, payload[f.key]);
+  const tables: Record<string, string[][]> = {};
+  for (const f of inputFields(fields)) {
+    if (f.b.k !== "input") continue;
+    if (f.b.type === "table") tables[f.key] = Array.isArray(payload[f.key]) ? (payload[f.key] as string[][]).filter(Array.isArray) : [];
+    else custom[f.key] = displayValue(f.b.type, payload[f.key]);
+  }
   const data: LeaveDocData = {
     company: company?.name ?? "",
     member: { name: me?.name ?? d.member_name, department: me?.departments?.name ?? null, position: me?.position ?? null, employee_number: me?.employee_number ?? null },
@@ -231,6 +240,7 @@ export async function getApprovalDocModel(docId: string): Promise<{ doc: DocMode
     applicant: null,
     approver: "pending",
     custom,
+    tables,
     signers: fitSigners(all, slots),
   };
   const doc = fillForm(form.sheets as unknown as DocModel, fields, data);

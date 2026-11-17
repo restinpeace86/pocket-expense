@@ -8,6 +8,7 @@ import { guarded } from "@/lib/action-guard";
 import { stdField } from "@/lib/company-forms/doc-types";
 import type { Field } from "@/lib/company-forms/model";
 import { displayValue, inputFields, won, type DocFile, type DocRow, type DocStep, type Payload } from "@/lib/approval-docs/model";
+import { cleanRows, tableCellText, tableTotal } from "@/lib/company-forms/table";
 import { DocFileList, DocFormButtons, DocSteps, StatusChip } from "./doc-shared";
 
 // [결재 문서] 보기(9-33e3·e4): 올린 뒤 쓴 사람·검토자·관리자가 보는 화면. 내 차례면 아래에 승인/반려, 내 문서면 회수(첫 결재 전까지)
@@ -58,7 +59,12 @@ export function DocView({
     router.refresh();
   };
 
-  const rows = inputFields(fields).map((f) => ({ key: f.key, label: f.label.trim() || (f.b.k === "input" && stdField(doc.doc_type, f.b.std)?.label) || "입력", value: f.b.k === "input" ? displayValue(f.b.type, doc.payload[f.key]) : "" }));
+  const rows = inputFields(fields).map((f) => ({
+    key: f.key,
+    label: f.label.trim() || (f.b.k === "input" && stdField(doc.doc_type, f.b.std)?.label) || "입력",
+    value: f.b.k === "input" ? (f.b.type === "check" ? (doc.payload[f.key] === "Y" ? "예" : "") : displayValue(f.b.type, doc.payload[f.key])) : "",
+    table: f.b.k === "input" && f.b.type === "table" ? { cols: f.b.cols ?? [], rows: cleanRows(Array.isArray(doc.payload[f.key]) ? (doc.payload[f.key] as string[][]) : []) } : null,
+  }));
   return (
     <div className="flex flex-col gap-4" data-doc-view-page={doc.id} data-status={doc.status}>
       <header className="flex flex-col gap-1">
@@ -86,7 +92,38 @@ export function DocView({
           {rows.map((r) => (
             <div key={r.key} className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-2 px-3.5 py-2.5">
               <dt className="text-zinc-600">{r.label}</dt>
-              <dd className="whitespace-pre-wrap break-words">{r.value || <span className="text-zinc-400">—</span>}</dd>
+              {r.table ? (
+                <dd className="col-span-2 overflow-x-auto" data-view-table>
+                  <table className="w-full min-w-[20rem] border-collapse text-[13px]">
+                    <thead>
+                      <tr>
+                        {r.table.cols.map((k) => (
+                          <th key={k.c} className="border-b border-zinc-200 px-1.5 py-1 text-left font-medium text-zinc-600">
+                            {k.label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {r.table.rows.map((row, y) => (
+                        <tr key={y}>
+                          {r.table!.cols.map((k, i) => (
+                            <td key={k.c} className={`border-b border-zinc-100 px-1.5 py-1 ${k.type !== "text" ? "text-right tabular-nums" : ""}`}>
+                              {tableCellText(k.type, row[i] ?? "")}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {(() => {
+                    const t = tableTotal(r.table.cols, r.table.rows);
+                    return t !== null ? <p className="mt-1 text-right text-[13px]">합계 <b>{won(t)}</b></p> : null;
+                  })()}
+                </dd>
+              ) : (
+                <dd className="whitespace-pre-wrap break-words">{r.value || <span className="text-zinc-400">—</span>}</dd>
+              )}
             </div>
           ))}
           {!rows.length && <p className="px-3.5 py-3 text-[13px] text-zinc-600">직원이 적는 칸이 없는 양식이에요. [양식 보기]로 확인하세요.</p>}

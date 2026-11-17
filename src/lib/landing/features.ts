@@ -33,7 +33,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     one: "쓰던 양식 그대로",
     sim: "convert",
     accent: "docs",
-    items: ["종이·PDF → 엑셀", "회사 양식 지출결의서·휴가신청서", "PDF·엑셀로 바로 받기"],
+    items: ["종이·PDF → 엑셀", "회사 양식 지출결의서·근태 신청서", "품의서·구매요청서 결재 문서", "PDF·엑셀로 바로 받기"],
   },
   {
     key: "tax",

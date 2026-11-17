@@ -33,6 +33,7 @@ import { useSheetGrid, type CellLook } from "@/components/doc-convert/use-sheet-
 import { SheetView } from "./sheet-view";
 import { guarded } from "@/lib/action-guard";
 import { BRAND } from "@/lib/brand";
+import { detectTable, guessColType, TABLE_COL_LABEL, tableCells, type TableCol, type TableColType } from "@/lib/company-forms/table";
 import { DOC_TYPES, docTypeOf, stdField, type DocTypeCode } from "@/lib/company-forms/doc-types";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
@@ -427,12 +428,17 @@ export function FormEditor({ ws, form, src }: { ws: string; form: EditorForm; sr
       {current && (
         <FieldSetDialog
           field={current}
+          sheet={st.doc.sheets[current.s]}
           kind={form.kind}
           docType={docType}
           othersInputs={st.fields.filter((f) => f.key !== current.key && f.b.k === "input").length}
           onClose={() => setSetting(null)}
           onSave={(label, b) => {
-            setField(current.key, { label, b });
+            // 표 칸(9-33e7): 표가 차지하는 다른 칸들은 목록에서 뺀다(표 하나로 채움)
+            if (b.k === "input" && b.type === "table" && b.cols && b.rows) {
+              const inside = new Set(tableCells(current.r, b.cols, b.rows).map((x) => `${x.r}:${x.c}`));
+              change({ ...st, fields: st.fields.filter((x) => x.key === current.key || x.s !== current.s || !inside.has(`${x.r}:${x.c}`)).map((x) => (x.key === current.key ? { ...x, label, b } : x)) });
+            } else setField(current.key, { label, b });
             setSetting(null);
           }}
           onRemove={() => {
@@ -471,6 +477,7 @@ const isPendingFirst = (f: Field) => f.b.k === "pending";
 // B③ 칸 하나 정하기: 우리 데이터 / 직원 입력 / 고정 값 / 비워 두기 / 빼기
 function FieldSetDialog({
   field,
+  sheet,
   kind,
   docType,
   othersInputs,
@@ -479,6 +486,7 @@ function FieldSetDialog({
   onRemove,
 }: {
   field: Field;
+  sheet: Sheet | undefined;
   kind: FormKind;
   docType: DocTypeCode | null;
   othersInputs: number;
@@ -497,6 +505,10 @@ function FieldSetDialog({
   const [required, setRequired] = useState(b0.k === "input" ? b0.required : true);
   const [options, setOptions] = useState((b0.k === "input" && b0.options?.join("\n")) || "");
   const [fixed, setFixed] = useState(b0.k === "fixed" ? b0.value : "");
+  // 표(줄 추가): 이 칸 = 표 첫 빈 칸. 머리글·빈 줄을 읽어 열·줄 수를 알아냄(열마다 입력 방식은 바꿀 수 있음)
+  const detected = sheet ? detectTable(sheet, field.r, field.c) : null;
+  const [colTypes, setColTypes] = useState<Record<number, TableColType>>(() => Object.fromEntries(((b0.k === "input" && b0.type === "table" && b0.cols) || []).map((k) => [k.c, k.type])));
+  const tableCols: TableCol[] = (detected?.cols ?? []).map((k) => ({ ...k, type: colTypes[k.c] ?? k.type ?? guessColType(k.label) }));
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -509,12 +521,13 @@ function FieldSetDialog({
     .slice(0, MAX_OPTIONS);
   const max = MAX_INPUTS[kind];
   const inputFull = (k === "input" || k === "std") && b0.k !== "input" && othersInputs >= max;
-  const invalid = !label.trim() || inputFull || (k === "input" && type === "choice" && opts.length < 2) || (k === "fixed" && !fixed.trim());
+  const invalid = !label.trim() || inputFull || (k === "input" && type === "choice" && opts.length < 2) || (k === "input" && type === "table" && !detected) || (k === "fixed" && !fixed.trim());
   const build = (): Binding => {
     if (k === "std") {
       const x = stdField(docType, std)!;
       return { k: "input", type: x.type, required: x.required, ...(x.options ? { options: x.options } : {}), std: x.key };
     }
+    if (k === "input" && type === "table" && detected) return { k, type, required, cols: tableCols, rows: detected.rows };
     return k === "data" ? { k, src } : k === "input" ? { k, type, required, ...(type === "choice" ? { options: opts.map((o) => o.slice(0, 40)) } : {}) } : k === "fixed" ? { k, value: fixed.trim() } : k === "blank" ? { k } : { k: "drop" };
   };
 
@@ -592,6 +605,32 @@ function FieldSetDialog({
                   </button>
                 ))}
               </div>
+              {type === "table" &&
+                (detected ? (
+                  <div className="flex flex-col gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 p-2.5" data-table-detected>
+                    <p className="text-[12.5px] text-zinc-700">
+                      표를 찾았어요: <b>{detected.cols.length}열 · 양식 빈 줄 {detected.rows}줄</b>. 직원은 줄을 더해 쓸 수 있고, 양식 줄보다 많으면 문서에 줄을 더 넣어요. 표 안의 다른 칸은 이 표 하나로 채워요.
+                    </p>
+                    {tableCols.map((col) => (
+                      <label key={col.c} className="flex items-center justify-between gap-2 text-[13px]">
+                        <span className="min-w-0 truncate">{col.label}</span>
+                        <select value={col.type} onChange={(e) => setColTypes((p) => ({ ...p, [col.c]: e.target.value as TableColType }))} className="h-8 rounded-md border border-zinc-300 bg-white px-1.5 text-[13px]" data-table-col-type={col.c}>
+                          {(Object.keys(TABLE_COL_LABEL) as TableColType[]).map((t) => (
+                            <option key={t} value={t}>
+                              {TABLE_COL_LABEL[t]}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rounded-lg bg-amber-50 px-2.5 py-2 text-[12.5px] text-amber-900" data-table-missing>
+                    표를 찾지 못했어요. 표 머리글(품목·수량 등) <b>바로 아래 첫 빈 칸</b>을 눌러 정해 주세요.
+                  </p>
+                ))}
+              {type === "check" && <p className="text-[12.5px] text-zinc-600">쓰기 화면에 체크 상자가 생기고, 체크하면 이 칸에 V가 들어가요.</p>}
+              {type === "attach" && <p className="text-[12.5px] text-zinc-600">직원이 붙인 첨부 파일 이름이 이 칸에 들어가요(예: 견적서.pdf). 필수면 첨부가 하나 이상 있어야 올릴 수 있어요.</p>}
               {type === "choice" && (
                 <textarea value={options} onChange={(e) => setOptions(e.target.value)} rows={3} placeholder={"한 줄에 하나씩(2~10개)\n예: 오전\n오후"} className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-[14px]" data-input-options />
               )}

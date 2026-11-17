@@ -60,7 +60,8 @@ export function AddFormDialog({
   // 이 파일이 들어갈 양식: 새 버전 대상 / 이미 있는 휴가신청서(휴가는 하나) / 새 양식(칸 하나 씀)
   const held = heldGroup ? data?.forms.find((f) => f.group_id === heldGroup) : undefined;
   const target = group ?? (held ? { id: held.group_id, name: held.name, kind: held.kind } : null) ?? (existing ? { id: existing.group_id, name: existing.name, kind: existing.kind } : null);
-  const full = !!data && !target && data.used >= data.limit;
+  // D-289: 칸은 결재 문서만 센다(근태 양식은 종류마다 하나, 칸과 상관없음). 칸 0(스타터)이면 회사 양식 전부 막힘
+  const full = !!data && !target && (data.limit <= 0 || (kind === "general" && data.used >= data.limit));
   const sourceName = source.type === "pick" ? (file?.name ?? null) : source.name;
 
   const pick = (f: File | undefined) => {
@@ -155,10 +156,10 @@ export function AddFormDialog({
         </div>
 
         <div className="flex items-center justify-between rounded-xl bg-zinc-100 px-3.5 py-2.5 text-[13px]">
-          <span className="text-zinc-700">회사 양식 칸</span>
+          <span className="text-zinc-700">결재 문서 칸 <span className="text-zinc-500">(근태 양식은 안 셈)</span></span>
           {data ? (
             <b data-slots={`${data.used}/${data.limit}`}>
-              {data.used} / {data.limit}장 사용
+              {data.used} / {data.limit}개 사용
             </b>
           ) : (
             <span className="h-4 w-16 animate-pulse rounded bg-zinc-200" />
@@ -171,7 +172,7 @@ export function AddFormDialog({
             {option("leave", "휴가신청서", leave ? `이미 등록된 '${leave.name}'의 새 버전으로 올려요(무료, 칸 그대로).` : "직원은 지금 휴가 신청 화면 그대로, 결재 뒤 이 모양으로 나와요.")}
             {option("correction", "근태 정정 신청서", one("correction") ? `이미 등록된 '${one("correction")!.name}'의 새 버전으로 올려요(무료).` : "출퇴근 기록 수정 요청서 — 직원은 지금 정정 신청 화면 그대로, 승인 뒤 이 모양으로 나와요.")}
             {option("holiday", "휴일·연장근무 신청서", one("holiday") ? `이미 등록된 '${one("holiday")!.name}'의 새 버전으로 올려요(무료).` : "직원은 지금 휴일 근무 상신 화면 그대로, 승인 뒤 이 모양으로 나와요.")}
-            {option("general", "일반 결재 문서", "품의서·구매요청서·시말서 등 — 양식으로 입력 화면을 만들어요(쓰기는 다음 단계에서 열려요).", "2단계")}
+            {option("general", "일반 결재 문서", "품의서·구매요청서·시말서 등 — 직원이 [결재 문서] 화면에서 바로 써요(칸 1개).")}
             {option("expense", "지출결의서", "지출결의서는 [설정 › 양식·결재 › 지출결의서 양식]에서 따로 등록해요(칸 안 씀).")}
           </div>
         )}
@@ -254,10 +255,10 @@ export function SlotFull({
     <div className="flex flex-col gap-2.5 rounded-2xl border border-amber-300 bg-amber-50 p-3.5" data-slot-full>
       <p className="flex items-start gap-2 text-[14px] font-semibold text-amber-950">
         <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-        회사 양식 등록 횟수를 다 썼어요({used}/{limit}장).
+        {limit <= 0 ? "지금 플랜은 지출결의서만 써요." : `결재 문서 칸을 다 썼어요(${used}/${limit}개).`}
       </p>
       <p className="text-[13px] leading-relaxed text-amber-950">
-        더 등록하려면 비즈니스 플랜(AI 양식 변환 무제한)으로 바꿔 주세요. 이미 등록한 양식을 고치거나 새 버전으로 바꾸는 것은 언제나 무료예요.
+        {limit <= 0 ? "회사 양식(근태 양식·결재 문서)은 프로 플랜부터 쓸 수 있어요." : "결재 문서를 더 쓰려면 비즈니스 플랜(5개)으로 바꾸거나 [의견 보내기]로 문의해 주세요."} 이미 등록한 양식을 고치거나 새 버전으로 바꾸는 것은 언제나 무료예요.
       </p>
       <div className="flex flex-wrap gap-2">
         {onReplace && forms.length > 0 && (

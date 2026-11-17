@@ -9,6 +9,7 @@ import { guarded } from "@/lib/action-guard";
 import { processProof } from "@/lib/attendance/proof-image";
 import { proofPath } from "@/lib/attendance/vacation";
 import { inputFields, missingFields, type DocFile, type Payload } from "@/lib/approval-docs/model";
+import { cleanRows } from "@/lib/company-forms/table";
 import type { Field } from "@/lib/company-forms/model";
 import { createClient } from "@/lib/supabase/client";
 import { DocFields } from "./doc-fields";
@@ -64,7 +65,7 @@ export function DocEditor({
       return false;
     }
     setState("saving");
-    const r = await save(doc.id, t, latest.current.values);
+    const r = await save(doc.id, t, forSave(latest.current.values));
     if (!r.ok) {
       setState("error");
       setError(r.error);
@@ -92,12 +93,23 @@ export function DocEditor({
 
   // 양식의 제목 칸(건명 등, 표준 칸 title)을 쓰면 문서 제목도 따라감 — 제목을 따로 고치기 전까지
   const titleKey = inputs.find((f) => f.b.k === "input" && f.b.std === "title")?.key;
-  const onField = (key: string, v: string) => {
+  // 저장할 값(9-33e7): 표는 빈 줄을 빼고, 첨부 칸에는 지금 붙인 파일 이름들
+  const forSave = (v: Payload): Payload => {
+    const out: Payload = { ...v };
+    for (const f of inputs) {
+      if (f.b.k !== "input") continue;
+      if (f.b.type === "table") out[f.key] = cleanRows(Array.isArray(v[f.key]) ? (v[f.key] as string[][]) : []);
+      if (f.b.type === "attach") out[f.key] = files.map((x) => x.name);
+    }
+    return out;
+  };
+  const onField = (key: string, v: string | string[][]) => {
     const next = { ...latest.current.values, [key]: v };
     const prevTitleField = typeof latest.current.values[key] === "string" ? (latest.current.values[key] as string) : "";
+    const t = typeof v === "string" ? v : "";
     const follow = key === titleKey && (latest.current.title === doc.form_name || latest.current.title === prevTitleField || !latest.current.title.trim());
-    latest.current = { title: follow && v.trim() ? v.slice(0, 100) : latest.current.title, values: next };
-    if (follow && v.trim()) setTitle(v.slice(0, 100));
+    latest.current = { title: follow && t.trim() ? t.slice(0, 100) : latest.current.title, values: next };
+    if (follow && t.trim()) setTitle(t.slice(0, 100));
     setValues(next);
     if (invalid === key) setInvalid(null);
     changed();
@@ -131,7 +143,7 @@ export function DocEditor({
   };
 
   const tryOpenConfirm = async () => {
-    const miss = missingFields(fields, values);
+    const miss = missingFields(fields, forSave(values));
     if (!title.trim()) return setError("제목을 적어 주세요.");
     if (miss.length) {
       setInvalid(miss[0].key);
@@ -144,7 +156,7 @@ export function DocEditor({
 
   const doSubmit = async () => {
     setBusy("submit");
-    const r = await submit(doc.id, title.trim(), values);
+    const r = await submit(doc.id, title.trim(), forSave(values));
     setBusy(null);
     if (!r.ok) {
       setConfirm(false);
@@ -196,7 +208,7 @@ export function DocEditor({
         />
       </div>
       {inputs.length ? (
-        <DocFields docType={doc.doc_type} fields={inputs} values={values} onChange={onField} members={members} invalid={invalid} />
+        <DocFields docType={doc.doc_type} fields={inputs} values={values} onChange={onField} members={members} invalid={invalid} files={files.map((x) => x.name)} />
       ) : (
         <p className="rounded-xl bg-zinc-50 px-3.5 py-3 text-[13px] text-zinc-600">이 양식은 직원이 적을 칸이 없어요. 이름·날짜 같은 칸은 자동으로 채워져요. 첨부만 붙여 올리면 돼요.</p>
       )}

@@ -3,6 +3,7 @@
 // - data: 우리 데이터(B-3) / input: 신청할 때 직원이 입력 / fixed: 고정 값 / blank: 비워 두기(수기) / drop: 빼기(등록할 때 양식에서 지움) / pending: 정해 주세요
 import { BRAND } from "@/lib/brand";
 import { guessDocType, guessInputType, isDocType, stdField, type DocTypeCode } from "./doc-types";
+import { detectTable, MAX_TABLE_COLS, MAX_TABLE_ROWS, TABLE_COL_LABEL, tableCells, type TableCol } from "./table";
 import { anchorOf, sheetFromAi, type AiCell, type AiPage, type DocModel, type Sheet, MAX_CELL, MAX_PAGES } from "@/lib/doc-convert/model";
 
 export type FormKind = "leave" | "correction" | "holiday" | "general";
@@ -70,10 +71,10 @@ export function dataKeysFor(kind: FormKind): DataKey[] {
 }
 export const isDataKey = (k: unknown, kind: FormKind): k is DataKey => typeof k === "string" && (dataKeysFor(kind) as string[]).includes(k);
 
-export type InputType = "text" | "long" | "date" | "number" | "choice" | "member" | "money" | "period" | "time_range";
-export const INPUT_LABEL: Record<InputType, string> = { text: "글", long: "긴 글", date: "날짜", number: "숫자", choice: "선택지", member: "직원 고르기", money: "금액", period: "기간", time_range: "시각(부터~까지)" };
-// 금액·기간·시각 범위는 결재 문서(9-33d)에서만 — 근태 양식의 [회사 추가 항목]은 기존 6가지
-export const GENERAL_ONLY_TYPES: InputType[] = ["money", "period", "time_range"];
+export type InputType = "text" | "long" | "date" | "number" | "choice" | "member" | "money" | "period" | "time_range" | "check" | "table" | "attach";
+export const INPUT_LABEL: Record<InputType, string> = { text: "글", long: "긴 글", date: "날짜", number: "숫자", choice: "선택지", member: "직원 고르기", money: "금액", period: "기간", time_range: "시각(부터~까지)", check: "체크", table: "표(줄 추가)", attach: "첨부 파일 이름" };
+// 금액·기간·시각 범위(9-33d)·체크·표·첨부(9-33e7)는 결재 문서에서만 — 근태 양식의 [회사 추가 항목]은 기존 6가지
+export const GENERAL_ONLY_TYPES: InputType[] = ["money", "period", "time_range", "check", "table", "attach"];
 export const inputTypesFor = (kind: FormKind) => (Object.keys(INPUT_LABEL) as InputType[]).filter((t) => kind === "general" || !GENERAL_ONLY_TYPES.includes(t));
 export const MAX_INPUTS: Record<FormKind, number> = { leave: 5, correction: 5, holiday: 5, general: 15 };
 export const MAX_OPTIONS = 10;
@@ -81,7 +82,7 @@ export const MAX_OPTIONS = 10;
 export type Binding =
   | { k: "pending" }
   | { k: "data"; src: DataKey }
-  | { k: "input"; type: InputType; required: boolean; options?: string[]; std?: string } // std: 결재 문서 표준 칸 키(9-33d, doc-types)
+  | { k: "input"; type: InputType; required: boolean; options?: string[]; std?: string; cols?: TableCol[]; rows?: number } // std: 결재 문서 표준 칸 키(9-33d) · cols·rows: 표 칸(9-33e7, 이 칸 = 표 첫 빈 칸)
   | { k: "fixed"; value: string }
   | { k: "blank" }
   | { k: "drop" };
@@ -109,6 +110,7 @@ export function bindingSummary(b: Binding): string {
     case "data":
       return DATA_LABEL[b.src] ?? "우리 데이터";
     case "input":
+      if (b.type === "table") return `직원 입력 · 표(${(b.cols ?? []).map((k) => k.label).join("·")} · 양식 ${b.rows ?? 0}줄)${b.required ? " · 필수" : ""}`;
       return `${b.std ? `${BRAND.name} 칸` : "직원 입력"} · ${INPUT_LABEL[b.type]}${b.required ? " · 필수" : ""}`;
     case "fixed":
       return `고정 값 · ${b.value || "(빈 글)"}`;
@@ -195,7 +197,27 @@ export function formFromAi(pages: AiFormPage[], kind: FormKind): { doc: DocModel
     if (seen.has(id)) f.b = { k: "pending" };
     else seen.add(id);
   }
-  return { doc: { v: 1, sheets }, fields, title: title ? title.slice(0, 60) : null, docType };
+  const out = kind === "general" ? autoTables(sheets, fields) : fields;
+  return { doc: { v: 1, sheets }, fields: out, title: title ? title.slice(0, 60) : null, docType };
+}
+
+// 결재 문서: 머리글 아래 빈 줄이 2줄 이상·2열 이상인 표 안에 AI가 값 칸을 3개 이상 찍었으면(예: 품목 표) 표 칸 하나로 바꾼다(9-33e7)
+export function autoTables(sheets: Sheet[], fields: Field[]): Field[] {
+  let list = [...fields];
+  const sorted = [...fields].sort((a, b) => a.s - b.s || a.r - b.r || a.c - b.c);
+  for (const f of sorted) {
+    if (!list.includes(f) || f.b.k === "data") continue;
+    const sh = sheets[f.s];
+    const t = sh ? detectTable(sh, f.r, f.c) : null;
+    if (!t || t.rows < 2 || t.cols.length < 2) continue;
+    const inside = new Set(tableCells(f.r, t.cols, t.rows).map((x) => `${x.r}:${x.c}`));
+    const hits = list.filter((x) => x.s === f.s && inside.has(`${x.r}:${x.c}`) && x.b.k !== "data");
+    if (hits.length < 3) continue;
+    const head = sh.cells[f.r - 1]?.map((x) => x.t.trim()).filter(Boolean).slice(0, 2).join("·") || "표";
+    const table: Field = { ...f, label: (f.label || head).slice(0, MAX_LABEL), b: { k: "input", type: "table", required: true, cols: t.cols, rows: t.rows } };
+    list = list.filter((x) => !hits.includes(x)).concat(table);
+  }
+  return list;
 }
 
 // ── 레이아웃을 고칠 때 칸 위치 따라가기 ───────────────────────────────────
@@ -239,6 +261,14 @@ export function applyDrops(doc: DocModel, fields: Field[]): { doc: DocModel; fie
   return { doc: { ...doc, sheets }, fields: fields.filter((f) => f.b.k !== "drop") };
 }
 
+// 표 칸(9-33e7): 열 1~8개(같은 쪽 안 · 겹치지 않음), 양식 줄 1~50줄(시트 안)
+function validTable(cols: unknown, rows: unknown, r: number, sh: Sheet): boolean {
+  if (!Array.isArray(cols) || cols.length < 1 || cols.length > MAX_TABLE_COLS) return false;
+  if (!Number.isInteger(rows) || (rows as number) < 1 || (rows as number) > MAX_TABLE_ROWS || r + (rows as number) > sh.cells.length) return false;
+  const seen = new Set<number>();
+  return cols.every((k: TableCol) => k && typeof k.label === "string" && k.label.trim().length > 0 && k.label.length <= 20 && Number.isInteger(k.c) && k.c >= 0 && k.c < sh.cols.length && !seen.has(k.c) && seen.add(k.c) && k.type in TABLE_COL_LABEL);
+}
+
 // 서버 저장 전 모양 확인
 export function validFields(x: unknown, doc: DocModel, kind: FormKind | null): x is Field[] {
   if (!Array.isArray(x) || x.length > MAX_FIELDS) return false;
@@ -267,7 +297,8 @@ export function validFields(x: unknown, doc: DocModel, kind: FormKind | null): x
           typeof b.required === "boolean" &&
           (b.options === undefined || (Array.isArray(b.options) && b.options.length <= MAX_OPTIONS && b.options.every((o) => typeof o === "string" && o.trim().length > 0 && o.length <= 40))) &&
           (b.type !== "choice" || (b.options?.length ?? 0) >= 2) &&
-          (b.std === undefined || (typeof b.std === "string" && /^[a-z_]{1,20}$/.test(b.std)))
+          (b.std === undefined || (typeof b.std === "string" && /^[a-z_]{1,20}$/.test(b.std))) &&
+          (b.type !== "table" || validTable(b.cols, b.rows, f.r, sh))
         );
       default:
         return false;

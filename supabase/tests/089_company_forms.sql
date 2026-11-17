@@ -96,19 +96,19 @@ begin
   v := public.company_form_publish('f8900000-0000-0000-0000-000000000001');
   if (v ->> 'version')::int <> 1 then raise exception 'FAIL [publish %]', v; end if;
   v := public.company_form_slots();
-  if (v ->> 'used')::int <> 1 then raise exception 'FAIL [used %]', v; end if;
+  -- D-289(migration 165): 칸은 결재 문서만 센다 — 휴가신청서(근태 양식)는 0
+  if (v ->> 'used')::int <> 0 then raise exception 'FAIL [used %]', v; end if;
 end;
 $$;
 reset role;
 
--- ③ 칸이 다 참: 일반 결재 문서 새 양식은 SLOTS_FULL, 휴가신청서는 기존 양식의 새 버전으로(무료)
+-- ③ 휴가신청서는 기존 양식의 새 버전으로(무료). 결재 문서 칸이 다 찬 경우는 101에서
 select public._t_as89('a8900000-0000-0000-0000-000000000001');
 set local role authenticated;
 do $$
 declare v jsonb; v_g uuid;
 begin
   perform public.company_form_start('f8900000-0000-0000-0000-000000000002', null, '품의서', 'application/pdf', 'c8900000-0000-0000-0000-00000000000a/f8900000-0000-0000-0000-000000000002.pdf', 'b.pdf');
-  perform public._t_raises89($q$select public.company_form_read_begin('f8900000-0000-0000-0000-000000000002', 'general')$q$, 'SLOTS_FULL', 'slots full');
   perform public._t_raises89($q$select public.company_form_read_begin('f8900000-0000-0000-0000-000000000002', 'nope')$q$, 'INVALID_KIND', 'kind');
   v := public.company_form_read_begin('f8900000-0000-0000-0000-000000000002', 'leave');
   select group_id into v_g from public.company_forms where id = 'f8900000-0000-0000-0000-000000000002';
@@ -126,7 +126,7 @@ begin
   v := public.company_form_publish('f8900000-0000-0000-0000-000000000002');
   if (v ->> 'version')::int <> 2 then raise exception 'FAIL [v2 %]', v; end if;
   if (select status from public.company_forms where id = 'f8900000-0000-0000-0000-000000000001') <> 'old' then raise exception 'FAIL [v1 old]'; end if;
-  if (public.company_form_slots() ->> 'used')::int <> 1 then raise exception 'FAIL [still 1]'; end if;
+  if (public.company_form_slots() ->> 'used')::int <> 0 then raise exception 'FAIL [still 0]'; end if;
   -- 고치기: 초안 복사(같은 초안 다시), 등록하면 v3
   v_g := public.company_form_edit('f8900000-0000-0000-0000-000000000001');
   if v_g <> public.company_form_edit('f8900000-0000-0000-0000-000000000001') then raise exception 'FAIL [edit reuses draft]'; end if;
@@ -193,11 +193,11 @@ begin
   v := public.company_form_read_begin('f8900000-0000-0000-0000-000000000003', 'general');
   perform public.company_form_read_done('f8900000-0000-0000-0000-000000000003', '품의서', public._t_sheets89(), '[]');
   perform public.company_form_publish('f8900000-0000-0000-0000-000000000003');
-  if (public.company_form_slots() ->> 'used')::int <> 2 then raise exception 'FAIL [used 2]'; end if;
+  if (public.company_form_slots() ->> 'used')::int <> 1 then raise exception 'FAIL [used 1]'; end if;
   -- 등록된 양식 지우기: 모든 버전 deleted, 칸 빔
   p := public.company_form_delete('f8900000-0000-0000-0000-000000000003');
   if p is not null then raise exception 'FAIL [active delete returns path]'; end if;
-  if (public.company_form_slots() ->> 'used')::int <> 1 then raise exception 'FAIL [freed]'; end if;
+  if (public.company_form_slots() ->> 'used')::int <> 0 then raise exception 'FAIL [freed]'; end if;
   -- 초안 지우기: 원본 경로(다른 버전이 안 쓰면)
   perform public.company_form_start('f8900000-0000-0000-0000-000000000004', null, 'x', 'image/png', 'c8900000-0000-0000-0000-00000000000a/f8900000-0000-0000-0000-000000000004.png', 'd.png');
   p := public.company_form_delete('f8900000-0000-0000-0000-000000000004');

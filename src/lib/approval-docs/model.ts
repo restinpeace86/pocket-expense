@@ -42,7 +42,7 @@ export type DocRow = {
   amount: number | null; // 표준 칸 금액(있을 때 목록에 보임)
   progress: string; // 목록 한 줄: "팀장 검토 중" · "관리자 승인 대기" …
 };
-export type Payload = Record<string, string | string[]>;
+export type Payload = Record<string, string | string[] | string[][]>;
 
 // 입력 칸(양식 위→아래, 왼→오)
 export function inputFields(fields: Field[]): Field[] {
@@ -52,9 +52,11 @@ export function inputFields(fields: Field[]): Field[] {
 const dot = (d: string) => d.replaceAll("-", ".");
 export const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 // 저장 값 → 양식·화면에 쓰는 글: 금액 2200000 → 2,200,000원, 기간 a~b → 2026.11.20 ~ 2026.12.15(26일), 시각 a~b → 09:00 ~ 11:00
-export function displayValue(type: InputType, raw: string | string[] | undefined): string {
+export function displayValue(type: InputType, raw: string | string[] | string[][] | undefined): string {
   if (raw === undefined || raw === null) return "";
-  if (Array.isArray(raw)) return raw.join(", ");
+  if (type === "table") return Array.isArray(raw) ? `${raw.length}줄` : "";
+  if (Array.isArray(raw)) return raw.map((x) => (Array.isArray(x) ? x.join(" ") : x)).join(", ");
+  if (type === "check") return raw === "Y" ? "V" : "";
   const v = raw.trim();
   if (!v) return "";
   switch (type) {
@@ -81,9 +83,10 @@ export function displayValue(type: InputType, raw: string | string[] | undefined
 }
 
 // 비었나(필수 확인 — DB의 approval_doc_missing과 같은 기준)
-export function isEmpty(v: string | string[] | undefined): boolean {
+export function isEmpty(v: string | string[] | string[][] | undefined): boolean {
   if (v === undefined) return true;
   if (Array.isArray(v)) return v.length === 0;
+  if (v === "N") return true; // 체크 안 함
   if (v.includes("~")) return v.split("~").some((x) => !x.trim()); // 기간·시각: 둘 다 있어야
   return !v.trim();
 }

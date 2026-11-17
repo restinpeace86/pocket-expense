@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { planCompareRows, planCore, PRICING_RULES } from "@/lib/billing/plan-benefits";
+import { CUSTOM_SCREEN_NOTE, planCompareRows, planCore, PRICING_RULES } from "@/lib/billing/plan-benefits";
 import { FEATURE_GROUPS } from "@/lib/landing/features";
 import { createPublicClient } from "@/lib/supabase/public";
 import { PlanChoice, PlanStorage, PlanSummary, StorageAddonPicker } from "@/components/billing/plan-storage";
@@ -155,6 +155,10 @@ export async function Pricing() {
           ))}
         </div>
       </div>
+      {/* 유료 맞춤 지원 안내(D-289, 9-33f) — 작게 */}
+      <p className="mx-auto mt-4 max-w-4xl break-keep px-1 text-[13px] text-zinc-600" data-custom-note>
+        {CUSTOM_SCREEN_NOTE}
+      </p>
       {/* 요금 기준(D-199) — 접어 둠(D-273) */}
       <details className="group mx-auto mt-4 max-w-4xl px-1" data-pricing-rules>
         <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-1 text-sm font-semibold text-zinc-700 [&::-webkit-details-marker]:hidden">

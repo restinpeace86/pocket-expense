@@ -10,6 +10,7 @@ import { docTypeLabel } from "@/lib/company-forms/doc-types";
 import { draftDaysLeft, type DocModel } from "@/lib/doc-convert/model";
 import { AddFormDialog, type AddFormSource } from "./add-form-dialog";
 import { SheetView } from "./sheet-view";
+import { CustomScreenCard } from "./custom-screen-card";
 import { guarded } from "@/lib/action-guard";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
@@ -88,18 +89,21 @@ export function CompanyFormsView({
         </button>
       </div>
 
-      <section className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3.5" aria-label="양식 칸" data-slot-bar>
+      {/* D-289(9-33f): 칸은 결재 문서만 센다(프로 3·비즈니스 5). 근태 양식은 종류마다 하나, 칸 수와 상관없음 */}
+      <section className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3.5" aria-label="결재 문서 칸" data-slot-bar>
         <p className="text-sm">
           <b>
-            양식 칸 {used} / {limit}장
+            결재 문서 {used} / {limit}개
           </b>{" "}
           사용 중
         </p>
         <div className="h-2 min-w-24 flex-1 overflow-hidden rounded-full bg-zinc-200" aria-hidden>
           <div className="h-full rounded-full bg-brand-600" style={{ width: `${pct}%` }} />
         </div>
-        {/* D-271: 양식 추가 1장 2만 원 폐기 — 더 필요하면 상위 플랜(비즈니스 무제한) */}
-        <p className="text-[13px] text-zinc-600">{limit >= 1000 ? "AI 양식 변환 무제한 플랜이에요" : "더 필요하면 비즈니스 플랜(무제한)으로 바꿀 수 있어요"}</p>
+        <p className="w-full text-[13px] text-zinc-600">
+          근태 양식(휴가·근태 정정·휴일근무 신청서)은 칸 수에 안 세요.{" "}
+          {limit <= 0 ? "지금 플랜은 지출결의서만 써요. 회사 양식은 프로 플랜부터예요." : used >= limit ? "결재 문서를 더 쓰려면 비즈니스 플랜(5개)으로 바꾸거나 [의견 보내기]로 문의해 주세요." : null}
+        </p>
       </section>
 
       {forms.length === 0 && drafts.length === 0 && (
@@ -157,9 +161,11 @@ export function CompanyFormsView({
           })}
         </ul>
       )}
-      {forms.length < limit && (
-        <p className="rounded-2xl border border-dashed border-zinc-300 px-4 py-4 text-[14px] text-zinc-600">빈 칸 {limit - forms.length}장 — [양식 추가]로 등록할 수 있어요</p>
+      {used < limit && (
+        <p className="rounded-2xl border border-dashed border-zinc-300 px-4 py-4 text-[14px] text-zinc-600">결재 문서 빈 칸 {limit - used}개 — [양식 추가]로 품의서·구매요청서 등을 등록할 수 있어요</p>
       )}
+
+      <CustomScreenCard forms={forms.filter((f) => f.kind === "general").map((f) => ({ id: f.id, name: f.name }))} />
 
       {drafts.length > 0 && (
         <section className="flex flex-col gap-2" aria-label="등록 대기">

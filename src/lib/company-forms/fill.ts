@@ -1,5 +1,6 @@
 import type { DocModel } from "@/lib/doc-convert/model";
 import type { DataKey, Field } from "./model";
+import { fillTable } from "./table";
 
 // 휴가신청서를 회사 양식으로 채우기(8-104 C, spec/features/company-forms.md §C)
 // 칸 바인딩대로: 우리 데이터 → 아래 값, 직원 입력 → 신청 때 낸 값(custom_payload), 고정 값 → 그 글, 비워 두기 → 빈칸(수기)
@@ -18,6 +19,8 @@ export type LeaveDocData = {
   custom: Record<string, string>;
   // [결재 문서](9-33e): 결재란 여러 칸 — 0번 = 쓴 사람, 다음부터 검토자 → 최종 승인자(양식 결재란 수에 맞춰 줄인 것). 있으면 approval.1~5를 이걸로 채움
   signers?: SignCell[];
+  // 표 칸(9-33e7): 칸 key → 줄들(열 순서). 양식 줄보다 많으면 줄을 더 넣는다
+  tables?: Record<string, string[][]>;
 };
 export type SignCell = Signer | "pending" | "rejected";
 const signCell = (s: SignCell | undefined) => (s === undefined ? "" : s === "pending" ? "결재 전" : s === "rejected" ? "반려" : signer(s));
@@ -117,9 +120,16 @@ export function fillForm(doc: DocModel, fields: Field[], d: LeaveDocData): DocMo
     if (!cell) continue;
     const b = f.b;
     if (b.k === "data") cell.t = dataValue(b.src, d);
+    else if (b.k === "input" && b.type === "table") continue; // 표는 아래에서(줄이 늘면 아래 칸이 밀리므로 마지막에)
     else if (b.k === "input") cell.t = d.custom[f.key] ?? "";
     else if (b.k === "fixed") cell.t = b.value;
     else if (b.k === "blank") cell.t = "";
+  }
+  // 표: 아래쪽 표부터 채워야 위쪽 표의 위치가 안 바뀐다
+  const tables = fields.filter((f) => f.b.k === "input" && f.b.type === "table").sort((a, b) => a.s - b.s || b.r - a.r);
+  for (const f of tables) {
+    if (f.b.k !== "input" || !f.b.cols?.length || !f.b.rows || !out.sheets[f.s]) continue;
+    out.sheets[f.s] = fillTable(out.sheets[f.s], f.r, f.b.cols, f.b.rows, d.tables?.[f.key] ?? []);
   }
   return out;
 }
