@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, FileUp, Loader2, Sparkles, X } from "lucide-react";
+import { uploadFailText } from "@/lib/storage/room";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -82,7 +83,7 @@ export function AddFormDialog({
         const f = file!;
         const id = crypto.randomUUID();
         const { error: up } = await supabase.storage.from("doc-files").upload(`${companyId}/${me}/${id}.${EXT[f.type]}`, f, { contentType: f.type });
-        if (up) r = { ok: false, error: "파일을 올리지 못했어요. 잠시 후 다시 시도해 주세요." };
+        if (up) r = { ok: false, error: await uploadFailText("파일을 올리지 못했어요. 잠시 후 다시 시도해 주세요.") };
         else r = await startFormAction({ upload: { id, name: f.name, mime: f.type } }, g, kind);
       }
       if (r.ok) {

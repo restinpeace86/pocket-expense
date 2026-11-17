@@ -1,6 +1,7 @@
 "use client";
 
 import { LeaveDocButtons } from "@/components/company-forms/leave-doc-buttons";
+import { uploadFailText } from "@/lib/storage/room";
 import { CheckCircle2, ChevronLeft, ChevronRight, FileText, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -191,7 +192,7 @@ function LeaveSheet({ leave: l, h, today, base, companyId, memberId, onClose }: 
       if (!files.length) return setError("증빙 파일을 골라 주세요.");
       if (!consent) return setError("민감정보 수집·이용에 동의해 주세요.");
       const failed = await uploadProofs(companyId, memberId, l.id, files, consent);
-      if (failed.length) setError(`올리지 못한 파일: ${failed.join(", ")}`);
+      if (failed.length) setError(await uploadFailText(`올리지 못한 파일: ${failed.join(", ")}`));
       setFiles([]);
       router.refresh();
     });

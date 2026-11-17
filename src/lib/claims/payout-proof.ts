@@ -1,6 +1,8 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { STORAGE_FULL_MESSAGE } from "@/lib/storage/room-message";
+import { storageFullFor } from "@/lib/storage/room-server";
 import { getMembership } from "@/lib/auth/session";
 import { isAdminRole } from "@/lib/auth/paths";
 import { messageForDbError } from "@/lib/errors";
@@ -29,6 +31,7 @@ export async function uploadPayoutProofAction(formData: FormData): Promise<{ ok:
   if (!ext) return { ok: false, error: "사진(jpg·png) 또는 PDF만 올릴 수 있어요." };
   const storage = createAdminClient();
   if (!storage) return { ok: false, error: "지금은 파일을 저장할 수 없어요. 잠시 뒤 다시 시도해 주세요." };
+  if (await storageFullFor(m.company_id)) return { ok: false, error: STORAGE_FULL_MESSAGE }; // D-286
   const path = `${m.company_id}/${crypto.randomUUID()}.${ext}`;
   const { error: upError } = await storage.storage.from(BUCKET).upload(path, new Uint8Array(await file.arrayBuffer()), { contentType: file.type });
   if (upError) return { ok: false, error: "파일을 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요." };

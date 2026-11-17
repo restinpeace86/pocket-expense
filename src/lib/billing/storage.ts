@@ -10,7 +10,8 @@ export type StorageStatus = {
   chat_limit: number;
   vault_used: number;
   vault_limit: number;
-  total_used?: number; // D-271 회사 공용(채팅 + 보관함)
+  total_used?: number; // D-271 회사 공용 → D-286 회사의 모든 파일(채팅 + 보관함 + 아래 docs)
+  docs?: { receipts: number; approvals: number; forms: number; tax: number }; // D-286 영수증 · 결재·증빙 · 서류·양식 · 세무
   total_limit?: number;
 };
 

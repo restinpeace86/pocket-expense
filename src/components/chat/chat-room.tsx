@@ -1,6 +1,7 @@
 "use client";
 
 import { AlarmClock, Archive, ArrowDown, ArrowLeft, Bell, CheckCheck, ChevronLeft, Copy, Download, FileSpreadsheet, FileStack, FileText, ImageOff, ImagePlus, ListChecks, Loader2, Lock, LogOut, MapPin, Menu, MessagesSquare, Paperclip, Pencil, RotateCw, SendHorizontal, Trash2, UserPlus, X } from "lucide-react";
+import { storageFullBefore } from "@/lib/storage/room";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -345,7 +346,16 @@ export function ChatRoom({ roomId, thread }: { roomId: string; thread?: ThreadMo
       const dir = `${membership.company_id}/${roomId}/${msg.id}`;
       const path = `${dir}.${f.ext}`;
       const up = await supabase.storage.from(BUCKET).upload(path, f.file, { upsert: true, cacheControl: "31536000", contentType: f.file.type || "application/octet-stream" });
-      if (up.error) return setMessages((m) => mergeMessages(m, [{ ...msg, pending: "failed" }]));
+      if (up.error) {
+        // 회사 저장 공간이 꽉 차 올리기가 막혔으면(D-286) 메시지를 빼고 안내, 아니면 '실패'로 두고 다시 보내기
+        const full = await storageFullBefore();
+        if (full) {
+          files.current.delete(msg.id);
+          setMessages((m) => m.filter((x) => x.id !== msg.id));
+          return setNotice(full);
+        }
+        return setMessages((m) => mergeMessages(m, [{ ...msg, pending: "failed" }]));
+      }
       let thumbPath: string | undefined;
       if (f.thumb) {
         thumbPath = `${dir}_t.${f.thumbExt ?? "jpg"}`;

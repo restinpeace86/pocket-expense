@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, Paperclip, Trash2, X } from "lucide-react";
+import { uploadFailText } from "@/lib/storage/room";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { addDocFileAction, deleteDocAction, removeDocFileAction, saveDocAction, submitDocAction } from "@/app/workspace/[id]/employee/docs/actions";
@@ -117,7 +118,7 @@ export function DocEditor({
         const p = await processProof(file); // 사진은 줄이고 위치정보 지움, PDF는 그대로(10MB까지)
         const path = proofPath(companyId, memberId, doc.id, p.ext);
         const up = await supabase.storage.from("approval-files").upload(path, p.blob, { contentType: p.mime, upsert: false });
-        if (up.error) throw new Error("파일을 올리지 못했어요. 다시 해 주세요.");
+        if (up.error) throw new Error(await uploadFailText("파일을 올리지 못했어요. 다시 해 주세요."));
         const r = await addDocFileAction(doc.id, { path, name: p.name, mime: p.mime, size: p.after });
         if (!r.ok) throw new Error(r.error);
         left--;

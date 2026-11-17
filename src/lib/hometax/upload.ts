@@ -1,4 +1,6 @@
 import "server-only";
+import { STORAGE_FULL_MESSAGE } from "@/lib/storage/room-message";
+import { storageFullFor } from "@/lib/storage/room-server";
 import { messageForDbError } from "@/lib/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MONTH } from "@/lib/tax/closing";
@@ -33,6 +35,7 @@ export async function prepareHometaxUpload(companyId: string, formData: FormData
   if (!table) return { error: "파일을 읽지 못했어요. 홈택스에서 내려받은 그대로인지, 암호가 걸려 있지 않은지 확인해 주세요." };
   const storage = createAdminClient();
   if (!storage) return { error: "지금은 파일을 저장할 수 없어요. 잠시 뒤 다시 시도해 주세요." };
+  if (await storageFullFor(companyId)) return { error: STORAGE_FULL_MESSAGE }; // D-286
   const path = `${companyId}/${crypto.randomUUID()}.${ext}`;
   const { error } = await storage.storage.from(HOMETAX_BUCKET).upload(path, bytes, { contentType: file.type || "application/octet-stream" });
   if (error) return { error: "파일을 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요." };

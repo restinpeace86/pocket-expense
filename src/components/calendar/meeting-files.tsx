@@ -1,6 +1,7 @@
 "use client";
 
 import { FileText, Loader2, Paperclip, X } from "lucide-react";
+import { uploadFailText } from "@/lib/storage/room";
 import { useRef, useState } from "react";
 import { bytesLabel } from "@/lib/chat/format";
 import type { MeetingFile } from "@/lib/calendar/calendar";
@@ -37,7 +38,7 @@ export async function uploadMeetingFiles(supabase: Supa, companyId: string, even
     const path = `${companyId}/${eventId}/${crypto.randomUUID()}.${extOf(f.name)}`;
     const up = await supabase.storage.from("meeting-files").upload(path, f, { contentType: f.type || undefined, upsert: false });
     if (up.error) {
-      errors.push(`${f.name}: 올리지 못했어요.`);
+      errors.push(`${f.name}: ${await uploadFailText("올리지 못했어요.")}`);
       continue;
     }
     const { error } = await supabase.rpc("calendar_event_file_add", { p_event: eventId, p_path: path, p_name: f.name, p_mime: f.type || null } as never);

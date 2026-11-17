@@ -1,6 +1,8 @@
 "use server";
 
 import { ALL_CATEGORIES, type ExpenseCategory } from "@/lib/expense/categories";
+import { STORAGE_FULL_MESSAGE } from "@/lib/storage/room-message";
+import { storageFull } from "@/lib/storage/room-server";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { getMembership } from "@/lib/auth/session";
@@ -198,6 +200,7 @@ export async function startReceiptUploadAction(
   const m = await approvedMember();
   if (!m) return fail("NOT_A_MEMBER");
   if (!isUuid(claimId)) return fail("NOT_FOUND");
+  if (await storageFull()) return { ok: false, error: STORAGE_FULL_MESSAGE }; // D-286: 꽉 차면 빈 항목을 만들기 전에 안내
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_receipt_item", { p_claim_id: claimId, p_is_pdf: file.isPdf, p_thumb_ext: file.thumbExt });
   if (error || !data) return { ok: false, error: messageForDbError(error) };
@@ -507,6 +510,7 @@ export async function attachItemEvidenceAction(itemId: string, file: { isPdf: bo
   if (!m) return fail("NOT_A_MEMBER");
   if (!isUuid(itemId)) return fail("NOT_FOUND");
   const supabase = await createClient();
+  if (await storageFull()) return { ok: false, error: STORAGE_FULL_MESSAGE };
   const { data, error } = await supabase.rpc("attach_item_evidence", { p_item_id: itemId, p_is_pdf: file.isPdf, p_thumb_ext: file.thumbExt });
   if (error || !data) return { ok: false, error: messageForDbError(error ?? { message: "NOT_FOUND" }) };
   const d = data as { receipt_path: string; thumb_path: string | null };
@@ -539,6 +543,7 @@ export async function attachOdometerPhotoAction(itemId: string, which: "start" |
   if (!m) return fail("NOT_A_MEMBER");
   if (!isUuid(itemId) || (which !== "start" && which !== "end")) return fail("NOT_FOUND");
   const supabase = await createClient();
+  if (await storageFull()) return { ok: false, error: STORAGE_FULL_MESSAGE };
   const { data, error } = await supabase.rpc("attach_odometer_photo", { p_item_id: itemId, p_which: which });
   if (error || !data) return { ok: false, error: messageForDbError(error ?? { message: "NOT_FOUND" }) };
   return { ok: true, path: data };

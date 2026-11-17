@@ -1,4 +1,6 @@
 import "server-only";
+import { STORAGE_FULL_MESSAGE } from "@/lib/storage/room-message";
+import { storageFullFor } from "@/lib/storage/room-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { FORMAT_BUCKET, FORMAT_EXT, FORMAT_MAX_BYTES, FORMAT_PROGRAM_LABEL, FORMAT_PROGRAMS, type FormatProgram, type FormatRequest } from "./programs";
@@ -36,6 +38,7 @@ export async function prepareFormatUpload(companyId: string, formData: FormData)
   if (!ext) return { error: "엑셀(.xlsx·.xls)이나 .csv 파일만 올릴 수 있어요." };
   const storage = createAdminClient();
   if (!storage) return { error: "지금은 파일을 저장할 수 없어요. 잠시 뒤 다시 시도해 주세요." };
+  if (await storageFullFor(companyId)) return { error: STORAGE_FULL_MESSAGE }; // D-286
   const path = `${companyId}/${crypto.randomUUID()}.${ext}`;
   const { error } = await storage.storage.from(FORMAT_BUCKET).upload(path, new Uint8Array(await file.arrayBuffer()), { contentType: MIME[ext] });
   if (error) return { error: "파일을 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요." };

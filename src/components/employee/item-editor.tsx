@@ -1,6 +1,7 @@
 "use client";
 
 import { deadlineDate, isOverdue, mdLabel, monthLabel, type DeadlinePolicy } from "@/lib/expense/deadline";
+import { uploadFailText } from "@/lib/storage/room";
 import { todayKst } from "@/lib/dates";
 import { formatMaskedCard, matchCard } from "@/lib/cards/match";
 import { AlertTriangle, FileText, ImageOff, Loader2, Minus, Plus, RefreshCw, Sparkles, Upload, X } from "lucide-react";
@@ -318,7 +319,7 @@ export function ItemInlineForm({
       const up = await bucket.upload(r.receiptPath, processed.original, { contentType: processed.kind === "pdf" ? "application/pdf" : "image/jpeg", upsert: true });
       if (up.error) {
         await detachItemEvidenceAction(item.id, { quiet: true }).catch(() => undefined);
-        return onError("자료를 올리지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+        return onError(await uploadFailText("자료를 올리지 못했어요. 잠시 뒤 다시 시도해 주세요."));
       }
       if (processed.kind === "image" && r.thumbPath) {
         await bucket.upload(r.thumbPath, processed.thumb, { contentType: processed.thumbExt === "webp" ? "image/webp" : "image/jpeg", upsert: true }).catch(() => undefined);

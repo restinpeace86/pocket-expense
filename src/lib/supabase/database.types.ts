@@ -6346,6 +6346,8 @@ export type Database = {
       storage_addon_request: { Args: { p_gb: number }; Returns: string }
       storage_addon_status: { Args: never; Returns: Json }
       storage_addon_withdraw: { Args: never; Returns: undefined }
+      storage_is_full: { Args: never; Returns: boolean }
+      storage_is_full_for: { Args: { p_company: string }; Returns: boolean }
       storage_total_bytes: { Args: never; Returns: number }
       submit_claim: {
         Args: { p_claim_id: string }

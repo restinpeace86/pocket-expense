@@ -48,9 +48,14 @@ export function StorageStatusCard({ status }: { status: StorageStatus }) {
             </span>
           </div>
           <UsageBar used={status.total_used ?? status.chat_used + status.vault_used} limit={status.total_limit} />
-          <p className="mt-1 text-xs tabular-nums text-zinc-500">
-            채팅 사진·파일 {bytesLabel(status.chat_used)} · 파일 보관함 {bytesLabel(status.vault_used)}
+          <p className="mt-1 text-xs tabular-nums text-zinc-500" data-storage-parts>
+            영수증 {bytesLabel(status.docs?.receipts ?? 0)} · 결재·증빙 {bytesLabel(status.docs?.approvals ?? 0)} · 서류·양식 {bytesLabel(status.docs?.forms ?? 0)} · 세무 자료 {bytesLabel(status.docs?.tax ?? 0)} · 채팅 사진·파일 {bytesLabel(status.chat_used)} · 파일 보관함 {bytesLabel(status.vault_used)}
           </p>
+          {(status.total_used ?? 0) >= status.total_limit && (
+            <p role="alert" className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-800" data-storage-full>
+              저장 공간이 꽉 차서 지금은 영수증·증빙·첨부·채팅 파일을 올릴 수 없어요. 아래에서 공간을 추가하거나 파일 보관함·채팅 파일을 정리해 주세요.
+            </p>
+          )}
         </div>
       ) : (
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -71,7 +76,7 @@ export function StorageStatusCard({ status }: { status: StorageStatus }) {
       </div>
       )}
       <p className="mt-2 break-keep text-xs text-zinc-500">
-        채팅 사진·파일과 파일 보관함(휴지통 포함)이 회사 저장 공간 하나를 함께 써요. 모자라면 아래 [저장 공간 추가]에서 골라 신청해 주세요.
+        영수증·휴가 증빙·결재 문서 첨부·서류·양식·세무 자료·채팅 사진·파일 보관함(휴지통 포함)까지 회사의 모든 파일이 저장 공간 하나를 함께 써요. 꽉 차면 모든 올리기가 멈추니, 모자라면 아래 [저장 공간 추가]에서 골라 신청해 주세요.
         {status.extra_gb > 0 && " 결제가 열릴 때까지는 무료로 쓰고, 열리면 요금제와 함께 매월 결제돼요(한 달 전에 알려 드려요)."}
       </p>
       {p && (

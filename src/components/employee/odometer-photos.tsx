@@ -1,6 +1,7 @@
 "use client";
 
 import { Camera, Loader2, Trash2 } from "lucide-react";
+import { uploadFailText } from "@/lib/storage/room";
 import { useRef, useState, useTransition } from "react";
 import { attachOdometerPhotoAction, detachOdometerPhotoAction, evidenceUploadedAction } from "@/app/workspace/[id]/employee/claims/actions";
 import type { EditorItem } from "@/lib/employee/editor-types";
@@ -67,7 +68,7 @@ function Slot({
       const up = await createClient().storage.from("receipts").upload(r.path, processed.original, { contentType: "image/jpeg", upsert: true });
       if (up.error) {
         await detachOdometerPhotoAction(itemId, which, { quiet: true }).catch(() => undefined);
-        return onError("사진을 올리지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+        return onError(await uploadFailText("사진을 올리지 못했어요. 잠시 뒤 다시 시도해 주세요."));
       }
       setPreview(URL.createObjectURL(processed.original));
       await evidenceUploadedAction().catch(() => undefined);

@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, X } from "lucide-react";
+import { storageFullBefore } from "@/lib/storage/room";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { createLeaveAction as createLeaveActionRaw } from "@/app/workspace/[id]/employee/vacation/actions";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
@@ -81,6 +82,10 @@ export function VacationForm({
       if (files.length && !consent) return setError("증빙을 올리려면 민감정보 수집·이용에 동의해 주세요.");
       const miss = custom ? missingRequired(custom.fields, values) : null;
       if (miss) return setError(`회사 추가 항목 [${miss.label}]을(를) 채워 주세요.`);
+      if (files.length) {
+        const full = await storageFullBefore(); // D-286: 꽉 차면 증빙을 못 올리니 신청 전에 안내
+        if (full) return setError(full);
+      }
       const r = await createLeaveAction({ type_id: typeId, unit: u, start_date: start, end_date: u === "hour" ? start : end || start, start_time: u === "hour" ? startTime : null, hours: u === "hour" ? hours : null, reason: reason.trim() || null, ...(custom ? { custom: values } : {}) });
       if (!r.ok) return setError(r.error);
       let flash = r.selfApproved ? "self" : "pending";

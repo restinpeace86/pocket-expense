@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp, Camera, Check, FileUp, Loader2, Plus, RotateCcw, Sparkles, X } from "lucide-react";
+import { uploadFailText } from "@/lib/storage/room";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { analyzeFormAction, clearFormLayoutAction, saveFormLayoutAction } from "@/app/workspace/[id]/admin/form-template/actions";
 import { ClaimDocument } from "@/components/forms/claim-document";
@@ -248,7 +249,7 @@ export function FormTemplateView(p: FormTemplateViewProps) {
       const pdf = processed.kind === "pdf";
       const path = `${p.companyId}/${crypto.randomUUID()}.${pdf ? "pdf" : "jpg"}`;
       const up = await createClient().storage.from("form-templates").upload(path, processed.original, { contentType: pdf ? "application/pdf" : "image/jpeg" });
-      if (up.error) return setMessage({ kind: "error", text: "양식 파일을 올리지 못했어요. 잠시 후 다시 시도해 주세요." });
+      if (up.error) return setMessage({ kind: "error", text: await uploadFailText("양식 파일을 올리지 못했어요. 잠시 후 다시 시도해 주세요.") });
       setSource({ path, localUrl: pdf ? null : URL.createObjectURL(processed.original) });
       const r = await analyzeFormAction(path);
       if (!r.ok) return setMessage({ kind: "error", text: r.error });
