@@ -16,6 +16,8 @@ export const BRAND = {
   accent: "온",
   // 슬로건(D-274): 큰 한 줄 + 뒷받침
   slogan: "진짜 일에만 집중하세요.",
+  // 카카오톡 채널 1:1 채팅(D-292, 채널 "다모온" · 검색용 아이디 damo-on): 랜딩 [1:1 문의] · 관리자 피드백 버튼. Vercel NEXT_PUBLIC_KAKAO_CHANNEL_CHAT_URL이 있으면 그 값이 먼저
+  kakaoChat: "https://pf.kakao.com/_xllRvX/chat",
   sloganSub: "잡일은 덜고, 함께 일하는 환경은 더했어요.",
   // 이름을 소리 내 읽을 때 끝 글자에 받침이 있나("다모온" → 있음). 이름을 바꾸면 같이 정한다 — 을/를·이/가·은/는·으로/로가 따라 바뀜
   batchim: true,

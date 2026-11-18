@@ -14,3 +14,10 @@ describe("feedbackUrl", () => {
     expect(feedbackUrl("https://pf.kakao.com/_AbC12")).toBeNull();
   });
 });
+
+describe("다모온 채널 기본 주소(D-292)", () => {
+  it("brand의 채팅 주소가 형식에 맞는다", async () => {
+    const { BRAND } = await import("./brand");
+    expect(feedbackUrl(BRAND.kakaoChat)).toBe(BRAND.kakaoChat);
+  });
+});

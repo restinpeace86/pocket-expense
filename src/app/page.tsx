@@ -14,6 +14,7 @@ import { ACCENT, BRAND_BUTTON, type Accent } from "@/components/landing/accent";
 import { WhyArtwork, type WhyArt } from "@/components/landing/why-art";
 import { SectionNav } from "@/components/landing/section-nav";
 import { MobileStartBar } from "@/components/landing/mobile-start-bar";
+import { KakaoFab } from "@/components/landing/kakao-fab";
 import { FEATURE_GROUPS } from "@/lib/landing/features";
 
 // 랜딩 페이지 (spec/screens/landing-page.md §0, D-255 §C 개편). 정적 화면 — 세션을 읽지 않는다.
@@ -279,6 +280,7 @@ export default function LandingPage() {
         <p>© 다모은랩 · {BRAND.name}</p>
       </footer>
       <MobileStartBar href={START_HREF} />
+      {ADMIN_FEEDBACK_URL && <KakaoFab href={ADMIN_FEEDBACK_URL} />}
     </div>
   );
 }
