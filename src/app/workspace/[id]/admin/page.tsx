@@ -106,6 +106,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
       creditsLeft={company.receipt_credits_granted - company.receipt_credits_used}
       creditsGranted={company.receipt_credits_granted}
       trialEndsOn={credit?.trialEndsOn ?? null}
+      billingExempt={credit?.exempt ?? false}
       policyToConfirm={company.policy_confirmed_at ? null : describePolicy(company)}
       basePath={`/workspace/${membership.company_id}/admin`}
       titlesManagedBy={officeInfo?.registered ? (officeInfo.registered_name ?? "세무사무소") : null}

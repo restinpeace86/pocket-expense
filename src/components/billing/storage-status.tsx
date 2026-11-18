@@ -15,7 +15,8 @@ const withdrawStorageAction = guarded(withdrawStorageActionRaw);
 
 // 관리자 요금제 › 저장 공간(8-103, D-262): 지금 쓰는 양 · 추가 공간 · 확인 중인 신청([신청 취소]) · 지난 결과
 // 신청·바꾸기·해지는 아래 요금제 카드의 [저장 공간 추가] 체크에서
-export function StorageStatusCard({ status }: { status: StorageStatus }) {
+// exempt = 운영사 결제 면제(D-294): 추가 신청 영역이 없으니 그 안내를 뺀다
+export function StorageStatusCard({ status, exempt = false }: { status: StorageStatus; exempt?: boolean }) {
   const router = useRouter();
   const [busy, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
@@ -76,7 +77,7 @@ export function StorageStatusCard({ status }: { status: StorageStatus }) {
       </div>
       )}
       <p className="mt-2 break-keep text-xs text-zinc-500">
-        영수증·휴가 증빙·결재 문서 첨부·서류·양식·세무 자료·채팅 사진·파일 보관함(휴지통 포함)까지 회사의 모든 파일이 저장 공간 하나를 함께 써요. 꽉 차면 모든 올리기가 멈추니, 모자라면 아래 [저장 공간 추가]에서 골라 신청해 주세요. 오래된 결재 문서 첨부는 [설정 › 파일 보관]에서 한 번에 정리할 수 있어요.
+        영수증·휴가 증빙·결재 문서 첨부·서류·양식·세무 자료·채팅 사진·파일 보관함(휴지통 포함)까지 회사의 모든 파일이 저장 공간 하나를 함께 써요. {exempt ? "꽉 차면 모든 올리기가 멈춰요." : "꽉 차면 모든 올리기가 멈추니, 모자라면 아래 [저장 공간 추가]에서 골라 신청해 주세요."} 오래된 결재 문서 첨부는 [설정 › 파일 보관]에서 한 번에 정리할 수 있어요.
         {status.extra_gb > 0 && " 결제가 열릴 때까지는 무료로 쓰고, 열리면 요금제와 함께 매월 결제돼요(한 달 전에 알려 드려요)."}
       </p>
       {p && (

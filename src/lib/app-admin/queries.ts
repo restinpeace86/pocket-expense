@@ -23,7 +23,7 @@ export async function getCompanyDetail(companyId: string, month: string) {
   const [company, members, ledger, records] = await Promise.all([
     admin
       .from("companies")
-      .select("id, name, business_number, business_status, created_at, billing_status, receipt_credits_granted, receipt_credits_used, last_event_bonus_at")
+      .select("id, name, business_number, business_status, created_at, billing_status, billing_exempt, receipt_credits_granted, receipt_credits_used, last_event_bonus_at")
       .eq("id", companyId)
       .maybeSingle(),
     admin.from("members").select("id, name, role, status, created_at").eq("company_id", companyId).order("created_at"),

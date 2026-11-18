@@ -19,14 +19,15 @@ const shift = (month: string, d: number) => {
   return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, "0")}`;
 };
 
-export function CreditUsageSection({ base, month, thisMonth, data }: { base: string; month: string; thisMonth: string; data: CreditUsage | null }) {
+// unlimited = 운영사 결제 면제(D-294): 남은 크레딧 대신 '제한 없음'
+export function CreditUsageSection({ base, month, thisMonth, data, unlimited = false }: { base: string; month: string; thisMonth: string; data: CreditUsage | null; unlimited?: boolean }) {
   const [y, m] = month.split("-").map(Number);
-  const tiles: [string, number][] = data
+  const tiles: [string, number | string][] = data
     ? [
         ["이번 달 쓴 크레딧", data.receipt + data.convert],
         ["영수증 읽기", data.receipt],
         ["서류 → 엑셀", data.convert],
-        ["남은 크레딧", Math.max(0, data.remaining)],
+        ["남은 크레딧", unlimited ? "제한 없음" : Math.max(0, data.remaining)],
       ]
     : [];
   return (

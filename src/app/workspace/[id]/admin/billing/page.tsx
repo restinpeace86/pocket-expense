@@ -41,7 +41,7 @@ async function Billing({ params, searchParams }: Pick<PageProps<"/workspace/[id]
   return (
     <div className="flex flex-col gap-6">
       <BillingView status={status} plans={plans} addons={addons} storage={(storage.data as unknown as StorageStatus) ?? null} storageAddons={storageAddons.data ?? []} docQuota={(docQuota.data as unknown as DocConvertQuota) ?? null} />
-      <CreditUsageSection base={`/workspace/${id}/admin/billing`} month={q} thisMonth={thisMonth} data={(usage.data as unknown as CreditUsage) ?? null} />
+      <CreditUsageSection base={`/workspace/${id}/admin/billing`} month={q} thisMonth={thisMonth} data={(usage.data as unknown as CreditUsage) ?? null} unlimited={status.exempt} />
     </div>
   );
 }

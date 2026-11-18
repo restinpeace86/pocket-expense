@@ -2339,6 +2339,7 @@ export type Database = {
       }
       companies: {
         Row: {
+          billing_exempt: boolean
           billing_status: Database["public"]["Enums"]["billing_status"]
           business_number: string
           business_status: string
@@ -2371,6 +2372,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          billing_exempt?: boolean
           billing_status?: Database["public"]["Enums"]["billing_status"]
           business_number: string
           business_status?: string
@@ -2403,6 +2405,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          billing_exempt?: boolean
           billing_status?: Database["public"]["Enums"]["billing_status"]
           business_number?: string
           business_status?: string

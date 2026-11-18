@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/brand";
 import { Check, Lock } from "lucide-react";
 import { SectionHeading } from "@/components/ui/help";
 import type { BillingAddon, BillingPlan, CreditStatus } from "@/lib/admin/billing";
@@ -200,6 +201,19 @@ function PaymentForm() {
   );
 }
 
+// 운영사 결제 면제(D-294): 무료 기간·결제 대신 이 카드 하나
+function ExemptCard({ plan }: { plan?: BillingPlan }) {
+  return (
+    <section className="rounded-xl border border-brand-200 bg-brand-50 p-5" data-billing-exempt>
+      <p className="text-sm font-semibold text-brand-800">운영사 계정</p>
+      <p className="mt-1 text-2xl font-bold">결제 없이 이용</p>
+      <p className="mt-2 break-keep text-sm text-zinc-700">
+        이 회사는 {BRAND.name} 운영사 계정이라 결제하지 않아요. 무료 기간 끝도 없고, {plan ? `${plan.name} 플랜` : "가장 높은 플랜"} 기준(저장 공간·양식 칸·서류 변환)으로 모든 기능을 써요.
+      </p>
+    </section>
+  );
+}
+
 export function BillingView({
   status,
   plans,
@@ -220,6 +234,16 @@ export function BillingView({
   today?: string;
 }) {
   const exhausted = status.granted - status.used <= 0;
+  if (status.exempt) {
+    return (
+      <>
+        <SectionHeading as="h1" title="요금제" summary="운영사 계정이라 결제 없이 모든 기능을 써요." />
+        <ExemptCard plan={plans.find((p) => p.code === "pro")} />
+        {docQuota && <DocConvertQuotaCard q={docQuota} today={today} />}
+        {storage && <StorageStatusCard status={storage} exempt />}
+      </>
+    );
+  }
   return (
     <>
       {status.showEventBanner && <EventBonusBanner amount={status.eventAmount} count={status.eventCount} total={status.eventTotal} preview={preview} />}

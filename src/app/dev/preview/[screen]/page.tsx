@@ -144,7 +144,7 @@ const AA_PAYLOAD = {
   ],
 };
 const AA_COMPANY_DETAIL: CompanyDetail = {
-  company: { id: "c1", name: "포켓컴퍼니 주식회사", business_number: "1234567890", business_status: "verified", created_at: "2026-10-01T01:00:00Z", billing_status: "free_trial", receipt_credits_granted: 200, receipt_credits_used: 112, last_event_bonus_at: "2026-10-15T01:00:00Z" },
+  company: { id: "c1", name: "포켓컴퍼니 주식회사", business_number: "1234567890", business_status: "verified", created_at: "2026-10-01T01:00:00Z", billing_status: "free_trial", billing_exempt: false, receipt_credits_granted: 200, receipt_credits_used: 112, last_event_bonus_at: "2026-10-15T01:00:00Z" },
   members: [
     { id: "m1", name: "김대표", role: "super_admin", status: "approved", created_at: "2026-10-01T01:00:00Z" },
     { id: "m2", name: "이직원", role: "employee", status: "approved", created_at: "2026-10-02T01:00:00Z" },
@@ -178,7 +178,7 @@ const SAMPLE_NOTICES: Notice[] = [
   { id: "n1", scope: "company", title: "11월부터 식대 1인 12,000원 (아주 긴 공지 제목이 들어가도 한 줄로 줄여 보이는지 확인)", body: "11월 1일 사용분부터 1인 한도가 12,000원으로 바뀝니다.\n야근 식대도 같아요.", created_at: "2026-10-22T01:00:00Z" },
   { id: "n2", scope: "platform", title: "10/30(목) 02:00~03:00 정기 점검", body: "점검 시간에는 영수증 업로드가 잠시 안 돼요.", created_at: "2026-10-21T01:00:00Z" },
 ];
-const SAMPLE_CREDIT = { granted: 200, used: 163, freeTrial: 100, eventCount: 1, eventTotal: 100, eventEnabled: true, eventAmount: 100, showEventBanner: false, surveyDone: false, coupon: false, trialEndsOn: "2026-12-04" };
+const SAMPLE_CREDIT = { granted: 200, used: 163, freeTrial: 100, eventCount: 1, eventTotal: 100, eventEnabled: true, eventAmount: 100, showEventBanner: false, surveyDone: false, coupon: false, trialEndsOn: "2026-12-04", exempt: false };
 
 const DI: DetailItem = {
   id: "d1", sort_order: 1, category: "trip", trip_type: "public_transport", purchase_type: null, payment_method: "corporate_card", corporate_card_id: "card1", card_last4: "7890",

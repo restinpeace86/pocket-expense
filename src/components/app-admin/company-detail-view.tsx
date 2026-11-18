@@ -21,7 +21,10 @@ export function CompanyDetailView({ data, month, base = "/app-admin" }: { data: 
         <Link href={`${base}?month=${month}`} className="w-fit text-sm text-zinc-500 hover:underline">
           ← 회사 목록
         </Link>
-        <h1 className="text-2xl font-bold">{company.name}</h1>
+        <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold">
+          {company.name}
+          {company.billing_exempt && <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-800" data-billing-exempt>결제 면제(운영사)</span>}
+        </h1>
         <p className="text-sm text-zinc-500">
           사업자번호 {formatBizNo(company.business_number)} · 가입 {formatKst(company.created_at).slice(0, 10)} · 크레딧 지급 {company.receipt_credits_granted} / 사용 {company.receipt_credits_used} / 남음{" "}
           <b className="text-zinc-800">{company.receipt_credits_granted - company.receipt_credits_used}</b>
