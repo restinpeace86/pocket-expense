@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { recordBusinessCheck } from "@/lib/business/record";
 import { todayKst } from "@/lib/dates";
 import { messageForDbError } from "@/lib/errors";
+import { notifyOps } from "@/lib/ops-notify/server";
 import { createClient } from "@/lib/supabase/server";
 
 export type FormState = { error: string | null; values?: Record<string, string> };
@@ -35,6 +36,8 @@ export async function createCompanyAction(_prev: FormState, formData: FormData):
     const keep = ["companyName", "businessNumber", "name", "phone", "position"];
     return { error: messageForDbError(error), values: Object.fromEntries(keep.map((k) => [k, text(formData, k)])) };
   }
+  // 운영자 디스코드(D-293): 회사 이름 + 링크만
+  notifyOps({ kind: "signup", company: text(formData, "companyName"), companyId: String(companyId) });
   // 다음 단계: 추천인·추천 회사(선택, 건너뛰면 관리자 홈) (D-147)
   redirect("/onboarding/referral");
 }

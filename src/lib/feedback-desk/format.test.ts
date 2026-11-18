@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FEEDBACK_DONE, FEEDBACK_ERROR, feedbackInputError, feedbackNotifyText, feedbackPagePath, userAgentSummary, viewportLabel } from "./format";
+import { FEEDBACK_DONE, FEEDBACK_ERROR, feedbackInputError, feedbackPagePath, userAgentSummary, viewportLabel } from "./format";
 import { BRAND } from "@/lib/brand";
 
 describe("의견 보내기 (D-246)", () => {
@@ -22,13 +22,6 @@ describe("의견 보내기 (D-246)", () => {
     expect(userAgentSummary("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit Version/18 Safari/604.1")).toBe("아이폰·아이패드 · 사파리");
     expect(userAgentSummary("Mozilla/5.0 (Linux; Android 14) SamsungBrowser/25 Chrome/120")).toBe("안드로이드 · 삼성 인터넷");
     expect(userAgentSummary(null)).toBe("알 수 없음");
-  });
-
-  it("운영자 알림은 첫 줄 60자", () => {
-    const t = feedbackNotifyText("예시 회사", "김대리", "bug", `${"가".repeat(70)}\n둘째 줄`, true);
-    expect(t).toContain(`🐛 [${BRAND.name}] 버그 신고: 예시 회사 · 김대리 · 캡처 있음`);
-    expect(t).toContain(`${"가".repeat(60)}…`);
-    expect(t).not.toContain("둘째 줄");
   });
 
   it(`안내 문구: 버그는 24시간 안에 확인, 기능 개선은 ${BRAND.name}`, () => {

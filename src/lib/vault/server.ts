@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { VAULT_BUCKET, vaultErrorMessage, vaultPaths, type VaultScope } from "./format";
 import { BRAND } from "@/lib/brand";
+import { opsWebhookUrl } from "@/lib/ops-notify/server";
 
 type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
 type Check = { member_id: string; company_id: string; message_id: string; path: string; thumb_path: string | null };
@@ -99,7 +100,7 @@ export async function checkStorageTotal(admin: Admin): Promise<{ bytes: number; 
   const { data, error } = await admin.rpc("storage_total_bytes");
   if (error) throw new Error(error.message);
   const bytes = Number(data ?? 0);
-  const hook = process.env.DISCORD_WEBHOOK_URL;
+  const hook = opsWebhookUrl(); // 운영 채널(D-293)
   if (bytes < STORAGE_INCLUDED_BYTES * 0.7 || !hook) return { bytes, alerted: false };
   const gb = Math.round((bytes / 1024 ** 3) * 10) / 10;
   await fetch(hook, {

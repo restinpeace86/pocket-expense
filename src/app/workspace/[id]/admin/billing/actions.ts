@@ -7,9 +7,8 @@ import { messageForDbError } from "@/lib/errors";
 import { isValidSurvey } from "@/lib/feedback-survey";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "../actions";
-import { BRAND } from "@/lib/brand";
 import { storageErrorText } from "@/lib/billing/storage";
-import { notifyFeedback } from "@/lib/feedback-desk/server";
+import { notifyOps } from "@/lib/ops-notify/server";
 
 // 이벤트 추가 지급 배너 [확인] (pricing-policy.md §5). 관리자 이상, 자기 회사만(RLS companies_update).
 export async function acknowledgeEventBonusAction(): Promise<ActionResult> {
@@ -43,6 +42,8 @@ export async function submitFeedbackSurveyAction(input: SurveyInput): Promise<{ 
     p_display_consent: input.displayConsent,
   });
   if (error) return { error: messageForDbError(error) };
+  const m = await getMembership();
+  if (m) notifyOps({ kind: "review", company: m.company_name, rating: input.rating, review: input.review });
   if (input.displayConsent && input.review.trim()) updateTag("testimonials"); // 랜딩 후기에 바로 반영
   refresh();
   return { error: null, left: data ?? undefined };
@@ -57,7 +58,7 @@ export async function requestStorageAction(gb: number): Promise<{ ok: true } | {
   const { error } = await supabase.rpc("storage_addon_request", { p_gb: gb });
   if (error) return { ok: false, error: storageErrorText(error.message) };
   // 운영자 알림(회사명·상품만)
-  await notifyFeedback(`💾 [${BRAND.name}] 저장 공간 신청 — ${m.company_name} · ${gb === 0 ? "추가 공간 해지" : `${gb}GB`}. 운영자 화면 [저장 공간 신청]에서 처리해 주세요.`).catch(() => undefined);
+  notifyOps({ kind: "storage", company: m.company_name, gb });
   refresh();
   return { ok: true };
 }

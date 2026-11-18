@@ -3,8 +3,8 @@
 import { headers } from "next/headers";
 import { getMembership } from "@/lib/auth/session";
 import { messageForDbError } from "@/lib/errors";
-import { FEEDBACK_BUCKET, FEEDBACK_ERROR, FEEDBACK_SHOT_TYPES, feedbackInputError, feedbackNotifyText, feedbackPagePath, type FeedbackCategory } from "@/lib/feedback-desk/format";
-import { notifyFeedback } from "@/lib/feedback-desk/server";
+import { FEEDBACK_BUCKET, FEEDBACK_ERROR, FEEDBACK_SHOT_TYPES, feedbackInputError, feedbackPagePath, type FeedbackCategory } from "@/lib/feedback-desk/format";
+import { notifyOps } from "@/lib/ops-notify/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -49,6 +49,7 @@ export async function submitFeedbackAction(formData: FormData): Promise<{ ok: tr
     if (shotPath && admin) await admin.storage.from(FEEDBACK_BUCKET).remove([shotPath]);
     return { ok: false, error: messageForDbError(error) };
   }
-  await notifyFeedback(feedbackNotifyText(m.company_name, m.name ?? "직원", cat, content, !!shotPath));
+  // 운영자 디스코드(D-293): 회사 이름 + 내용 요약 + 링크만(보낸 사람 이름 없음)
+  notifyOps({ kind: "feedback", company: m.company_name, category: cat, content, hasShot: !!shotPath });
   return { ok: true };
 }

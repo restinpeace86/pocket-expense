@@ -1,4 +1,4 @@
-import { BRAND, BRAND_JOSA } from "@/lib/brand";
+import { BRAND_JOSA } from "@/lib/brand";
 // 의견 보내기(버그 신고 · 기능 개선, D-246, spec/features/improvement-2026-11.md §C) — 화면·서버 공통
 export type FeedbackCategory = "bug" | "feature";
 export type FeedbackStatus = "pending" | "reviewing" | "resolved";
@@ -63,13 +63,6 @@ export function feedbackPagePath(href: string): string {
 }
 
 export const viewportLabel = (w: number, h: number) => `${Math.round(w)}x${Math.round(h)}`;
-
-// 운영자 디스코드 알림 한 줄(내용 첫 줄 60자)
-export function feedbackNotifyText(companyName: string, reporter: string, category: FeedbackCategory, content: string, hasShot: boolean): string {
-  const first = content.trim().split(/\r?\n/)[0] ?? "";
-  const line = first.length > 60 ? `${first.slice(0, 60)}…` : first;
-  return `${FEEDBACK_CATEGORY[category].emoji} [${BRAND.name}] ${FEEDBACK_CATEGORY[category].label}: ${companyName} · ${reporter}${hasShot ? " · 캡처 있음" : ""} — "${line}" (운영자 화면 [의견])`;
-}
 
 // User-Agent를 사람이 읽을 요약으로(운영자 화면)
 export function userAgentSummary(ua: string | null | undefined): string {

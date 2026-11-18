@@ -4,7 +4,9 @@ import { refresh } from "next/cache";
 import { getMembership } from "@/lib/auth/session";
 import { isAdminRole } from "@/lib/auth/paths";
 import { messageForDbError } from "@/lib/errors";
-import { notifyFormatRequest, prepareFormatUpload } from "@/lib/accounting-format/server";
+import { prepareFormatUpload } from "@/lib/accounting-format/server";
+import { FORMAT_PROGRAM_LABEL } from "@/lib/accounting-format/programs";
+import { notifyOps } from "@/lib/ops-notify/server";
 import { createClient } from "@/lib/supabase/server";
 
 // 회사 관리자: 다른 회계 프로그램(이카운트·세무사랑) 엑셀 업로드 서식 등록 (D-180). 권한·회사 격리는 DB 함수가 다시 확인한다
@@ -25,7 +27,7 @@ export async function addFormatRequestAction(formData: FormData): Promise<{ ok: 
     await up.cleanup();
     return { ok: false, error: messageForDbError(error) };
   }
-  await notifyFormatRequest(m.company_name, up.program);
+  notifyOps({ kind: "format", company: m.company_name, program: FORMAT_PROGRAM_LABEL[up.program] });
   refresh();
   return { ok: true };
 }

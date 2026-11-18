@@ -3,8 +3,7 @@ import { STORAGE_FULL_MESSAGE } from "@/lib/storage/room-message";
 import { storageFullFor } from "@/lib/storage/room-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { FORMAT_BUCKET, FORMAT_EXT, FORMAT_MAX_BYTES, FORMAT_PROGRAM_LABEL, FORMAT_PROGRAMS, type FormatProgram, type FormatRequest } from "./programs";
-import { BRAND } from "@/lib/brand";
+import { FORMAT_BUCKET, FORMAT_EXT, FORMAT_MAX_BYTES, FORMAT_PROGRAMS, type FormatProgram, type FormatRequest } from "./programs";
 
 const MIME: Record<string, string> = {
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -52,22 +51,6 @@ export async function prepareFormatUpload(companyId: string, formData: FormData)
       await storage.storage.from(FORMAT_BUCKET).remove([path]);
     },
   };
-}
-
-// 운영자 알림(디스코드). 주소가 없거나 실패해도 접수는 그대로(운영자 화면 [양식 접수]에 남는다)
-export async function notifyFormatRequest(companyName: string, program: FormatProgram): Promise<void> {
-  const url = process.env.DISCORD_WEBHOOK_URL;
-  if (!url) return;
-  try {
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: `📥 [${BRAND.name}] 회계 양식 접수: ${companyName} · ${FORMAT_PROGRAM_LABEL[program]} — 운영자 화면 [양식 접수]에서 확인` }),
-      signal: AbortSignal.timeout(3000),
-    });
-  } catch {
-    // 알림 실패는 무시
-  }
 }
 
 // 운영자: 원본 받기(운영 키)
