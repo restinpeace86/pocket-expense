@@ -11,7 +11,7 @@
 - [ ] B-3 (사용자 할 일 — 코드 준비 완료 D-297, 2026-11-19) 알림톡 발송대행사 선정·템플릿 심사 → 실제 발송 드라이버(T8-3). 오픈 전 필수(랜딩·기능 카드가 알림톡 연결 전제, D-142) — D-213으로 알림톡은 초대 2종 + 앱 알림을 못 받은 사람의 결재 요청·반려·독촉·자료 요청만(템플릿 심사도 이 6종이면 됨) — D-226: 심사용 고정 글 6종 준비 완료(`implementation/alimtalk-templates.md`), 사용자: 카카오 채널 → 솔라피 가입·연결 → 제출(도메인 먼저 정하면 좋음) → 템플릿 ID를 `ALIMTALK_TEMPLATE_<코드>`로 — **D-297: 솔라피 드라이버·요금제 스위치·설정 카드 완료.** 남은 것(사용자): 솔라피 사업자 심사 통과 → 채널 연결(pfId) → 템플릿 3종(결재 요청·반려·완료) 심사 → Vercel에 ALIMTALK_DRIVER=solapi · ALIMTALK_API_KEY · ALIMTALK_API_SECRET · ALIMTALK_SENDER_KEY · ALIMTALK_TEMPLATE_APPROVAL_REQUEST/APPROVAL_REJECTED/APPROVAL_COMPLETED (· ALIMTALK_FROM 선택) → 재배포 후 다모은랩에서 실제 1건 시험
 - [ ] B-4 ⛔ 보류(PG 계약) 결제 연동 — 결제 버튼 켜기, 첫 결제 50% 실제 결제 반영(D-134, 7-9 스킵 기록)
 - [ ] B-5 `OPERATOR` 일부 채움(2026-11-05: 상호·대표·사업자등록번호·전화) — 개인정보 보호책임자 조호신(2026-11-06) — 문의 이메일 damoun.workon@gmail.com(2026-11-06) — 남은 것: 통신판매업 신고번호(B-1), 사업장 주소 — 일단 뺌(2026-11-06), 비상주 오피스로 사업자 주소 정정 뒤 넣기(유료 판매 전 필수)
-- [ ] B-6 ⛔ 보류(도메인 확정) Vercel `GOOGLE_SITE_VERIFICATION`·`NAVER_SITE_VERIFICATION` 등록 → 다시 배포 → 서치 콘솔·서치어드바이저에 사이트맵 제출(D-129)
+- [ ] B-6 (사용자 할 일 — 도메인 damo-on.com 확정으로 보류 해제 2026-11-19, robots·sitemap 운영 확인됨) Vercel `GOOGLE_SITE_VERIFICATION`·`NAVER_SITE_VERIFICATION` 등록 → 다시 배포 → 서치 콘솔·서치어드바이저에 사이트맵 제출(D-129)
 
 ## 하네스 구축 (완료)
 - [x] GitHub 원격 연결 (`restinpeace86/pocket-expense`)
@@ -461,7 +461,7 @@
 - [x] 9-34a migration 162 적용(2026-11-17 사용자 승인) — 약관·처리방침 버전 2026-11-17, 도우미 방 이름 다모온
 - [x] 9-34b 안드로이드 APK 1.0.4(versionCode 5, 이름 다모온) 빌드·올리기 — aapt 이름 다모온·kr.damounlab.app 확인, 4.1MB 올림(200), ANDROID_APP_VERSION 1.0.4 → 아이콘 C로 1.0.5(versionCode 6)
 - [ ] 9-34c 도메인 damo-on.com(대표)·damo-on.kr — 2026-11-17 구입·Vercel 연결됨, 카카오 JS 키 도메인(새 주소·www 허용 확인)·구글 동의 화면(앱 이름 다모온 확인)·설치 앱 server.url = damo-on.com + 안드로이드 1.0.6(versionCode 7) 올림·www CNAME(가비아)·www → damo-on.com 넘기기(next.config redirects, 308)·NEXT_PUBLIC_SITE_URL(사용자) 반영 확인(canonical = damo-on.com), Supabase site_url·허용 주소 바꿈(승인, D-287). 남은 것: (사용자) Vercel NEXT_PUBLIC_SITE_URL·www DNS·카카오 플랫폼 Web 도메인·구글 동의 화면·서치콘솔/네이버 → (나) 설치 앱 server.url + APK. 처음 계획: Supabase site_url·리디렉트(인증 설정 = 사용자 확인 후), 카카오·구글 리디렉트 주소, NEXT_PUBLIC_SITE_URL, 설치 앱 server.url. 옛 주소(pocket-expense-ruby.vercel.app)는 당분간 그대로 열림
-- [ ] 9-34d (사용자) 카카오 디벨로퍼스·구글 OAuth 동의 화면 앱 이름 → 다모온 · 상표 출원(다모온·DamoOn, 9·35·42류)
+- [ ] 9-34d (사용자) 카카오 디벨로퍼스·구글 OAuth 동의 화면 앱 이름 → 다모온 · 상표 출원(다모온·DamoOn, 9·35·42류) — 2026-11-19 확인: 구글 로그인 창에 'qmgkkplmpbechnkfbqnq.supabase.co(으)로 이동'으로 보임(앱 이름 아님) → 구글 OAuth 브랜딩 확인(서치 콘솔 도메인 소유 확인 B-6 뒤 신청) 또는 Supabase 사용자 지정 도메인(Pro 유료 추가 기능). 카카오는 로그인 전 화면에 앱 이름이 안 나와 사용자 확인 필요
 - [ ] 9-34e 아이폰 앱 빌드 — 9-13e 준비 뒤(이름 파일은 이미 다모온)
 ## 2026-11-14 서비스 이름 RealOn
 - [x] 9-30 저장 공간 추가 상자 높이 = 선택한 구성(D-275, PC 277px = 277px)
