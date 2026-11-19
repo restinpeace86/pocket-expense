@@ -12,8 +12,9 @@ describe("알림톡 템플릿 (notification-rule.md §2)", () => {
   });
   it("승인: 직원명·금액·사용처·완료 문구, 사비 있음 / 법인카드만", () => {
     const m = approvalCompleted({ companyId: "c", claimId: "k", name: "김개발", title: "t", total: 10000, payout: 10000, merchant: "김밥천국" });
-    expect(m.text).toBe(`[${BRAND.name}] 결재가 정상 완료되었습니다. ✅\n신청자: 김개발\n제목: t\n금액: 10,000 원\n사용처: 김밥천국\n상태: 사비 10,000원 지급 대기 중입니다.`);
-    expect(approvalCompleted({ companyId: "c", claimId: "k", name: "a", title: "t", total: 10000, payout: 0, merchant: "-" }).text).toContain("법인카드 사용 건으로 정상 마감 처리되었습니다.");
+    expect(m.text).toBe(`[${BRAND.name}] 결재 완료\n\n지출결의서 결재가 완료되었습니다.\n\n신청자: 김개발\n제목: t\n금액: 10,000 원\n사용처: 김밥천국\n정산: 사비 10,000원 지급 예정`);
+    expect(m.buttonLabel).toBe("내 내역 확인하기");
+    expect(approvalCompleted({ companyId: "c", claimId: "k", name: "a", title: "t", total: 10000, payout: 0, merchant: "-" }).text).toContain("정산: 법인카드 사용(지급 없음)");
   });
   it("반려는 사유 필수 포함·편집 화면으로", () => {
     const m = approvalRejected({ companyId: "c", claimId: "k", name: "김개발", title: "t", total: 5000, merchant: "스타벅스", reason: "날짜 확인" });

@@ -35,9 +35,7 @@ export function merchantSummary(names: (string | null | undefined)[]): string {
   return uniq.length === 1 ? uniq[0] : `${uniq[0]} 외 ${uniq.length - 1}곳`;
 }
 
-const linesOf = (vars: Record<string, string>) => Object.entries(vars).map(([k, v]) => `${k}: ${v}`);
-
-// ── 카카오 알림톡 심사용 고정 템플릿 6종(D-226, implementation/alimtalk-templates.md) ─────────────
+// ── 카카오 알림톡 심사용 고정 템플릿 7종(D-226, implementation/alimtalk-templates.md) ─────────────
 // 카카오는 "고정 글 + #{변수}"만 심사한다(경우에 따라 글이 달라지면 안 됨). 보내는 글 = 이 글에 변수를 넣은 것과 글자 하나까지 같아야 한다.
 // 버튼(웹링크) 주소 = https://{도메인}/#{링크} — 링크 변수에는 앞의 "/"를 뺀 경로를 넣는다.
 export const ALIMTALK_TEMPLATES = {
@@ -60,6 +58,12 @@ export const ALIMTALK_TEMPLATES = {
     name: `${BRAND.name} 결재 반려`,
     text: `[${BRAND.name}] 결재 반려\n\n지출결의서가 반려되었습니다.\n\n신청자: #{신청자}\n제목: #{제목}\n금액: #{금액}\n사용처: #{사용처}\n반려 사유: #{반려사유}\n\n내용을 고쳐 다시 상신해 주세요.`,
     button: "수정 후 다시 올리기",
+  },
+  // D-295(2026-11-19): 프로 이상 기본 포함 알림톡 = 결재 요청·반려·완료 3종. 완료도 심사용 고정 글로
+  APPROVAL_COMPLETED: {
+    name: `${BRAND.name} 결재 완료`,
+    text: `[${BRAND.name}] 결재 완료\n\n지출결의서 결재가 완료되었습니다.\n\n신청자: #{신청자}\n제목: #{제목}\n금액: #{금액}\n사용처: #{사용처}\n정산: #{정산}`,
+    button: "내 내역 확인하기",
   },
   REMINDER: {
     name: `${BRAND.name} 결의서 제출 안내`,
@@ -116,20 +120,17 @@ export function reminder(p: { companyId: string; companyName: string; pending: n
 }
 
 export function approvalCompleted(p: { companyId: string; claimId: string; name: string; title: string; total: number; payout: number; merchant: string }): BuiltMessage {
-  const vars = {
-    신청자: p.name,
-    제목: p.title,
-    금액: `${won(p.total)} 원`,
-    사용처: p.merchant,
-    상태: p.payout > 0 ? `사비 ${won(p.payout)}원 지급 대기 중입니다.` : "법인카드 사용 건으로 정상 마감 처리되었습니다.",
-  };
-  return {
-    template: "APPROVAL_COMPLETED",
-    text: [`[${BRAND.name}] 결재가 정상 완료되었습니다. ✅`, ...linesOf(vars)].join("\n"),
-    buttonLabel: "내 내역 확인하기",
-    buttonPath: `/workspace/${p.companyId}/employee/claims/${p.claimId}`,
-    vars,
-  };
+  return renderAlimtalk(
+    "APPROVAL_COMPLETED",
+    {
+      신청자: p.name,
+      제목: p.title || "제목 없음",
+      금액: `${won(p.total)} 원`,
+      사용처: p.merchant,
+      정산: p.payout > 0 ? `사비 ${won(p.payout)}원 지급 예정` : "법인카드 사용(지급 없음)",
+    },
+    `/workspace/${p.companyId}/employee/claims/${p.claimId}`,
+  );
 }
 
 

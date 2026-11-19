@@ -270,7 +270,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="flex flex-col items-center gap-2 border-t border-zinc-200 bg-zinc-50 py-8 text-xs text-zinc-500">
+      <footer className="flex flex-col items-center gap-2 border-t border-zinc-200 bg-zinc-50 pt-8 pb-28 text-xs text-zinc-500 lg:pb-8">
         <nav className="flex flex-wrap justify-center gap-x-4">
           <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-zinc-800">이용약관</Link>
           <Link href="/privacy" className="inline-flex min-h-11 items-center font-semibold hover:text-zinc-800">개인정보 처리방침</Link>
@@ -285,32 +285,43 @@ export default function LandingPage() {
   );
 }
 
-// 사업자 정보(D-142) — 운영자 정보(OPERATOR)가 채워진 칸만 보인다. 지금은 상호·이메일만(D-233, SHOW_FULL_BUSINESS_INFO), [사업자 정보 ▾]로 접어 둠
+// 사업자 정보(D-142 → D-295): 전자상거래법 표시 사항을 펼친 채 작은 글씨 2~3줄로. 비어 있는 칸(통신판매업 신고번호 등)은 채워지면 저절로 보인다
+// SHOW_FULL_BUSINESS_INFO = false면 상호·이메일만(예전 D-233)
 function BusinessInfo() {
   if (!OPERATOR.name) return null;
-  const items = [
-    ["상호", OPERATOR.name],
-    ["대표", OPERATOR.ceo],
-    ["사업자등록번호", OPERATOR.businessNumber],
-    ["통신판매업 신고", OPERATOR.mailOrderNumber],
-    ["주소", OPERATOR.address],
-    ["전화", OPERATOR.phone],
-    ["이메일", OPERATOR.email],
-    ["호스팅", OPERATOR.hosting],
-  ].filter(([label, value]) => value && (SHOW_FULL_BUSINESS_INFO || label === "상호" || label === "이메일"));
-  // 접어 두기(D-233): [사업자 정보 ▾]를 눌러야 펼쳐진다(자바스크립트 없이 details)
+  const show = (label: string, value: string) => !!value && (SHOW_FULL_BUSINESS_INFO || label === "상호" || label === "이메일");
+  const lines = [
+    [
+      ["상호", OPERATOR.name],
+      ["대표", OPERATOR.ceo],
+      ["사업자등록번호", OPERATOR.businessNumber],
+      ["통신판매업 신고", OPERATOR.mailOrderNumber],
+    ],
+    [
+      ["주소", OPERATOR.address],
+      ["전화", OPERATOR.phone],
+      ["이메일", OPERATOR.email],
+      ["호스팅", OPERATOR.hosting],
+    ],
+  ]
+    .map((line) => line.filter(([label, value]) => show(label, value)))
+    .filter((line) => line.length);
   return (
-    <details className="group max-w-3xl px-4 text-center">
-      <summary className="mx-auto inline-flex min-h-11 cursor-pointer list-none items-center gap-1 rounded-lg px-3 hover:text-zinc-800 [&::-webkit-details-marker]:hidden">
-        사업자 정보 <span aria-hidden className="transition-transform group-open:rotate-180">▾</span>
-      </summary>
-      <p className="mt-1 leading-relaxed">
-        {items.map(([label, value]) => (
-          <span key={label} className="mx-1.5 inline-block">
-            {label} {value}
-          </span>
-        ))}
-      </p>
-    </details>
+    <div className="flex max-w-3xl flex-col gap-0.5 px-4 text-center leading-relaxed" data-business-info>
+      {lines.map((line, i) => (
+        <p key={i} className="flex flex-wrap justify-center gap-x-3 sm:gap-x-0">
+          {line.map(([label, value], j) => (
+            <span key={label} className="whitespace-nowrap">
+              {j > 0 && (
+                <span aria-hidden className="mx-1.5 hidden text-zinc-300 sm:inline">
+                  |
+                </span>
+              )}
+              {label === "상호" ? value : `${label} ${value}`}
+            </span>
+          ))}
+        </p>
+      ))}
+    </div>
   );
 }
