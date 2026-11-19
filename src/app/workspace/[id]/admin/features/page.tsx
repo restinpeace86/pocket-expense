@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { AlimtalkSwitch } from "@/components/admin/alimtalk-switch";
 import { AttendanceSwitch } from "@/components/admin/attendance-admin";
 import { CalendarSwitch } from "@/components/admin/calendar-switch";
 import { SectionHeading } from "@/components/ui/help";
@@ -6,6 +7,7 @@ import { attendanceEnabled } from "@/lib/attendance/server";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { calendarEnabled } from "@/lib/calendar/server";
 import { BRAND } from "@/lib/brand";
+import { getAlimtalkStatus } from "@/lib/notify/alimtalk-status";
 
 export const metadata = { title: `기능 사용 · ${BRAND.name}` };
 
@@ -24,6 +26,9 @@ export default function FeaturesPage({ params }: PageProps<"/workspace/[id]/admi
               <b>근태</b>를 켜면 직원 하단 가운데 버튼이 [QR 출퇴근]으로 바뀌고, 설정에 [근태 정책] 메뉴가 생겨요.
             </p>
             <p>
+              <b>결재 알림 받는 곳</b>: 결재 요청·반려·완료 알림은 늘 앱 알림과 채팅 [알림]방으로 가요. 프로 이상 요금제는 카카오톡 알림톡도 켤 수 있어요(앱 알림을 못 받은 사람에게만).
+            </p>
+            <p>
               <b>사내 캘린더</b>는 처음부터 켜져 있어요. 회의·외근·출장 일정과 마감일을 함께 보고, 회의실을 예약해요. 쓰지 않는 회사는 꺼서 직원 화면에서 숨길 수 있어요.
             </p>
           </>
@@ -39,9 +44,10 @@ export default function FeaturesPage({ params }: PageProps<"/workspace/[id]/admi
 async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/features">["params"] }) {
   const { id } = await params;
   await requireWorkspace(id, { admin: true });
-  const [attendance, calendar] = await Promise.all([attendanceEnabled(), calendarEnabled()]);
+  const [attendance, calendar, alimtalk] = await Promise.all([attendanceEnabled(), calendarEnabled(), getAlimtalkStatus()]);
   return (
     <div className="flex flex-col gap-4">
+      <AlimtalkSwitch status={alimtalk} historyHref={`/workspace/${id}/admin/notifications`} />
       <AttendanceSwitch enabled={attendance} />
       <CalendarSwitch enabled={calendar} calendarHref={`/workspace/${id}/calendar`} />
     </div>

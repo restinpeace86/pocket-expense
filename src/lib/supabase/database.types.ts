@@ -1294,6 +1294,7 @@ export type Database = {
       }
       billing_plans: {
         Row: {
+          alimtalk_included: boolean
           annual_price: number | null
           budget_alerts: boolean
           chat_storage_mb: number | null
@@ -1320,6 +1321,7 @@ export type Database = {
           vault_storage_mb: number | null
         }
         Insert: {
+          alimtalk_included?: boolean
           annual_price?: number | null
           budget_alerts?: boolean
           chat_storage_mb?: number | null
@@ -1346,6 +1348,7 @@ export type Database = {
           vault_storage_mb?: number | null
         }
         Update: {
+          alimtalk_included?: boolean
           annual_price?: number | null
           budget_alerts?: boolean
           chat_storage_mb?: number | null
@@ -5494,6 +5497,9 @@ export type Database = {
         Returns: string
       }
       admin_dashboard: { Args: { p_month: string }; Returns: Json }
+      alimtalk_active: { Args: { p_company: string }; Returns: boolean }
+      alimtalk_set_enabled: { Args: { p_enabled: boolean }; Returns: boolean }
+      alimtalk_status: { Args: never; Returns: Json }
       answer_tax_office_request: {
         Args: { p_answer: string; p_id: string }
         Returns: undefined

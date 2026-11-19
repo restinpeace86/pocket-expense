@@ -80,7 +80,7 @@ async function notifyMembers(
     if (p.officeRoom) await postOfficeRoom(admin, p.companyId, p.officeRoom.officeId, p.officeRoom.requestId, card).catch(() => 0);
     else await postNoticeCards(admin, p.companyId, ids, card).catch(() => 0);
   }
-  // 카카오 알림톡 추가 서비스(D-247): 회사가 켰을 때만 '앱 알림을 못 받은 사람'에게
+  // 카카오 알림톡(D-297): 프로 이상 요금제 + 회사가 켰을 때만, 결재 3종을 '앱 알림을 못 받은 사람'에게
   const alimtalkOn = channel === "fallback" ? await alimtalkEnabled(admin, p.companyId) : false;
   let alimtalk = 0;
   for (const r of p.recipients) {
@@ -107,9 +107,10 @@ async function notifyMembers(
   return { pushed: reached.size, alimtalk };
 }
 
+// 요금제 포함(billing_plans.alimtalk_included) + 설정 › 기능 사용 스위치 — DB 함수가 매번 확인(migration 169)
 async function alimtalkEnabled(admin: Admin, companyId: string): Promise<boolean> {
-  const { data } = await admin.from("company_features").select("enabled").eq("company_id", companyId).eq("feature", "alimtalk").maybeSingle();
-  return data?.enabled === true;
+  const { data } = await admin.rpc("alimtalk_active", { p_company: companyId });
+  return data === true;
 }
 
 async function loadClaim(admin: Admin, companyId: string, claimId: string) {

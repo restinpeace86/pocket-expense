@@ -15,19 +15,23 @@ export const CHANNEL: Record<TemplateCode, Channel> = {
   APPROVAL_REJECTED: "fallback", // 고쳐서 다시 올려야 돈을 받는다
   REMINDER: "fallback", // 관리자가 직접 누른 독촉 — 앱을 안 보는 사람에게 가야 의미가 있다
   TAX_REQUEST: "fallback", // 세무사무소가 답을 기다린다(마감)
-  APPROVAL_COMPLETED: "push",
+  APPROVAL_COMPLETED: "fallback", // D-297: 결재 완료도 카카오 알림톡 3종(D-295)
   PAYOUT_COMPLETED: "push",
   RECURRING_READY: "push",
   CLOSING: "push",
   TAX_CLOSED: "push",
 };
 
+// 카카오 알림톡을 보내는 결재 알림 3종(D-295: 프로 이상 기본 포함 — 결재 요청·반려·완료). 독촉·세무 자료 요청은 fallback이어도 앱 안으로만
+export const KAKAO_CODES = ["APPROVAL_REQUEST", "APPROVAL_REJECTED", "APPROVAL_COMPLETED"] as const satisfies readonly TemplateCode[];
+const KAKAO_SET: ReadonlySet<TemplateCode> = new Set(KAKAO_CODES);
+
 // pushed: 이 사람이 앱 알림을 하나라도 받았는지
-// alimtalkOn: 회사가 카카오 알림톡 추가 서비스를 켰는지(D-247, company_features 'alimtalk' — 기본 꺼짐).
+// alimtalkOn: 회사가 카카오 알림톡을 쓸 수 있고 켰는지(D-297: 프로 이상 요금제 + 설정 › 기능 사용 스위치, company_features 'alimtalk' — 기본 꺼짐).
 // 꺼져 있으면 핵심 알림도 앱 안(앱 알림 + 채팅 [알림]방 카드)으로만 간다. 초대는 받는 사람이 아직 회원이 아니라 그대로 알림톡
 export function needsAlimtalk(code: TemplateCode, pushed: boolean, alimtalkOn = false): boolean {
   const c = CHANNEL[code];
-  return c === "alimtalk" || (c === "fallback" && alimtalkOn && !pushed);
+  return c === "alimtalk" || (c === "fallback" && KAKAO_SET.has(code) && alimtalkOn && !pushed);
 }
 
 const PUSH_TITLE: Partial<Record<TemplateCode, string>> = {

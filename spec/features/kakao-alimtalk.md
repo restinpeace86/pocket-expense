@@ -8,7 +8,8 @@
 ## 2. 발송 구조
 - 발송은 `NotificationSender` 어댑터 인터페이스 뒤에 둔다. 드라이버는 환경변수 `ALIMTALK_DRIVER`로 고른다.
   - `log`(기본값): 실제 발송 없이 `notification_logs`에 `provider='log'`, `status='sent'`로 기록하고 서버 로그에 메시지·링크를 출력한다. 개발·테스트용.
-  - 실제 발송대행사 드라이버: 대행사 선정 후 추가한다(**O-01, 구현 보류**). 필요한 키는 `.env.local`에만 둔다.
+  - `solapi`(D-297): 솔라피 API로 보낸다. 환경변수(Vercel) `ALIMTALK_DRIVER=solapi`, `ALIMTALK_API_KEY`, `ALIMTALK_API_SECRET`, `ALIMTALK_SENDER_KEY`(카카오 채널 pfId), `ALIMTALK_FROM`(발신번호, 선택), `ALIMTALK_TEMPLATE_<코드>`(심사 통과 템플릿 ID). 템플릿 ID가 없는 알림은 보내지 않고 `failed`로 기록한다. 문자 대체 발송은 하지 않는다.
+- 보내는 범위(D-295·D-297): 결재 요청·반려·완료 3종만, 앱 알림을 받지 못한 사람에게만. 회사 요금제에 포함(프로 이상, `billing_plans.alimtalk_included`)되고 설정 › 기능 사용에서 켠 회사만(`alimtalk_active`). 초대 2종은 템플릿 심사를 받으면 보낸다.
 - 발송은 결재 트랜잭션 **커밋 이후** 수행한다. 발송 실패가 결재 처리를 되돌리지 않는다.
 - 수신 번호는 `members.phone`. 번호가 비었거나 형식이 틀리면 `failed`로 기록한다.
 

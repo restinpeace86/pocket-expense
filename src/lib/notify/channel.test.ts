@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CHANNEL, needsAlimtalk, pushOf } from "./channel";
+import { CHANNEL, KAKAO_CODES, needsAlimtalk, pushOf } from "./channel";
 import { approvalRejected, approvalRequest, invite, payoutCompleted } from "./templates";
 import { BRAND } from "@/lib/brand";
 
@@ -8,17 +8,19 @@ describe("알림 길 나누기 (D-213)", () => {
     expect(needsAlimtalk("INVITE", true)).toBe(true);
     expect(needsAlimtalk("TAX_OFFICE_INVITE", false)).toBe(true);
   });
-  it("결재 요청·반려·독촉·자료 요청은 앱 알림을 못 받았을 때만 알림톡", () => {
-    for (const c of ["APPROVAL_REQUEST", "APPROVAL_REJECTED", "REMINDER", "TAX_REQUEST"] as const) {
+  it("결재 요청·반려·완료(D-295 3종)는 회사가 켰고 앱 알림을 못 받았을 때만 알림톡", () => {
+    expect([...KAKAO_CODES].sort()).toEqual(["APPROVAL_COMPLETED", "APPROVAL_REJECTED", "APPROVAL_REQUEST"]);
+    for (const c of KAKAO_CODES) {
       expect(needsAlimtalk(c, true)).toBe(false);
       expect(needsAlimtalk(c, false)).toBe(false); // 카카오 추가 서비스 꺼짐(기본) → 앱 안만(D-247)
       expect(needsAlimtalk(c, false, true)).toBe(true);
       expect(needsAlimtalk(c, true, true)).toBe(false);
     }
   });
-  it("승인 완료·지급 완료·정기 결제·월말 마감·세무 마감은 앱 알림만", () => {
-    for (const c of ["APPROVAL_COMPLETED", "PAYOUT_COMPLETED", "RECURRING_READY", "CLOSING", "TAX_CLOSED"] as const) {
+  it("독촉·자료 요청·지급 완료·정기 결제·월말 마감·세무 마감은 켜 있어도 앱 알림만", () => {
+    for (const c of ["REMINDER", "TAX_REQUEST", "PAYOUT_COMPLETED", "RECURRING_READY", "CLOSING", "TAX_CLOSED"] as const) {
       expect(needsAlimtalk(c, false)).toBe(false);
+      expect(needsAlimtalk(c, false, true)).toBe(false);
     }
   });
   it("알림톡이 꼭 가는 것은 2종뿐", () => {
