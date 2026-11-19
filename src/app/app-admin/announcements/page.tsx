@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { AppAdminShell, Panel } from "@/components/app-admin/app-admin-shell";
+import { Panel } from "@/components/app-admin/app-admin-shell";
 import { AnnouncementForm, AnnouncementList } from "@/components/push/announcement-form";
 import { requireAppAdmin } from "@/lib/app-admin/guard";
 import { postPlatformAnnouncementAction } from "./actions";
@@ -10,11 +10,9 @@ export const metadata = { title: `전체 공지 · ${BRAND.name} 운영자` };
 // 전체 공지 (D-116 채널 A) — 모든 회사의 대표·직원에게
 export default function PlatformAnnouncementsPage() {
   return (
-    <AppAdminShell>
-      <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-zinc-100" />}>
-        <Content />
-      </Suspense>
-    </AppAdminShell>
+    <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-zinc-100" />}>
+      <Content />
+    </Suspense>
   );
 }
 

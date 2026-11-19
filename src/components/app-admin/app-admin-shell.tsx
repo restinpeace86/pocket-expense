@@ -1,31 +1,20 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Wordmark } from "@/components/brand/logo";
+import { AppAdminNav } from "./app-admin-nav";
 
 // 앱관리자(운영자) 화면 틀 (D-080) — PC 기준, 읽기 전용(전체 공지 쓰기만 예외, D-116). 고객 화면 어디에도 링크하지 않는다.
 export function AppAdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-1 flex-col bg-zinc-50">
       <header className="border-b border-zinc-800 bg-zinc-900 text-white">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 md:px-6">
-          <Link href="/app-admin" className="flex items-center gap-2 whitespace-nowrap font-bold">
+        {/* 넓은 화면: 로고 · 메뉴 한 줄 / 좁은 화면: 로고 아래 옆으로 밀어 보는 메뉴(D-296). 지금 보는 메뉴는 흰 칩 */}
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-2.5 md:px-6 lg:flex-row lg:items-center lg:gap-4">
+          <Link href="/app-admin" className="flex min-h-9 shrink-0 items-center gap-2 whitespace-nowrap font-bold">
             <Wordmark tone="light" className="text-base" />
             <span className="rounded-md bg-amber-400 px-1.5 py-0.5 text-xs text-zinc-900">운영자</span>
           </Link>
-          <nav className="flex items-center gap-3 whitespace-nowrap text-sm">
-            <Link href="/app-admin" className="text-zinc-300 hover:text-white">회사</Link>
-            <Link href="/app-admin/announcements" className="text-zinc-300 hover:text-white">전체 공지</Link>
-            <Link href="/app-admin/reviews" className="text-zinc-300 hover:text-white">후기</Link>
-            <Link href="/app-admin/format-requests" className="text-zinc-300 hover:text-white">양식 접수</Link>
-            <Link href="/app-admin/form-slots" className="text-zinc-300 hover:text-white">양식 칸 신청</Link>
-            <Link href="/app-admin/storage" className="text-zinc-300 hover:text-white">저장 공간 신청</Link>
-            <Link href="/app-admin/feedback" className="text-zinc-300 hover:text-white">의견</Link>
-            <Link href="/app-admin/referrals" className="text-zinc-300 hover:text-white">추천</Link>
-            <Link href="/app-admin/notifications" className="text-zinc-300 hover:text-white">알림 이력</Link>
-            <Link href="/app-admin/holidays" className="text-zinc-300 hover:text-white">공휴일</Link>
-            <Link href="/app-admin/help" className="text-zinc-300 hover:text-white">도움말 글</Link>
-            <span className="hidden rounded-full bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300 sm:inline">공지·후기 숨김·공휴일·양식 접수 표시 외 읽기 전용</span>
-          </nav>
+          <AppAdminNav />
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 md:px-6">{children}</main>
@@ -51,7 +40,8 @@ export function TableWrap({ children }: { children: ReactNode }) {
 }
 
 export const th = "whitespace-nowrap border-b border-zinc-200 px-2 py-2 text-left text-xs font-medium text-zinc-500";
-export const td = "border-b border-zinc-100 px-2 py-2 align-top text-sm";
+// break-keep: 좁은 화면에서 한글이 한 글자씩 세로로 쪼개지지 않게(단어 단위 줄바꿈, 넓어지면 표만 옆으로 밀어 봄)
+export const td = "break-keep border-b border-zinc-100 px-2 py-2 align-top text-sm";
 
 export function MonthNav({ month, hrefFor }: { month: string; hrefFor: (m: string) => string }) {
   const [y, m] = month.split("-").map(Number);
