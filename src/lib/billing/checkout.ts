@@ -14,3 +14,13 @@ export function checkoutPrice(monthlyPrice: number, coupon: boolean): Checkout {
   const vat = Math.floor(supply / 10);
   return { list, discount, supply, vat, total: supply + vat, coupon };
 }
+
+// 정기결제 한 번에 낼 금액(D-298): 요금제(후기 쿠폰이면 첫 결제만 50%) + 저장 공간 추가(할인 없음) → 공급가액 + 부가세 10%
+export type SubscriptionCharge = Checkout & { plan: number; storage: number };
+export function subscriptionCharge(planPrice: number, storagePrice: number, coupon: boolean): SubscriptionCharge {
+  const p = checkoutPrice(planPrice, coupon);
+  const storage = Math.max(0, Math.round(storagePrice));
+  const supply = p.supply + storage;
+  const vat = Math.floor(supply / 10);
+  return { list: p.list + storage, discount: p.discount, supply, vat, total: supply + vat, coupon: p.coupon, plan: p.list, storage };
+}

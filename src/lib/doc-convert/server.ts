@@ -1,4 +1,5 @@
 import "server-only";
+import { billingBlocked } from "@/lib/billing/server";
 import { tryGemini } from "@/lib/ai/gemini-retry";
 import { PDFDocument } from "pdf-lib";
 import { getMembership } from "@/lib/auth/session";
@@ -22,6 +23,11 @@ async function pageCount(data: ArrayBuffer, mime: string): Promise<number> {
 
 // 공통: 쪽 수 확인 → 크레딧 차감(begin) → AI 읽기 → 표 저장(ready). 표를 못 찾거나 AI 오류면 돌려주고(fail) 원본도 지운다
 async function run(admin: Admin, o: { id: string; memberId: string; name: string; mime: string; path: string; messageId: string | null }): Promise<Result> {
+  // D-298: 결제가 8일 넘게 밀린 회사는 서류 변환(AI)도 멈춤
+  if (await billingBlocked(o.path.split("/")[0])) {
+    await admin.storage.from(DOC_BUCKET).remove([o.path]);
+    return { ok: false, error: convertErrorMessage("BILLING_PAST_DUE") };
+  }
   const { data: blob } = await admin.storage.from(DOC_BUCKET).download(o.path);
   if (!blob) return { ok: false, error: convertErrorMessage("EXPIRED") };
   if (blob.size > MAX_BYTES) {

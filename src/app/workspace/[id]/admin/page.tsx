@@ -17,6 +17,7 @@ import type { DayAdminData } from "@/lib/attendance/today";
 import { BRAND } from "@/lib/brand";
 import { BudgetHomeCard } from "@/components/admin/budget-home-card";
 import type { BudgetStatus } from "@/lib/budget/format";
+import { mdKo, pastDueSchedule } from "@/lib/billing/state";
 
 export const metadata = { title: `관리자 · ${BRAND.name}` };
 
@@ -38,7 +39,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
   const membership = await requireWorkspace(id, { admin: true });
   const supabase = await createClient();
   const weekAgo = daysAgoIso(7);
-  const [{ company }, credit, dashboard, notices, { count: titleChanges }, { count: openRequests }, { data: office }, { count: closedMonths }, attendancePending, { data: budget }] = await Promise.all([
+  const [{ company }, credit, dashboard, notices, { count: titleChanges }, { count: openRequests }, { data: office }, { count: closedMonths }, attendancePending, { data: budget }, { data: billingSub }] = await Promise.all([
     getCompanySummary(membership.company_id),
     getCreditStatus(membership.company_id),
     getDashboard(currentMonthKst()),
@@ -54,6 +55,8 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
     attendancePendingCount(),
     // 이번 달 예산(D-267)
     supabase.rpc("budget_status", {}),
+    // 정기결제 미납 안내(D-298) — 관리자만 보임(RLS)
+    supabase.from("billing_subscriptions").select("status, past_due_since, cancel_reason").maybeSingle(),
   ]);
   // 오늘 출근 카드(D-242)
   const attendanceDay =
@@ -68,6 +71,22 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
     <>
       {/* 이벤트 추가 지급 뒤 처음 접속하면 상단 배너 (pricing-policy.md §5) */}
       {credit?.showEventBanner && <EventBonusBanner amount={credit.eventAmount} count={credit.eventCount} total={credit.eventTotal} />}
+      {(billingSub?.status === "past_due" && billingSub.past_due_since) || (billingSub?.status === "canceled" && billingSub.cancel_reason === "unpaid") ? (
+        <Link
+          href={`/workspace/${membership.company_id}/admin/billing#subscription`}
+          className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 hover:bg-red-100"
+          data-billing-banner
+        >
+          <span className="break-keep">
+            {billingSub.status === "canceled"
+              ? "결제가 30일 밀려 구독이 해지됐어요. 새 영수증 올리기가 멈춰 있어요. 다시 결제하면 바로 풀려요."
+              : todayKst() >= pastDueSchedule(billingSub.past_due_since!).blockFrom
+                ? "결제가 밀려 새 영수증 올리기가 멈췄어요. 카드를 바꾸거나 다시 결제하면 바로 풀려요."
+                : `요금 결제에 실패했어요. ${mdKo(pastDueSchedule(billingSub.past_due_since!).graceUntil)}까지 카드를 바꾸거나 다시 결제해 주세요.`}
+          </span>
+          <span className="shrink-0 font-semibold">결제하러 가기 →</span>
+        </Link>
+      ) : null}
       {askReview && (
         <Link
           href={`/workspace/${membership.company_id}/admin/billing`}

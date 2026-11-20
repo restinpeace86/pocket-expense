@@ -61,6 +61,7 @@ const MESSAGES: Record<string, string> = {
   MEMBER_HAS_PENDING_REVIEW: "이 멤버가 검토할 차례인 결의서가 있어요. 먼저 처리해 주세요.",
   NOT_EDITABLE: "이미 상신된 결의서는 고칠 수 없어요. 화면을 새로고침해 주세요.",
   TOO_MANY_ITEMS: "결의서 한 건에는 영수증을 30장까지 담을 수 있어요. 새 결의서로 나눠 올려 주세요.",
+  BILLING_PAST_DUE: "지금은 새 영수증을 올릴 수 없어요. 관리자에게 문의해 주세요.",
   NO_CREDITS: "회사 무료 사용량을 모두 사용했습니다. 관리자에게 문의하세요.",
   INVALID_FILE: "올릴 수 없는 파일이에요. 사진(JPG·PNG·HEIC 등) 또는 PDF를 골라 주세요.",
   INVALID_CLAIM_TEXT: "제목은 100자, 지출 사유는 1,000자, 예외 소명 사유는 500자, 출장지·출장 목적은 100자 이내로 입력해 주세요.",

@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/server";
 import { BRAND } from "@/lib/brand";
 import type { StorageStatus } from "@/lib/billing/storage";
 import type { DocConvertQuota } from "@/lib/billing/doc-quota";
+import type { BillingState } from "@/lib/billing/state";
+import { tossReady } from "@/lib/billing/server";
 
 export const metadata = { title: `요금제 · ${BRAND.name}` };
 
@@ -28,7 +30,7 @@ async function Billing({ params, searchParams }: Pick<PageProps<"/workspace/[id]
   const thisMonth = todayKst().slice(0, 7);
   const q = typeof sp.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(sp.month) && sp.month <= thisMonth ? sp.month : thisMonth;
   const supabase = await createClient();
-  const [status, plans, addons, usage, storage, storageAddons, docQuota] = await Promise.all([
+  const [status, plans, addons, usage, storage, storageAddons, docQuota, billingRes] = await Promise.all([
     getCreditStatus(membership.company_id),
     getBillingPlans(),
     getBillingAddons(),
@@ -36,11 +38,16 @@ async function Billing({ params, searchParams }: Pick<PageProps<"/workspace/[id]
     supabase.rpc("storage_addon_status"),
     supabase.from("storage_addons").select("code, storage_gb, monthly_price").order("sort_order"),
     supabase.rpc("doc_convert_quota"),
+    supabase.rpc("billing_state"),
   ]);
   if (!status) notFound();
+  // 정기결제(D-298): 운영자가 연 회사 + 서버에 토스 키가 있을 때만 결제 버튼
+  const billingRaw = (billingRes.data as unknown as BillingState | null) ?? null;
+  const billing = billingRaw ? { ...billingRaw, open: billingRaw.open && tossReady() } : null;
+  const str = (v: unknown) => (typeof v === "string" ? v.slice(0, 200) : undefined);
   return (
     <div className="flex flex-col gap-6">
-      <BillingView status={status} plans={plans} addons={addons} storage={(storage.data as unknown as StorageStatus) ?? null} storageAddons={storageAddons.data ?? []} docQuota={(docQuota.data as unknown as DocConvertQuota) ?? null} />
+      <BillingView status={status} plans={plans} addons={addons} storage={(storage.data as unknown as StorageStatus) ?? null} storageAddons={storageAddons.data ?? []} docQuota={(docQuota.data as unknown as DocConvertQuota) ?? null} billing={billing} result={{ kind: str(sp.billing), msg: str(sp.msg) ?? str(sp.message) }} />
       <CreditUsageSection base={`/workspace/${id}/admin/billing`} month={q} thisMonth={thisMonth} data={(usage.data as unknown as CreditUsage) ?? null} unlimited={status.exempt} />
     </div>
   );

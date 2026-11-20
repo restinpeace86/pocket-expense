@@ -1292,6 +1292,119 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_keys: {
+        Row: {
+          billing_key: string
+          company_id: string
+          updated_at: string
+        }
+        Insert: {
+          billing_key: string
+          company_id: string
+          updated_at?: string
+        }
+        Update: {
+          billing_key?: string
+          company_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_keys_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_payments: {
+        Row: {
+          approved_at: string | null
+          company_id: string
+          coupon: boolean
+          created_at: string
+          discount: number
+          fail_code: string | null
+          fail_message: string | null
+          id: string
+          kind: string
+          list_amount: number
+          order_id: string
+          payment_key: string | null
+          period_end: string | null
+          period_start: string | null
+          plan_code: string
+          receipt_url: string | null
+          status: string
+          storage_gb: number
+          supply: number
+          total: number
+          vat: number
+        }
+        Insert: {
+          approved_at?: string | null
+          company_id: string
+          coupon?: boolean
+          created_at?: string
+          discount?: number
+          fail_code?: string | null
+          fail_message?: string | null
+          id?: string
+          kind: string
+          list_amount: number
+          order_id: string
+          payment_key?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_code: string
+          receipt_url?: string | null
+          status: string
+          storage_gb?: number
+          supply: number
+          total: number
+          vat: number
+        }
+        Update: {
+          approved_at?: string | null
+          company_id?: string
+          coupon?: boolean
+          created_at?: string
+          discount?: number
+          fail_code?: string | null
+          fail_message?: string | null
+          id?: string
+          kind?: string
+          list_amount?: number
+          order_id?: string
+          payment_key?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_code?: string
+          receipt_url?: string | null
+          status?: string
+          storage_gb?: number
+          supply?: number
+          total?: number
+          vat?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_payments_plan_code_fkey"
+            columns: ["plan_code"]
+            isOneToOne: false
+            referencedRelation: "billing_plans"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       billing_plans: {
         Row: {
           alimtalk_included: boolean
@@ -1375,6 +1488,97 @@ export type Database = {
           vault_storage_mb?: number | null
         }
         Relationships: []
+      }
+      billing_subscriptions: {
+        Row: {
+          anchor_day: number | null
+          cancel_at_period_end: boolean
+          cancel_reason: string | null
+          canceled_at: string | null
+          card_label: string | null
+          company_id: string
+          created_at: string
+          customer_key: string
+          last_attempt_on: string | null
+          last_grant_month: string | null
+          next_billing_on: string | null
+          past_due_since: string | null
+          pending_plan_code: string | null
+          pending_storage_gb: number | null
+          period_end: string | null
+          period_start: string | null
+          plan_code: string
+          status: string
+          storage_gb: number
+          updated_at: string
+        }
+        Insert: {
+          anchor_day?: number | null
+          cancel_at_period_end?: boolean
+          cancel_reason?: string | null
+          canceled_at?: string | null
+          card_label?: string | null
+          company_id: string
+          created_at?: string
+          customer_key?: string
+          last_attempt_on?: string | null
+          last_grant_month?: string | null
+          next_billing_on?: string | null
+          past_due_since?: string | null
+          pending_plan_code?: string | null
+          pending_storage_gb?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_code: string
+          status?: string
+          storage_gb?: number
+          updated_at?: string
+        }
+        Update: {
+          anchor_day?: number | null
+          cancel_at_period_end?: boolean
+          cancel_reason?: string | null
+          canceled_at?: string | null
+          card_label?: string | null
+          company_id?: string
+          created_at?: string
+          customer_key?: string
+          last_attempt_on?: string | null
+          last_grant_month?: string | null
+          next_billing_on?: string | null
+          past_due_since?: string | null
+          pending_plan_code?: string | null
+          pending_storage_gb?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_code?: string
+          status?: string
+          storage_gb?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_subscriptions_pending_plan_code_fkey"
+            columns: ["pending_plan_code"]
+            isOneToOne: false
+            referencedRelation: "billing_plans"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "billing_subscriptions_plan_code_fkey"
+            columns: ["plan_code"]
+            isOneToOne: false
+            referencedRelation: "billing_plans"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       budget_alert_logs: {
         Row: {
@@ -5690,6 +5894,60 @@ export type Database = {
         Returns: undefined
       }
       attendance_terminal_revoke: { Args: { p_id: string }; Returns: undefined }
+      billing_card_saved: {
+        Args: {
+          p_billing_key: string
+          p_card_label: string
+          p_company: string
+          p_customer_key: string
+        }
+        Returns: string
+      }
+      billing_change: {
+        Args: { p_plan: string; p_storage: number }
+        Returns: string
+      }
+      billing_charge_info: { Args: { p_company: string }; Returns: Json }
+      billing_close: {
+        Args: { p_company: string; p_reason: string }
+        Returns: undefined
+      }
+      billing_due: {
+        Args: { p_today: string }
+        Returns: {
+          action: string
+          company_id: string
+        }[]
+      }
+      billing_monthly_grant: { Args: { p_today: string }; Returns: number }
+      billing_payment_result: {
+        Args: {
+          p_company: string
+          p_coupon: boolean
+          p_discount: number
+          p_fail_code: string
+          p_fail_message: string
+          p_kind: string
+          p_list: number
+          p_ok: boolean
+          p_order_id: string
+          p_payment_key: string
+          p_plan: string
+          p_receipt_url: string
+          p_storage: number
+          p_supply: number
+          p_total: number
+          p_vat: number
+        }
+        Returns: Json
+      }
+      billing_prepare: {
+        Args: { p_plan: string; p_storage: number }
+        Returns: string
+      }
+      billing_set_cancel: { Args: { p_cancel: boolean }; Returns: string }
+      billing_state: { Args: never; Returns: Json }
+      billing_upload_blocked: { Args: { p_company: string }; Returns: boolean }
       budget_claim_impact: { Args: { p_claim: string }; Returns: Json }
       budget_save: {
         Args: { p_titles: Json; p_total: number }

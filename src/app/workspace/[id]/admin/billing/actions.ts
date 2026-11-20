@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "../actions";
 import { storageErrorText } from "@/lib/billing/storage";
 import { notifyOps } from "@/lib/ops-notify/server";
+import { chargeCompany, tossReady } from "@/lib/billing/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // 이벤트 추가 지급 배너 [확인] (pricing-policy.md §5). 관리자 이상, 자기 회사만(RLS companies_update).
 export async function acknowledgeEventBonusAction(): Promise<ActionResult> {
@@ -72,4 +74,69 @@ export async function withdrawStorageAction(): Promise<{ ok: true } | { ok: fals
   if (error) return { ok: false, error: "취소하지 못했어요. 잠시 후 다시 시도해 주세요." };
   refresh();
   return { ok: true };
+}
+
+// ── 정기결제(D-298) ─────────────────────────────────────────────────────────
+const BILLING_ERRORS: Record<string, string> = {
+  BILLING_CLOSED: "아직 결제가 열리지 않은 회사예요.",
+  INVALID_PLAN: "요금제나 저장 공간을 다시 골라 주세요.",
+  NO_SUBSCRIPTION: "구독 정보가 없어요. 새로고침해 주세요.",
+  PAST_DUE_CANCEL: "밀린 결제가 있어요. 카드를 바꿔 결제한 뒤 해지할 수 있어요.",
+};
+const billingError = (code: string) => BILLING_ERRORS[Object.keys(BILLING_ERRORS).find((k) => code.includes(k)) ?? ""] ?? messageForDbError({ message: code });
+
+async function billingAdmin() {
+  const m = await getMembership();
+  return m && m.status === "approved" && isAdminRole(m.role) ? m : null;
+}
+
+// 결제하기/카드 바꾸기: 고른 구성을 저장하고 토스 카드 등록창에 넘길 값을 돌려준다(비밀 키는 주지 않음)
+export async function prepareBillingAction(plan: string, gb: number): Promise<{ ok: true; customerKey: string; clientKey: string; customerName: string } | { ok: false; error: string }> {
+  const m = await billingAdmin();
+  if (!m) return { ok: false, error: messageForDbError({ message: "NOT_ALLOWED" }) };
+  const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+  if (!clientKey || !process.env.TOSS_SECRET_KEY) return { ok: false, error: "결제 설정이 아직 안 됐어요. 잠시 후 다시 시도해 주세요." };
+  if (typeof plan !== "string" || plan.length > 30 || !Number.isInteger(gb)) return { ok: false, error: billingError("INVALID_PLAN") };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("billing_prepare", { p_plan: plan, p_storage: gb });
+  if (error || !data) return { ok: false, error: billingError(error?.message ?? "") };
+  return { ok: true, customerKey: data, clientKey, customerName: m.company_name.slice(0, 50) };
+}
+
+// 구성 바꾸기(첫 결제 전이면 바로, 결제 중이면 다음 결제일부터)
+export async function changeBillingAction(plan: string, gb: number): Promise<{ ok: true; when: string } | { ok: false; error: string }> {
+  const m = await billingAdmin();
+  if (!m) return { ok: false, error: messageForDbError({ message: "NOT_ALLOWED" }) };
+  if (typeof plan !== "string" || plan.length > 30 || !Number.isInteger(gb)) return { ok: false, error: billingError("INVALID_PLAN") };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("billing_change", { p_plan: plan, p_storage: gb });
+  if (error) return { ok: false, error: billingError(error.message) };
+  refresh();
+  return { ok: true, when: data ?? "next" };
+}
+
+// 해지 신청/취소
+export async function setBillingCancelAction(cancel: boolean): Promise<{ ok: true; result: string } | { ok: false; error: string }> {
+  const m = await billingAdmin();
+  if (!m) return { ok: false, error: messageForDbError({ message: "NOT_ALLOWED" }) };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("billing_set_cancel", { p_cancel: cancel === true });
+  if (error) return { ok: false, error: billingError(error.message) };
+  refresh();
+  return { ok: true, result: data ?? "" };
+}
+
+// 밀린 결제를 지금 다시(등록된 카드로)
+export async function payNowAction(): Promise<{ ok: true } | { ok: false; error: string }> {
+  const m = await billingAdmin();
+  if (!m) return { ok: false, error: messageForDbError({ message: "NOT_ALLOWED" }) };
+  const supabase = await createClient();
+  const { data: state } = await supabase.rpc("billing_state");
+  const status = (state as { subscription?: { status: string } | null } | null)?.subscription?.status;
+  if (status !== "past_due") return { ok: false, error: "지금 다시 결제할 내용이 없어요." };
+  const admin = createAdminClient();
+  if (!admin || !tossReady()) return { ok: false, error: "결제 설정이 아직 안 됐어요." };
+  const r = await chargeCompany(admin, m.company_id, "retry");
+  refresh();
+  return r.ok ? { ok: true } : { ok: false, error: r.message };
 }

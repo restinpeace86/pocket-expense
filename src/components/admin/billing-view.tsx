@@ -11,6 +11,8 @@ import { PlanChoice, PlanStorage, PlanSummary, StorageAddonPicker, StorageReques
 import { StorageStatusCard } from "@/components/billing/storage-status";
 import type { StorageAddon, StorageStatus } from "@/lib/billing/storage";
 import type { DocConvertQuota } from "@/lib/billing/doc-quota";
+import { BillingResult, SubscriptionCard } from "@/components/billing/subscription-card";
+import { addDays, isSubscribed, type BillingState } from "@/lib/billing/state";
 import { EventBonusBanner } from "./event-bonus-banner";
 import { SurveyButton } from "./survey-dialog";
 
@@ -223,6 +225,8 @@ export function BillingView({
   docQuota = null,
   preview = false,
   today = todayKst(),
+  billing = null,
+  result,
 }: {
   status: CreditStatus;
   plans: BillingPlan[];
@@ -232,8 +236,16 @@ export function BillingView({
   docQuota?: DocConvertQuota | null;
   preview?: boolean;
   today?: string;
+  billing?: BillingState | null; // 정기결제(D-298) — 결제가 열린 회사만 open
+  result?: { kind?: string; msg?: string };
 }) {
   const exhausted = status.granted - status.used <= 0;
+  const open = !!billing?.open && !status.exempt;
+  const sub = open ? billing!.subscription : null;
+  const subscribed = isSubscribed(sub);
+  // 무료 기간이 남았고 결제한 적 없으면 첫 결제 = 무료 기간 끝난 다음 날
+  const firstOn = !status.purchased && status.trialEndsOn && status.trialEndsOn >= today ? addDays(status.trialEndsOn, 1) : null;
+  const payMode = !open ? undefined : subscribed ? { mode: "subscribed" as const, plan: sub!.plan_code, gb: sub!.storage_gb, scheduled: sub!.status === "scheduled" } : { mode: "open" as const, coupon: status.coupon, firstOn };
   if (status.exempt) {
     return (
       <>
@@ -260,7 +272,9 @@ export function BillingView({
           </>
         }
       />
-      <UsageCard s={status} preview={preview} today={today} />
+      {open && <BillingResult kind={result?.kind} msg={result?.msg} />}
+      {open && billing && <SubscriptionCard billing={billing} plans={plans} storageAddons={storageAddons} creditsLeft={Math.max(status.granted - status.used, 0)} />}
+      {!(sub && (sub.status === "active" || sub.status === "past_due")) && <UsageCard s={status} preview={preview} today={today} />}
       {docQuota && <DocConvertQuotaCard q={docQuota} today={today} />}
       {storage && <StorageStatusCard status={storage} />}
       {exhausted && <AddonCard addons={addons} />}
@@ -270,8 +284,8 @@ export function BillingView({
         <PlanStorage
           addons={storageAddons}
           plans={plans.map((p) => ({ code: p.code, name: p.name, price: p.monthly_price }))}
-          initialPlan={(plans.find((p) => p.is_featured) ?? plans[0])?.code ?? ""}
-          initial={storage?.extra_gb ?? 0}
+          initialPlan={sub && subscribed ? (sub.pending_plan_code ?? sub.plan_code) : ((plans.find((p) => p.is_featured) ?? plans[0])?.code ?? "")}
+          initial={sub && subscribed ? (sub.pending_storage_gb ?? sub.storage_gb) : (storage?.extra_gb ?? 0)}
         >
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" role="radiogroup" aria-label="플랜 고르기">
             {plans.map((p) => (
@@ -280,7 +294,7 @@ export function BillingView({
           </ul>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             <StorageAddonPicker note="모든 플랜에 같은 가격으로 더할 수 있어요. 체크하면 [선택한 구성] 합계에 더해져요. 다시 누르면 해제돼요." />
-            <PlanSummary payTip={DISABLED_TIP}>{storage && <StorageRequestButton current={storage.extra_gb} pending={!!storage.pending} />}</PlanSummary>
+            <PlanSummary payTip={DISABLED_TIP} pay={payMode}>{storage && !subscribed && !open && <StorageRequestButton current={storage.extra_gb} pending={!!storage.pending} />}</PlanSummary>
           </div>
         </PlanStorage>
         <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
@@ -314,7 +328,7 @@ export function BillingView({
           </ul>
         </div>
       </section>
-      <PaymentForm />
+      {!open && <PaymentForm />}
     </>
   );
 }

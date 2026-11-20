@@ -8,6 +8,8 @@ import { requestStorageAction as requestStorageActionRaw } from "@/app/workspace
 import { addonPrice, requestLabel, type StorageAddon } from "@/lib/billing/storage";
 import { formatWon } from "@/lib/format";
 import { guarded } from "@/lib/action-guard";
+import { subscriptionCharge } from "@/lib/billing/checkout";
+import { ChangePlanButton, StartSubscriptionButton } from "./subscription-actions";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
 const requestStorageAction = guarded(requestStorageActionRaw);
@@ -88,7 +90,11 @@ export function StorageAddonPicker({ note }: { note?: string }) {
 
 // [선택한 구성]: 플랜 + 저장 공간 = 합계. 버튼 자리 — 랜딩(startHref): 이 구성으로 무료로 시작, 관리자(payTip): 결제하기(준비 중).
 // 결제가 붙으면 관리자 버튼을 여기서 켠다
-export function PlanSummary({ startHref, payTip, children }: { startHref?: string; payTip?: string; children?: ReactNode }) {
+// 결제가 열린 회사(D-298): open = 처음 결제(카드 등록), subscribed = 결제 중(구성 바꾸기)
+export type PayMode = { mode: "open"; coupon: boolean; firstOn: string | null } | { mode: "subscribed"; plan: string; gb: number; scheduled: boolean };
+const mdLabel = (d: string) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8, 10))}일`;
+
+export function PlanSummary({ startHref, payTip, pay, children }: { startHref?: string; payTip?: string; pay?: PayMode; children?: ReactNode }) {
   const { addons, plans, plan, gb } = use();
   const p = plans.find((x) => x.code === plan) ?? plans[0];
   if (!p) return null;
@@ -119,10 +125,30 @@ export function PlanSummary({ startHref, payTip, children }: { startHref?: strin
           </dd>
         </div>
       </dl>
-      <div className="mt-4">{startHref ? <SummaryStartLink href={startHref} total={total} planName={p.name} /> : <SummaryPayButton total={total} tip={payTip ?? ""} />}</div>
+      <div className="mt-4">
+        {startHref ? (
+          <SummaryStartLink href={startHref} total={total} planName={p.name} />
+        ) : pay?.mode === "open" ? (
+          <OpenPay plan={p.code} gb={gb} planPrice={p.price} storagePrice={extra} coupon={pay.coupon} firstOn={pay.firstOn} />
+        ) : pay?.mode === "subscribed" ? (
+          <ChangePlanButton plan={p.code} gb={gb} same={p.code === pay.plan && gb === pay.gb} scheduled={pay.scheduled} />
+        ) : (
+          <SummaryPayButton total={total} tip={payTip ?? ""} />
+        )}
+      </div>
       {children}
     </section>
   );
+}
+
+// 처음 결제: 첫 결제 금액(부가세 포함, 후기 쿠폰 반영) + 언제 결제되는지
+function OpenPay({ plan, gb, planPrice, storagePrice, coupon, firstOn }: { plan: string; gb: number; planPrice: number; storagePrice: number; coupon: boolean; firstOn: string | null }) {
+  const first = subscriptionCharge(planPrice, storagePrice, coupon);
+  const every = subscriptionCharge(planPrice, storagePrice, false);
+  const note = firstOn
+    ? `무료 기간이 끝난 다음 날(${mdLabel(firstOn)}) 첫 결제 ${formatWon(first.total)}(VAT 포함), 그 뒤 매월 같은 날 ${formatWon(every.total)}. 지금은 카드만 등록해요.`
+    : `오늘 첫 결제 ${formatWon(first.total)}(VAT 포함), 그 뒤 매월 같은 날 ${formatWon(every.total)}. 해지는 언제든, 다음 결제일부터 적용돼요.`;
+  return <StartSubscriptionButton plan={plan} gb={gb} label={firstOn ? "카드 등록하기" : `${formatWon(first.total)} 결제하기`} note={note} />;
 }
 
 // 랜딩: [이 구성으로 무료로 시작하기] — 결제 정보 없이 시작(첫 월말 마감까지 무료)

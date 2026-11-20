@@ -3,6 +3,7 @@
 import { ALL_CATEGORIES, type ExpenseCategory } from "@/lib/expense/categories";
 import { STORAGE_FULL_MESSAGE } from "@/lib/storage/room-message";
 import { storageFull } from "@/lib/storage/room-server";
+import { billingBlocked } from "@/lib/billing/server";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { getMembership } from "@/lib/auth/session";
@@ -201,6 +202,7 @@ export async function startReceiptUploadAction(
   if (!m) return fail("NOT_A_MEMBER");
   if (!isUuid(claimId)) return fail("NOT_FOUND");
   if (await storageFull()) return { ok: false, error: STORAGE_FULL_MESSAGE }; // D-286: 꽉 차면 빈 항목을 만들기 전에 안내
+  if (await billingBlocked(m.company_id)) return fail("BILLING_PAST_DUE"); // D-298: 결제가 8일 넘게 밀리면 새 영수증만 멈춤
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_receipt_item", { p_claim_id: claimId, p_is_pdf: file.isPdf, p_thumb_ext: file.thumbExt });
   if (error || !data) return { ok: false, error: messageForDbError(error) };
