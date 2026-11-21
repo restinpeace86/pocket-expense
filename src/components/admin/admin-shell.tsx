@@ -274,7 +274,7 @@ export function AdminShell({
             </Link>
           )}
         </div>
-        <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 py-6 md:px-8">
+        <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 py-6 md:px-8 md:[body:has([data-kakao-fab])_&]:pb-24">
           <SettingsTabs base={base} previewPath={previewPath} />
           {children}
         </main>

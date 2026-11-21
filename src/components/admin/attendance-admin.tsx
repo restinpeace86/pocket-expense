@@ -181,7 +181,7 @@ function SettingsForm({ initial }: { initial: AttendanceSettings }) {
           ))}
         </select>
       </Row>
-      <Row title="연차 연도 기준" help="직원별 연차 일수를 정할 때 써요(연차 화면은 곧 열려요).">
+      <Row title="연차 연도 기준" help="직원별 연차 일수를 계산하는 기준이에요([직원별 연차] 탭).">
         <div className="flex flex-col text-[15px]">
           <label className="flex min-h-10 items-center gap-2">
             <input type="radio" name="att-year" checked={s.leave_year_basis === "calendar"} onChange={() => set("leave_year_basis", "calendar")} className="size-4" /> 1월 1일 ~ 12월 31일
