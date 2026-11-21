@@ -38,8 +38,8 @@ export async function createCompanyAction(_prev: FormState, formData: FormData):
   }
   // 운영자 디스코드(D-293): 회사 이름 + 링크만
   notifyOps({ kind: "signup", company: text(formData, "companyName"), companyId: String(companyId) });
-  // 다음 단계: 추천인·추천 회사(선택, 건너뛰면 관리자 홈) (D-147)
-  redirect("/onboarding/referral");
+  // 다음 단계: 회사 위치(선택, 2026-11-21) → 추천인·추천 회사(선택, 건너뛰면 관리자 홈) (D-147)
+  redirect("/onboarding/location");
 }
 
 // 직원 가입: 공용 코드(승인 대기) 또는 개별 초대 토큰(즉시 활성) (D-042)

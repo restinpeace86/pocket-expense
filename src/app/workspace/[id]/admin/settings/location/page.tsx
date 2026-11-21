@@ -1,25 +1,17 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { CompanyLocationCard } from "@/components/admin/company-location-card";
-import { requireWorkspace } from "@/lib/auth/guards";
-import { getCompanyNearby } from "@/lib/bus/server";
-import { BRAND } from "@/lib/brand";
 
-export const metadata = { title: `회사 위치 · ${BRAND.name}` };
-
-// 설정 › 회사 기본정보 › 회사 위치(D-243 → D-251)
+// 옛 '회사 위치' 탭 주소(D-243 → D-251) — 2026-11-21 회사정보 탭으로 합침. 예전 링크·도움말은 회사정보의 위치 카드로
 export default function Page({ params }: PageProps<"/workspace/[id]/admin/settings/location">) {
   return (
-    <>
-      <h1 className="text-2xl font-bold tracking-tight">회사 위치</h1>
-      <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-zinc-100" />}>
-        <Content params={params} />
-      </Suspense>
-    </>
+    <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-zinc-100" />}>
+      <Go params={params} />
+    </Suspense>
   );
 }
 
-async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/settings/location">["params"] }) {
+async function Go({ params }: { params: PageProps<"/workspace/[id]/admin/settings/location">["params"] }) {
   const { id } = await params;
-  await requireWorkspace(id, { admin: true });
-  return <CompanyLocationCard current={await getCompanyNearby()} />;
+  redirect(`/workspace/${id}/admin/settings#location`);
+  return null;
 }

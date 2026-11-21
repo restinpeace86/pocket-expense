@@ -42,9 +42,9 @@ export const HELP_SEED: SeedArticle[] = [
   },
   {
     id: "company-location", cat: "basic", audience: "admin", title: "회사 위치(주소) 넣기", summary: "[주소 검색]에서 도로명·지번·건물명으로 찾아 고르면 바로 저장돼요.",
-    keywords: ["주소", "위치", "우편번호", "지번", "회사 주소", "정류장"], path: "/admin/settings/location", pathLabel: "회사 위치로 이동",
+    keywords: ["주소", "위치", "우편번호", "지번", "회사 주소", "정류장"], path: "/admin/settings#location", pathLabel: "회사 위치로 이동",
     steps: [
-      { body: "설정 › 회사 기본정보 › [회사 위치] 탭에서 [주소 검색]을 눌러요." },
+      { body: "설정 › 회사 기본정보 › [회사정보] 아래 [회사 위치]에서 [주소 검색]을 눌러요. 회사를 처음 만들 때도 넣을 수 있어요." },
       { body: "도로명(판교원로 3)·지번(삼평동 670)·건물명 아무거나로 찾아 목록에서 골라요. 도로명·지번·우편번호가 함께 저장되고 위치(좌표)는 자동으로 찾아요.", shot: "admin-location" },
       { body: "회사 200m 안 버스 정류장이 지도에 보여요. 정류장이 있으면 직원 홈에 [주변 버스]가 생겨요(전국 시내버스)." },
     ],

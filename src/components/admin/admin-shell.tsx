@@ -290,7 +290,7 @@ export function AdminShell({
           className="fixed bottom-6 right-6 z-50 hidden min-h-12 items-center gap-2 rounded-full bg-[#FEE500] px-5 text-sm font-semibold text-[#191919] shadow-lg ring-1 ring-black/5 transition hover:brightness-95 md:inline-flex [body:has(.kb-hide.fixed)_&]:bottom-28"
         >
           <MessageCircle className="size-5 shrink-0" />
-          관리자 피드백
+          1:1 문의
         </a>
       )}
     </div>

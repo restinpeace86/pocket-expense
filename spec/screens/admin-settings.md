@@ -47,7 +47,7 @@
 >
 > | 메뉴 | 탭 |
 > |---|---|
-> | 회사 기본정보 | 회사정보 `/settings` · 회사 위치 `/settings/location` · 부서 · 세무사무소 |
+> | 회사 기본정보 | 회사정보 `/settings`(아래 회사 위치 카드 `#location`, D-299 — 옛 `/settings/location`은 여기로) · 부서 · 세무사무소 |
 > | 회사 자산 | 법인카드 · 회사차량 · 회의실 `/calendar-settings` |
 > | 기능 사용 `/features` | 근태 사용 · 사내 캘린더 사용(기본 켜짐) |
 > | 경비 정책 | 식대 한도 `/settings/meal` · 자차 유류비 `/settings/fuel` · 출장 일비 `/settings/per-diem` · 정기 결제 `/recurring` · 마감 일정 `/settings/closing` |

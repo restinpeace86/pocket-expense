@@ -1,3 +1,4 @@
+// 회사 위치는 2026-11-21부터 회사정보 탭 아래 카드(옛 주소 /settings/location → /settings#location)
 // 관리자 설정 8개 메뉴(D-251, todo_improvement 개선사항 1): 7개 그룹 + 요금제
 // 왼쪽 메뉴는 그룹만, 그룹 화면 위 탭이 하위 영역. 탭 주소는 기존 화면 주소를 그대로 쓴다(예전 링크가 맞는 탭으로 열림)
 export type SettingsTab = { href: string; label: string };
@@ -10,7 +11,6 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     label: "회사 기본정보",
     tabs: [
       { href: "/settings", label: "회사정보" },
-      { href: "/settings/location", label: "회사 위치" },
       { href: "/departments", label: "부서" },
       { href: "/tax-office", label: "세무사무소" },
     ],
