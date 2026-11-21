@@ -1,0 +1,212 @@
+<title>다모온 설정 UX 검토</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 한 줄 읽기 문서 — 요약 → 공통 문제 → 처음 1회 단계 안내 → 화면별 표 → 고를 것 */
+:root {
+  --bg: #f7f7fb; --surface: #ffffff; --fg: #1d1b2e; --muted: #5d5a73; --line: #e3e1ee;
+  --accent: #4f46e5; --accent-soft: #eef0ff;
+  --hi: #b42318; --hi-soft: #fdecea; --mid: #a15c00; --mid-soft: #fff4e0; --lo: #3f6212; --lo-soft: #eef7e2;
+  --font: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #14131c; --surface: #1d1c28; --fg: #ecebf5; --muted: #a9a6bf; --line: #2f2d40;
+  --accent: #a5a1ff; --accent-soft: #26244a;
+  --hi: #ff9b8f; --hi-soft: #3a1d1b; --mid: #f5b955; --mid-soft: #362810; --lo: #a9d67a; --lo-soft: #1f2d14; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #14131c; --surface: #1d1c28; --fg: #ecebf5; --muted: #a9a6bf; --line: #2f2d40;
+  --accent: #a5a1ff; --accent-soft: #26244a;
+  --hi: #ff9b8f; --hi-soft: #3a1d1b; --mid: #f5b955; --mid-soft: #362810; --lo: #a9d67a; --lo-soft: #1f2d14; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.7; }
+.wrap { max-width: 920px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 40px; }
+h1 { font-size: 28px; line-height: 1.3; margin: 0; text-wrap: balance; }
+h2 { font-size: 20px; margin: 0 0 12px; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0 0 6px; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; letter-spacing: .06em; color: var(--accent); font-weight: 600; }
+.lead { color: var(--muted); margin-top: 8px; max-width: 68ch; }
+section { display: flex; flex-direction: column; gap: 12px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.id { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent); margin-right: 6px; white-space: nowrap; }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 1px 9px; white-space: nowrap; }
+.p-hi { background: var(--hi-soft); color: var(--hi); }
+.p-mid { background: var(--mid-soft); color: var(--mid); }
+.p-lo { background: var(--lo-soft); color: var(--lo); }
+.p-done { background: var(--accent-soft); color: var(--accent); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; color: var(--muted); font-weight: 600; background: var(--bg); position: sticky; top: 0; }
+tr.group td { background: var(--accent-soft); font-weight: 700; color: var(--fg); }
+td.ok { color: var(--muted); }
+.opt { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+.opt.rec { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.muted { color: var(--muted); font-size: 14px; }
+/* 제안 화면 모형 */
+.mock { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); font-size: 13px; }
+.mock .bar { display: flex; gap: 8px; align-items: center; padding: 10px 14px; background: var(--accent-soft); flex-wrap: wrap; }
+.step { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); }
+.step.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.step.done { color: var(--lo); }
+.mock .body { padding: 14px; color: var(--muted); min-height: 70px; }
+.mock .foot { display: flex; justify-content: space-between; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line); color: var(--fg); background: var(--surface); }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">2026-11-21 · 관리자 설정 검토</p>
+    <h1>다모온 설정 UX 검토</h1>
+    <p class="lead">처음 가입한 회사 상태로 운영 사이트(damo-on.com)의 설정 탭 24개를 PC·휴대폰으로 모두 열어 보고, "앱을 처음 보는 관리자"가 이해하고 바꿀 수 있는지 봤어요. 기본값은 우리가 미는 표준 설정이라는 전제예요. 고를 항목은 번호(U-1…)로 알려 주세요.</p>
+  </header>
+
+  <section>
+    <h2>한눈에</h2>
+    <div class="grid2">
+      <div class="box">
+        <h3>이미 고친 것 <span class="pill p-done">배포됨</span></h3>
+        <ul>
+          <li>PC 노란 [1:1 문의] 버튼이 <b>근무 기준·세무사무소 화면 맨 아래 [저장] 버튼을 가림</b> → 화면 아래 여백 추가</li>
+          <li>근무 기준의 옛 문구 "연차 화면은 곧 열려요" → 이미 있는 [직원별 연차] 탭 안내로</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>가장 큰 문제 3가지</h3>
+        <ul>
+          <li><b>탭에 순서가 없음</b> — 처음 온 관리자가 어디부터 무엇을 하고 언제 끝난 건지 모름 (U-1)</li>
+          <li><b>저장 방식이 섞임</b> — 바로 저장되는 화면과 [저장]을 눌러야 하는 화면이 섞여 있고, 저장 안 하고 탭을 옮겨도 경고가 없음 (U-2)</li>
+          <li><b>기본값이 "추천"인지 안 보임</b> — 그대로 둬도 되는지, 바꾸면 직원에게 뭐가 달라지는지가 화면마다 다름 (U-3)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>U-1 처음 1회 단계 안내</h2>
+    <p class="lead">말씀하신 방식이에요. 메뉴(그룹) 안의 탭을 처음 한 번은 순서대로 안내하고, [완료하고 다음]으로 넘어가게 해요. 끝낸 뒤에는 지금처럼 자유롭게 탭을 오가요.</p>
+    <div class="mock" aria-label="제안 화면 예시: 회사 자산 처음 설정">
+      <div class="bar">
+        <b>처음 설정 · 회사 자산</b>
+        <span class="step done">✓ 법인카드</span>
+        <span class="step on">2 회사차량</span>
+        <span class="step">3 회의실</span>
+      </div>
+      <div class="body">회사차량 등록 화면(지금과 같음). 차량이 없으면 등록하지 않고 넘어가도 돼요.</div>
+      <div class="foot">
+        <span class="btn">이 단계 건너뛰기</span>
+        <span class="btn pri">완료하고 다음 (회의실) →</span>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="opt rec">
+        <h3>A. 메뉴별 처음 1회 단계 안내 <span class="pill p-done">추천</span></h3>
+        <p class="muted">회사 자산·경비 정책·근태 정책·양식·결재처럼 탭이 여러 개인 메뉴만, 처음 들어오면 위 모형처럼 안내해요. 마지막 탭에서 [설정 완료]를 누르면 메뉴 옆에 ✓가 붙어요. 완료 기록은 회사 단위라 다른 관리자가 이미 끝냈으면 다시 안내하지 않아요. 관리자 홈 '처음 설정' 체크리스트도 이 완료 기록으로 채워요.</p>
+      </div>
+      <div class="opt">
+        <h3>B. 가입 직후 전체 마법사</h3>
+        <p class="muted">회사 등록 뒤 설정 전부를 한 번에 거치게 해요. 놓치는 것은 없지만 20단계가 넘어 첫날 이탈이 걱정돼요.</p>
+      </div>
+      <div class="opt">
+        <h3>C. 탭 아래 [다음 탭 →] 버튼만</h3>
+        <p class="muted">가장 간단해요. 완료 기록과 체크 표시가 없어서 "다 했는지"는 여전히 알 수 없어요.</p>
+      </div>
+    </div>
+    <p class="muted">A를 하면 회사별 완료 기록을 남길 작은 DB 표가 하나 필요해요. 만들 때 운영 DB 변경 승인을 따로 받을게요.</p>
+  </section>
+
+  <section>
+    <h2>모든 화면에 걸친 문제</h2>
+    <div class="box">
+      <p><span class="id">U-2</span><span class="pill p-hi">높음</span> <b>저장 방식 통일 + 저장 안 한 변경 경고</b></p>
+      <p class="muted">지금: 법인카드·회사차량·회의실·부서·회사 위치·기능 스위치는 누르면 바로 저장. 회사정보·경비 정책·근무 기준·결재라인·양식은 [저장]을 눌러야 저장. 바꾸고 [저장] 없이 다른 탭으로 가면 아무 말 없이 사라져요.</p>
+      <p class="muted">제안: [저장]이 있는 화면은 바꾼 게 생기면 화면 아래에 "저장하지 않은 변경이 있어요 [저장]" 줄을 띄우고, 그대로 다른 탭·메뉴로 가려 하면 한 번 물어요. 바로 저장되는 화면은 저장될 때 "저장했어요"를 잠깐 보여 줘요.</p>
+    </div>
+    <div class="box">
+      <p><span class="id">U-3</span><span class="pill p-hi">높음</span> <b>기본값에 "추천" 표시 + 바꾸면 달라지는 것 한 줄</b></p>
+      <p class="muted">식대 한도·자차 유류비는 예시와 근거가 잘 돼 있어요(예: "2명이 25,000원 먹으면 회사 20,000원 · 직원 부담 5,000원", "기본 200원은…"). 다른 화면은 이 수준이 아니에요. 모든 선택지에 <b>[기본·추천]</b> 표시를 같은 모양으로 붙이고, 고를 때마다 "직원 화면에서는 이렇게 보여요" 한 줄을 붙여요. 식대 화면을 기준 모양으로 삼아요.</p>
+    </div>
+    <div class="box">
+      <p><span class="id">U-4</span><span class="pill p-mid">중간</span> <b>저장 버튼 옆 문구를 화면에 맞게</b></p>
+      <p class="muted">회사정보(회사명·사업자번호)의 [저장] 옆에도 "변경 내용은 이후 상신되는 경비부터 적용돼요"가 나와요. 회사정보와 상관없는 말이라 헷갈려요. 경비 정책 화면에만 남기고, 회사정보는 "저장하면 직원 화면 회사 이름도 바로 바뀌어요"처럼 바꿔요.</p>
+    </div>
+    <div class="box">
+      <p><span class="id">U-5</span><span class="pill p-mid">중간</span> <b>휴대폰 탭 줄이 잘리는데 더 있다는 표시가 없음</b></p>
+      <p class="muted">경비 정책(탭 6개)·근태 정책(5개)은 휴대폰에서 "정기…"처럼 잘려 보여요. 옆으로 밀면 되지만 처음 보는 사람은 몰라요. 오른쪽 끝을 흐리게 하고 › 표시를 붙여요. U-1을 하면 처음 1회는 단계 줄이 대신 보여서 더 나아져요.</p>
+    </div>
+    <div class="box">
+      <p><span class="id">U-6</span><span class="pill p-mid">중간</span> <b>관리자 홈에 같은 안내가 두 번</b></p>
+      <p class="muted">'처음 설정 (2/3)' 체크리스트 안에 [정산 정책 확인]이 있고, 바로 아래에 '정산 정책을 확인해 주세요' 카드가 또 있어요. 카드의 내용(지금 기본값 요약)은 체크리스트 항목을 펼치면 보이게 합치고 카드는 없애요.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>화면별 검토</h2>
+    <p class="muted">PC 1280·휴대폰 390으로 봤어요. "괜찮음"은 처음 보는 관리자도 이해하고 바꿀 수 있다고 본 화면이에요.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:15%">탭</th><th style="width:40%">보인 문제</th><th>제안</th><th style="width:9%">중요도</th></tr></thead>
+        <tbody>
+          <tr class="group"><td colspan="4">회사 기본정보</td></tr>
+          <tr><td>회사정보</td><td>저장 옆 문구가 경비 얘기(U-4). 회사 위치 카드는 오늘 합침</td><td>U-4</td><td><span class="pill p-mid">중간</span></td></tr>
+          <tr><td>부서</td><td class="ok">괜찮음</td><td>—</td><td></td></tr>
+          <tr><td><span class="id">U-7</span>세무사무소</td><td>세무사무소가 아직 없는 회사가 뭘 해야 하는지 안내가 없음. 입력 칸이 많아(사무소명·이메일·담당 세무사 3칸) 다 채워야 하는 것처럼 보임</td><td>맨 위에 "아직 없으면 비워 두세요. 나중에 넣어도 돼요" 한 줄. 담당 세무사 칸은 접어 두기</td><td><span class="pill p-lo">낮음</span></td></tr>
+
+          <tr class="group"><td colspan="4">회사 자산</td></tr>
+          <tr><td><span class="id">U-8</span>법인카드</td><td>카드가 한 장도 없는데 맨 위에 '법인카드 내역 대조(선택)'가 등록보다 먼저 나옴. 처음 온 관리자는 등록부터 해야 함</td><td>카드 등록을 맨 위로. 대조 카드는 카드가 1장 이상일 때만 아래에</td><td><span class="pill p-mid">중간</span></td></tr>
+          <tr><td>회사차량</td><td class="ok">괜찮음(없으면 어떻게 되는지도 안내돼 있음)</td><td>U-1 단계에 포함</td><td></td></tr>
+          <tr><td>회의실</td><td class="ok">괜찮음</td><td>U-1 단계에 포함</td><td></td></tr>
+
+          <tr class="group"><td colspan="4">기능 사용</td></tr>
+          <tr><td><span class="id">U-9</span>근태 사용</td><td>꺼진 게 기본(아래 '근태 기본값' 참고). 켜면 무엇을 더 정해야 하는지 모르고 켜게 됨</td><td>켤 때 "켜면 할 일 3가지: 근무 기준 → 직원 입사일 → 출근 단말" 미리 보여 주고, 켠 뒤 근태 정책 처음 설정(U-1)으로 바로 이어 주기</td><td><span class="pill p-mid">중간</span></td></tr>
+          <tr><td>알림 받는 곳 · 캘린더</td><td class="ok">괜찮음</td><td>—</td><td></td></tr>
+
+          <tr class="group"><td colspan="4">경비 정책</td></tr>
+          <tr><td>식대 한도 · 자차 유류비</td><td class="ok">괜찮음 — 예시·근거가 좋아서 다른 화면의 기준으로 삼을 만함</td><td>U-3 기준 모양</td><td></td></tr>
+          <tr><td>출장 일비</td><td>'사용 안 함'만 보이고, 켜면 어떻게 되는지(하루 얼마, 식대 한도와의 관계)는 켜 봐야 앎</td><td>U-3으로 "켜면: 출장 하루 ○원, 출장 중 식대 영수증은 안 받음" 미리 보기</td><td><span class="pill p-lo">낮음</span></td></tr>
+          <tr><td><span class="id">U-10</span>예산</td><td>회사 전체 예산과 계정과목 9개 칸이 한 번에 펼쳐져 부담스러움</td><td>회사 전체 예산 하나만 먼저, 계정과목별은 [계정과목별로도 정하기]로 접기</td><td><span class="pill p-lo">낮음</span></td></tr>
+          <tr><td><span class="id">U-11</span>정기 결제</td><td>'정책'이 아니라 노션·구글 같은 구독을 <b>등록</b>하는 화면이라 경비 정책 안에서 찾기 어려움</td><td>회사 자산(법인카드 옆)으로 옮기기. 법인카드 내역 대조와 같이 쓰는 기능이라 그쪽이 자연스러움</td><td><span class="pill p-lo">낮음</span></td></tr>
+          <tr><td><span class="id">U-12</span>마감 일정</td><td>바꿀 수 있는 게 없는 안내 화면인데 설정 탭으로 있음(모든 회사 같은 일정)</td><td>탭에서 빼고, 경비 정책 화면 아래 "마감 일정 안내" 링크나 도움말로</td><td><span class="pill p-lo">낮음</span></td></tr>
+
+          <tr class="group"><td colspan="4">근태 정책 (근태를 켠 회사만)</td></tr>
+          <tr><td><span class="id">U-13</span>탭 순서</td><td>첫 탭이 '직원별 연차'인데, 연차 계산은 근무 기준의 '연차 연도 기준'·'5인 미만 회사'가 먼저 정해져야 맞음</td><td>근무 기준 → 휴가 종류 → 직원별 연차 → 출근 단말 → 변경 이력 순서로</td><td><span class="pill p-mid">중간</span></td></tr>
+          <tr><td><span class="id">U-14</span>근무 기준</td><td>'연차 연도 기준'·'5인 미만 회사'는 연차 설정인데 근무 기준에 섞여 있음</td><td>두 항목을 직원별 연차 탭 맨 위로 옮기기(연차 탭에 이미 "근무 기준에서 바꾸기" 링크가 있음 — 직접 바꾸게)</td><td><span class="pill p-lo">낮음</span></td></tr>
+          <tr><td><span class="id">U-15</span>직원별 연차</td><td>처음엔 직원 전원이 '입사일 없음'이라 줄마다 같은 경고가 반복됨</td><td>맨 위에 "입사일을 넣은 직원 0/4 — [입사일 한 번에 넣기]"로 묶기</td><td><span class="pill p-mid">중간</span></td></tr>
+          <tr><td>휴가 종류</td><td class="ok">괜찮음(법정·회사 규정 구분, 법 조항, 기본값 표시)</td><td>—</td><td></td></tr>
+          <tr><td>출근 단말</td><td>'출근 단말'이라는 말이 낯섦. 설명 보기가 없음</td><td>"회사 입구에 둔 태블릿·PC에 QR을 띄워 두면 직원이 휴대폰으로 찍어요" 그림 한 장(다른 탭처럼 설명 보기)</td><td><span class="pill p-lo">낮음</span></td></tr>
+
+          <tr class="group"><td colspan="4">양식·결재</td></tr>
+          <tr><td><span class="id">U-16</span>지출결의서 양식</td><td>① 고르기 ② 꾸미기 ③ 미리보기가 한 화면에 모두 펼쳐져 매우 김. 기본 양식 그대로 쓸 회사도 칸 목록 수십 줄을 지나야 함</td><td>② 꾸미기는 접어 두고 [이 양식 꾸미기]를 눌러야 펼치기. 기본 양식이면 "그대로 써도 돼요" 안내</td><td><span class="pill p-mid">중간</span></td></tr>
+          <tr><td>회사 양식</td><td class="ok">괜찮음(칸 수·플랜 안내 명확)</td><td>—</td><td></td></tr>
+          <tr><td>사전 검토 결재라인</td><td class="ok">괜찮음("넣지 않으면 관리자에게 바로" 안내 좋음)</td><td>—</td><td></td></tr>
+
+          <tr class="group"><td colspan="4">파일 보관 · 요금제</td></tr>
+          <tr><td>파일 보관</td><td class="ok">괜찮음(기본 90일 표시)</td><td>—</td><td></td></tr>
+          <tr><td><span class="id">U-17</span>요금제</td><td>매우 김. 결제가 열리지 않은 지금도 '결제 수단(카드번호·유효기간)' 모양 칸이 보여 입력해야 하나 헷갈림</td><td>결제가 열리기 전에는 결제 수단 칸 숨기기. 무료 기간 카드 → 플랜 → 기능 표 순서로 짧게</td><td><span class="pill p-lo">낮음</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>근태 기본값: 꺼 둔 채로 두기</h2>
+    <div class="box">
+      <p>꺼 두는 게 맞다고 봐요. 켜는 순간 직원 하단 가운데 버튼이 [QR 출퇴근]으로 바뀌고 연차·근무 기준·출근 단말을 정해야 해요. 다른 근태 앱을 쓰는 회사나 경비 정산만 쓰려는 회사에는 혼란이 돼요.</p>
+      <p class="muted">대신 모르고 지나치지 않게, 관리자 홈 '처음 설정'에 <b>"근태도 쓸까요? (선택)"</b>를 넣고 U-9처럼 켤 때 할 일을 미리 보여 주는 걸 추천해요 <span class="id">U-18</span>.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>추천 진행 순서</h2>
+    <div class="box">
+      <ul>
+        <li><b>1차 (처음 쓰는 관리자 체감이 가장 큼):</b> U-1(A안) · U-2 · U-6 · U-18</li>
+        <li><b>2차 (화면 정리):</b> U-3 · U-4 · U-8 · U-13 · U-15 · U-16 · U-9</li>
+        <li><b>3차 (다듬기):</b> U-5 · U-7 · U-10 · U-11 · U-12 · U-14 · U-17, 출장 일비·출근 단말 설명</li>
+      </ul>
+      <p class="muted">메뉴를 옮기는 것(U-11·U-12·U-14)은 도움말과 예전 링크도 같이 고쳐야 해서 한 번에 묶어 하는 게 좋아요. 1차는 단계마다 화면 시안을 먼저 보여 드리고 만들게요.</p>
+    </div>
+  </section>
+</div>
