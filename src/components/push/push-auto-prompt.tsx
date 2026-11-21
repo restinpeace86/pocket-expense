@@ -12,6 +12,7 @@ import { usePushSubscription } from "./push-toggle";
 // ① 이미 알림을 허용한 브라우저인데 이 기기 구독이 없으면 → 묻지 않고 바로 등록
 // ② 휴대폰 브라우저 탭이면 → "1. 홈 화면에 추가 → 2. 알림 켜기" 두 단계 안내(안드로이드는 버튼 한 번에 휴대폰의 추가 창, 아이폰은 메뉴 안내)
 //    홈 화면 아이콘(앱)으로 연 경우·PC는 → 알림 켜기만
+// PC에서는 관리자 1:1 문의 노란 버튼(data-kakao-fab)·아래 고정 버튼 줄 위로 비켜 선다(겹쳐서 [알림 켜기]가 가려지던 문제)
 // [나중에]·[확인]은 쿠키로 7일(만료되면 다시 물음). 막혀 있거나 지원 안 하면 알림 단계는 빼고 안내
 const ASK_COOKIE = "pe_push_ask";
 const ASK_AGAIN_S = 7 * 86400;
@@ -79,7 +80,7 @@ export function PushAutoPrompt() {
       role="dialog"
       aria-label="알림 켜기 안내"
       data-keyboard-self
-      className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-2xl border border-zinc-200 bg-white p-4 shadow-xl md:inset-x-auto md:bottom-6 md:right-6 md:w-96"
+      className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-2xl border border-zinc-200 bg-white p-4 shadow-xl md:inset-x-auto md:bottom-6 md:right-6 md:w-96 md:[body:has([data-kakao-fab])_&]:bottom-24 md:[body:has(.kb-hide.fixed)_&]:bottom-28 md:[body:has(.kb-hide.fixed):has([data-kakao-fab])_&]:bottom-44"
     >
       <div className="flex items-start gap-3">
         <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
