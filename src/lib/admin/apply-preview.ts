@@ -1,7 +1,6 @@
 // "우리 회사에 적용하면" 한 칸 미리보기(D-304`${workDaysLabel(s.work_days)} ${s.work_start}~${s.work_end} · 하루 ${s.daily_hours}시간(반차 ${Number.isInteger(half) ? half : half.toFixed(1)}시간)`, 벤치마킹 B-3) — 샘플이 아니라 이 회사의 지금 값·입력 중인 값으로 계산. 순수 함수
 // 규칙: 설정 하나에 한 칸, 두 줄까지. 계산할 자료가 없으면 줄을 만들지 않는다
 import { addMonths, recommend, type LeaveAdminData, type LeaveSettings } from "@/lib/attendance/leave";
-import { alertLabel, WEEKDAYS, type AttendanceSettings } from "@/lib/attendance/rules";
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const md = (date: string) => {
@@ -33,22 +32,6 @@ export function retentionPreview(today: string, days: number): string[] {
   const [y, m, d] = today.split("-").map(Number);
   const at = new Date(Date.UTC(y, m - 1, d + days + 1)).toISOString().slice(0, 10);
   return [`오늘 올린 채팅 사진·파일은 ${ymdLabel(at)} 새벽에 지워져요.`, "오늘 끝난 회의의 자료도 같은 날이에요. 글·안건과 영수증은 남아요."];
-}
-
-// ── 근무 기준: 요일·시각·반차·누락 알림 ──
-export function workDaysLabel(days: number[]): string {
-  const s = [...days].sort();
-  if (s.join() === "1,2,3,4,5") return "평일(월~금)";
-  if (s.join() === "1,2,3,4,5,6") return "월~토";
-  if (s.length === 7) return "매일";
-  return s.map((d) => WEEKDAYS[d - 1]).join("·") || "근무 요일 없음";
-}
-export function workRulesPreview(s: AttendanceSettings): string[] {
-  const half = s.daily_hours / 2;
-  return [
-    `${workDaysLabel(s.work_days)} ${s.work_start}~${s.work_end} 근무 · 하루 ${s.daily_hours}시간(반차 ${Number.isInteger(half) ? half : half.toFixed(1)}시간)`,
-    `${alertLabel(s.work_end, s.missing_alert_minutes).match(/\((\d{2}:\d{2})\)/)?.[1] ?? s.work_end}까지 퇴근을 안 찍으면 그 직원에게 알림이 가요.`,
-  ];
 }
 
 // ── 연차 기준·5인 미만을 바꾸면 추천 연차가 달라지는 직원 수(막지 않고 알려만) ──
@@ -85,14 +68,3 @@ export function hirePreview(hire: string, data: LeaveAdminData): string[] | null
   return [`${show(now, thisLabel)} → ${show(next, `${y + 1}년`)}`, now.nextAccrual ? `다음 1일은 ${md(now.nextAccrual)}에 생겨요. 실제 일수는 회사가 확정해요.` : "추천값이에요. 실제 일수는 회사가 확정해요."];
 }
 
-// ── 기능 사용: 켜거나 끄면 우리 회사에서 바뀌는 것 ──
-export function featurePreview(feature: "attendance" | "calendar", enabled: boolean, members: number): string[] {
-  const who = members > 0 ? `직원 ${members}명` : "직원";
-  if (feature === "attendance")
-    return enabled
-      ? [`끄면: ${who}의 [QR 출퇴근] 버튼과 출근 단말 QR이 멈추고, 설정의 [근태 정책]이 숨어요.`, "지금까지의 출퇴근·연차 기록은 지워지지 않아요."]
-      : [`켜면: ${who}의 하단 가운데 버튼이 [QR 출퇴근]으로 바뀌고, 설정에 [근태 정책]이 생겨요.`];
-  return enabled
-    ? [`끄면: ${who} 화면과 관리자 메뉴에서 캘린더가 숨어요. 일정·회의실은 지워지지 않아요.`]
-    : [`켜면: ${who}의 하단 메뉴와 관리자 메뉴에 [캘린더]가 생겨요.`];
-}

@@ -7,14 +7,12 @@ import { useState, useTransition } from "react";
 import { setCalendarEnabledAction as setCalendarEnabledActionRaw } from "@/app/workspace/[id]/admin/calendar-settings/actions";
 import { FormError } from "@/components/onboarding/field";
 import { guarded } from "@/lib/action-guard";
-import { ApplyPreview } from "@/components/admin/apply-preview";
-import { featurePreview } from "@/lib/admin/apply-preview";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
 const setCalendarEnabledAction = guarded(setCalendarEnabledActionRaw);
 
 // 사내 캘린더 켜기·끄기(D-208)
-export function CalendarSwitch({ enabled, calendarHref, members = 0 }: { enabled: boolean; calendarHref: string; members?: number }) {
+export function CalendarSwitch({ enabled, calendarHref }: { enabled: boolean; calendarHref: string }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const toggle = () => {
@@ -34,7 +32,7 @@ export function CalendarSwitch({ enabled, calendarHref, members = 0 }: { enabled
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-semibold">사내 캘린더 사용</p>
-          <p className="text-sm text-zinc-600">{enabled ? "켜져 있어요. 관리자 메뉴 [캘린더]와 직원 하단 [캘린더] 탭으로 들어가요." : "꺼져 있어요."}</p>
+          <p className="text-sm text-zinc-600">{enabled ? "켜져 있어요. 관리자 메뉴 [캘린더]와 직원 하단 [캘린더] 탭으로 들어가요." : "꺼져 있어요. 켜면 관리자 메뉴와 직원 하단 메뉴에 캘린더가 생겨요."}</p>
         </div>
         <button
           type="button"
@@ -48,9 +46,6 @@ export function CalendarSwitch({ enabled, calendarHref, members = 0 }: { enabled
           <span className={`inline-block size-6 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-7" : "translate-x-1"}`} />
           {pending && <Loader2 className="absolute -left-6 size-4 animate-spin text-zinc-400" />}
         </button>
-      </div>
-      <div className="mt-3">
-        <ApplyPreview name="feature-calendar" lines={featurePreview("calendar", enabled, members)} />
       </div>
       {enabled && (
         <Link href={calendarHref} className="mt-3 inline-flex min-h-11 items-center gap-1 rounded-xl border border-zinc-300 px-4 text-sm font-semibold hover:bg-zinc-50">

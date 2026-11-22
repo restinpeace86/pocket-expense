@@ -8,7 +8,6 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { calendarEnabled } from "@/lib/calendar/server";
 import { BRAND } from "@/lib/brand";
 import { getAlimtalkStatus } from "@/lib/notify/alimtalk-status";
-import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: `기능 사용 · ${BRAND.name}` };
 
@@ -44,19 +43,13 @@ export default function FeaturesPage({ params }: PageProps<"/workspace/[id]/admi
 
 async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/features">["params"] }) {
   const { id } = await params;
-  const membership = await requireWorkspace(id, { admin: true });
-  const supabase = await createClient();
-  const [attendance, calendar, alimtalk, { count }] = await Promise.all([
-    attendanceEnabled(),
-    calendarEnabled(),
-    getAlimtalkStatus(),
-    supabase.from("members").select("id", { count: "exact", head: true }).eq("company_id", membership.company_id).eq("status", "approved"),
-  ]);
+  await requireWorkspace(id, { admin: true });
+  const [attendance, calendar, alimtalk] = await Promise.all([attendanceEnabled(), calendarEnabled(), getAlimtalkStatus()]);
   return (
     <div className="flex flex-col gap-4">
       <AlimtalkSwitch status={alimtalk} historyHref={`/workspace/${id}/admin/notifications`} />
-      <AttendanceSwitch enabled={attendance} members={count ?? 0} />
-      <CalendarSwitch enabled={calendar} calendarHref={`/workspace/${id}/calendar`} members={count ?? 0} />
+      <AttendanceSwitch enabled={attendance} />
+      <CalendarSwitch enabled={calendar} calendarHref={`/workspace/${id}/calendar`} />
     </div>
   );
 }

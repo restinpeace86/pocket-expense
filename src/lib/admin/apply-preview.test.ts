@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LeaveAdminData } from "@/lib/attendance/leave";
-import { budgetPreview, featurePreview, hirePreview, leaveImpact, retentionPreview, workDaysLabel, workRulesPreview } from "./apply-preview";
+import { budgetPreview, hirePreview, leaveImpact, retentionPreview } from "./apply-preview";
 
 const leave: LeaveAdminData = {
   year: 2026,
@@ -36,13 +36,6 @@ describe("우리 회사에 적용하면(D-304)", () => {
     expect(retentionPreview("2026-11-22", 90)[0]).toBe("오늘 올린 채팅 사진·파일은 2027년 2월 21일 새벽에 지워져요.");
     expect(retentionPreview("2026-12-31", 30)[0]).toMatch(/2027년 1월 31일/);
   });
-  it("근무 기준 요약", () => {
-    expect(workDaysLabel([5, 1, 2, 3, 4])).toBe("평일(월~금)");
-    expect(workDaysLabel([1, 3, 5])).toBe("월·수·금");
-    const l = workRulesPreview({ work_start: "09:00", work_end: "18:00", daily_hours: 8, work_days: [1, 2, 3, 4, 5], missing_alert_minutes: 30, leave_year_basis: "calendar", under_five: false } as never);
-    expect(l[0]).toBe("평일(월~금) 09:00~18:00 근무 · 하루 8시간(반차 4시간)");
-    expect(l[1]).toBe("18:30까지 퇴근을 안 찍으면 그 직원에게 알림이 가요.");
-  });
   it("연차 기준을 바꾸면 달라지는 직원 수(대표·입사일 없음은 그대로)", () => {
     expect(leaveImpact(leave, { basis: "calendar", under_five: false, daily_hours: 8 })).toBeNull();
     expect(leaveImpact(leave, { basis: "hire", under_five: false, daily_hours: 8 })).toEqual({ changed: 2, confirmed: 1 });
@@ -58,10 +51,5 @@ describe("우리 회사에 적용하면(D-304)", () => {
     expect(first[1]).toMatch(/다음 1일은 12월 2일/);
     expect(hirePreview("2020-03-02", { ...leave, settings: { ...leave.settings, under_five: true } })![0]).toMatch(/5인 미만/);
     expect(hirePreview("2027-05-01", leave)![0]).toMatch(/아직 입사 전/);
-  });
-  it("기능 사용: 켜고 끄면 바뀌는 것 + 직원 수", () => {
-    expect(featurePreview("attendance", false, 6)[0]).toMatch(/직원 6명의 하단 가운데 버튼이 \[QR 출퇴근\]/);
-    expect(featurePreview("attendance", true, 0)[1]).toMatch(/지워지지 않아요/);
-    expect(featurePreview("calendar", false, 3)[0]).toMatch(/직원 3명/);
   });
 });

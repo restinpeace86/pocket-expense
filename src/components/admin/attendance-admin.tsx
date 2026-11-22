@@ -10,7 +10,7 @@ import { ALERT_OPTIONS, alertLabel, TIME_OPTIONS, WEEKDAYS, type AttendanceSetti
 import type { AttendanceAdminView } from "@/lib/attendance/server";
 import { guarded } from "@/lib/action-guard";
 import { ApplyPreview } from "@/components/admin/apply-preview";
-import { featurePreview, leaveImpact, workRulesPreview } from "@/lib/admin/apply-preview";
+import { leaveImpact } from "@/lib/admin/apply-preview";
 import type { LeaveAdminData } from "@/lib/attendance/leave";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
@@ -46,7 +46,7 @@ export function AttendanceOff({ featuresHref }: { featuresHref: string }) {
   );
 }
 
-export function AttendanceSwitch({ enabled, members = 0 }: { enabled: boolean; members?: number }) {
+export function AttendanceSwitch({ enabled }: { enabled: boolean }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const toggle = () => {
@@ -67,7 +67,7 @@ export function AttendanceSwitch({ enabled, members = 0 }: { enabled: boolean; m
         <div className="min-w-0 flex-1">
           <p className="font-semibold">근태 사용</p>
           <p className="text-sm text-zinc-600">
-            {enabled ? "켜져 있어요. 직원 하단 가운데 버튼이 [QR 출퇴근]이에요." : "꺼져 있어요. 켜면 홈에 오늘 출근 현황도 보여요."}
+            {enabled ? "켜져 있어요. 직원 하단 가운데 버튼이 [QR 출퇴근]으로 바뀌었어요." : "꺼져 있어요. 켜면 직원 하단 가운데 버튼이 [QR 출퇴근]으로 바뀌고 홈에 오늘 출근 현황이 보여요."}
           </p>
         </div>
         <button
@@ -82,9 +82,6 @@ export function AttendanceSwitch({ enabled, members = 0 }: { enabled: boolean; m
           <span className={`inline-block size-6 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-7" : "translate-x-1"}`} />
           {pending && <Loader2 className="absolute -left-6 size-4 animate-spin text-zinc-400" />}
         </button>
-      </div>
-      <div className="mt-3">
-        <ApplyPreview name="feature-attendance" lines={featurePreview("attendance", enabled, members)} />
       </div>
       <FormError message={error} />
     </section>
@@ -190,7 +187,6 @@ function SettingsForm({ initial, leave }: { initial: AttendanceSettings; leave: 
           ))}
         </select>
       </Row>
-      <ApplyPreview name="work-rules" lines={workRulesPreview(s)} />
       <Row title="연차 연도 기준" help="직원별 연차 일수를 계산하는 기준이에요([직원별 연차] 탭).">
         <div className="flex flex-col text-[15px]">
           <label className="flex min-h-10 items-center gap-2">
