@@ -42,9 +42,10 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     label: "근태 정책",
     attendanceOnly: true,
     tabs: [
-      { href: "/attendance-settings/leave", label: "직원별 연차" },
-      { href: "/attendance-settings/vacation-types", label: "휴가 종류" },
+      // U-13(D-308): 연차 계산보다 근무 기준·휴가 종류가 먼저
       { href: "/attendance-settings", label: "근무 기준" },
+      { href: "/attendance-settings/vacation-types", label: "휴가 종류" },
+      { href: "/attendance-settings/leave", label: "직원별 연차" },
       { href: "/attendance-settings/terminals", label: "출근 단말" },
       { href: "/attendance-settings/history", label: "변경 이력" },
     ],

@@ -51,7 +51,7 @@
 > | 회사 자산 | 법인카드 · 회사차량 · 회의실 `/calendar-settings` |
 > | 기능 사용 `/features` | 근태 사용 · 사내 캘린더 사용(기본 켜짐) |
 > | 경비 정책 | 식대 한도 `/settings/meal` · 자차 유류비 `/settings/fuel` · 출장 일비 `/settings/per-diem` · 정기 결제 `/recurring` · 마감 일정 `/settings/closing` |
-> | 근태 정책(근태 켰을 때만) | 직원별 연차 · 휴가 종류 · 근무 기준 `/attendance-settings` · 출근 단말 `/attendance-settings/terminals` · 변경 이력 `/attendance-settings/history` |
+> | 근태 정책(근태 켰을 때만) | 근무 기준 `/attendance-settings` · 휴가 종류 · 직원별 연차(맨 위에 연차 연도 기준·5인 미만 회사, D-308) · 출근 단말 `/attendance-settings/terminals` · 변경 이력 `/attendance-settings/history` |
 > | 변경 이력 | 변경 이력 `/change-history` — 모든 설정의 누가·언제·이전→이후, 근태 이력도 합쳐 보임, 메뉴별 거르기(D-303) |
 
 > '우리 회사에 적용하면' 미리보기(D-304): 예산 · 사전 검토 결재라인 · 파일 보관(항상) / 근무 기준의 연차 기준·5인 미만을 바꿀 때 영향 직원 수 · 직원별 연차 입사일 미리 보기(접힘). 입력만 봐서는 모르는 결과만 보여 줌(D-305: 근무 기준 요약·기능 사용 미리보기 뺌). 바꾸는 칸 바로 아래 한 칸, 두 줄까지(`ApplyPreview`)

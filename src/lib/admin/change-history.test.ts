@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { findSettingsTab } from "./settings-groups";
-import { areaLabel, mergeHistory, parseArea } from "./change-history";
+import { areaLabel, attendanceMenu, mergeHistory, parseArea } from "./change-history";
 
 describe("설정 › 변경 이력(D-303)", () => {
   it("두 표를 시간순(최신 먼저)으로 합치고 개수를 자른다", () => {
@@ -20,6 +20,11 @@ describe("설정 › 변경 이력(D-303)", () => {
     const m = mergeHistory([{ id: 1, at: "2026-11-22T01:00:00Z", member_name: "x", area: "billing", menu: "?", action: "add", target: null, changes: null }], [{ id: 2, at: "2026-11-22T01:00:00Z", member_name: null, action: "weird", changes: "x" }]);
     expect(m).toHaveLength(1);
     expect(m[0]).toMatchObject({ menu: "근태 정책", action: "change", who: "시스템", changes: [] });
+  });
+  it("근태 설정 저장: 연차 기준만 바꿨으면 직원별 연차", () => {
+    expect(attendanceMenu("settings", [{ label: "연차 연도 기준", from: "a", to: "b" }])).toBe("직원별 연차");
+    expect(attendanceMenu("settings", [{ label: "정규 출근", from: "a", to: "b" }, { label: "5인 미만 회사", from: "a", to: "b" }])).toBe("근무 기준");
+    expect(attendanceMenu("leave_type", [])).toBe("휴가 종류");
   });
   it("메뉴 거르기 값과 이름", () => {
     expect(parseArea("policy")).toBe("policy");

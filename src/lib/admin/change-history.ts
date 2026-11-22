@@ -22,6 +22,12 @@ export function parseArea(v: string | string[] | undefined): HistoryArea | null 
 
 // 근태 이력의 action → 근태 정책 탭 이름(attendance-admin ACTION_LABEL과 같은 말)
 const ATT_MENU: Record<string, string> = { enabled: "근태 켜기·끄기", settings: "근무 기준", terminal_add: "출근 단말", terminal_rename: "출근 단말", terminal_revoke: "출근 단말", hire_date: "직원별 연차", leave_grant: "직원별 연차", leave_type: "휴가 종류" };
+// 연차 연도 기준·5인 미만 회사만 바꾼 근무 설정 저장은 [직원별 연차] 탭에서 한 것(D-308 U-14)
+const LEAVE_LABELS = new Set(["연차 연도 기준", "5인 미만 회사"]);
+export function attendanceMenu(action: string, changes: HistoryChange[]): string {
+  if (action === "settings" && changes.length > 0 && changes.every((c) => LEAVE_LABELS.has(c.label))) return "직원별 연차";
+  return ATT_MENU[action] ?? "근태 정책";
+}
 const ATT_ACTION: Record<string, HistoryItem["action"]> = { terminal_add: "add", terminal_revoke: "remove" };
 
 function changesOf(v: unknown): HistoryChange[] {
@@ -49,7 +55,7 @@ export function mergeHistory(settings: SettingsHistoryRow[], attendance: Attenda
     at: r.at,
     who: r.member_name ?? "시스템",
     area: "attendance",
-    menu: ATT_MENU[r.action] ?? "근태 정책",
+    menu: attendanceMenu(r.action, changesOf(r.changes)),
     action: ATT_ACTION[r.action] ?? "change",
     target: null,
     changes: changesOf(r.changes),

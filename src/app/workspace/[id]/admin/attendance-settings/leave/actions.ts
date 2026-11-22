@@ -34,6 +34,19 @@ export async function saveLeaveSettingsAction(hourly: boolean, rounding: "day" |
   return { ok: true };
 }
 
+// U-14(D-308): 연차 연도 기준·5인 미만 회사 — 근무 기준과 같은 attendance_settings_save로(나머지 값은 지금 값 그대로)
+export async function saveLeaveBasisAction(basis: "calendar" | "hire", underFive: boolean): Promise<{ ok: boolean; error?: string }> {
+  if (basis !== "calendar" && basis !== "hire") return { ok: false, error: "연차 연도 기준을 골라 주세요." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("attendance_admin_view");
+  const cur = (data as { settings?: Record<string, unknown> } | null)?.settings;
+  if (error || !cur) return { ok: false, error: leaveErrorText(error?.message) };
+  const { error: e2 } = await supabase.rpc("attendance_settings_save", { p: { ...cur, leave_year_basis: basis, under_five: !!underFive } });
+  if (e2) return { ok: false, error: leaveErrorText(e2.message) };
+  refresh();
+  return { ok: true };
+}
+
 export async function setHireDateAction(memberId: string, date: string, reason: string): Promise<{ ok: boolean; error?: string }> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("attendance_member_hire_date_set", { p_member: memberId, p_date: date, p_reason: reason });

@@ -4,15 +4,17 @@ import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, Loader2, X } fro
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { confirmLeaveAction as confirmLeaveActionRaw, saveLeaveSettingsAction as saveLeaveSettingsActionRaw, setHireDateAction as setHireDateActionRaw, type LeaveConfirmItem } from "@/app/workspace/[id]/admin/attendance-settings/leave/actions";
+import { confirmLeaveAction as confirmLeaveActionRaw, saveLeaveBasisAction as saveLeaveBasisActionRaw, saveLeaveSettingsAction as saveLeaveSettingsActionRaw, setHireDateAction as setHireDateActionRaw, type LeaveConfirmItem } from "@/app/workspace/[id]/admin/attendance-settings/leave/actions";
 import { buildLeaveRows, daysLabel, ROUNDING_LABEL, type LeaveAdminData, type LeaveRow, type LeaveSettings, type LeaveStatus } from "@/lib/attendance/leave";
 import { ApplyPreview } from "@/components/admin/apply-preview";
-import { hirePreview } from "@/lib/admin/apply-preview";
+import { hirePreview, leaveImpact } from "@/lib/admin/apply-preview";
+import { todayKst } from "@/lib/dates";
 import { guarded } from "@/lib/action-guard";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
 const confirmLeaveAction = guarded(confirmLeaveActionRaw);
 const saveLeaveSettingsAction = guarded(saveLeaveSettingsActionRaw);
+const saveLeaveBasisAction = guarded(saveLeaveBasisActionRaw);
 const setHireDateAction = guarded(setHireDateActionRaw);
 
 // 직원별 연차(D-240, spec/features/attendance.md §7-2): 연도 · 연도 기준 · 시간차 · 소수점 · 직원 목록(법 기준 추천·확정·계산 근거) · 확정 창
@@ -33,7 +35,7 @@ const WHY: Record<string, string> = {
   not_yet: "입사 전",
 };
 
-export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string }) {
+export function LeaveAdmin({ data }: { data: LeaveAdminData; base: string }) {
   const router = useRouter();
   const rows = useMemo(() => buildLeaveRows(data), [data]);
   const h = data.settings.daily_hours;
@@ -53,6 +55,7 @@ export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string 
       router.refresh();
     });
 
+  const [hireBatch, setHireBatch] = useState(false);
   const counts = { confirmed: rows.filter((r) => ["confirmed", "above", "below"].includes(r.status)).length, pending: rows.filter((r) => ["unconfirmed", "direct", "grown"].includes(r.status)).length, noHire: rows.filter((r) => r.status === "no_hire").length };
 
   return (
@@ -69,23 +72,24 @@ export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string 
         </div>
       </div>
 
-      <section className={`${card} px-4 py-3.5 text-sm leading-relaxed text-zinc-800 md:px-5`} aria-label="우리 회사 연도 기준">
-        <b>우리 회사 연도 기준: {data.settings.basis === "calendar" ? "1월 1일~12월 31일(회계연도)" : "직원별 입사일"}</b>{" "}
-        <Link href={`${base}/attendance-settings`} className="text-[13px] text-brand-700 hover:underline">
-          근무 기준에서 바꾸기
-        </Link>
-        <span className="block text-[13px] text-zinc-600">
-          {data.settings.basis === "calendar"
-            ? `${data.year}년 1월 1일~12월 31일에 쓰는 연차예요. 입사 다음 해에는 근무한 날만큼 나눠서(비례) 줘요.`
-            : `${data.year}년에 시작하는 각 직원의 연차 연도(입사한 날부터 1년)예요.`}
-        </span>
-        <HirePreview data={data} />
-        {data.settings.under_five && (
-          <span className="mt-2 block rounded-lg bg-amber-50 px-3 py-2 text-[13px] text-amber-950">근무 기준에서 &quot;5인 미만 회사&quot;로 되어 있어요. 근로기준법 제60조가 적용되지 않아 추천값 없이 회사가 직접 정해요.</span>
-        )}
-      </section>
+      <LeaveBasisCard data={data} />
 
       <LeaveSettingsCard settings={data.settings} />
+
+      {/* U-15(D-308): 입사일이 빠진 직원은 줄마다 경고하지 않고 여기 한 번에 */}
+      {counts.noHire > 0 && (
+        <section className="flex flex-col gap-3 rounded-2xl sm:flex-row sm:items-center border border-amber-200 bg-amber-50 px-4 py-3" data-hire-missing>
+          <p className="min-w-0 flex-1 text-sm text-amber-950">
+            <b>
+              입사일을 넣은 직원 {rows.length - counts.noHire}/{rows.length}명
+            </b>
+            <span className="block text-[13px]">입사일이 있어야 연차를 계산해요. 근로계약서의 첫 출근일을 넣어 주세요.</span>
+          </p>
+          <button type="button" onClick={() => setHireBatch(true)} className="min-h-11 shrink-0 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700" data-hire-batch-open>
+            입사일 한 번에 넣기 ({counts.noHire}명)
+          </button>
+        </section>
+      )}
 
       <section className={`${card} overflow-hidden`} aria-label="직원별 연차">
         <div className="flex flex-wrap items-center gap-2 px-4 py-3.5">
@@ -109,6 +113,7 @@ export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string 
           {rows.map((r) => {
             const st = STATUS[r.status];
             const open = openId === r.member.id;
+            const noHire = r.status === "no_hire"; // U-15: 휴대폰에선 빈 칸(—)을 줄줄이 보이지 않게
             return (
               <li key={r.member.id} className="border-b border-zinc-100 last:border-b-0" data-member={r.member.id} data-status={r.status}>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 md:grid md:grid-cols-[9rem_7.5rem_6rem_minmax(0,1fr)_6rem_auto_auto] md:gap-4">
@@ -116,17 +121,13 @@ export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string 
                     {r.member.name}
                     {r.member.role !== "employee" && <span className="ml-1 text-xs font-normal text-zinc-500">{r.member.role === "super_admin" ? "대표" : "관리자"}</span>}
                   </b>
-                  <span className="text-sm text-zinc-700">
-                    {r.member.hire_date ?? (
-                      <button type="button" onClick={() => setEditId(r.member.id)} className="font-semibold text-brand-700 hover:underline">
-                        입사일을 넣어 주세요
-                      </button>
-                    )}
+                  <span className={`text-sm text-zinc-700 ${noHire ? "max-md:hidden" : ""}`}>
+                    {r.member.hire_date ?? <span className="text-zinc-400">—</span>}
                   </span>
-                  <span className="text-sm text-zinc-600">{r.rec.service}</span>
-                  <button type="button" onClick={() => setOpenId(open ? null : r.member.id)} disabled={r.rec.days === null} aria-expanded={open} className="flex items-center gap-1 text-left text-sm disabled:cursor-default" data-rec>
+                  <span className={`text-sm text-zinc-600 ${noHire ? "max-md:hidden" : ""}`}>{r.rec.service}</span>
+                  <button type="button" onClick={() => setOpenId(open ? null : r.member.id)} disabled={r.rec.days === null} aria-expanded={open} className={`flex items-center gap-1 text-left text-sm disabled:cursor-default ${noHire ? "max-md:hidden" : ""}`} data-rec>
                     {r.rec.days === null ? (
-                      <span className="text-zinc-500">{WHY[r.rec.why] ?? "—"}</span>
+                      <span className="text-zinc-500">{r.rec.why === "no_hire" ? "—" : (WHY[r.rec.why] ?? "—")}</span>
                     ) : (
                       <>
                         <span className="text-zinc-500 md:hidden">추천</span>
@@ -136,13 +137,13 @@ export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string 
                       </>
                     )}
                   </button>
-                  <span className="text-sm">
+                  <span className={`text-sm ${noHire ? "max-md:hidden" : ""}`}>
                     <span className="text-zinc-500 md:hidden">확정 </span>
                     {r.grant ? <b className="text-[15px]">{daysLabel(r.grant.granted, h)}</b> : <span className="text-zinc-400">—</span>}
                   </span>
                   <span className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${st.cls}`}>{st.text(r, h)}</span>
                   <button type="button" onClick={() => setEditId(r.member.id)} className="ml-auto h-9 rounded-lg px-2 text-sm font-semibold text-brand-700 hover:bg-brand-50 md:ml-0" data-edit>
-                    {r.grant ? "수정" : "확정"}
+                    {r.grant ? "수정" : r.status === "no_hire" ? "입사일 넣기" : "확정"}
                   </button>
                 </div>
                 {open && <Why row={r} h={h} />}
@@ -153,6 +154,7 @@ export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string 
       </section>
       <p className="text-xs leading-relaxed text-zinc-600">추천값은 법 기준을 계산한 참고값이에요. 확정·수정·입사일·시간차 설정은 모두 근태 정책의 [변경 이력]에 남아요. 직원 화면의 남은 연차는 휴가 신청 기능에서 열려요.</p>
 
+      {hireBatch && <HireBatchSheet rows={rows.filter((r) => r.status === "no_hire")} onClose={() => setHireBatch(false)} />}
       {editing && <EditSheet row={editing} h={h} hourly={data.settings.hourly_leave} today={data.today} onClose={() => setEditId(null)} />}
     </div>
   );
@@ -429,5 +431,167 @@ function HirePreview({ data }: { data: LeaveAdminData }) {
         {lines ? <ApplyPreview name="hire" title={`입사일 ${hire}인 직원이면`} lines={lines} /> : <p className="text-[13px] text-zinc-500">날짜를 고르면 이 회사 기준으로 올해·내년 연차를 계산해 보여 줘요. 저장되지 않아요.</p>}
       </div>
     </details>
+  );
+}
+
+// U-14(D-308): 연차 연도 기준·5인 미만 회사 — 근무 기준에서 이 탭 맨 위로. 바꾸면 달라지는 직원 수(D-304)를 저장 전에 보여 줌
+function LeaveBasisCard({ data }: { data: LeaveAdminData }) {
+  const router = useRouter();
+  const cur = data.settings;
+  const [basis, setBasis] = useState(cur.basis);
+  const [u5, setU5] = useState(cur.under_five);
+  const [prev, setPrev] = useState({ b: cur.basis, u: cur.under_five });
+  if (prev.b !== cur.basis || prev.u !== cur.under_five) {
+    setPrev({ b: cur.basis, u: cur.under_five });
+    setBasis(cur.basis);
+    setU5(cur.under_five);
+  }
+  const [busy, start] = useTransition();
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
+  const dirty = !justSaved && (basis !== cur.basis || u5 !== cur.under_five);
+  const impact = dirty ? leaveImpact(data, { basis, under_five: u5, daily_hours: cur.daily_hours }) : null;
+  const save = () =>
+    start(async () => {
+      setMsg(null);
+      const res = await saveLeaveBasisAction(basis, u5);
+      setMsg(res.ok ? { ok: true, text: "저장했어요. 변경 이력에 남았어요." } : { ok: false, text: res.error ?? "저장하지 못했어요." });
+      if (res.ok) {
+        setJustSaved(true);
+        router.refresh();
+      }
+    });
+  const radio = "flex min-h-10 items-center gap-2 text-[15px]";
+  return (
+    <section className={`${card} flex flex-col gap-4 px-4 py-4 md:px-5`} aria-label="연차 기준" data-leave-basis>
+      <fieldset className="flex flex-col gap-1">
+        <legend className="text-[15px] font-bold">연차 연도 기준</legend>
+        <p className="text-[13px] leading-relaxed text-zinc-600">직원별 연차 일수를 어떤 1년 단위로 계산할지 정해요.</p>
+        <label className={radio}>
+          <input type="radio" name="leave-basis" checked={basis === "calendar"} onChange={() => (setBasis("calendar"), setMsg(null), setJustSaved(false))} className="size-4" /> 1월 1일 ~ 12월 31일(회계연도)
+        </label>
+        <label className={radio}>
+          <input type="radio" name="leave-basis" checked={basis === "hire"} onChange={() => (setBasis("hire"), setMsg(null), setJustSaved(false))} className="size-4" /> 직원별 입사일 기준
+        </label>
+        <span className="text-[13px] text-zinc-600">
+          {basis === "calendar" ? `${data.year}년 1월 1일~12월 31일에 쓰는 연차예요. 입사 다음 해에는 근무한 날만큼 나눠서(비례) 줘요.` : `${data.year}년에 시작하는 각 직원의 연차 연도(입사한 날부터 1년)예요.`}
+        </span>
+      </fieldset>
+      <fieldset className="flex flex-col gap-1">
+        <legend className="text-[15px] font-bold">상시 근로자 5인 미만 회사</legend>
+        <p className="text-[13px] leading-relaxed text-zinc-600">&apos;예&apos;면 근로기준법 제60조(연차)가 적용되지 않아 추천값 없이 회사가 직접 정해요.</p>
+        <div className="flex gap-4">
+          <label className={radio}>
+            <input type="radio" name="leave-u5" checked={u5} onChange={() => (setU5(true), setMsg(null), setJustSaved(false))} className="size-4" /> 예
+          </label>
+          <label className={radio}>
+            <input type="radio" name="leave-u5" checked={!u5} onChange={() => (setU5(false), setMsg(null), setJustSaved(false))} className="size-4" /> 아니요
+          </label>
+        </div>
+      </fieldset>
+      {impact && (
+        <ApplyPreview
+          name="leave-impact"
+          title="저장하면 우리 회사는"
+          lines={
+            impact.changed === 0
+              ? [`바꿔도 ${data.year}년 추천 연차가 달라지는 직원은 없어요.`]
+              : [
+                  `직원 ${data.members.length}명 중 ${impact.changed}명의 ${data.year}년 추천 연차가 달라져요.`,
+                  `${impact.confirmed > 0 ? `확정해 둔 연차(${impact.confirmed}명)는 지워지지 않아요. ` : ""}저장한 뒤 아래 목록에서 확인해 주세요.`,
+                ]
+          }
+        />
+      )}
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" onClick={save} disabled={busy || !dirty} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-brand-600 px-5 font-semibold text-white hover:bg-brand-700 disabled:opacity-50" data-leave-basis-save>
+          {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+          저장
+        </button>
+        {msg && (
+          <p role={msg.ok ? "status" : "alert"} className={`text-sm ${msg.ok ? "text-green-800" : "font-semibold text-red-700"}`}>
+            {msg.text}
+          </p>
+        )}
+      </div>
+      <HirePreview data={data} />
+    </section>
+  );
+}
+
+// U-15(D-308): 입사일 없는 직원을 한 화면에서. 사유는 한 칸(입사일 기록·알림에 함께 남음)
+function HireBatchSheet({ rows, onClose }: { rows: LeaveRow[]; onClose: () => void }) {
+  const router = useRouter();
+  const today = todayKst();
+  const [dates, setDates] = useState<Record<string, string>>({});
+  const [reason, setReason] = useState("근로계약서 기준 처음 입력");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [busy, start] = useTransition();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const filled = rows.filter((r) => dates[r.member.id]);
+  const save = () =>
+    start(async () => {
+      setError(null);
+      if (filled.length === 0) return setError("입사일을 하나 이상 넣어 주세요.");
+      if (!reason.trim()) return setError("사유를 적어 주세요.");
+      const errs: Record<string, string> = {};
+      for (const r of filled) {
+        const res = await setHireDateAction(r.member.id, dates[r.member.id], reason.trim());
+        if (!res.ok) errs[r.member.id] = res.error ?? "저장하지 못했어요.";
+      }
+      setErrors(errs);
+      if (Object.keys(errs).length === 0) {
+        onClose();
+        router.refresh();
+      } else {
+        setError("일부 직원은 저장하지 못했어요. 표시된 줄을 확인해 주세요.");
+        router.refresh();
+      }
+    });
+  const input = "h-11 rounded-xl border border-zinc-300 bg-white px-3 text-base outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20";
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-center" onClick={onClose}>
+      <section role="dialog" aria-modal="true" aria-labelledby="hire-batch-title" onClick={(e) => e.stopPropagation()} className="flex max-h-[92dvh] w-full max-w-md flex-col gap-3 overflow-y-auto rounded-t-3xl bg-white px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-5 md:rounded-3xl" data-hire-batch data-unsaved-ignore>
+        <div className="flex items-center">
+          <h2 id="hire-batch-title" className="text-lg font-bold">
+            입사일 한 번에 넣기
+          </h2>
+          <button type="button" onClick={onClose} aria-label="닫기" className="ml-auto flex size-10 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100">
+            <X className="size-5" />
+          </button>
+        </div>
+        <p className="text-[13px] text-zinc-600">아는 직원만 넣어도 돼요. 빈 칸은 그대로 두고 나중에 넣을 수 있어요.</p>
+        <ul className="flex flex-col gap-2">
+          {rows.map((r) => (
+            <li key={r.member.id} className="flex flex-col gap-1">
+              <label className="flex items-center gap-3">
+                <span className="w-24 shrink-0 truncate text-[15px] font-semibold">{r.member.name}</span>
+                <input type="date" max={today} value={dates[r.member.id] ?? ""} onChange={(e) => setDates((d) => ({ ...d, [r.member.id]: e.target.value }))} className={`${input} min-w-0 flex-1`} aria-label={`${r.member.name} 입사일`} data-hire-date={r.member.name} />
+              </label>
+              {errors[r.member.id] && <span className="pl-27 text-[13px] font-semibold text-red-700">{errors[r.member.id]}</span>}
+            </li>
+          ))}
+        </ul>
+        <label className="flex flex-col gap-1 text-sm font-semibold">
+          사유
+          <input value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} className={`${input} font-normal`} />
+          <span className="text-[13px] font-normal text-zinc-600">근태 정책의 변경 이력에 직원별로 함께 남아요.</span>
+        </label>
+        {error && (
+          <p role="alert" className="text-sm font-semibold text-red-700">
+            {error}
+          </p>
+        )}
+        <button type="button" onClick={save} disabled={busy || filled.length === 0} className="flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-brand-600 font-semibold text-white hover:bg-brand-700 disabled:opacity-50" data-hire-batch-save>
+          {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+          {filled.length > 0 ? `${filled.length}명 저장` : "저장"}
+        </button>
+      </section>
+    </div>
   );
 }

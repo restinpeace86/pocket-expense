@@ -3,15 +3,14 @@
 import { Clock, Loader2, MonitorSmartphone } from "lucide-react";
 import { showSaved } from "@/lib/ui/saved-event";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { createPairCodeAction as createPairCodeActionRaw, refreshAttendanceAction as refreshAttendanceActionRaw, renameTerminalAction as renameTerminalActionRaw, revokeTerminalAction as revokeTerminalActionRaw, saveAttendanceSettingsAction as saveAttendanceSettingsActionRaw, setAttendanceEnabledAction as setAttendanceEnabledActionRaw } from "@/app/workspace/[id]/admin/attendance-settings/actions";
 import { FormError } from "@/components/onboarding/field";
 import { ALERT_OPTIONS, alertLabel, TIME_OPTIONS, WEEKDAYS, type AttendanceSettings } from "@/lib/attendance/rules";
 import type { AttendanceAdminView } from "@/lib/attendance/server";
 import { guarded } from "@/lib/action-guard";
-import { ApplyPreview } from "@/components/admin/apply-preview";
-import { leaveImpact } from "@/lib/admin/apply-preview";
-import type { LeaveAdminData } from "@/lib/attendance/leave";
+import { attendanceMenu } from "@/lib/admin/change-history";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
 const createPairCodeAction = guarded(createPairCodeActionRaw);
@@ -28,10 +27,10 @@ const card = "rounded-2xl border border-zinc-200 bg-white p-4 md:p-5";
 const select = "h-11 rounded-xl border border-zinc-300 bg-white px-3 text-[15px]";
 
 // 설정 › 근태 정책(D-251): 근무 기준 · 출근 단말 · 변경 이력을 탭마다 나눠 보여 준다. 켜기·끄기는 설정 › 기능 사용
-export function AttendanceAdmin({ view, part, featuresHref, leave = null }: { view: AttendanceAdminView; part: "rules" | "terminals" | "history"; featuresHref: string; leave?: LeaveAdminData | null }) {
+export function AttendanceAdmin({ view, part, featuresHref }: { view: AttendanceAdminView; part: "rules" | "terminals" | "history"; featuresHref: string }) {
   if (part === "history") return <History rows={view.history} />;
   if (!view.enabled) return <AttendanceOff featuresHref={featuresHref} />;
-  return part === "rules" ? <SettingsForm initial={view.settings} leave={leave} /> : <Terminals terminals={view.terminals} />;
+  return part === "rules" ? <SettingsForm initial={view.settings} /> : <Terminals terminals={view.terminals} />;
 }
 
 export function AttendanceOff({ featuresHref }: { featuresHref: string }) {
@@ -106,7 +105,8 @@ function Row({ title, help, children, htmlFor }: { title: string; help: string; 
   );
 }
 
-function SettingsForm({ initial, leave }: { initial: AttendanceSettings; leave: LeaveAdminData | null }) {
+function SettingsForm({ initial }: { initial: AttendanceSettings }) {
+  const pathname = usePathname();
   const [s, setS] = useState(initial);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -117,7 +117,6 @@ function SettingsForm({ initial, leave }: { initial: AttendanceSettings; leave: 
     setS(initial);
   }
   const dirty = JSON.stringify(s) !== JSON.stringify(initial);
-  const impact = leave ? leaveImpact(leave, { basis: s.leave_year_basis, under_five: s.under_five, daily_hours: s.daily_hours }) : null;
   const set = <K extends keyof AttendanceSettings>(k: K, v: AttendanceSettings[K]) => {
     setSaved(false);
     setS((p) => ({ ...p, [k]: v }));
@@ -187,40 +186,14 @@ function SettingsForm({ initial, leave }: { initial: AttendanceSettings; leave: 
           ))}
         </select>
       </Row>
-      <Row title="연차 연도 기준" help="직원별 연차 일수를 계산하는 기준이에요([직원별 연차] 탭).">
-        <div className="flex flex-col text-[15px]">
-          <label className="flex min-h-10 items-center gap-2">
-            <input type="radio" name="att-year" checked={s.leave_year_basis === "calendar"} onChange={() => set("leave_year_basis", "calendar")} className="size-4" /> 1월 1일 ~ 12월 31일
-          </label>
-          <label className="flex min-h-10 items-center gap-2">
-            <input type="radio" name="att-year" checked={s.leave_year_basis === "hire"} onChange={() => set("leave_year_basis", "hire")} className="size-4" /> 직원별 입사일 기준
-          </label>
-        </div>
-      </Row>
-      <Row title="상시 근로자 5인 미만 회사" help="'예'면 연차 법 기준 추천값 없이 직접 입력해요.">
-        <div className="flex gap-4 text-[15px]">
-          <label className="flex min-h-10 items-center gap-2">
-            <input type="radio" name="att-u5" checked={s.under_five} onChange={() => set("under_five", true)} className="size-4" /> 예
-          </label>
-          <label className="flex min-h-10 items-center gap-2">
-            <input type="radio" name="att-u5" checked={!s.under_five} onChange={() => set("under_five", false)} className="size-4" /> 아니요
-          </label>
-        </div>
-      </Row>
-      {impact && leave && (
-        <ApplyPreview
-          name="leave-impact"
-          title="저장하면 우리 회사는"
-          lines={
-            impact.changed === 0
-              ? [`바꿔도 ${leave.year}년 추천 연차가 달라지는 직원은 없어요.`]
-              : [
-                  `직원 ${leave.members.length}명 중 ${impact.changed}명의 ${leave.year}년 추천 연차가 달라져요.`,
-                  `${impact.confirmed > 0 ? `확정해 둔 연차(${impact.confirmed}명)는 지워지지 않아요. ` : ""}저장한 뒤 [직원별 연차]에서 확인해 주세요.`,
-                ]
-          }
-        />
-      )}
+      {/* U-14(D-308): 연차 연도 기준·5인 미만 회사는 [직원별 연차] 탭 맨 위에서 정함(값은 같은 근태 설정에 저장) */}
+      <p className="border-b border-zinc-100 py-4 text-[13px] text-zinc-600" data-leave-moved>
+        연차 연도 기준·5인 미만 회사는{" "}
+        <Link href={`${pathname}/leave`} className="font-semibold text-brand-700 hover:underline">
+          직원별 연차
+        </Link>{" "}
+        탭에서 정해요.
+      </p>
       <div className="flex flex-wrap items-center gap-3 pt-3">
         <p className="min-w-0 flex-1 text-[13px] text-zinc-600">저장하면 바꾼 사람·시각·이전 값이 변경 이력에 남아요. 이미 남은 출퇴근 기록은 바뀌지 않아요.</p>
         {saved && !dirty && (
@@ -385,7 +358,7 @@ function History({ rows }: { rows: AttendanceAdminView["history"] }) {
             <li key={h.id} className="flex flex-wrap gap-x-4 gap-y-1 py-3">
               <span className="w-32 shrink-0 text-[13px] text-zinc-600">{fmt(h.at)}</span>
               <div className="min-w-0 flex-1 text-sm leading-relaxed">
-                <span className="mr-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[12px] text-zinc-600">{ACTION_LABEL[h.action] ?? h.action}</span>
+                <span className="mr-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[12px] text-zinc-600">{h.action === "settings" ? attendanceMenu(h.action, h.changes) : (ACTION_LABEL[h.action] ?? h.action)}</span>
                 <b className="font-semibold">{h.member_name ?? "시스템"}</b>
                 {h.changes.map((c, i) => (
                   <span key={i} className="block">
