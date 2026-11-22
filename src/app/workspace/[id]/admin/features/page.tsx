@@ -8,6 +8,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { calendarEnabled } from "@/lib/calendar/server";
 import { BRAND } from "@/lib/brand";
 import { getAlimtalkStatus } from "@/lib/notify/alimtalk-status";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: `기능 사용 · ${BRAND.name}` };
 
@@ -43,12 +44,24 @@ export default function FeaturesPage({ params }: PageProps<"/workspace/[id]/admi
 
 async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/features">["params"] }) {
   const { id } = await params;
-  await requireWorkspace(id, { admin: true });
+  const membership = await requireWorkspace(id, { admin: true });
   const [attendance, calendar, alimtalk] = await Promise.all([attendanceEnabled(), calendarEnabled(), getAlimtalkStatus()]);
+  // U-9(D-310): 근태를 켠 회사만 남은 할 일(입사일 없는 직원 수·연결한 출근 단말 수)
+  let todo: { members: number; hireMissing: number; terminals: number } | null = null;
+  if (attendance) {
+    const supabase = await createClient();
+    const members = supabase.from("members").select("id", { count: "exact", head: true }).eq("company_id", membership.company_id).eq("status", "approved");
+    const [all, missing, term] = await Promise.all([
+      members,
+      supabase.from("members").select("id", { count: "exact", head: true }).eq("company_id", membership.company_id).eq("status", "approved").is("hire_date", null),
+      supabase.from("attendance_terminals").select("id", { count: "exact", head: true }).eq("company_id", membership.company_id).is("revoked_at", null),
+    ]);
+    if (!all.error && !missing.error && !term.error) todo = { members: all.count ?? 0, hireMissing: missing.count ?? 0, terminals: term.count ?? 0 };
+  }
   return (
     <div className="flex flex-col gap-4">
       <AlimtalkSwitch status={alimtalk} historyHref={`/workspace/${id}/admin/notifications`} />
-      <AttendanceSwitch enabled={attendance} />
+      <AttendanceSwitch enabled={attendance} todo={todo} base={`/workspace/${id}/admin`} />
       <CalendarSwitch enabled={calendar} calendarHref={`/workspace/${id}/calendar`} />
     </div>
   );

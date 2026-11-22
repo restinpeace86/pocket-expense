@@ -1,16 +1,17 @@
 "use client";
 
-import { Clock, Loader2, MonitorSmartphone } from "lucide-react";
+import { Check, ChevronRight, Clock, Loader2, MonitorSmartphone } from "lucide-react";
 import { showSaved } from "@/lib/ui/saved-event";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { createPairCodeAction as createPairCodeActionRaw, refreshAttendanceAction as refreshAttendanceActionRaw, renameTerminalAction as renameTerminalActionRaw, revokeTerminalAction as revokeTerminalActionRaw, saveAttendanceSettingsAction as saveAttendanceSettingsActionRaw, setAttendanceEnabledAction as setAttendanceEnabledActionRaw } from "@/app/workspace/[id]/admin/attendance-settings/actions";
 import { FormError } from "@/components/onboarding/field";
 import { ALERT_OPTIONS, alertLabel, TIME_OPTIONS, WEEKDAYS, type AttendanceSettings } from "@/lib/attendance/rules";
 import type { AttendanceAdminView } from "@/lib/attendance/server";
 import { guarded } from "@/lib/action-guard";
 import { attendanceMenu } from "@/lib/admin/change-history";
+import { minutesLabel, SETUP_STEPS } from "@/lib/admin/setup-wizard";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
 const createPairCodeAction = guarded(createPairCodeActionRaw);
@@ -45,16 +46,28 @@ export function AttendanceOff({ featuresHref }: { featuresHref: string }) {
   );
 }
 
-export function AttendanceSwitch({ enabled }: { enabled: boolean }) {
+// U-9(D-310): 켜기 전엔 켜면 할 일과 걸리는 시간, 켠 뒤엔 아직 남은 할 일(입사일·출근 단말)을 이 카드에서 바로
+const ATT_MINUTES = minutesLabel(SETUP_STEPS.filter((x) => x.attendanceOnly).reduce((n, x) => n + x.minutes, 0)); // 최초 설정 근태 단계와 같은 값
+export type AttendanceTodo = { members: number; hireMissing: number; terminals: number };
+export function AttendanceSwitch({ enabled, todo = null, base = "" }: { enabled: boolean; todo?: AttendanceTodo | null; base?: string }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [justOn, setJustOn] = useState(false);
+  const todoRef = useRef<HTMLDivElement>(null);
+  // 방금 켰으면 남은 할 일 카드가 화면에 들어오게(휴대폰에서 아래로 잘리지 않게)
+  useEffect(() => {
+    if (justOn && enabled && todoRef.current) todoRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [justOn, enabled, todo]);
   const toggle = () => {
     if (enabled && !confirm("근태를 끌까요?\n\n직원 화면의 [QR 출퇴근]과 출근 단말 QR이 멈춰요. 지금까지의 기록은 지워지지 않아요.")) return;
     setError(null);
     start(async () => {
       const r = await setAttendanceEnabledAction(!enabled);
       if (r.error) setError(r.error);
-      else showSaved();
+      else {
+        showSaved();
+        setJustOn(!enabled);
+      }
     });
   };
   return (
@@ -82,8 +95,44 @@ export function AttendanceSwitch({ enabled }: { enabled: boolean }) {
           {pending && <Loader2 className="absolute -left-6 size-4 animate-spin text-zinc-400" />}
         </button>
       </div>
+      {!enabled && (
+        <p className="mt-3 rounded-xl bg-zinc-50 px-3 py-2 text-[13px] text-zinc-700" data-att-before>
+          <b>켜면 할 일({ATT_MINUTES}):</b> 근무 기준 확인 → 직원 입사일 넣기 → 출근 단말 연결(선택). 켜면 바로 이어서 안내해 드려요.
+        </p>
+      )}
+      {enabled && todo && (todo.hireMissing > 0 || todo.terminals === 0) && (
+        <div ref={todoRef} className="mt-3 flex scroll-mb-24 flex-col gap-1 rounded-xl border border-brand-200 bg-brand-50/50 p-3" data-att-todo>
+          <p className="text-[13px] font-bold text-brand-800">근태를 쓰려면 남은 일</p>
+          <TodoLink href={`${base}/attendance-settings`} done={false} label="근무 기준 확인" note="근무 요일·시각과 퇴근 누락 알림이 우리 회사에 맞는지 봐요." />
+          <TodoLink
+            href={`${base}/attendance-settings/leave`}
+            done={todo.hireMissing === 0}
+            label="직원 입사일 넣기"
+            note={todo.hireMissing === 0 ? "모두 넣었어요." : `${todo.members}명 중 ${todo.hireMissing}명이 아직 없어요. 연차 계산에 필요해요.`}
+          />
+          <TodoLink
+            href={`${base}/attendance-settings/terminals`}
+            done={todo.terminals > 0}
+            label="출근 단말 연결 (선택)"
+            note={todo.terminals > 0 ? `${todo.terminals}대 연결했어요.` : "회사 입구 PC·태블릿에 QR을 띄워요. 휴대폰으로만 찍으면 건너뛰어도 돼요."}
+          />
+        </div>
+      )}
       <FormError message={error} />
     </section>
+  );
+}
+
+function TodoLink({ href, done, label, note }: { href: string; done: boolean; label: string; note: string }) {
+  return (
+    <Link href={href} className="flex min-h-11 items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-white" data-att-todo-item={done ? "done" : "todo"}>
+      <span className={`inline-flex size-5 shrink-0 items-center justify-center rounded-full border ${done ? "border-emerald-600 bg-emerald-600 text-white" : "border-zinc-400 bg-white"}`}>{done && <Check className="size-3.5" aria-hidden />}</span>
+      <span className="min-w-0 flex-1 text-sm">
+        <b className={done ? "font-semibold text-zinc-500 line-through" : "font-semibold text-zinc-900"}>{label}</b>
+        <span className="block text-[13px] text-zinc-600">{note}</span>
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-zinc-400" aria-hidden />
+    </Link>
   );
 }
 
