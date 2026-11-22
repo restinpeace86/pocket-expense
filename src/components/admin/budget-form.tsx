@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, SlidersHorizontal } from "lucide-react";
 import { useState, useTransition } from "react";
 import { saveBudgetAction as saveBudgetActionRaw } from "@/app/workspace/[id]/admin/settings/budget/actions";
 import { parseBudgetInput } from "@/lib/budget/format";
@@ -18,6 +18,8 @@ const fmt = (n: number | null) => (n ? n.toLocaleString("ko-KR") : "");
 // 예산 정하기(D-267): 회사 전체 월 예산 + 계정과목별(넣고 싶은 것만). 빈 칸 = 그 예산 없음
 export function BudgetForm({ total, titles, disabled, spent, today }: { total: number | null; titles: Title[]; disabled: boolean; spent: number; today: string }) {
   const [totalText, setTotalText] = useState(fmt(total));
+  // U-10(D-311): 계정과목별 칸은 눌러야 펼침. 이미 넣어 둔 예산이 있으면 펼친 채(넣은 값이 숨지 않게)
+  const [byTitle, setByTitle] = useState(() => titles.some((t) => t.budget));
   const [texts, setTexts] = useState<Record<string, string>>(() => Object.fromEntries(titles.map((t) => [t.id, fmt(t.budget)])));
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, start] = useTransition();
@@ -56,8 +58,17 @@ export function BudgetForm({ total, titles, disabled, spent, today }: { total: n
       <div className="mt-2">
         <ApplyPreview name="budget" lines={budgetPreview(spent, typeof tv === "number" ? tv : null, today)} />
       </div>
-      <p className="mt-5 text-sm font-semibold text-zinc-900">계정과목별 월 예산 (넣고 싶은 것만)</p>
-      {titles.length === 0 ? (
+      {!byTitle ? (
+        <div className="mt-5 flex flex-col gap-2" data-budget-titles-closed>
+          <p className="text-sm text-zinc-600">회사 전체 예산 하나로 충분해요. 계정과목마다 따로 알림을 받고 싶을 때만 정해요. 계정과목별로 쓴 돈은 위 칸에서 볼 수 있어요.</p>
+          <button type="button" onClick={() => setByTitle(true)} className="inline-flex min-h-11 items-center justify-center gap-1.5 self-start rounded-xl border border-brand-600 px-4 text-sm font-semibold text-brand-700 hover:bg-brand-50" data-budget-titles-open>
+            <SlidersHorizontal className="size-4" /> 계정과목별로도 정하기
+          </button>
+        </div>
+      ) : (
+        <p className="mt-5 text-sm font-semibold text-zinc-900">계정과목별 월 예산 (넣고 싶은 것만)</p>
+      )}
+      {!byTitle ? null : titles.length === 0 ? (
         <p className="mt-2 text-sm text-zinc-500">계정과목이 아직 없어요. 계정과목을 먼저 정하면 여기에 나와요.</p>
       ) : (
         <ul className="mt-2 grid gap-2 md:grid-cols-2">
