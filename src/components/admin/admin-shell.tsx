@@ -1,6 +1,6 @@
 "use client";
 
-import { FileSignature, Banknote, Bell, Building2, CircleHelp, CalendarDays, ClipboardCheck, Clock, Car, ChartBar, ChevronDown, FileDown, FileText, HardDrive, LayoutDashboard, Menu, MessageCircle, ReceiptText, Settings, SlidersHorizontal, ToggleRight, Users, Wallet, X, type LucideIcon } from "lucide-react";
+import { Check, FileSignature, Banknote, Bell, Building2, CircleHelp, CalendarDays, ClipboardCheck, Clock, Car, ChartBar, ChevronDown, FileDown, FileText, HardDrive, LayoutDashboard, Menu, MessageCircle, ReceiptText, Settings, SlidersHorizontal, ToggleRight, Users, Wallet, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -12,6 +12,8 @@ import type { Membership } from "@/lib/auth/paths";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 import { findSettingsTab, visibleGroups, type SettingsGroupKey } from "@/lib/admin/settings-groups";
 import { SettingsTabs } from "@/components/admin/settings-tabs";
+import { SetupWizardBar, type SetupBarData } from "@/components/admin/setup-wizard-bar";
+import { groupStatus } from "@/lib/admin/setup-wizard";
 import { useChatUnread } from "@/components/chat/use-chat-unread";
 import { Wordmark } from "@/components/brand/logo";
 
@@ -68,7 +70,7 @@ function NavLink({ item, base, pathname, onNavigate }: { item: NavItem; base: st
 
 // settingsOpen: 휴대폰 메뉴(서랍)에서는 설정 하위 메뉴를 펼친 채로 연다(개선사항 1-1) — 화면 이름이 바로 보이게
 // feedback: 관리자 1:1 문의 주소 — 휴대폰 서랍 메뉴에서만 넘긴다(PC는 오른쪽 아래 떠 있는 버튼, 7차 개선사항 3)
-function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, calendar = false, attendance = null, docs = null }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; calendar?: boolean; attendance?: number | null; docs?: number | null }) {
+function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback, calendar = false, attendance = null, docs = null, setup = null }: { base: string; onNavigate?: () => void; previewPath?: string; settingsOpen?: boolean; feedback?: string | null; calendar?: boolean; attendance?: number | null; docs?: number | null; setup?: SetupBarData | null }) {
   const realPath = usePathname();
   const pathname = previewPath ? `${base}${previewPath}` : realPath;
   const groups = visibleGroups(attendance !== null);
@@ -154,7 +156,8 @@ function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback
                 className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm ${g.key === "billing" ? "mt-2 border-t border-sidebar-border pt-2" : ""} ${on ? "bg-sidebar-active font-semibold text-sidebar-active-fg" : "text-sidebar-fg hover:bg-sidebar-hover"}`}
               >
                 <Icon className="size-5 shrink-0" />
-                {g.label}
+                <span className="flex-1">{g.label}</span>
+                <SetupChip group={g.key} setup={setup} />
               </Link>
             );
           })}
@@ -201,6 +204,16 @@ function Brand() {
 export type ShellTheme = ThemeKey;
 
 // previewPath: 미리보기(/dev/preview)에서 선택된 메뉴를 보여 주기 위한 값. 실제 화면에서는 쓰지 않는다.
+// 최초 1회 설정(D-300): 새로 가입한 회사가 안내에 답한 뒤에만 메뉴 옆에 ✓ / 건너뜀 표시(이미 쓰던 회사는 표시 안 함)
+function SetupChip({ group, setup }: { group: SettingsGroupKey; setup: SetupBarData | null }) {
+  if (!setup || setup.state.legacy || !setup.state.introAnswered) return null;
+  const gs = groupStatus(group, setup.state.statuses, setup.attendanceOn);
+  if (!gs || gs.handled === 0) return null;
+  if (gs.skipped > 0) return <span className="whitespace-nowrap rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-800" data-setup-chip="skipped">{gs.skipped} 건너뜀</span>;
+  if (gs.complete) return <Check className="size-4 shrink-0 text-green-600" aria-label="설정 완료" data-setup-chip="done" />;
+  return null;
+}
+
 export function AdminShell({
   membership,
   children,
@@ -210,7 +223,9 @@ export function AdminShell({
   calendar = false,
   attendance = null,
   docs = null,
+  setup = null,
 }: {
+  setup?: SetupBarData | null;
   membership: Membership;
   children: ReactNode;
   theme?: ShellTheme;
@@ -230,7 +245,7 @@ export function AdminShell({
         <p className="px-6 pb-3 pt-5">
           <Brand />
         </p>
-        <NavList base={base} previewPath={previewPath} calendar={calendar} attendance={attendance} docs={docs} />
+        <NavList base={base} previewPath={previewPath} calendar={calendar} attendance={attendance} docs={docs} setup={setup} />
       </aside>
 
       {open && (
@@ -243,7 +258,7 @@ export function AdminShell({
                 <X className="size-5" />
               </button>
             </div>
-            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} calendar={calendar} attendance={attendance} docs={docs} />
+            <NavList base={base} onNavigate={() => setOpen(false)} previewPath={previewPath} settingsOpen feedback={ADMIN_FEEDBACK_URL} calendar={calendar} attendance={attendance} docs={docs} setup={setup} />
             <div className="mt-auto sm:hidden">
               <div className="px-2 pb-1">
                 <FeedbackButton variant="row" />
@@ -275,6 +290,7 @@ export function AdminShell({
           )}
         </div>
         <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 py-6 md:px-8 md:[body:has([data-kakao-fab])_&]:pb-24">
+          {setup && !previewPath && <SetupWizardBar base={base} companyId={membership.company_id} data={setup} />}
           <SettingsTabs base={base} previewPath={previewPath} />
           {children}
         </main>

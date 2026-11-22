@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { categoryBars, changePct, checklist, type Dashboard } from "@/lib/admin/dashboard";
 import { formatWon } from "@/lib/format";
 import { InviteLinkCard } from "./invite-link-card";
+import { SetupHomeCard, SetupIntroDialog } from "./setup-intro";
+import type { SetupState } from "@/lib/admin/setup-wizard";
 
 // 관리자 홈 대시보드 (admin-dashboard.md ①, T11-1): 대표가 이번 달 경비 흐름과 처리할 일을 3초 안에 파악한다.
 // 순서: 초기 설정 체크리스트(남은 것만) → (직원이 본인뿐이면) 초대 카드 → KPI 3개 → 할 일 → 카테고리 비중·직원 상위 5명 → 무료 영수증·초대 카드
@@ -38,7 +40,9 @@ export function AdminHomeView({
   titlesManagedBy = null,
   preview = false,
   notices,
+  setup = null,
 }: {
+  setup?: { companyId: string; state: SetupState; attendanceOn: boolean } | null; // 최초 1회 설정(D-300). 이미 쓰던 회사(legacy)는 예전 체크리스트 그대로
   adminName: string;
   companyName: string;
   inviteCode: string;
@@ -58,7 +62,8 @@ export function AdminHomeView({
   const monthLabel = `${Number(m)}월`;
   const onlyMe = dashboard.checklist.approved_members <= 1;
   const steps = checklist(dashboard.checklist);
-  const showChecklist = steps.some((s) => !s.done && !s.optional);
+  const wizard = setup && !setup.state.legacy ? setup : null;
+  const showChecklist = !wizard && steps.some((s) => !s.done && !s.optional);
   const pct = changePct(kpi.spend, kpi.spend_prev);
   const bars = categoryBars(dashboard.categories);
   const topMax = Math.max(1, ...dashboard.top_members.map((t) => t.amount));
@@ -117,6 +122,8 @@ export function AdminHomeView({
       </div>
       {notices}
 
+      {wizard && !wizard.state.introAnswered && !preview && <SetupIntroDialog companyId={wizard.companyId} attendanceOn={wizard.attendanceOn} />}
+      {wizard && wizard.state.introAnswered && !wizard.state.finished && <SetupHomeCard companyId={wizard.companyId} basePath={basePath} state={wizard.state} attendanceOn={wizard.attendanceOn} />}
       {showChecklist && (
         <section className={card} aria-labelledby="setup-title">
           <h2 id="setup-title" className="flex items-center gap-2 font-semibold">

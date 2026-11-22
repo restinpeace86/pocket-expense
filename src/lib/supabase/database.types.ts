@@ -5088,6 +5088,77 @@ export type Database = {
           },
         ]
       }
+      setup_wizard_steps: {
+        Row: {
+          company_id: string
+          member_id: string | null
+          status: string
+          step_key: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          member_id?: string | null
+          status: string
+          step_key: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          member_id?: string | null
+          status?: string
+          step_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setup_wizard_steps_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "setup_wizard_steps_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      setup_wizards: {
+        Row: {
+          company_id: string
+          created_at: string
+          finished_at: string | null
+          intro_answered_at: string | null
+          legacy: boolean
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          finished_at?: string | null
+          intro_answered_at?: string | null
+          legacy?: boolean
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          finished_at?: string | null
+          intro_answered_at?: string | null
+          legacy?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setup_wizards_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storage_addons: {
         Row: {
           code: string
@@ -6612,6 +6683,11 @@ export type Database = {
       }
       set_tax_office_request_status: {
         Args: { p_id: string; p_resolved: boolean }
+        Returns: undefined
+      }
+      setup_wizard_answer_intro: { Args: never; Returns: undefined }
+      setup_wizard_mark: {
+        Args: { p_finished?: boolean; p_status: string; p_step: string }
         Returns: undefined
       }
       storage_addon_grant: { Args: { p_request: string }; Returns: Json }

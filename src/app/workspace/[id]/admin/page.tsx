@@ -18,6 +18,7 @@ import { BRAND } from "@/lib/brand";
 import { BudgetHomeCard } from "@/components/admin/budget-home-card";
 import type { BudgetStatus } from "@/lib/budget/format";
 import { mdKo, pastDueSchedule } from "@/lib/billing/state";
+import { getSetupState } from "@/lib/admin/setup-wizard-server";
 
 export const metadata = { title: `관리자 · ${BRAND.name}` };
 
@@ -58,6 +59,8 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
     // 정기결제 미납 안내(D-298) — 관리자만 보임(RLS)
     supabase.from("billing_subscriptions").select("status, past_due_since, cancel_reason").maybeSingle(),
   ]);
+  // 최초 1회 설정(D-300): 시작 안내 창·진행 카드
+  const setupState = await getSetupState();
   // 오늘 출근 카드(D-242)
   const attendanceDay =
     attendancePending === null ? null : ((await supabase.rpc("attendance_day_admin", { p_date: todayKst() })).data as unknown as DayAdminData | null);
@@ -130,6 +133,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
       basePath={`/workspace/${membership.company_id}/admin`}
       titlesManagedBy={officeInfo?.registered ? (officeInfo.registered_name ?? "세무사무소") : null}
       notices={<NoticeStrip notices={notices} />}
+      setup={{ companyId: membership.company_id, state: setupState, attendanceOn: attendancePending !== null }}
       />
       {budget && <BudgetHomeCard status={budget as unknown as BudgetStatus} href={`/workspace/${membership.company_id}/admin/settings/budget`} />}
     </>
