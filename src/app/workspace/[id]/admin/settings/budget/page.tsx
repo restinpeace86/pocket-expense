@@ -7,6 +7,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import type { BudgetStatus } from "@/lib/budget/format";
 import { createClient } from "@/lib/supabase/server";
 import { BRAND } from "@/lib/brand";
+import { todayKst } from "@/lib/dates";
 
 export const metadata = { title: `예산 · ${BRAND.name}` };
 
@@ -69,6 +70,8 @@ async function Content({ params }: Pick<PageProps<"/workspace/[id]/admin/setting
         total={status.total_budget}
         titles={(titles ?? []).map((t) => ({ id: t.id, name: t.name, budget: byId.get(t.id)?.budget ?? null, spent: byId.get(t.id)?.spent ?? 0 }))}
         disabled={!status.enabled}
+        spent={status.total_spent}
+        today={todayKst()}
       />
     </div>
   );

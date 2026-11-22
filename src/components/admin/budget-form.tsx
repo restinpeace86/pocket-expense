@@ -5,6 +5,8 @@ import { useState, useTransition } from "react";
 import { saveBudgetAction as saveBudgetActionRaw } from "@/app/workspace/[id]/admin/settings/budget/actions";
 import { parseBudgetInput } from "@/lib/budget/format";
 import { guarded } from "@/lib/action-guard";
+import { ApplyPreview } from "@/components/admin/apply-preview";
+import { budgetPreview } from "@/lib/admin/apply-preview";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
 const saveBudgetAction = guarded(saveBudgetActionRaw);
@@ -14,7 +16,7 @@ type Title = { id: string; name: string; budget: number | null; spent: number };
 const fmt = (n: number | null) => (n ? n.toLocaleString("ko-KR") : "");
 
 // 예산 정하기(D-267): 회사 전체 월 예산 + 계정과목별(넣고 싶은 것만). 빈 칸 = 그 예산 없음
-export function BudgetForm({ total, titles, disabled }: { total: number | null; titles: Title[]; disabled: boolean }) {
+export function BudgetForm({ total, titles, disabled, spent, today }: { total: number | null; titles: Title[]; disabled: boolean; spent: number; today: string }) {
   const [totalText, setTotalText] = useState(fmt(total));
   const [texts, setTexts] = useState<Record<string, string>>(() => Object.fromEntries(titles.map((t) => [t.id, fmt(t.budget)])));
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -51,6 +53,9 @@ export function BudgetForm({ total, titles, disabled }: { total: number | null; 
           <span className="shrink-0 text-sm text-zinc-600">원</span>
         </span>
       </label>
+      <div className="mt-2">
+        <ApplyPreview name="budget" lines={budgetPreview(spent, typeof tv === "number" ? tv : null, today)} />
+      </div>
       <p className="mt-5 text-sm font-semibold text-zinc-900">계정과목별 월 예산 (넣고 싶은 것만)</p>
       {titles.length === 0 ? (
         <p className="mt-2 text-sm text-zinc-500">계정과목이 아직 없어요. 계정과목을 먼저 정하면 여기에 나와요.</p>

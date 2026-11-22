@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { confirmLeaveAction as confirmLeaveActionRaw, saveLeaveSettingsAction as saveLeaveSettingsActionRaw, setHireDateAction as setHireDateActionRaw, type LeaveConfirmItem } from "@/app/workspace/[id]/admin/attendance-settings/leave/actions";
 import { buildLeaveRows, daysLabel, ROUNDING_LABEL, type LeaveAdminData, type LeaveRow, type LeaveSettings, type LeaveStatus } from "@/lib/attendance/leave";
+import { ApplyPreview } from "@/components/admin/apply-preview";
+import { hirePreview } from "@/lib/admin/apply-preview";
 import { guarded } from "@/lib/action-guard";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
@@ -77,6 +79,7 @@ export function LeaveAdmin({ data, base }: { data: LeaveAdminData; base: string 
             ? `${data.year}년 1월 1일~12월 31일에 쓰는 연차예요. 입사 다음 해에는 근무한 날만큼 나눠서(비례) 줘요.`
             : `${data.year}년에 시작하는 각 직원의 연차 연도(입사한 날부터 1년)예요.`}
         </span>
+        <HirePreview data={data} />
         {data.settings.under_five && (
           <span className="mt-2 block rounded-lg bg-amber-50 px-3 py-2 text-[13px] text-amber-950">근무 기준에서 &quot;5인 미만 회사&quot;로 되어 있어요. 근로기준법 제60조가 적용되지 않아 추천값 없이 회사가 직접 정해요.</span>
         )}
@@ -408,5 +411,23 @@ function EditSheet({ row, h, hourly, today, onClose }: { row: LeaveRow; h: numbe
         )}
       </section>
     </div>
+  );
+}
+
+// 입사일로 미리 보기(D-304 B-3): 직접 넣어 봐야 하는 미리보기라 접어 둠. 이 회사 연차 기준으로 올해·내년 추천 연차
+function HirePreview({ data }: { data: LeaveAdminData }) {
+  const [hire, setHire] = useState("");
+  const lines = hire ? hirePreview(hire, data) : null;
+  return (
+    <details className="mt-2 rounded-lg border border-dashed border-zinc-300 px-3 py-2" data-hire-preview>
+      <summary className="flex min-h-9 cursor-pointer items-center text-[13px] font-semibold text-zinc-700">입사일로 미리 보기</summary>
+      <label className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-zinc-700">
+        입사일
+        <input type="date" value={hire} onChange={(e) => setHire(e.target.value)} className="h-10 rounded-lg border border-zinc-300 bg-white px-2 text-[15px]" aria-label="미리 볼 입사일" data-unsaved-ignore />
+      </label>
+      <div className="mt-2">
+        {lines ? <ApplyPreview name="hire" title={`입사일 ${hire}인 직원이면`} lines={lines} /> : <p className="text-[13px] text-zinc-500">날짜를 고르면 이 회사 기준으로 올해·내년 연차를 계산해 보여 줘요. 저장되지 않아요.</p>}
+      </div>
+    </details>
   );
 }

@@ -9,6 +9,9 @@ import { FormError } from "@/components/onboarding/field";
 import { ALERT_OPTIONS, alertLabel, TIME_OPTIONS, WEEKDAYS, type AttendanceSettings } from "@/lib/attendance/rules";
 import type { AttendanceAdminView } from "@/lib/attendance/server";
 import { guarded } from "@/lib/action-guard";
+import { ApplyPreview } from "@/components/admin/apply-preview";
+import { featurePreview, leaveImpact, workRulesPreview } from "@/lib/admin/apply-preview";
+import type { LeaveAdminData } from "@/lib/attendance/leave";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
 const createPairCodeAction = guarded(createPairCodeActionRaw);
@@ -25,10 +28,10 @@ const card = "rounded-2xl border border-zinc-200 bg-white p-4 md:p-5";
 const select = "h-11 rounded-xl border border-zinc-300 bg-white px-3 text-[15px]";
 
 // 설정 › 근태 정책(D-251): 근무 기준 · 출근 단말 · 변경 이력을 탭마다 나눠 보여 준다. 켜기·끄기는 설정 › 기능 사용
-export function AttendanceAdmin({ view, part, featuresHref }: { view: AttendanceAdminView; part: "rules" | "terminals" | "history"; featuresHref: string }) {
+export function AttendanceAdmin({ view, part, featuresHref, leave = null }: { view: AttendanceAdminView; part: "rules" | "terminals" | "history"; featuresHref: string; leave?: LeaveAdminData | null }) {
   if (part === "history") return <History rows={view.history} />;
   if (!view.enabled) return <AttendanceOff featuresHref={featuresHref} />;
-  return part === "rules" ? <SettingsForm initial={view.settings} /> : <Terminals terminals={view.terminals} />;
+  return part === "rules" ? <SettingsForm initial={view.settings} leave={leave} /> : <Terminals terminals={view.terminals} />;
 }
 
 export function AttendanceOff({ featuresHref }: { featuresHref: string }) {
@@ -43,7 +46,7 @@ export function AttendanceOff({ featuresHref }: { featuresHref: string }) {
   );
 }
 
-export function AttendanceSwitch({ enabled }: { enabled: boolean }) {
+export function AttendanceSwitch({ enabled, members = 0 }: { enabled: boolean; members?: number }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const toggle = () => {
@@ -64,7 +67,7 @@ export function AttendanceSwitch({ enabled }: { enabled: boolean }) {
         <div className="min-w-0 flex-1">
           <p className="font-semibold">근태 사용</p>
           <p className="text-sm text-zinc-600">
-            {enabled ? "켜져 있어요. 직원 하단 가운데 버튼이 [QR 출퇴근]으로 바뀌었어요." : "꺼져 있어요. 켜면 직원 하단 가운데 버튼이 [QR 출퇴근]으로 바뀌고 홈에 오늘 출근 현황이 보여요."}
+            {enabled ? "켜져 있어요. 직원 하단 가운데 버튼이 [QR 출퇴근]이에요." : "꺼져 있어요. 켜면 홈에 오늘 출근 현황도 보여요."}
           </p>
         </div>
         <button
@@ -79,6 +82,9 @@ export function AttendanceSwitch({ enabled }: { enabled: boolean }) {
           <span className={`inline-block size-6 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-7" : "translate-x-1"}`} />
           {pending && <Loader2 className="absolute -left-6 size-4 animate-spin text-zinc-400" />}
         </button>
+      </div>
+      <div className="mt-3">
+        <ApplyPreview name="feature-attendance" lines={featurePreview("attendance", enabled, members)} />
       </div>
       <FormError message={error} />
     </section>
@@ -103,7 +109,7 @@ function Row({ title, help, children, htmlFor }: { title: string; help: string; 
   );
 }
 
-function SettingsForm({ initial }: { initial: AttendanceSettings }) {
+function SettingsForm({ initial, leave }: { initial: AttendanceSettings; leave: LeaveAdminData | null }) {
   const [s, setS] = useState(initial);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +120,7 @@ function SettingsForm({ initial }: { initial: AttendanceSettings }) {
     setS(initial);
   }
   const dirty = JSON.stringify(s) !== JSON.stringify(initial);
+  const impact = leave ? leaveImpact(leave, { basis: s.leave_year_basis, under_five: s.under_five, daily_hours: s.daily_hours }) : null;
   const set = <K extends keyof AttendanceSettings>(k: K, v: AttendanceSettings[K]) => {
     setSaved(false);
     setS((p) => ({ ...p, [k]: v }));
@@ -183,6 +190,7 @@ function SettingsForm({ initial }: { initial: AttendanceSettings }) {
           ))}
         </select>
       </Row>
+      <ApplyPreview name="work-rules" lines={workRulesPreview(s)} />
       <Row title="연차 연도 기준" help="직원별 연차 일수를 계산하는 기준이에요([직원별 연차] 탭).">
         <div className="flex flex-col text-[15px]">
           <label className="flex min-h-10 items-center gap-2">
@@ -203,6 +211,16 @@ function SettingsForm({ initial }: { initial: AttendanceSettings }) {
           </label>
         </div>
       </Row>
+      {impact && leave && (
+        <ApplyPreview
+          name="leave-impact"
+          title="저장하면 우리 회사는"
+          lines={[
+            `직원 ${leave.members.length}명 중 ${impact.changed}명의 ${leave.year}년 추천 연차가 달라져요.`,
+            `${impact.confirmed > 0 ? `확정해 둔 연차(${impact.confirmed}명)는 지워지지 않아요. ` : ""}저장한 뒤 [직원별 연차]에서 확인해 주세요.`,
+          ]}
+        />
+      )}
       <div className="flex flex-wrap items-center gap-3 pt-3">
         <p className="min-w-0 flex-1 text-[13px] text-zinc-600">저장하면 바꾼 사람·시각·이전 값이 변경 이력에 남아요. 이미 남은 출퇴근 기록은 바뀌지 않아요.</p>
         {saved && !dirty && (

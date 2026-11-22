@@ -6,6 +6,8 @@ import { setChatAttachmentDaysAction as setChatAttachmentDaysActionRaw } from "@
 import { FormError } from "@/components/onboarding/field";
 import { bytesLabel } from "@/lib/chat/format";
 import { guarded } from "@/lib/action-guard";
+import { ApplyPreview } from "@/components/admin/apply-preview";
+import { retentionPreview } from "@/lib/admin/apply-preview";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
 const setChatAttachmentDaysAction = guarded(setChatAttachmentDaysActionRaw);
@@ -19,7 +21,7 @@ const OPTIONS = [
 ] as const;
 
 // 채팅 저장 공간·보관 기간(D-212). 짧게 바꾸면 그보다 오래된 파일은 오늘 새벽에 지워진다고 먼저 묻는다
-export function ChatRetention({ status }: { status: RetentionStatus }) {
+export function ChatRetention({ status, today }: { status: RetentionStatus; today: string }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -93,6 +95,9 @@ export function ChatRetention({ status }: { status: RetentionStatus }) {
               </button>
             );
           })}
+        </div>
+        <div className="mt-3">
+          <ApplyPreview name="retention" lines={retentionPreview(today, status.days)} />
         </div>
         {saved && !pending && (
           <p className="mt-2 text-sm text-green-700" role="status">

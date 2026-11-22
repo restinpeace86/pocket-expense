@@ -9,6 +9,7 @@ import { inputClass } from "@/components/ui/page-shell";
 import type { ApprovalLineView, LineMember } from "@/lib/admin/approval-lines";
 import { measureAction } from "@/lib/perf/client";
 import { guarded } from "@/lib/action-guard";
+import { ApplyPreview } from "@/components/admin/apply-preview";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
 const saveApprovalLineAction = guarded(saveApprovalLineActionRaw);
@@ -113,7 +114,13 @@ function LineEditor({ line, members, onSaved }: { line: ApprovalLineView; member
           </button>
         </div>
       )}
-      <p className="rounded-xl bg-zinc-50 px-3 py-2 text-sm text-zinc-700">미리보기: {preview(list)}</p>
+      <ApplyPreview
+        name="approval-line"
+        lines={[
+          `${line.department_id ? line.name.replace(/ 결재라인$/, "") : "부서별 결재라인이 없는"} 직원${line.appliesTo ? ` ${line.appliesTo}명` : ""}이 결의서를 올리면:`,
+          <b key="chain" className="font-semibold">{preview(list)}</b>,
+        ]}
+      />
       {error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {error}

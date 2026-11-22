@@ -53,6 +53,8 @@
 > | 경비 정책 | 식대 한도 `/settings/meal` · 자차 유류비 `/settings/fuel` · 출장 일비 `/settings/per-diem` · 정기 결제 `/recurring` · 마감 일정 `/settings/closing` |
 > | 근태 정책(근태 켰을 때만) | 직원별 연차 · 휴가 종류 · 근무 기준 `/attendance-settings` · 출근 단말 `/attendance-settings/terminals` · 변경 이력 `/attendance-settings/history` |
 > | 변경 이력 | 변경 이력 `/change-history` — 모든 설정의 누가·언제·이전→이후, 근태 이력도 합쳐 보임, 메뉴별 거르기(D-303) |
+
+> '우리 회사에 적용하면' 미리보기(D-304): 예산 · 사전 검토 결재라인 · 근무 기준(+연차 기준 영향) · 직원별 연차(입사일 미리 보기, 접힘) · 파일 보관 · 기능 사용(근태·캘린더). 바꾸는 칸 바로 아래 한 칸, 두 줄까지(`ApplyPreview`)
 > | 양식·결재 | 지출결의서 양식 · 회사 양식 · 사전 검토 결재라인 |
 > | 파일 보관 | (탭 없음) |
 > | 요금제 | 요금제 + 저장 용량 추가 요금 안내(준비 중, D-248) |

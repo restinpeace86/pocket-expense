@@ -7,6 +7,7 @@ import { SectionHeading } from "@/components/ui/help";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { BRAND } from "@/lib/brand";
+import { todayKst } from "@/lib/dates";
 
 export const metadata = { title: `파일 보관 · ${BRAND.name}` };
 
@@ -57,7 +58,7 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/ch
   if (error || !data) throw new Error("채팅 저장 공간을 불러오지 못했어요.");
   return (
     <div className="flex flex-col gap-4">
-      <ChatRetention status={data as unknown as RetentionStatus} />
+      <ChatRetention status={data as unknown as RetentionStatus} today={todayKst()} />
       {vault.data && <VaultUsageCard usage={vault.data as unknown as VaultUsage} />}
       {/* D-291: 결재 문서를 쓰는 회사(양식이 있었거나 정리할 첨부가 있음)만 */}
       {purge.data && ((docForms ?? 0) > 0 || (purge.data as unknown as PurgeStatus)["0"].files > 0) && <ApprovalFilesPurge companyId={id} status={purge.data as unknown as PurgeStatus} />}
