@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp, Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { showSaved } from "@/lib/ui/saved-event";
 import { useState, useTransition } from "react";
 import { addDepartmentAction as addDepartmentActionRaw, deleteDepartmentAction as deleteDepartmentActionRaw, renameDepartmentAction as renameDepartmentActionRaw, reorderDepartmentsAction as reorderDepartmentsActionRaw } from "@/app/workspace/[id]/admin/departments/actions";
 import { FormError } from "@/components/onboarding/field";
@@ -52,7 +53,10 @@ export function DepartmentsView({ departments, preview = false }: { departments:
     startTransition(async () => {
       const r = await measureAction("departments.change", action);
       if (r.error) setError(r.error);
-      else onDone?.();
+      else {
+        onDone?.();
+        showSaved();
+      }
     });
   }
 

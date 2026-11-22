@@ -1,6 +1,7 @@
 "use client";
 
 import { Clock, Loader2, MonitorSmartphone } from "lucide-react";
+import { showSaved } from "@/lib/ui/saved-event";
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { createPairCodeAction as createPairCodeActionRaw, refreshAttendanceAction as refreshAttendanceActionRaw, renameTerminalAction as renameTerminalActionRaw, revokeTerminalAction as revokeTerminalActionRaw, saveAttendanceSettingsAction as saveAttendanceSettingsActionRaw, setAttendanceEnabledAction as setAttendanceEnabledActionRaw } from "@/app/workspace/[id]/admin/attendance-settings/actions";
@@ -51,6 +52,7 @@ export function AttendanceSwitch({ enabled }: { enabled: boolean }) {
     start(async () => {
       const r = await setAttendanceEnabledAction(!enabled);
       if (r.error) setError(r.error);
+      else showSaved();
     });
   };
   return (

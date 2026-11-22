@@ -1,6 +1,7 @@
 "use client";
 
 import { CreditCard, Pencil, Plus } from "lucide-react";
+import { showSaved } from "@/lib/ui/saved-event";
 import { useState, useTransition } from "react";
 import { addCardAction as addCardActionRaw, setCardActiveAction as setCardActiveActionRaw, updateCardAction as updateCardActionRaw } from "@/app/workspace/[id]/admin/corporate-cards/actions";
 import { CardNumberInput } from "@/components/admin/card-number-input";
@@ -82,7 +83,10 @@ export function CorporateCardsView({
     startTransition(async () => {
       const r = await measureAction(`corporate-cards.${label}`, action);
       if (r.error) setError(r.error);
-      else done?.();
+      else {
+        done?.();
+        showSaved();
+      }
     });
   }
 

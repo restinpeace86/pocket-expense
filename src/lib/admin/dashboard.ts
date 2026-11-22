@@ -41,7 +41,7 @@ export function checklist(c: Dashboard["checklist"]): ChecklistItem[] {
   return [
     { key: "invite", label: "직원 초대", done: c.approved_members > 1, href: "/members" },
     { key: "departments", label: "부서 만들기", done: c.departments > 0, href: "/departments" },
-    { key: "policy", label: "정산 정책 확인", done: c.policy_confirmed, href: "/settings" },
+    { key: "policy", label: "정산 정책 확인", done: c.policy_confirmed, href: "/settings/meal" },
     { key: "review", label: "사전 검토 결재라인", done: c.review_steps > 0, optional: true, href: "/approval-lines" },
   ];
 }

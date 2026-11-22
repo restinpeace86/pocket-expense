@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarDays, Loader2 } from "lucide-react";
+import { showSaved } from "@/lib/ui/saved-event";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { setCalendarEnabledAction as setCalendarEnabledActionRaw } from "@/app/workspace/[id]/admin/calendar-settings/actions";
@@ -20,6 +21,7 @@ export function CalendarSwitch({ enabled, calendarHref }: { enabled: boolean; ca
     start(async () => {
       const r = await setCalendarEnabledAction(!enabled);
       if (r.error) setError(r.error);
+      else showSaved();
     });
   };
   return (

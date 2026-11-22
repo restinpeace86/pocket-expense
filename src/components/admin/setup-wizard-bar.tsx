@@ -2,7 +2,8 @@
 
 import { Check, Wand2 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import { hasUnsaved } from "@/lib/ui/unsaved-store";
 import { findSettingsTab } from "@/lib/admin/settings-groups";
 import { groupStatus, minutesLabel, progress, setupSteps, stepForPath, type SetupState } from "@/lib/admin/setup-wizard";
 import { markSetupStepAction, pauseSetupAction, startSetupAction } from "@/app/workspace/[id]/admin/setup/actions";
@@ -13,16 +14,17 @@ export type SetupBarData = { state: SetupState; attendanceOn: boolean; on: boole
 //  · 진행 중 + 지금 화면이 단계 → 전체 N단계 중 M단계 · % · 남은 시간 / 메뉴 안 단계 / 이유 한 줄 / [건너뛰기] [완료하고 다음]
 //  · 진행 중 + 단계 아닌 설정 화면 → 한 줄 [이어서 하기]
 //  · 멈춘 상태 → 오른쪽 작은 [설정 마법사 %] 버튼
-// 저장 안 한 입력이 있으면 넘어가기 전에 확인(U-2와 같은 장치): [저장] 버튼이 있는 form에서 입력이 바뀌고 아직 제출 안 됐을 때
+// 저장 안 한 입력이 있으면 넘어가기 전에 확인 — 목록은 UnsavedGuard(U-2)와 같은 것(unsaved-store)
 export function SetupWizardBar({ base, companyId, data }: { base: string; companyId: string; data: SetupBarData }) {
   const pathname = usePathname();
   const rest = pathname.startsWith(base) ? pathname.slice(base.length) : "";
   const onSettings = !!findSettingsTab(rest);
   const step = stepForPath(rest, data.attendanceOn);
-  const dirty = useDirtyForms(!!step && data.on);
-  const [confirm, setConfirm] = useState<null | "done" | "skipped">(null);
+  // 화면이 바뀌면 확인 창은 저절로 닫힘(주소별로 기억)
+  const [confirmAt, setConfirmAt] = useState<{ path: string; status: "done" | "skipped" } | null>(null);
+  const confirm = confirmAt?.path === pathname ? confirmAt.status : null;
+  const setConfirm = (status: "done" | "skipped" | null) => setConfirmAt(status ? { path: pathname, status } : null);
   const [pending, start] = useTransition();
-  useEffect(() => setConfirm(null), [pathname]);
   if (!onSettings) return null;
 
   const p = progress(data.state, data.attendanceOn);
@@ -46,7 +48,7 @@ export function SetupWizardBar({ base, companyId, data }: { base: string; compan
   const last = !!step && p.total - p.handled <= 1 && !data.state.statuses[step.key];
   const mark = (status: "done" | "skipped") => {
     if (!step) return;
-    if (dirty.current.size > 0 && confirm !== status) return setConfirm(status);
+    if (hasUnsaved() && confirm !== status) return setConfirm(status);
     start(() => markSetupStepAction(companyId, step.key, status));
   };
 
@@ -147,30 +149,3 @@ export function SetupWizardBar({ base, companyId, data }: { base: string; compan
   );
 }
 
-// [저장] 버튼이 있는 form 안 입력이 바뀌었는데 아직 제출 안 됨 → 저장 안 한 내용
-function useDirtyForms(active: boolean) {
-  const dirty = useRef(new Set<HTMLFormElement>());
-  const pathname = usePathname();
-  useEffect(() => {
-    dirty.current.clear();
-    if (!active) return;
-    const main = document.querySelector("main");
-    if (!main) return;
-    const onEdit = (e: Event) => {
-      const t = e.target as HTMLElement | null;
-      if (t?.closest("[data-setup-bar]")) return;
-      const form = t?.closest("form");
-      if (form && form.querySelector('button[type="submit"], button:not([type])')) dirty.current.add(form);
-    };
-    const onSubmit = (e: Event) => dirty.current.delete(e.target as HTMLFormElement);
-    main.addEventListener("input", onEdit, true);
-    main.addEventListener("change", onEdit, true);
-    main.addEventListener("submit", onSubmit, true);
-    return () => {
-      main.removeEventListener("input", onEdit, true);
-      main.removeEventListener("change", onEdit, true);
-      main.removeEventListener("submit", onSubmit, true);
-    };
-  }, [active, pathname]);
-  return dirty;
-}

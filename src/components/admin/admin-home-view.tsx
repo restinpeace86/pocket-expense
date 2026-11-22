@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, ChevronRight, Circle, ClipboardCheck, Hourglass, ReceiptText, SlidersHorizontal, Tags, UserPlus, Wallet } from "lucide-react";
+import { AlertTriangle, Check, ChevronRight, Circle, ClipboardCheck, Hourglass, ReceiptText, Tags, UserPlus, Wallet } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { categoryBars, changePct, checklist, type Dashboard } from "@/lib/admin/dashboard";
@@ -133,9 +133,17 @@ export function AdminHomeView({
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
             {steps.map((s) => (
               <li key={s.key}>
-                <Link href={`${basePath}${s.href}`} className={`flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm ${s.done ? "text-zinc-500" : "bg-zinc-50 font-medium hover:bg-zinc-100"}`}>
-                  {s.done ? <Check className="size-4 text-green-600" /> : <Circle className="size-4 text-zinc-400" />}
-                  <span className={s.done ? "line-through" : ""}>{s.label}</span>
+                <Link href={`${basePath}${s.href}`} className={`flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm ${s.done ? "text-zinc-500" : "bg-zinc-50 font-medium hover:bg-zinc-100"}`}>
+                  {s.done ? <Check className="size-4 shrink-0 text-green-600" /> : <Circle className="size-4 shrink-0 text-zinc-400" />}
+                  <span className="min-w-0">
+                    <span className={s.done ? "line-through" : ""}>{s.label}</span>
+                    {/* U-6(D-301): 따로 있던 정산 정책 확인 카드를 이 항목 안으로 합침 */}
+                    {s.key === "policy" && !s.done && policyToConfirm && (
+                      <span className="mt-0.5 block break-keep text-xs font-normal text-zinc-500" data-policy-summary>
+                        지금 기본값: {policyToConfirm.join(" · ")}. 그대로 써도 되면 [저장]만 누르세요.
+                      </span>
+                    )}
+                  </span>
                   {s.optional && <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">선택</span>}
                   {!s.done && <ChevronRight className="ml-auto size-4 text-zinc-400" />}
                 </Link>
@@ -143,19 +151,6 @@ export function AdminHomeView({
             ))}
           </ul>
         </section>
-      )}
-
-      {policyToConfirm && (
-        <Link href={`${basePath}/settings/meal`} className="flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 text-brand-900 hover:bg-brand-100">
-          <SlidersHorizontal className="mt-0.5 size-5 shrink-0" />
-          <span className="min-w-0 flex-1">
-            <span className="block font-medium">정산 정책을 확인해 주세요</span>
-            <span className="mt-0.5 block text-sm">
-              지금은 기본값으로 운영돼요: {policyToConfirm.join(" · ")}. 우리 회사 규정과 다르면 바꾸고, 그대로 써도 되면 [저장]만 누르세요.
-            </span>
-          </span>
-          <ChevronRight className="mt-0.5 size-5 shrink-0" />
-        </Link>
       )}
 
       {onlyMe && <InviteLinkCard inviteCode={inviteCode} companyName={companyName} preview={preview} />}

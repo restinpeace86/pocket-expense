@@ -41,7 +41,7 @@ export function CompanyLocationCard({ current }: { current: Nearby }) {
   const center = useMemo(() => (shown && typeof shown.lat === "number" ? { lat: shown.lat, lng: shown.lng } : null), [shown?.lat, shown?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
   const mapStops = useMemo(() => (shown?.stops ?? []).slice(0, 3).filter((s): s is MapStop => typeof s.lat === "number" && typeof s.lng === "number"), [shown?.stops]);
   return (
-    <section id="location" aria-labelledby="loc-title" className="flex scroll-mt-24 flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 md:p-5" data-company-location>
+    <section id="location" data-unsaved-ignore aria-labelledby="loc-title" className="flex scroll-mt-24 flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 md:p-5" data-company-location>
       <h2 id="loc-title" className="flex items-center gap-2 text-lg font-bold">
         <MapPin className="size-5 text-brand-700" aria-hidden />
         회사 위치

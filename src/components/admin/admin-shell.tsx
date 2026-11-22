@@ -12,6 +12,7 @@ import type { Membership } from "@/lib/auth/paths";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 import { findSettingsTab, visibleGroups, type SettingsGroupKey } from "@/lib/admin/settings-groups";
 import { SettingsTabs } from "@/components/admin/settings-tabs";
+import { UnsavedGuard } from "@/components/admin/unsaved-guard";
 import { SetupWizardBar, type SetupBarData } from "@/components/admin/setup-wizard-bar";
 import { groupStatus } from "@/lib/admin/setup-wizard";
 import { useChatUnread } from "@/components/chat/use-chat-unread";
@@ -293,6 +294,7 @@ export function AdminShell({
           {setup && !previewPath && <SetupWizardBar base={base} companyId={membership.company_id} data={setup} />}
           <SettingsTabs base={base} previewPath={previewPath} />
           {children}
+          {!previewPath && <UnsavedGuard base={base} />}
         </main>
       </div>
 

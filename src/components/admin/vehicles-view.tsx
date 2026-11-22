@@ -1,6 +1,7 @@
 "use client";
 
 import { Car, Pencil, Plus } from "lucide-react";
+import { showSaved } from "@/lib/ui/saved-event";
 import { useState, useTransition } from "react";
 import { addVehicleAction as addVehicleActionRaw, setVehicleActiveAction as setVehicleActiveActionRaw, updateVehicleAction as updateVehicleActionRaw } from "@/app/workspace/[id]/admin/vehicles/actions";
 import { Field, FormError } from "@/components/onboarding/field";
@@ -58,7 +59,10 @@ export function VehiclesView({ vehicles, preview = false }: { vehicles: CompanyV
     startTransition(async () => {
       const r = await measureAction(`vehicles.${label}`, action);
       if (r.error) setError(r.error);
-      else done?.();
+      else {
+        done?.();
+        showSaved();
+      }
     });
   }
 

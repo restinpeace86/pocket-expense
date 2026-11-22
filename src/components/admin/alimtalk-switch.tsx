@@ -1,6 +1,7 @@
 "use client";
 
 import { BellRing, Loader2, MessageCircle } from "lucide-react";
+import { showSaved } from "@/lib/ui/saved-event";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { setAlimtalkEnabledAction as setAlimtalkEnabledActionRaw } from "@/app/workspace/[id]/admin/features/actions";
@@ -25,6 +26,7 @@ export function AlimtalkSwitch({ status, historyHref }: { status: AlimtalkStatus
     start(async () => {
       const r = await setAlimtalkEnabledAction(!enabled);
       if (r.error) setError(r.error);
+      else showSaved();
     });
   };
   const note = !included

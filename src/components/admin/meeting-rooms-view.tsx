@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp, Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { showSaved } from "@/lib/ui/saved-event";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteMeetingRoomAction as deleteMeetingRoomActionRaw, reorderMeetingRoomsAction as reorderMeetingRoomsActionRaw, saveMeetingRoomAction as saveMeetingRoomActionRaw } from "@/app/workspace/[id]/admin/calendar-settings/actions";
@@ -27,7 +28,10 @@ export function MeetingRoomsView({ rooms, calendarHref }: { rooms: MeetingRoom[]
     startTransition(async () => {
       const r = await action();
       if (r.error) setError(r.error);
-      else onDone?.();
+      else {
+        onDone?.();
+        showSaved();
+      }
     });
   }
 
