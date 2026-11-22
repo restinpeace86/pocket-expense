@@ -83,7 +83,8 @@ async function Content({ params, searchParams }: { params: Promise<{ id: string 
               <div className="min-w-0 flex-1 text-sm leading-relaxed">
                 <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
                   <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[12px] text-zinc-600">
-                    {areaLabel(h.area)} › {h.menu}
+                    {areaLabel(h.area)}
+                    {h.menu !== areaLabel(h.area) && ` › ${h.menu}`}
                   </span>
                   <b className="font-semibold">{h.who}</b>
                   <span className="text-zinc-600">

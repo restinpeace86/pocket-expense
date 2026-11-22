@@ -65,6 +65,7 @@ begin
   select * into r from public.settings_history where company_id = 'c1070000-0000-0000-0000-00000000000a' and menu = '자차 유류비';
   if r.changes <> '[{"label": "km당 단가", "from": "200원", "to": "250원"}]'::jsonb then raise exception 'FAIL [fuel] %', r.changes; end if;
   select * into r from public.settings_history where company_id = 'c1070000-0000-0000-0000-00000000000a' and menu = '기능 사용';
+  if r.changes -> 0 ->> 'from' <> '켬' then raise exception 'FAIL [feature default from] %', r.changes; end if; -- 173: 캘린더는 줄이 없으면 켜짐
   if r.target <> '사내 캘린더' or r.changes -> 0 ->> 'to' <> '끔' then raise exception 'FAIL [feature] %', row_to_json(r); end if;
   select count(*) into n from public.settings_history where company_id = 'c1070000-0000-0000-0000-00000000000a' and menu = '사전 검토 결재라인';
   if n <> 2 then raise exception 'FAIL [approval count %]', n; end if;
@@ -90,6 +91,19 @@ reset role;
 -- B 대표가 A 회사 줄을 바꾸는 시도(권한 없는 경로) — 기록 회사는 바꾼 줄의 회사, 바꾼 사람은 그 회사 멤버가 아니라 안 남음
 update public.departments set name = '침입' where company_id = 'c1070000-0000-0000-0000-00000000000a' and name = '영업1팀';
 do $$ begin if exists (select 1 from public.settings_history where target = '침입' or changes::text like '%침입%') then raise exception 'FAIL [cross-company logged]'; end if; end; $$;
+
+-- 173: 예산 추가·삭제 = 금액이 보임, 부서 추가 = 이름(대상)과 겹치는 값은 안 남김
+select public._t_as107('a1070000-0000-0000-0000-000000000001');
+insert into public.company_budgets (company_id, account_title_id, monthly_amount) values ('c1070000-0000-0000-0000-00000000000a', null, 3000000);
+delete from public.company_budgets where company_id = 'c1070000-0000-0000-0000-00000000000a' and account_title_id is null;
+do $$ declare r public.settings_history; begin
+  select * into r from public.settings_history where company_id = 'c1070000-0000-0000-0000-00000000000a' and menu = '예산' and action = 'add';
+  if r.changes <> '[{"label": "월 예산", "from": null, "to": "3,000,000원"}]'::jsonb then raise exception 'FAIL [budget add] %', r.changes; end if;
+  select * into r from public.settings_history where company_id = 'c1070000-0000-0000-0000-00000000000a' and menu = '예산' and action = 'remove';
+  if r.changes <> '[{"label": "월 예산", "from": "3,000,000원", "to": null}]'::jsonb then raise exception 'FAIL [budget remove] %', r.changes; end if;
+  select * into r from public.settings_history where company_id = 'c1070000-0000-0000-0000-00000000000a' and menu = '부서' and action = 'add';
+  if r.changes <> '[]'::jsonb then raise exception 'FAIL [dept add] %', r.changes; end if;
+end $$;
 
 -- 회사 삭제 = 함께 지워짐
 select public._t_as107('00000000-0000-0000-0000-000000000000');

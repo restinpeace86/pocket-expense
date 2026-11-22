@@ -211,10 +211,14 @@ function SettingsForm({ initial, leave }: { initial: AttendanceSettings; leave: 
         <ApplyPreview
           name="leave-impact"
           title="저장하면 우리 회사는"
-          lines={[
-            `직원 ${leave.members.length}명 중 ${impact.changed}명의 ${leave.year}년 추천 연차가 달라져요.`,
-            `${impact.confirmed > 0 ? `확정해 둔 연차(${impact.confirmed}명)는 지워지지 않아요. ` : ""}저장한 뒤 [직원별 연차]에서 확인해 주세요.`,
-          ]}
+          lines={
+            impact.changed === 0
+              ? [`바꿔도 ${leave.year}년 추천 연차가 달라지는 직원은 없어요.`]
+              : [
+                  `직원 ${leave.members.length}명 중 ${impact.changed}명의 ${leave.year}년 추천 연차가 달라져요.`,
+                  `${impact.confirmed > 0 ? `확정해 둔 연차(${impact.confirmed}명)는 지워지지 않아요. ` : ""}저장한 뒤 [직원별 연차]에서 확인해 주세요.`,
+                ]
+          }
         />
       )}
       <div className="flex flex-wrap items-center gap-3 pt-3">
