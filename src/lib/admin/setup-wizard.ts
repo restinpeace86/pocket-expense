@@ -1,9 +1,11 @@
 // 최초 1회 설정(설정 마법사, D-300 · U-1 A안): 설정 메뉴를 순서대로 한 번 훑는 단계 목록
 // 진행률 = (완료 + 건너뜀) / 전체 단계(사용자 2026-11-22). 근태 정책 단계는 근태를 켠 회사만 뒤에 붙는다
-// 요금제·근태 변경 이력은 정하는 화면이 아니라서 뺐다. 기록은 DB setup_wizard_steps(회사 단위)
+// 요금제·근태 변경 이력은 정하는 화면이 아니라서 뺐다. 마지막은 직원 초대(멤버 관리, D-302 B-1). 기록은 DB setup_wizard_steps(회사 단위)
 import type { SettingsGroupKey } from "./settings-groups";
 
-export type SetupStep = { key: string; group: SettingsGroupKey; groupLabel: string; label: string; href: string; minutes: number; why: string; attendanceOnly?: boolean };
+// group "invite" = 설정 메뉴 밖(멤버 관리) 마지막 단계(D-302 B-1)
+export type SetupGroupKey = SettingsGroupKey | "invite";
+export type SetupStep = { key: string; group: SetupGroupKey; groupLabel: string; label: string; href: string; minutes: number; why: string; attendanceOnly?: boolean; last?: boolean };
 export type SetupStatus = "done" | "skipped";
 export type SetupState = { legacy: boolean; introAnswered: boolean; finished: boolean; statuses: Record<string, SetupStatus> };
 
@@ -28,11 +30,14 @@ export const SETUP_STEPS: SetupStep[] = [
   { key: "att-rules", group: "attendance", groupLabel: "근태 정책", label: "근무 기준", href: "/attendance-settings", minutes: 2, why: "근무하는 요일·시각과 퇴근을 잊었을 때 알릴 시간을 정해요. 이게 있어야 출퇴근 기록이 맞게 보여요.", attendanceOnly: true },
   { key: "att-vtypes", group: "attendance", groupLabel: "근태 정책", label: "휴가 종류", href: "/attendance-settings/vacation-types", minutes: 1, why: "우리 회사에서 쓰는 휴가를 켜고 끄고, 연차가 모자랄 때 어떻게 할지 정해요.", attendanceOnly: true },
   { key: "att-leave", group: "attendance", groupLabel: "근태 정책", label: "직원별 연차", href: "/attendance-settings/leave", minutes: 2, why: "근로기준법 기준으로 직원마다 연차 일수를 계산해 보여 줘요. 회사가 확인하고 확정해요.", attendanceOnly: true },
+  { key: "invite", group: "invite", groupLabel: "직원 초대", label: "직원 초대", href: "/members", minutes: 1, why: "정책을 다 정했으면 이제 직원을 불러요. 초대 링크를 보내면 직원이 가입 신청을 하고, 이 화면에서 승인하면 바로 써요.", last: true },
   { key: "att-terminals", group: "attendance", groupLabel: "근태 정책", label: "출근 단말", href: "/attendance-settings/terminals", minutes: 1, why: "회사 입구 PC·태블릿을 출근 단말로 연결해 QR을 띄워요. 휴대폰으로만 출근을 찍으면 건너뛰세요.", attendanceOnly: true },
 ];
 
+// 순서: 설정 단계 → (근태 켬) 근태 단계 → 맨 끝 직원 초대(flex·시프티 시작 가이드와 같은 순서)
 export function setupSteps(attendanceOn: boolean): SetupStep[] {
-  return SETUP_STEPS.filter((s) => !s.attendanceOnly || attendanceOn);
+  const on = SETUP_STEPS.filter((s) => !s.attendanceOnly || attendanceOn);
+  return [...on.filter((s) => !s.last), ...on.filter((s) => s.last)];
 }
 
 // rest = `/workspace/{id}/admin` 뒤 주소. 주소가 정확히 같은 단계(탭 주소는 서로 겹치지 않게 정확히 비교)
@@ -72,7 +77,7 @@ export function nextStep(currentKey: string, statuses: Record<string, SetupStatu
 }
 
 // 메뉴(그룹)별 상태: 단계가 다 처리됐는지, 건너뛴 수
-export function groupStatus(group: SettingsGroupKey, statuses: Record<string, SetupStatus>, attendanceOn: boolean) {
+export function groupStatus(group: SetupGroupKey, statuses: Record<string, SetupStatus>, attendanceOn: boolean) {
   const steps = setupSteps(attendanceOn).filter((s) => s.group === group);
   if (!steps.length) return null;
   const handled = steps.filter((s) => statuses[s.key]).length;

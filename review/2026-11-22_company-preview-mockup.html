@@ -1,0 +1,105 @@
+<title>우리 회사 적용 미리보기 시안</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 원칙 → 실제 화면 2개 목업 → 화면별 한 줄 표 → 확인할 것. 한 열 */
+:root{
+  --bg:#f6f7fb; --panel:#ffffff; --ink:#18181b; --ink2:#52525b; --muted:#8a8a96; --line:#e4e4e7;
+  --brand:#4f46e5; --brand-soft:#eef2ff; --brand-ink:#3730a3; --warn:#a16207; --warn-soft:#fef9c3;
+  --font:"Noto Sans KR",system-ui,-apple-system,"Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1016; --panel:#191a23; --ink:#f4f4f5; --ink2:#c4c4cc; --muted:#8b8b96; --line:#2e2f3a;
+  --brand:#818cf8; --brand-soft:#23254a; --brand-ink:#c7d2fe; --warn:#facc15; --warn-soft:#3a3212; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1016; --panel:#191a23; --ink:#f4f4f5; --ink2:#c4c4cc; --muted:#8b8b96; --line:#2e2f3a;
+  --brand:#818cf8; --brand-soft:#23254a; --brand-ink:#c7d2fe; --warn:#facc15; --warn-soft:#3a3212; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.65;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+h1{font-size:1.6rem;margin:0;text-wrap:balance} h2{font-size:1.15rem;margin:0;text-wrap:balance}
+p{margin:0} .lead{color:var(--ink2);max-width:68ch} .note{color:var(--ink2);font-size:.9rem}
+.sec{display:flex;flex-direction:column;gap:12px}
+.tag{font-size:.75rem;font-weight:700;color:var(--brand-ink);background:var(--brand-soft);border-radius:6px;padding:2px 8px;width:fit-content}
+ul{margin:0;padding-left:1.2em} li{margin:3px 0}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+@media (max-width:760px){.row{grid-template-columns:minmax(0,1fr)}}
+.frame{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.cap{font-size:.75rem;color:var(--muted)}
+.lbl{font-size:.88rem;font-weight:700}
+.inp{border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-variant-numeric:tabular-nums;display:flex;justify-content:space-between}
+.prev{background:var(--brand-soft);color:var(--brand-ink);border-radius:10px;padding:10px 12px;font-size:.86rem;display:flex;flex-direction:column;gap:2px}
+.prev b{font-weight:700}
+.prev .h{font-size:.72rem;font-weight:700;letter-spacing:.02em;opacity:.85}
+.warn{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:.86rem}
+.fold{border:1px dashed var(--line);border-radius:10px;padding:8px 12px;font-size:.86rem;color:var(--ink2)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:620px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--bg);color:var(--ink2)} tr:last-child td{border-bottom:0}
+.st{font-size:.72rem;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.st.have{background:var(--brand-soft);color:var(--brand-ink)} .st.new{background:var(--warn-soft);color:var(--warn)}
+.q{display:grid;gap:10px}
+.q div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.q b{display:block} .q span{color:var(--ink2);font-size:.88rem}
+</style>
+
+<div class="wrap">
+  <header class="sec">
+    <span class="tag">B-3 시안 · 2026-11-22</span>
+    <h1>우리 회사 적용 미리보기 시안</h1>
+    <p class="lead">설정 값을 바꾸면 그 아래에 <b>"우리 회사에 적용하면"</b> 한 칸이 바로 따라 바뀌어요. 샘플 숫자가 아니라 이 회사의 지금 값(입력 중인 값)과 이 회사의 실제 자료로 계산해요. 화면이 무거워지지 않게 세 가지 규칙을 지켜요.</p>
+    <ul class="note">
+      <li><b>설정 하나에 한 칸, 두 줄까지:</b> 새 화면이나 새 탭은 만들지 않아요.</li>
+      <li><b>위치와 모양을 통일해요:</b> 바꾸는 칸 바로 아래에, 모두 같은 연한 보라 상자로 보여 줘요. 지금 식대 화면 예시와 같은 모양이에요.</li>
+      <li><b>입력이 필요한 미리보기는 접어 둬요:</b> 연차 입사일 미리보기처럼 직접 넣어 봐야 하는 것만 [미리 보기]를 눌러야 열려요.</li>
+    </ul>
+  </header>
+
+  <section class="sec">
+    <h2>화면 예시 두 개</h2>
+    <div class="row">
+      <div class="frame">
+        <span class="cap">설정 › 경비 정책 › 예산</span>
+        <span class="lbl">월 예산(전체)</span>
+        <div class="inp"><span>3,000,000</span><span>원</span></div>
+        <div class="prev"><span class="h">우리 회사에 적용하면</span><span>이번 달 지금까지 승인된 지출 <b>2,140,000원</b> → 예산의 <b>71%</b>예요.</span><span>지금 속도면 <b>11월 26일쯤 80%</b> 알림이 가요.</span></div>
+        <span class="cap">이 회사의 이번 달 실제 지출로 계산해요. 지출이 없으면 "아직 이번 달 지출이 없어요"라고 나와요.</span>
+      </div>
+      <div class="frame">
+        <span class="cap">설정 › 근태 정책 › 직원별 연차</span>
+        <span class="lbl">연차 연도 기준: 1월 1일 ~ 12월 31일</span>
+        <div class="fold">▸ 입사일로 미리 보기</div>
+        <div class="prev"><span class="h">입사일 2025-03-02인 직원이면 (예시)</span><span>2026년 <b>12일</b>(첫해 비례) → 2027년 <b>15일</b></span><span>지금 우리 회사 직원 6명 중 <b>2명</b>이 이 기준으로 바뀌어요.</span></div>
+        <div class="warn">기준을 바꾸면 이미 확정한 연차 3명 것은 그대로고, 확정 안 한 추천값만 다시 계산돼요.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>화면별 한 칸 (지금 있는 것 + 새로 붙일 것)</h2>
+    <div class="tw"><table>
+      <thead><tr><th>화면</th><th>상태</th><th>"우리 회사에 적용하면" 한 칸</th></tr></thead>
+      <tbody>
+        <tr><td>식대 한도</td><td><span class="st have">이미 있음</span></td><td>2명이 29,000원 먹으면 회사 24,000원 · 직원 부담 5,000원 (입력한 한도로 계산)</td></tr>
+        <tr><td>자차 유류비</td><td><span class="st have">이미 있음</span></td><td>120km × 250원 = 30,000원 / 유가 방식이면 오늘 유가로</td></tr>
+        <tr><td>출장 일비</td><td><span class="st have">이미 있음</span></td><td>1박 2일 출장 → 60,000원</td></tr>
+        <tr><td>예산</td><td><span class="st new">새로</span></td><td>이번 달 실제 지출 기준 몇 %, 80%·100% 알림이 언제쯤 갈지</td></tr>
+        <tr><td>사전 검토 결재라인</td><td><span class="st new">새로</span></td><td>영업팀 직원이 올리면: 김팀장 → 관리자 (부서별·기본 줄을 실제 이름으로)</td></tr>
+        <tr><td>근무 기준</td><td><span class="st new">새로</span></td><td>평일 09:00~18:00, 18:30까지 퇴근을 안 찍으면 그 직원에게 알림</td></tr>
+        <tr><td>직원별 연차</td><td><span class="st new">새로 · 접힘</span></td><td>입사일을 넣어 보면 올해·내년 연차 일수 + 기준을 바꾸면 영향받는 직원 수</td></tr>
+        <tr><td>파일 보관</td><td><span class="st new">새로</span></td><td>오늘 올린 채팅 사진은 2027년 2월 20일에 지워져요 (보관 기간으로 계산)</td></tr>
+        <tr><td>기능 사용</td><td><span class="st new">새로</span></td><td>근태를 켜면: 직원 하단 가운데 버튼이 [QR 출퇴근]으로 바뀌고, 설정에 [근태 정책]이 생겨요</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">마감 일정은 모든 회사가 같은 규칙이라 빼고, 법인카드·차량·회의실·부서처럼 목록을 등록하는 화면도 뺐어요. 예산 화면의 "11월 26일쯤"처럼 날짜를 내다보는 계산은 시안의 예시예요. 실제로는 이 회사의 이번 달 지출로 계산하고, 계산할 자료가 없으면 표시하지 않아요.</p>
+  </section>
+
+  <section class="sec">
+    <h2>확인해 주실 것</h2>
+    <div class="q">
+      <div><b>1. 이 정도 양이면 괜찮을까요?</b><span>새로 붙는 건 6곳이고 모두 한 칸이에요. 더 줄이자면 예산·결재라인·연차 3곳만 먼저 해도 돼요.</span></div>
+      <div><b>2. 예산의 "언제쯤 80%" 내다보기는 넣을까요?</b><span>이번 달 지금까지 쓴 속도로 단순하게 계산해요. 월초에는 틀릴 수 있어서 "쯤"으로 표시하거나, 아예 빼고 지금 몇 %만 보여 줄 수도 있어요.</span></div>
+      <div><b>3. 연차 "바뀌는 직원 수"는 넣을까요?</b><span>기준(1월 1일 / 입사일)이나 5인 미만을 바꾸기 전에 몇 명의 추천 연차가 달라지는지 보여 줘요. 막지는 않고 알려만 줘요.</span></div>
+    </div>
+  </section>
+</div>

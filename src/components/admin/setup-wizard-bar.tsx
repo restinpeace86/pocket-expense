@@ -25,12 +25,14 @@ export function SetupWizardBar({ base, companyId, data }: { base: string; compan
   const confirm = confirmAt?.path === pathname ? confirmAt.status : null;
   const setConfirm = (status: "done" | "skipped" | null) => setConfirmAt(status ? { path: pathname, status } : null);
   const [pending, start] = useTransition();
-  if (!onSettings) return null;
+  // 설정 화면 + 설정 밖 단계(직원 초대 = 멤버 관리)에서만
+  if (!onSettings && !step) return null;
 
   const p = progress(data.state, data.attendanceOn);
   const go = (mode: "resume" | "first") => start(() => startSetupAction(companyId, mode));
 
   if (!data.on) {
+    if (!onSettings) return null; // 멤버 관리 화면엔 [설정 마법사] 버튼을 안 띄움
     return (
       <div className="-mb-2 flex justify-end">
         <button type="button" onClick={() => go(data.state.finished ? "first" : "resume")} disabled={pending} data-setup-launch className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 hover:border-brand-300 hover:text-brand-700 disabled:opacity-60">
