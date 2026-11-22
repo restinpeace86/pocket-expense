@@ -32,6 +32,7 @@ export type SettingsSection = "company" | "meal" | "fuel" | "perDiem";
 const ALL: SettingsSection[] = ["company", "meal", "fuel", "perDiem"];
 export function CompanySettingsForm({ settings: s, preview = false, closing = null, show = ALL }: { settings: CompanySettings; preview?: boolean; closing?: ClosingDates | null; show?: SettingsSection[] }) {
   const has = (k: SettingsSection) => show.includes(k);
+  const policy = show.some((k) => k !== "company");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -357,7 +358,7 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
       {closing && <FixedClosingSection dates={closing} />}
 
       <FormError message={error} />
-      {saved && <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">저장했어요. 변경 내용은 이후 상신되는 경비부터 적용됩니다.</p>}
+      {saved && <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{policy ? "저장했어요. 변경 내용은 이후 상신되는 경비부터 적용됩니다." : "저장했어요."}</p>}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <button
           type="submit"
@@ -366,7 +367,8 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
         >
           {pending ? "저장 중..." : "저장"}
         </button>
-        <span className="text-xs text-zinc-500">변경 내용은 이후 상신되는 경비부터 적용돼요. 이미 상신한 경비는 그대로예요.</span>
+        {/* U-4: 저장 옆 문구는 그 화면에 맞게 — 경비 정책은 적용 시점, 회사정보는 바로 반영 */}
+        <span className="text-xs text-zinc-500">{policy ? "변경 내용은 이후 상신되는 경비부터 적용돼요. 이미 상신한 경비는 그대로예요." : "저장하면 바로 바뀌어요. 누가 언제 바꿨는지는 [변경 이력]에 남아요."}</span>
       </div>
     </form>
   );

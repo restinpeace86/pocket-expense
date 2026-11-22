@@ -27,8 +27,9 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/co
   const { cards, members } = await getCorporateCards(membership.company_id, start, end);
   return (
     <div className="flex flex-col gap-4">
-      <ReconcileLink href={`/workspace/${id}/admin/corporate-cards/reconcile`} />
+      {/* U-8(D-307): 등록이 먼저 — 내역 대조는 카드가 1장 이상일 때만, 목록 아래 */}
       <CorporateCardsView cards={cards} members={members} />
+      {cards.length > 0 && <ReconcileLink href={`/workspace/${id}/admin/corporate-cards/reconcile`} />}
     </div>
   );
 }

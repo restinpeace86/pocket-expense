@@ -178,6 +178,10 @@ function PaymentForm() {
           결제 준비 중
         </span>
       </div>
+      {/* U-17(D-307): 모양은 Spec §4대로 두고, 입력해야 하는지 헷갈리지 않게 한 줄 */}
+      <p className="mt-1 break-keep text-sm text-zinc-600" data-payment-note>
+        지금은 아무것도 입력하지 않아도 돼요. 결제가 열리면 미리 알려 드리고, 그때 여기서 카드를 등록해요.
+      </p>
       {/* 입력 모양만 보여 준다. disabled라 입력·전송이 되지 않고, 이름(name)이 없어 어떤 값도 서버로 가지 않는다 */}
       <fieldset disabled className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm text-zinc-500 sm:col-span-2">
