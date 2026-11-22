@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { DefaultBadge } from "@/components/ui/default-badge";
 
 // 라디오 선택 카드. 도움말 규칙(ui-rules.md §6) ③: 예시·추가 입력은 선택한 카드에만 보여 준다.
 export type Choice<T extends string> = {
@@ -8,6 +9,7 @@ export type Choice<T extends string> = {
   label: string;
   description: string;
   badge?: string;
+  isDefault?: boolean; // U-3: 회사가 바꾸지 않았을 때 쓰는 값이면 [기본]
   example?: ReactNode; // 선택했을 때만
   extra?: ReactNode; // 선택했을 때만 (예: N일 입력칸)
 };
@@ -43,6 +45,7 @@ export function ChoiceCards<T extends string>({
               <span className="min-w-0">
                 <span className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-zinc-900">
                   {c.label}
+                  {c.isDefault && <DefaultBadge />}
                   {c.badge && <span className="rounded-full bg-brand-600 px-2 py-0.5 text-[11px] font-semibold text-white">{c.badge}</span>}
                 </span>
                 <span className="mt-0.5 block text-sm text-zinc-600">{c.description}</span>

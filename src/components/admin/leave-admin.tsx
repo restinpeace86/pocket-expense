@@ -10,6 +10,7 @@ import { ApplyPreview } from "@/components/admin/apply-preview";
 import { hirePreview, leaveImpact } from "@/lib/admin/apply-preview";
 import { todayKst } from "@/lib/dates";
 import { guarded } from "@/lib/action-guard";
+import { DefaultBadge } from "@/components/ui/default-badge";
 
 // 인터넷 끊김·서버 응답 없음에도 화면 전체가 오류로 바뀌지 않게(비정상 사용 점검 2026-11-14)
 const confirmLeaveAction = guarded(confirmLeaveActionRaw);
@@ -263,8 +264,10 @@ function LeaveSettingsCard({ settings }: { settings: LeaveSettings }) {
                 onClick={() => save(hourly, k)}
                 className={`flex min-h-11 flex-col items-start rounded-xl border px-3 py-2 text-left text-sm disabled:opacity-50 ${rounding === k ? "border-brand-600 bg-brand-50 font-semibold text-brand-900" : "border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"}`}
               >
-                {ROUNDING_LABEL[k]}
-                {k === "day" && " (기본)"}
+                <span className="flex items-center gap-1.5">
+                  {ROUNDING_LABEL[k]}
+                  {k === "day" && <DefaultBadge />}
+                </span>
                 <span className="text-xs font-normal text-zinc-600">{off ? "시간차를 켜면 고를 수 있어요" : ex}</span>
               </button>
             );
@@ -421,8 +424,11 @@ function HirePreview({ data }: { data: LeaveAdminData }) {
   const [hire, setHire] = useState("");
   const lines = hire ? hirePreview(hire, data) : null;
   return (
-    <details className="mt-2 rounded-lg border border-dashed border-zinc-300 px-3 py-2" data-hire-preview>
-      <summary className="flex min-h-9 cursor-pointer items-center text-[13px] font-semibold text-zinc-700">입사일로 미리 보기</summary>
+    <details className="group rounded-lg border border-dashed border-zinc-300 px-3 py-2" data-hire-preview>
+      <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 text-[13px] font-semibold text-zinc-700 [&::-webkit-details-marker]:hidden">
+        <ChevronDown className="size-4 shrink-0 text-zinc-500 transition-transform group-open:rotate-180" aria-hidden />
+        입사일로 미리 보기
+      </summary>
       <label className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-zinc-700">
         입사일
         <input type="date" value={hire} onChange={(e) => setHire(e.target.value)} className="h-10 rounded-lg border border-zinc-300 bg-white px-2 text-[15px]" aria-label="미리 볼 입사일" data-unsaved-ignore />
@@ -468,7 +474,7 @@ function LeaveBasisCard({ data }: { data: LeaveAdminData }) {
         <legend className="text-[15px] font-bold">연차 연도 기준</legend>
         <p className="text-[13px] leading-relaxed text-zinc-600">직원별 연차 일수를 어떤 1년 단위로 계산할지 정해요.</p>
         <label className={radio}>
-          <input type="radio" name="leave-basis" checked={basis === "calendar"} onChange={() => (setBasis("calendar"), setMsg(null), setJustSaved(false))} className="size-4" /> 1월 1일 ~ 12월 31일(회계연도)
+          <input type="radio" name="leave-basis" checked={basis === "calendar"} onChange={() => (setBasis("calendar"), setMsg(null), setJustSaved(false))} className="size-4" /> 1월 1일 ~ 12월 31일(회계연도) <DefaultBadge />
         </label>
         <label className={radio}>
           <input type="radio" name="leave-basis" checked={basis === "hire"} onChange={() => (setBasis("hire"), setMsg(null), setJustSaved(false))} className="size-4" /> 직원별 입사일 기준
@@ -485,7 +491,7 @@ function LeaveBasisCard({ data }: { data: LeaveAdminData }) {
             <input type="radio" name="leave-u5" checked={u5} onChange={() => (setU5(true), setMsg(null), setJustSaved(false))} className="size-4" /> 예
           </label>
           <label className={radio}>
-            <input type="radio" name="leave-u5" checked={!u5} onChange={() => (setU5(false), setMsg(null), setJustSaved(false))} className="size-4" /> 아니요
+            <input type="radio" name="leave-u5" checked={!u5} onChange={() => (setU5(false), setMsg(null), setJustSaved(false))} className="size-4" /> 아니요 <DefaultBadge />
           </label>
         </div>
       </fieldset>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Clock, Copy, Landmark, Unlink } from "lucide-react";
+import { Check, ChevronDown, Clock, Copy, Landmark, Unlink } from "lucide-react";
 import { useState, useTransition } from "react";
 import { clearCompanyTaxOfficeAction, saveCompanyTaxOfficeAction } from "@/app/workspace/[id]/admin/tax-office/actions";
 import { Field, FormError } from "@/components/onboarding/field";
@@ -40,6 +40,7 @@ export function CompanyTaxOfficeForm({ current, companyName, connectCode = null 
   const [agentName, setAgentName] = useState(current?.agent_name ?? "");
   const [agentEmail, setAgentEmail] = useState(current?.agent_email ?? "");
   const [agentPhone, setAgentPhone] = useState(current?.agent_phone ? formatTel(current.agent_phone) : "");
+  const [agentOpen] = useState(() => !!(current?.agent_name || current?.agent_email || current?.agent_phone)); // 처음에만 정함(지우는 중에 접히지 않게)
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -165,6 +166,12 @@ export function CompanyTaxOfficeForm({ current, companyName, connectCode = null 
       {editing && (
         <section className={card} aria-label="세무사무소 정보">
           <div className="flex flex-col gap-4">
+            {/* U-7(D-309): 아직 세무사무소가 없는 회사가 다 채워야 하는 줄 알지 않게 */}
+            {!current && (
+              <p className="break-keep rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-900" data-tax-office-optional>
+                <b>아직 계약한 세무사무소가 없으면 비워 두세요.</b> 나중에 넣어도 돼요. 그동안 세무 자료는 [세무 마감]에서 내려받아 직접 보낼 수 있어요.
+              </p>
+            )}
             <Field label="세무사무소명" required>
               <input value={officeName} onChange={(e) => setOfficeName(e.target.value)} maxLength={100} className={inputClass} placeholder="예: OO세무사무소" />
             </Field>
@@ -180,10 +187,15 @@ export function CompanyTaxOfficeForm({ current, companyName, connectCode = null 
                 placeholder="office@example.com"
               />
             </Field>
-            <div className="flex flex-col gap-4 rounded-xl bg-zinc-50 p-3">
-              <p className="text-sm font-medium text-zinc-700">
-                담당 세무사 <span className="font-normal text-zinc-500">(선택 · 알고 있으면 적어 두세요. 배정은 사무소가 해요)</span>
-              </p>
+            <details className="group rounded-xl bg-zinc-50 p-3" open={agentOpen || undefined} data-tax-agent>
+              <summary className="flex min-h-9 cursor-pointer list-none items-start gap-2 text-sm font-medium text-zinc-700 [&::-webkit-details-marker]:hidden">
+                <ChevronDown className="mt-0.5 size-4 shrink-0 text-zinc-500 transition-transform group-open:rotate-180" aria-hidden />
+                <span className="min-w-0">
+                  담당 세무사 (선택)
+                  <span className="block font-normal text-zinc-500">알고 있으면 적어 두세요. 배정은 사무소가 해요.</span>
+                </span>
+              </summary>
+              <div className="mt-3 flex flex-col gap-4">
               <Field label="이름">
                 <input value={agentName} onChange={(e) => setAgentName(e.target.value)} maxLength={50} className={inputClass} placeholder="예: 홍길동 세무사" />
               </Field>
@@ -202,7 +214,8 @@ export function CompanyTaxOfficeForm({ current, companyName, connectCode = null 
               <Field label="연락처">
                 <input value={agentPhone} onChange={(e) => setAgentPhone(e.target.value)} inputMode="tel" className={inputClass} placeholder="02-123-4567" />
               </Field>
-            </div>
+              </div>
+            </details>
             <p className="break-keep rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
               저장하면 승인 절차 없이 바로 연결돼요. 이 사무소는 우리 회사의 승인된 지출·영수증·세무 엑셀을 볼 수 있으니 이메일을 한 번 더 확인해 주세요.
             </p>

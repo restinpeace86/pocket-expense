@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Camera, Check, FileUp, Loader2, Plus, RotateCcw, Sparkles, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Camera, Check, FileUp, Loader2, Plus, RotateCcw, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { uploadFailText } from "@/lib/storage/room";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { analyzeFormAction, clearFormLayoutAction, saveFormLayoutAction } from "@/app/workspace/[id]/admin/form-template/actions";
@@ -209,6 +209,7 @@ export function FormTemplateView(p: FormTemplateViewProps) {
   const [dirty, setDirty] = useState(false);
   const [reviewed, setReviewed] = useState(false); // 저장 전 미리보기 확인(필수) — 바꿀 때마다 다시 확인
   const [tab, setTab] = useState<"edit" | "preview">("edit");
+  const [customizing, setCustomizing] = useState(false); // U-16(D-309): ② 꾸미기는 눌러야 펼침
   const [source, setSource] = useState<{ path: string; localUrl: string | null } | null>(null);
   const [ai, setAi] = useState<{ result: AiLayoutResult; read: AiFormRead } | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -219,6 +220,8 @@ export function FormTemplateView(p: FormTemplateViewProps) {
   // 아직 안 정한 회사 추가 칸(AI가 찾았거나 새로 넣은 칸) — 다 정해야 저장(D-120)
   const pending = [...layout.header, ...layout.columns, ...layout.footer].filter((e) => isCustom(e) && e.pending).map((e) => e.label);
   const inputCount = inputFieldsOf(layout).length;
+  // 찍어 올린 양식이거나 정해야 할 칸이 있으면 꾸미기를 꼭 봐야 해서 펼쳐 둠
+  const showEdit = customizing || choice === "photo" || pending.length > 0;
   const model = useMemo(() => buildDocModel(layout, p.previewDoc, { companyName: p.companyName }), [layout, p.previewDoc, p.companyName]);
 
   const edit = (patch: Partial<FormLayout>) => {
@@ -394,6 +397,17 @@ export function FormTemplateView(p: FormTemplateViewProps) {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         <section className={`flex min-w-0 flex-col gap-5 rounded-xl border border-zinc-200 bg-white p-4 sm:p-5 ${tab === "edit" ? "" : "hidden lg:flex"}`} aria-label="꾸미기">
           <SectionHeading title="② 꾸미기" summary="칸 이름을 회사에서 쓰던 말로 바꾸고, 순서를 바꾸거나 빼세요." />
+          {!showEdit ? (
+            <div className="flex flex-col gap-3" data-customize-closed>
+              <p className="text-sm text-zinc-700">
+                {p.active ? "고른 포맷 그대로 쓰고 있어요." : "기본 양식을 쓰고 있어요."} <b>그대로 써도 돼요.</b> 칸 이름·순서를 바꾸고 싶을 때만 열어요.
+              </p>
+              <button type="button" onClick={() => setCustomizing(true)} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-brand-600 px-4 text-sm font-semibold text-brand-700 hover:bg-brand-50" data-customize-open>
+                <SlidersHorizontal className="size-4" /> 이 양식 꾸미기
+              </button>
+            </div>
+          ) : (
+          <>
           <label className="flex flex-col gap-1 text-sm font-semibold text-zinc-900">
             문서 제목
             <input className={inputClass} value={layout.title} maxLength={30} onChange={(e) => edit({ title: e.target.value })} />
@@ -424,6 +438,8 @@ export function FormTemplateView(p: FormTemplateViewProps) {
               <input type="checkbox" className="size-4 accent-brand-600" checked={layout.showCompany} onChange={(e) => edit({ showCompany: e.target.checked })} /> 회사 이름 줄
             </label>
           </fieldset>
+          </>
+          )}
         </section>
 
         <section className={`flex min-w-0 flex-col gap-2 ${tab === "preview" ? "" : "hidden lg:flex"}`} aria-label="미리보기">
@@ -447,7 +463,7 @@ export function FormTemplateView(p: FormTemplateViewProps) {
       )}
       <div className="kb-hide fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur md:left-64">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
-          <p className="hidden flex-1 text-sm text-zinc-600 sm:block">{pending.length ? `정해야 할 칸 ${pending.length}개를 먼저 정해 주세요.` : dirty || !p.active ? (reviewed ? "확인했어요. 저장할 수 있어요." : "미리보기 아래 '확인했어요'를 체크하면 저장할 수 있어요.") : "저장된 양식이에요."}</p>
+          <p className="hidden flex-1 text-sm text-zinc-600 sm:block">{pending.length ? `정해야 할 칸 ${pending.length}개를 먼저 정해 주세요.` : !dirty && !p.active && choice === "standard" ? "기본 양식 그대로 쓰면 저장하지 않아도 돼요." : dirty || !p.active ? (reviewed ? "확인했어요. 저장할 수 있어요." : "미리보기 아래 '확인했어요'를 체크하면 저장할 수 있어요.") : "저장된 양식이에요."}</p>
           <button type="button" className={`${buttonSecondary} sm:w-auto lg:hidden`} onClick={() => setTab(tab === "edit" ? "preview" : "edit")}>
             {tab === "edit" ? "미리보기" : "꾸미기"}
           </button>

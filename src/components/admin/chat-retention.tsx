@@ -6,6 +6,7 @@ import { setChatAttachmentDaysAction as setChatAttachmentDaysActionRaw } from "@
 import { FormError } from "@/components/onboarding/field";
 import { bytesLabel } from "@/lib/chat/format";
 import { guarded } from "@/lib/action-guard";
+import { DefaultBadge } from "@/components/ui/default-badge";
 import { ApplyPreview } from "@/components/admin/apply-preview";
 import { retentionPreview } from "@/lib/admin/apply-preview";
 
@@ -17,7 +18,7 @@ export type RetentionStatus = { used: number; limit: number; days: number; older
 const OPTIONS = [
   { days: 30, hint: "가장 많이 주고받을 수 있어요" },
   { days: 60, hint: "중간" },
-  { days: 90, hint: "기본 · 가장 오래 남아요" },
+  { days: 90, hint: "가장 오래 남아요" },
 ] as const;
 
 // 채팅 저장 공간·보관 기간(D-212). 짧게 바꾸면 그보다 오래된 파일은 오늘 새벽에 지워진다고 먼저 묻는다
@@ -88,7 +89,9 @@ export function ChatRetention({ status, today }: { status: RetentionStatus; toda
                 className={`flex min-h-14 items-center gap-2 rounded-xl border px-3 py-2 text-left disabled:opacity-60 ${on ? "border-brand-600 bg-brand-50 ring-1 ring-brand-600" : "border-zinc-200 hover:bg-zinc-50"}`}
               >
                 <span className="min-w-0 flex-1">
-                  <span className={`block text-base ${on ? "font-bold text-brand-700" : "font-semibold text-zinc-900"}`}>{o.days}일</span>
+                  <span className={`flex items-center gap-1.5 text-base ${on ? "font-bold text-brand-700" : "font-semibold text-zinc-900"}`}>
+                    {o.days}일{o.days === 90 && <DefaultBadge />}
+                  </span>
                   <span className="block text-xs text-zinc-500">{!on && o.days < status.days && f > 0 ? `지금 바꾸면 약 ${bytesLabel(f)} 비워짐` : o.hint}</span>
                 </span>
                 {on && (pending ? <Loader2 className="size-4 shrink-0 animate-spin text-brand-600" /> : <Check className="size-4 shrink-0 text-brand-600" />)}

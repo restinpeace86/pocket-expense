@@ -1,5 +1,6 @@
 "use client";
 
+import { DefaultBadge } from "@/components/ui/default-badge";
 import { AlertTriangle, Loader2, Plus, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useTransition } from "react";
@@ -153,9 +154,12 @@ function ShortageCard({ mode }: { mode: "block" | "borrow" }) {
       setMsg(r.ok ? { ok: true, text: "저장했어요. 변경 이력에 남았어요." } : { ok: false, text: r.error ?? "저장하지 못했어요." });
     });
   };
-  const opt = (k: "block" | "borrow", title: string, body: string) => (
+  const opt = (k: "block" | "borrow", title: string, body: string, isDefault = false) => (
     <button type="button" role="radio" aria-checked={m === k} disabled={busy} onClick={() => save(k)} className={`flex min-h-11 flex-1 flex-col items-start rounded-xl border px-3.5 py-2.5 text-left text-sm ${m === k ? "border-brand-600 bg-brand-50 font-semibold text-brand-900" : "border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"}`}>
-      {title}
+      <span className="flex items-center gap-1.5">
+        {title}
+        {isDefault && <DefaultBadge />}
+      </span>
       <span className="text-xs font-normal leading-relaxed text-zinc-600">{body}</span>
     </button>
   );
@@ -163,7 +167,7 @@ function ShortageCard({ mode }: { mode: "block" | "borrow" }) {
     <section className={`${card} flex flex-col gap-2.5 px-4 py-4 md:px-5`} aria-label="연차가 모자랄 때">
       <b className="text-[15px]">연차가 모자랄 때</b>
       <div className="flex flex-col gap-2 sm:flex-row" role="radiogroup" aria-label="연차가 모자랄 때">
-        {opt("block", "막기 (기본)", "남은 연차보다 많이 신청할 수 없어요.")}
+        {opt("block", "막기", "남은 연차보다 많이 신청할 수 없어요.", true)}
         {opt("borrow", "당겨쓰기 허용", "남은 연차가 마이너스로 보이고, 다음 연차에서 빠지는 것으로 회사가 관리해요.")}
       </div>
       {m === "borrow" && <p className="rounded-lg bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-950">당겨쓴 직원이 퇴사할 때 그만큼 급여에서 빼려면 직원 동의가 필요해요. 정산 방법은 노무사와 확인해 주세요.</p>}

@@ -6,6 +6,7 @@ import { FixedClosingSection, type ClosingDates } from "./fixed-closing-section"
 import { Field, FormError } from "@/components/onboarding/field";
 import { AmountInput } from "@/components/ui/amount-input";
 import { ChoiceCards } from "@/components/ui/choice-cards";
+import { DefaultBadge } from "@/components/ui/default-badge";
 import { SectionHeading } from "@/components/ui/help";
 import { inputClass } from "@/components/ui/page-shell";
 import type { CompanySettings } from "@/lib/admin/queries";
@@ -152,6 +153,7 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
               {
                 value: "limit",
                 label: "1인 한도 적용",
+                isDefault: true,
                 description: "1인 한도 × 함께 먹은 인원수까지 지원해요.",
                 extra: (
                   <div className="flex flex-col gap-4">
@@ -171,6 +173,7 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
                           {
                             value: "split",
                             label: "초과분은 개인 부담 (절사)",
+                            isDefault: true,
                             description: "한도까지만 회사가 지원해요.",
                             example: `예: 2명이 ${formatWon(mealTotal)} 먹으면 회사 ${formatWon(limit * 2)} · 직원 부담 5,000원`,
                           },
@@ -228,6 +231,7 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
               {
                 value: "on",
                 label: "자차 유류비 지원",
+                isDefault: true,
                 description: "주행거리로 계산해요. 계산 방식을 골라 주세요.",
                 extra: (
                   <div className="flex flex-col gap-4">
@@ -247,7 +251,10 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
                           onClick={() => setFuelMode(v)}
                           className={`flex min-h-11 flex-col items-start rounded-xl border px-3 py-2 text-left text-sm ${fuelMode === v ? "border-brand-600 bg-brand-50" : "border-zinc-300 bg-white hover:bg-zinc-50"}`}
                         >
-                          <span className="font-semibold text-zinc-900">{label}</span>
+                          <span className="flex items-center gap-1.5 font-semibold text-zinc-900">
+                            {label}
+                            {v === "fixed" && <DefaultBadge />}
+                          </span>
                           <span className="text-xs text-zinc-600">{desc}</span>
                         </button>
                       ))}
@@ -348,7 +355,7 @@ export function CompanySettingsForm({ settings: s, preview = false, closing = nu
                   </div>
                 ),
               },
-              { value: "off", label: "사용 안 함", description: "출장 식비는 영수증으로 받아요(식대 한도 적용)." },
+              { value: "off", label: "사용 안 함", description: "출장 식비는 영수증으로 받아요(식대 한도 적용).", isDefault: true },
             ]}
           />
         </div>
