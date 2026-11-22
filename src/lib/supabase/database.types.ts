@@ -5088,6 +5088,53 @@ export type Database = {
           },
         ]
       }
+      settings_history: {
+        Row: {
+          action: string
+          area: string
+          at: string
+          changes: Json
+          company_id: string
+          id: number
+          member_id: string | null
+          member_name: string | null
+          menu: string
+          target: string | null
+        }
+        Insert: {
+          action: string
+          area: string
+          at?: string
+          changes?: Json
+          company_id: string
+          id?: never
+          member_id?: string | null
+          member_name?: string | null
+          menu: string
+          target?: string | null
+        }
+        Update: {
+          action?: string
+          area?: string
+          at?: string
+          changes?: Json
+          company_id?: string
+          id?: never
+          member_id?: string | null
+          member_name?: string | null
+          menu?: string
+          target?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settings_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       setup_wizard_steps: {
         Row: {
           company_id: string

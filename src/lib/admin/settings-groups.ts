@@ -2,7 +2,7 @@
 // 관리자 설정 8개 메뉴(D-251, todo_improvement 개선사항 1): 7개 그룹 + 요금제
 // 왼쪽 메뉴는 그룹만, 그룹 화면 위 탭이 하위 영역. 탭 주소는 기존 화면 주소를 그대로 쓴다(예전 링크가 맞는 탭으로 열림)
 export type SettingsTab = { href: string; label: string };
-export type SettingsGroupKey = "company" | "assets" | "features" | "policy" | "attendance" | "forms" | "files" | "billing";
+export type SettingsGroupKey = "company" | "assets" | "features" | "policy" | "attendance" | "forms" | "files" | "history" | "billing";
 export type SettingsGroup = { key: SettingsGroupKey; label: string; tabs: SettingsTab[]; attendanceOnly?: boolean };
 
 export const SETTINGS_GROUPS: SettingsGroup[] = [
@@ -59,6 +59,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     ],
   },
   { key: "files", label: "파일 보관", tabs: [{ href: "/chat-settings", label: "파일 보관" }] },
+  // D-303(B-2): 모든 설정의 누가·언제·이전→이후 한 곳에서(근태 이력도 합쳐 보임)
+  { key: "history", label: "변경 이력", tabs: [{ href: "/change-history", label: "변경 이력" }] },
   { key: "billing", label: "요금제", tabs: [{ href: "/billing", label: "요금제" }] },
 ];
 

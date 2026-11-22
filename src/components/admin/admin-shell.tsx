@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, FileSignature, Banknote, Bell, Building2, CircleHelp, CalendarDays, ClipboardCheck, Clock, Car, ChartBar, ChevronDown, FileDown, FileText, HardDrive, LayoutDashboard, Menu, MessageCircle, ReceiptText, Settings, SlidersHorizontal, ToggleRight, Users, Wallet, X, type LucideIcon } from "lucide-react";
+import { Check, FileSignature, Banknote, Bell, Building2, CircleHelp, CalendarDays, ClipboardCheck, Clock, Car, ChartBar, ChevronDown, FileDown, FileText, HardDrive, History, LayoutDashboard, Menu, MessageCircle, ReceiptText, Settings, SlidersHorizontal, ToggleRight, Users, Wallet, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -38,6 +38,7 @@ const GROUP_ICON: Record<SettingsGroupKey, LucideIcon> = {
   attendance: Clock,
   forms: FileText,
   files: HardDrive,
+  history: History,
   billing: Wallet,
 };
 // 사내 공지·알림 이력은 메뉴에서 숨김(D-159, 개선사항 2) — 화면·데이터는 그대로, 알림 이력은 앱 운영자 화면으로
