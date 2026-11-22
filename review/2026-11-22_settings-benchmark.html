@@ -1,0 +1,178 @@
+<title>다모온 설정 벤치마킹</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 결론(추천) 먼저 → 우리와 비교표 → 제품별 근거 → 출처. 한 열 문서 */
+:root{
+  --bg:#f6f7fb; --panel:#ffffff; --ink:#18181b; --ink2:#52525b; --muted:#8a8a96; --line:#e4e4e7;
+  --brand:#4f46e5; --brand-soft:#eef2ff; --brand-ink:#3730a3; --ok:#15803d; --ok-soft:#dcfce7; --warn:#a16207; --warn-soft:#fef9c3; --no:#9f1239; --no-soft:#ffe4e6;
+  --font:"Noto Sans KR",system-ui,-apple-system,"Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1016; --panel:#191a23; --ink:#f4f4f5; --ink2:#c4c4cc; --muted:#8b8b96; --line:#2e2f3a;
+  --brand:#818cf8; --brand-soft:#23254a; --brand-ink:#c7d2fe; --ok:#4ade80; --ok-soft:#163222; --warn:#facc15; --warn-soft:#3a3212; --no:#fda4af; --no-soft:#3b1720; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1016; --panel:#191a23; --ink:#f4f4f5; --ink2:#c4c4cc; --muted:#8b8b96; --line:#2e2f3a;
+  --brand:#818cf8; --brand-soft:#23254a; --brand-ink:#c7d2fe; --ok:#4ade80; --ok-soft:#163222; --warn:#facc15; --warn-soft:#3a3212; --no:#fda4af; --no-soft:#3b1720; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.65;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+h1{font-size:1.6rem;margin:0;text-wrap:balance} h2{font-size:1.15rem;margin:0;text-wrap:balance} h3{font-size:1rem;margin:0}
+p{margin:0} .lead{color:var(--ink2);max-width:68ch}
+.sec{display:flex;flex-direction:column;gap:12px}
+.tag{font-size:.75rem;font-weight:700;color:var(--brand-ink);background:var(--brand-soft);border-radius:6px;padding:2px 8px;width:fit-content}
+.note{color:var(--ink2);font-size:.9rem}
+.rec{display:grid;gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.card.top{border-color:var(--brand)}
+.head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.id{font-weight:700;color:var(--brand-ink);font-variant-numeric:tabular-nums}
+.pill{font-size:.72rem;font-weight:700;border-radius:999px;padding:1px 8px}
+.p-hi{background:var(--no-soft);color:var(--no)} .p-mid{background:var(--warn-soft);color:var(--warn)} .p-lo{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.meta{font-size:.82rem;color:var(--muted)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:640px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--bg);color:var(--ink2);font-weight:700}
+tr:last-child td{border-bottom:0}
+.y{color:var(--ok);font-weight:700} .n{color:var(--no);font-weight:700} .h{color:var(--warn);font-weight:700}
+ul{margin:0;padding-left:1.2em} li{margin:3px 0}
+a{color:var(--brand)}
+a:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+summary{cursor:pointer;font-weight:700}
+details[open] summary{margin-bottom:8px}
+.src{font-size:.8rem;word-break:break-all;color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <header class="sec">
+    <span class="tag">설정 UX 벤치마킹 · 2026-11-22</span>
+    <h1>다모온 설정 벤치마킹</h1>
+    <p class="lead">네이버웍스, 다우오피스, flex, 시프티, 비즈플레이, Google Workspace, Slack이 관리자 설정을 어떻게 두는지 공개 도움말로 확인하고 다모온과 비교했어요. 제품 화면을 직접 써 본 것은 아니라서 문서에 없는 것은 "확인 못 함"으로 적었어요.</p>
+  </header>
+
+  <section class="sec">
+    <h2>한 줄 결론</h2>
+    <p>메뉴 구조와 저장 방식은 이미 비슷하거나 앞서 있어요. 제품 안에 진행률이 있는 설정 마법사와 저장 안 함 경고는 공개 문서로는 다른 제품에서 확인되지 않았어요. 다른 제품이 더 잘하는 것은 세 가지예요. <b>① 설정 변경 이력이 모든 설정에 남는다 ② 바꾸면 어떻게 되는지 미리 보여 준다 ③ 엑셀로 직원·입사일·기존 연차를 한 번에 올린다.</b></p>
+  </section>
+
+  <section class="sec">
+    <h2>우리 쪽에 적용하면 좋을 것 (추천 순서)</h2>
+    <p class="note">기능 동결 중이라 제안만 드려요. 고르신 것만 만들어요. B-1~B-3이 이번 설정 UX 흐름과 바로 이어져요.</p>
+    <div class="rec">
+      <div class="card top">
+        <div class="head"><span class="id">B-1</span><span class="pill p-hi">추천 1순위 · 작음</span><b>최초 1회 설정 마지막에 [직원 초대] 단계 추가</b></div>
+        <p>flex와 시프티의 시작 가이드는 모두 <b>회사·조직 → 근무 → 휴가 → 결재·권한 → 구성원 초대</b> 순서예요. 정책을 다 정한 뒤 직원을 부르는 게 마지막 단계예요. 우리 마법사는 파일 보관에서 끝나서 가장 중요한 "직원 부르기"가 빠져 있어요. 마지막 단계로 초대 링크 복사 화면을 붙이면 돼요(약 1분). DB 변경은 없어요.</p>
+        <p class="meta">근거: flex 초기 설정 가이드, 시프티 시작하기(관리자)</p>
+      </div>
+      <div class="card top">
+        <div class="head"><span class="id">B-2</span><span class="pill p-hi">추천 2순위 · 중간</span><b>설정 변경 이력을 모든 설정으로 넓히기</b></div>
+        <p>지금은 근태 설정만 "누가·언제·이전→이후"가 남아요. 네이버웍스는 관리자가 한 모든 작업을 180일 남기고, Google은 설정 이름·이전 값·새 값까지 남겨요. 식대 한도·유류비 단가·결재라인·마감 일정이 언제 누구 때문에 바뀌었는지는 세무사에게 설명할 때 필요해요. <b>설정 › [변경 이력]</b> 한 곳에서 전체를 보게 해요. DB 표가 하나 필요해요.</p>
+        <p class="meta">근거: 네이버웍스 Admin 로그, Google 관리자 로그</p>
+      </div>
+      <div class="card top">
+        <div class="head"><span class="id">B-3</span><span class="pill p-hi">추천 3순위 · 중간</span><b>"바꾸면 이렇게 돼요" 미리보기 (U-3과 합침)</b></div>
+        <p>flex는 연차 정책 화면에서 <b>테스트 입사일을 넣어 보면 앞으로 연차가 어떻게 생기는지</b> 미리 보여 주고, 정책을 바꾸면 "과거 연차까지 다시 계산돼요"라고 미리 경고해요. 우리 식대·유류비 화면의 예시("2명이 29,000원 먹으면 회사 24,000원")가 같은 방향이라, 이 모양을 다른 화면에도 넓혀요.</p>
+        <ul class="note">
+          <li>직원별 연차: 입사일을 넣어 보면 올해·내년 연차 일수를 미리 보기</li>
+          <li>마감 일정: "이렇게 바꾸면 이번 달 마감일은 12월 2일" 미리 보기</li>
+          <li>연차 기준·5인 미만 바꾸기 전: 이미 확정한 연차에 어떤 영향이 있는지 경고</li>
+          <li>모든 선택지에 [기본·추천] 표시(U-3)</li>
+        </ul>
+        <p class="meta">근거: flex 연차 정책(자동 부여 미리보기·재계산 안내)</p>
+      </div>
+      <div class="card">
+        <div class="head"><span class="id">B-4</span><span class="pill p-mid">중간 · 중간</span><b>엑셀로 직원 입사일·기존 연차 한 번에 올리기 (U-15와 합침)</b></div>
+        <p>네이버웍스·flex·시프티 모두 <b>엑셀 서식을 받아 채워 올리고, 틀린 줄은 이유를 보여 주고 고쳐 다시 올리는</b> 방식이에요. 네이버웍스는 <b>올해 쓴·남은 연차도 올릴 수 있어서</b> 연말이 아닌 때에 옮겨 오는 회사도 바로 맞출 수 있어요. 우리는 직원별 연차에서 입사일을 한 명씩 넣어야 해요. 직원 초대는 지금처럼 링크로 두고, 입사일과 기존 연차만 엑셀로 받으면 돼요.</p>
+        <p class="meta">근거: 네이버웍스 부재 관리(데이터 불러오기), flex 여러 명 추가하기, 시프티 이관 가이드</p>
+      </div>
+      <div class="card">
+        <div class="head"><span class="id">B-5</span><span class="pill p-mid">중간 · 작음</span><b>설명에 "언제 켜야 하나요" 예시 붙이기</b></div>
+        <p>비즈플레이는 선택 항목마다 "이런 회사면 켜세요"를 예시로 설명하고, 네이버웍스는 근무 방식을 부서 예시(생산 = 교대, 영업 = 선택근무)로 보여 줘요. 우리 기능 사용·결재라인·회사 양식 화면에 "이런 회사는 켜세요 / 건너뛰세요" 한 줄을 붙여요. 최초 1회 설정의 단계별 이유 문구와 같은 말투로 맞춰요.</p>
+      </div>
+      <div class="card">
+        <div class="head"><span class="id">B-6</span><span class="pill p-mid">확인 · 작음</span><b>법정 휴가는 끌 수 없게 표시</b></div>
+        <p>flex는 법정 휴가를 기본으로 두고 지울 수 없게 해요(설정만 바꿈). 우리 휴가 종류 화면에서 법정 휴가(출산전후·배우자 출산 등)를 끌 수 있는지 확인하고, 끌 수 있으면 "법정 휴가라 끌 수 없어요"로 막을지 정해야 해요. 다만 우리 원칙이 "막지 말고 알려 주기"라서 경고만 할 수도 있어요.</p>
+      </div>
+      <div class="card">
+        <div class="head"><span class="id">B-7</span><span class="pill p-lo">나중 · 큼</span><b>메뉴별 관리자 권한</b></div>
+        <p>네이버웍스(유료)·다우오피스·flex 모두 "근태만 보는 관리자", "결재 양식만 고치는 관리자"처럼 메뉴 단위로 권한을 나눠요. 우리는 최고 관리자 / 관리자 두 가지예요. 50명 이하 회사에서는 아직 필요가 적어서 문의가 생기면 하는 게 맞아요.</p>
+      </div>
+      <div class="card">
+        <div class="head"><span class="id">B-8</span><span class="pill p-lo">나중 · 큼</span><b>기본 정책 + 예외 그룹</b></div>
+        <p>다른 제품은 "모두 기본 정책, 예외만 다른 그룹"(개인 → 하위 부서 → 상위 부서 순서로 적용)이에요. 우리는 결재라인만 부서별이 있고, 식대 한도·근무 기준은 회사 하나예요. 영업팀만 식대 한도가 다른 회사가 생기면 그때 검토해요.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>다모온과 나란히 보기</h2>
+    <div class="tw"><table>
+      <thead><tr><th>항목</th><th>다모온 (지금)</th><th>네이버웍스</th><th>다우오피스</th><th>flex</th><th>시프티</th></tr></thead>
+      <tbody>
+        <tr><td>메뉴 구조</td><td>왼쪽 메뉴 8개 + 위 탭</td><td>왼쪽 트리 + 서비스별 하위 트리</td><td>관리자 페이지 메뉴</td><td>[설정] 아래 기능별 탭</td><td>회사설정 5개 영역</td></tr>
+        <tr><td>처음 설정 안내</td><td class="y">제품 안 마법사 · 진행률 · 예상 시간</td><td class="h">도움말 시작 가이드</td><td class="h">PDF 가이드</td><td class="h">도움말 초기 설정 가이드(순서·이유)</td><td class="h">도움말·영상 시작 가이드</td></tr>
+        <tr><td>저장</td><td class="y">[저장] + 저장 안 함 경고 · 바로 저장 알림</td><td>[취소]/[저장] · 적용 시작일 예약</td><td>확인 못 함</td><td>확인 못 함</td><td>확인 못 함</td></tr>
+        <tr><td>설정 변경 이력</td><td class="h">근태만</td><td class="y">관리자 작업 전체 180일</td><td class="y">관리자 업무 기록</td><td class="h">감사 로그 권한 있음(내용 확인 못 함)</td><td>확인 못 함</td></tr>
+        <tr><td>바꾸면 어떻게 되나 미리보기</td><td class="h">식대·유류비 예시만</td><td>예시·법 근거 문서</td><td>확인 못 함</td><td class="y">연차 부여 미리보기 · 재계산 경고</td><td>확인 못 함</td></tr>
+        <tr><td>엑셀 일괄 올리기</td><td class="n">없음(초대 링크)</td><td class="y">구성원 · 기존 연차·부재</td><td>확인 못 함</td><td class="y">구성원+입사일+정책</td><td class="y">직원·장소·조직</td></tr>
+        <tr><td>메뉴별 관리자 권한</td><td class="n">최고 관리자 / 관리자</td><td class="y">메뉴·하위 메뉴 단위(유료)</td><td class="y">메뉴별 운영자</td><td class="y">권한 그룹 + 조회 범위</td><td class="y">권한 설정</td></tr>
+        <tr><td>부서별 정책</td><td class="h">결재라인만</td><td class="y">개인 → 하위 → 상위 부서</td><td class="y">금액별 자동 결재선</td><td class="y">정책 여러 개 지정</td><td class="y">조직·직무별 승인 규칙</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="sec">
+    <h2>이미 앞서 있는 것 (그대로 지키기)</h2>
+    <ul>
+      <li><b>제품 안 최초 1회 설정:</b> 다른 제품은 도움말 문서로 순서를 알려 줘요. 우리는 화면 안에서 단계·%·남은 시간을 보여 줘요.</li>
+      <li><b>저장 안 함 경고:</b> 공개 문서로는 다른 제품에서 확인되지 않았어요.</li>
+      <li><b>설명 방식:</b> 식대 예시·법 근거·기본값을 보여 주는 방식은 flex·네이버웍스 문서 수준과 같아요. 이 모양을 모든 화면으로 넓히는 게 B-3이에요.</li>
+      <li><b>메뉴 수:</b> 50명 이하 회사에 맞게 적게 유지하고 있어요. 보안·감사·아카이빙 같은 대기업용 메뉴는 따라 만들 필요가 없어요.</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>제품별 근거</h2>
+    <details><summary>네이버웍스</summary>
+      <ul class="note">
+        <li>Admin 왼쪽 트리: 기본환경 / 구성원 / 보안 / 서비스 관리 / 통계 / 감사 / 모니터링 / 아카이빙 / 구매·청구 / Apps</li>
+        <li>근태 설정: 아래 [취소]/[저장]. 근무 방식 적용 시작일 지정·예약 취소</li>
+        <li>Admin 로그: 대상·성공 여부·작업·수행자·일시·IP·메뉴, 180일</li>
+        <li>관리자 권한: 최고관리자·부관리자·운영관리자 + 메뉴 단위 직접 만든 권한(유료)</li>
+        <li>정책 우선순위: 개인 → 하위 부서 → 상위 부서, 최상위에 적용하면 새 직원도 자동</li>
+        <li>연차: 입사일/회계연도, 연차 그룹(처음엔 모두 '기본'), 올해 사용·잔여 연차 업로드(실패 이유 표시)</li>
+      </ul>
+      <p class="src">help.worksmobile.com/ko/admin-guides/overview · …/manage-service/attendance/attendance-settings · …/audit/admin · …/security/administrator-authorities/manage-administrator-authorities · …/manage-service/attendance/manage-absence</p>
+    </details>
+    <details><summary>다우오피스</summary>
+      <ul class="note">
+        <li>관리자 페이지: 기본 정보 / 메뉴 관리 / 기능 관리 / 로그인 설정 / 보안 / 팝업 공지 / 관리자 목록 / 관리자 업무 기록</li>
+        <li>메뉴 운영 권한 관리(메뉴별 운영자), 결재 양식별 운영자</li>
+        <li>자동 결재선: 금액 기준으로 나눔</li>
+        <li>연차 초기 설정: 회계연도/입사일, 1년 미만 월차 자동, 중도 입사자 연차 조정</li>
+        <li>설정 마법사·저장 방식은 확인 못 함(가이드 PDF 본문을 읽지 못함)</li>
+      </ul>
+      <p class="src">daouoffice.com/cloud_guide/etc/daouoffice_siteadmin.pdf · …/upgrade/upgrade_202004.pdf · …/approval/auto_approval_guide_v2.pdf · …/setting/e-HR10.pdf</p>
+    </details>
+    <details><summary>flex</summary>
+      <ul class="note">
+        <li>초기 설정 가이드: 회사·조직 → 근무 → 연차·휴가 → 결재·권한 → 구성원 초대 → 연동, 순서마다 이유</li>
+        <li>기본 정책·자주 쓰는 휴가 미리 제공, 법정 휴가는 지울 수 없음</li>
+        <li>연차 자동 부여 미리보기, 바꾸면 재계산 경고, 직원에게 보이는 정책 설명 칸</li>
+        <li>엑셀 여러 명 추가(이름·이메일·입사일 필수 + 정책), 초대는 나중에</li>
+        <li>권한 그룹 + 조회 범위(전체/소속 조직)</li>
+      </ul>
+      <p class="src">guide.flex.team/en/articles/13933576-flex-initial-setup-guide · intercom.help/flex-team-guide/ko/articles/10288375 · …/10288153 · …/10288255 · …/10295334</p>
+    </details>
+    <details><summary>시프티 · 비즈플레이 · Google · Slack</summary>
+      <ul class="note">
+        <li>시프티: 회사 생성 → 관리 단위 → 출퇴근 장소 → 조직 → 직무 → 회사설정 → 직원 초대 → 일정·휴가·승인 → 마감. 직무를 '승인자/비승인자'로 나누라고 권장. 엑셀·API 이관</li>
+        <li>비즈플레이: 계정과목 아래 용도 여러 개, 용도별 입력 항목 켜기·필수. 기능 기본값과 "언제 켜는지" 설명</li>
+        <li>Google: 하위 조직은 상위 설정 상속(상속/재정의 표시), 관리자 로그에 이전·새 값</li>
+        <li>Slack: 섹션을 펼쳐서 섹션마다 [Save]</li>
+      </ul>
+      <p class="src">shiftee.io/ko/help/article/gettingStartedGuideForOwner · docs.bizplay.co.kr/about-bizplay/tips/tip-0001 · knowledge.workspace.google.com/admin/users/advanced/how-the-organizational-structure-works · support.google.com/a/answer/4579579 · slack.com/help/articles/115005912706</p>
+    </details>
+  </section>
+</div>
