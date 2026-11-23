@@ -4,40 +4,65 @@ import { todayKst } from "@/lib/dates";
 import { pushToMembers } from "@/lib/push/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { subscriptionCharge, type SubscriptionCharge } from "./checkout";
-import { cardLabel, orderId, parseCharge, TOSS_API, tossAuthHeader, type TossResult } from "./toss-format";
+import { orderId, parseBillingKeyInfo, parseChargeRequest, parsePayment, PORTONE_API, portoneAuthHeader, type BillingCustomer, type ChargeResult } from "./portone-format";
 
-// 정기결제 서버(D-298): 토스페이먼츠 자동결제(빌링). 비밀 키·결제키는 서버에서만, 결제·상태는 DB 함수가 한 트랜잭션에서 기록한다
+// 정기결제 서버(D-298 → D-312): 포트원 V2 + KG이니시스 정기결제(빌링키). 비밀 키·빌링키는 서버에서만, 결제·상태는 DB 함수가 한 트랜잭션에서 기록한다
 // 규칙: 실패 0~3일 하루 1번 재시도(막지 않음) · 8일째부터 새 영수증 올리기만 멈춤 · 30일 해지 · 바꾸기·해지는 다음 결제일부터
 type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
 export type ChargeKind = "first" | "renewal" | "retry";
 
-export function tossReady(): boolean {
-  return !!process.env.TOSS_SECRET_KEY && !!process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+export function portoneReady(): boolean {
+  return !!process.env.PORTONE_API_SECRET && !!process.env.NEXT_PUBLIC_PORTONE_STORE_ID && !!process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY;
 }
 
-async function tossPost(path: string, body: unknown, idempotencyKey?: string): Promise<{ status: number; json: unknown }> {
-  const secret = process.env.TOSS_SECRET_KEY;
-  if (!secret) return { status: 0, json: { code: "NOT_CONFIGURED", message: "결제 설정이 아직 안 됐어요" } };
+async function portone(method: "GET" | "POST", path: string, body?: unknown, idempotencyKey?: string): Promise<{ status: number; json: unknown }> {
+  const secret = process.env.PORTONE_API_SECRET;
+  if (!secret) return { status: 0, json: { type: "NOT_CONFIGURED", message: "결제 설정이 아직 안 됐어요" } };
   try {
-    const r = await fetch(`${TOSS_API}${path}`, {
-      method: "POST",
-      headers: { Authorization: tossAuthHeader(secret), "Content-Type": "application/json", ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}) },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30_000),
+    const r = await fetch(`${PORTONE_API}${path}`, {
+      method,
+      headers: { Authorization: portoneAuthHeader(secret), "Content-Type": "application/json", ...(idempotencyKey ? { "Idempotency-Key": `"${idempotencyKey}"` } : {}) },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: AbortSignal.timeout(60_000),
       cache: "no-store",
     });
     return { status: r.status, json: await r.json().catch(() => ({})) };
   } catch {
-    return { status: 503, json: { code: "NETWORK", message: "결제사와 연결하지 못했어요" } };
+    return { status: 0, json: { type: "NETWORK", message: "결제사와 연결하지 못했어요" } };
   }
 }
 
-// 카드 등록창 성공 → authKey로 결제키 받기
-export async function issueBillingKey(authKey: string, customerKey: string): Promise<{ ok: true; billingKey: string; label: string } | { ok: false; message: string }> {
-  const { status, json } = await tossPost("/billing/authorizations/issue", { authKey, customerKey });
-  const j = json as { billingKey?: string; card?: { issuerCode?: string; number?: string }; message?: string };
-  if (status === 200 && j.billingKey) return { ok: true, billingKey: j.billingKey, label: cardLabel(j.card) };
-  return { ok: false, message: (j.message ?? "카드를 등록하지 못했어요").slice(0, 200) };
+// 카드 등록창에서 받은 빌링키가 진짜 이 구독 것인지 포트원에 물어 확인(구매자 ID = customer_key) + 카드 표시·구매자 정보
+export async function verifyBillingKey(billingKey: string, customerKey: string): Promise<{ ok: true; label: string; customer: BillingCustomer } | { ok: false; message: string }> {
+  const { status, json } = await portone("GET", `/billing-keys/${encodeURIComponent(billingKey)}?storeId=${encodeURIComponent(process.env.NEXT_PUBLIC_PORTONE_STORE_ID ?? "")}`);
+  return parseBillingKeyInfo(status, json, customerKey);
+}
+
+// 빌링키로 결제 요청 → 결제 조회로 영수증·거래 번호 확인. 같은 결제 번호(paymentId)는 두 번 결제되지 않는다
+async function payWithBillingKey(paymentId: string, billingKey: string, customerKey: string, orderName: string, total: number): Promise<ChargeResult> {
+  const info = await verifyBillingKey(billingKey, customerKey); // 이니시스는 결제 때 구매자 이름·이메일·전화가 필요 → 카드 등록 때 넣은 값을 그대로
+  if (!info.ok) return { ok: false, code: "BILLING_KEY", message: "등록된 카드를 확인하지 못했어요. 카드를 다시 등록해 주세요.", retryable: false };
+  const body = {
+    storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID,
+    billingKey,
+    orderName,
+    customer: { id: customerKey, name: { full: info.customer.name || BRAND.name }, email: info.customer.email || undefined, phoneNumber: info.customer.phone || undefined },
+    amount: { total },
+    currency: "KRW",
+  };
+  const send = () => portone("POST", `/payments/${encodeURIComponent(paymentId)}/billing-key`, body, paymentId);
+  let r = await send();
+  let req = parseChargeRequest(r.status, r.json);
+  if (!req.ok && req.retryable) {
+    r = await send(); // 같은 결제 번호·Idempotency-Key라 두 번 결제되지 않는다
+    req = parseChargeRequest(r.status, r.json);
+  }
+  if (!req.ok) return req;
+  const g = await portone("GET", `/payments/${encodeURIComponent(paymentId)}?storeId=${encodeURIComponent(process.env.NEXT_PUBLIC_PORTONE_STORE_ID ?? "")}`);
+  const paid = parsePayment(g.status, g.json, total);
+  if (paid.ok || paid.code === "AMOUNT_MISMATCH") return paid;
+  // 결제는 됐는데 조회만 실패 → 결제됨으로 기록(금액은 우리가 보낸 값), 영수증 주소만 없음
+  return { ok: true, paymentKey: paymentId, receiptUrl: null, totalAmount: total };
 }
 
 type ChargeInfo = {
@@ -65,13 +90,7 @@ export async function chargeCompany(admin: Admin, companyId: string, kind: Charg
   const c: SubscriptionCharge = subscriptionCharge(info.plan_price, info.storage_price, info.coupon);
   const oid = orderId(companyId, kind);
   const orderName = `${BRAND.name} ${info.plan_name}${info.storage_gb ? ` + 저장 공간 ${info.storage_gb}GB` : ""} 월 구독`.slice(0, 100);
-  const send = () => tossPost(`/billing/${encodeURIComponent(info.billing_key!)}`, { customerKey: info.customer_key, amount: c.total, orderId: oid, orderName, taxFreeAmount: 0 }, oid);
-  let r = await send();
-  let result: TossResult = parseCharge(r.status, r.json, c.total);
-  if (!result.ok && result.retryable) {
-    r = await send(); // 같은 주문번호(Idempotency-Key)라 두 번 결제되지 않는다
-    result = parseCharge(r.status, r.json, c.total);
-  }
+  const result = await payWithBillingKey(oid, info.billing_key, info.customer_key, orderName, c.total);
   const { error } = await admin.rpc("billing_payment_result", {
     p_company: companyId, p_order_id: oid, p_kind: kind, p_ok: result.ok,
     p_plan: info.plan_code, p_storage: info.storage_gb, p_list: c.list, p_discount: c.discount, p_supply: c.supply, p_vat: c.vat, p_total: c.total, p_coupon: c.coupon,
@@ -95,7 +114,7 @@ export async function runBilling(): Promise<Record<string, number | string>> {
   const out: Record<string, number | string> = { granted: 0, charged: 0, failed: 0, ended: 0, blocked: 0, expired: 0 };
   const { data: granted } = await admin.rpc("billing_monthly_grant", { p_today: today });
   out.granted = granted ?? 0;
-  if (!tossReady()) return { ...out, skipped: "toss keys missing" };
+  if (!portoneReady()) return { ...out, skipped: "portone keys missing" };
   const { data: due } = await admin.rpc("billing_due", { p_today: today });
   for (const d of (due ?? []) as { company_id: string; action: string }[]) {
     if (d.action === "charge" || d.action === "retry") {

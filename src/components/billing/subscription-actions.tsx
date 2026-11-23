@@ -10,31 +10,41 @@ import {
   setBillingCancelAction as setBillingCancelActionRaw,
 } from "@/app/workspace/[id]/admin/billing/actions";
 import { guarded } from "@/lib/action-guard";
+import { BRAND } from "@/lib/brand";
+import { issueId } from "@/lib/billing/portone-format";
 
-// 정기결제 버튼들(D-298). 카드 정보는 토스 카드 등록창에서만 받는다 — 우리 화면·서버는 카드 번호를 보지 않는다
+// 정기결제 버튼들(D-298 → D-312). 카드 정보는 포트원(KG이니시스) 카드 등록창에서만 받는다 — 우리 화면·서버는 카드 번호를 보지 않는다
 const prepareBillingAction = guarded(prepareBillingActionRaw);
 const changeBillingAction = guarded(changeBillingActionRaw);
 const setBillingCancelAction = guarded(setBillingCancelActionRaw);
 const payNowAction = guarded(payNowActionRaw);
 
-// 토스 카드 등록창 열기 → 성공하면 /admin/billing/card(서버)로, 그만두거나 실패하면 요금제 화면으로
+// 포트원 카드 등록창 열기 → PC는 창이 닫히면 결과(billingKey)를 들고 /admin/billing/card(서버)로, 휴대폰은 포트원이 그 주소로 보낸다
+// 그만두면 아무 말 없이 그대로, 실패하면 이유를 보여 준다
 export async function openCardWindow(companyId: string, plan: string, gb: number): Promise<string | null> {
   const r = await prepareBillingAction(plan, gb);
   if (!r.ok) return r.error;
+  const cardUrl = `${window.location.origin}/workspace/${companyId}/admin/billing/card`;
   try {
-    const { loadTossPayments } = await import("@tosspayments/tosspayments-sdk");
-    const toss = await loadTossPayments(r.clientKey);
-    const payment = toss.payment({ customerKey: r.customerKey });
-    await payment.requestBillingAuth({
-      method: "CARD",
-      successUrl: `${window.location.origin}/workspace/${companyId}/admin/billing/card`,
-      failUrl: `${window.location.origin}/workspace/${companyId}/admin/billing?billing=card_canceled`,
-      customerName: r.customerName,
+    const PortOne = await import("@portone/browser-sdk/v2");
+    const res = await PortOne.requestIssueBillingKey({
+      storeId: r.storeId,
+      channelKey: r.channelKey,
+      billingKeyMethod: "CARD",
+      issueId: issueId(r.customerKey),
+      issueName: `${BRAND.name} 월 구독 카드 등록`,
+      customer: { customerId: r.customerKey, fullName: r.customerName, email: r.email || undefined, phoneNumber: r.phone || undefined },
+      offerPeriod: { interval: "1m" },
+      redirectUrl: cardUrl,
     });
+    if (!res) return null; // 휴대폰: 포트원이 cardUrl로 보냄
+    if (res.code !== undefined) {
+      if (/cancel|취소/i.test(`${res.code} ${res.message ?? ""} ${res.pgMessage ?? ""}`)) return null;
+      return (res.message || "카드를 등록하지 못했어요.").slice(0, 200);
+    }
+    window.location.assign(`${cardUrl}?billingKey=${encodeURIComponent(res.billingKey)}`);
     return null;
-  } catch (e) {
-    const code = (e as { code?: string })?.code;
-    if (code === "USER_CANCEL" || code === "PAY_PROCESS_CANCELED") return null;
+  } catch {
     return "카드 등록창을 열지 못했어요. 잠시 후 다시 시도해 주세요.";
   }
 }

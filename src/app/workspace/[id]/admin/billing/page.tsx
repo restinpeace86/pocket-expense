@@ -10,7 +10,7 @@ import { BRAND } from "@/lib/brand";
 import type { StorageStatus } from "@/lib/billing/storage";
 import type { DocConvertQuota } from "@/lib/billing/doc-quota";
 import type { BillingState } from "@/lib/billing/state";
-import { tossReady } from "@/lib/billing/server";
+import { portoneReady } from "@/lib/billing/server";
 
 export const metadata = { title: `요금제 · ${BRAND.name}` };
 
@@ -41,9 +41,9 @@ async function Billing({ params, searchParams }: Pick<PageProps<"/workspace/[id]
     supabase.rpc("billing_state"),
   ]);
   if (!status) notFound();
-  // 정기결제(D-298): 운영자가 연 회사 + 서버에 토스 키가 있을 때만 결제 버튼
+  // 정기결제(D-298·D-312): 운영자가 연 회사 + 서버에 포트원 키가 있을 때만 결제 버튼
   const billingRaw = (billingRes.data as unknown as BillingState | null) ?? null;
-  const billing = billingRaw ? { ...billingRaw, open: billingRaw.open && tossReady() } : null;
+  const billing = billingRaw ? { ...billingRaw, open: billingRaw.open && portoneReady() } : null;
   const str = (v: unknown) => (typeof v === "string" ? v.slice(0, 200) : undefined);
   return (
     <div className="flex flex-col gap-6">

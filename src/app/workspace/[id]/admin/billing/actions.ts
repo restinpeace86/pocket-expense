@@ -9,7 +9,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "../actions";
 import { storageErrorText } from "@/lib/billing/storage";
 import { notifyOps } from "@/lib/ops-notify/server";
-import { chargeCompany, tossReady } from "@/lib/billing/server";
+import { chargeCompany, portoneReady } from "@/lib/billing/server";
+import { phoneDigits } from "@/lib/billing/portone-format";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // 이벤트 추가 지급 배너 [확인] (pricing-policy.md §5). 관리자 이상, 자기 회사만(RLS companies_update).
@@ -90,17 +91,21 @@ async function billingAdmin() {
   return m && m.status === "approved" && isAdminRole(m.role) ? m : null;
 }
 
-// 결제하기/카드 바꾸기: 고른 구성을 저장하고 토스 카드 등록창에 넘길 값을 돌려준다(비밀 키는 주지 않음)
-export async function prepareBillingAction(plan: string, gb: number): Promise<{ ok: true; customerKey: string; clientKey: string; customerName: string } | { ok: false; error: string }> {
+// 결제하기/카드 바꾸기: 고른 구성을 저장하고 포트원(이니시스) 카드 등록창에 넘길 값을 돌려준다(비밀 키는 주지 않음)
+// 이니시스는 구매자 이름·이메일·휴대폰이 필요 → 회사 이름 + 결제하는 관리자의 로그인 이메일·내 정보 휴대폰
+export type PrepareBilling = { ok: true; storeId: string; channelKey: string; customerKey: string; customerName: string; email: string; phone: string };
+export async function prepareBillingAction(plan: string, gb: number): Promise<PrepareBilling | { ok: false; error: string }> {
   const m = await billingAdmin();
   if (!m) return { ok: false, error: messageForDbError({ message: "NOT_ALLOWED" }) };
-  const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
-  if (!clientKey || !process.env.TOSS_SECRET_KEY) return { ok: false, error: "결제 설정이 아직 안 됐어요. 잠시 후 다시 시도해 주세요." };
+  const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID;
+  const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY;
+  if (!storeId || !channelKey || !portoneReady()) return { ok: false, error: "결제 설정이 아직 안 됐어요. 잠시 후 다시 시도해 주세요." };
   if (typeof plan !== "string" || plan.length > 30 || !Number.isInteger(gb)) return { ok: false, error: billingError("INVALID_PLAN") };
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("billing_prepare", { p_plan: plan, p_storage: gb });
   if (error || !data) return { ok: false, error: billingError(error?.message ?? "") };
-  return { ok: true, customerKey: data, clientKey, customerName: m.company_name.slice(0, 50) };
+  const [{ data: user }, { data: me }] = await Promise.all([supabase.auth.getUser(), supabase.from("members").select("phone").eq("id", m.member_id).maybeSingle()]);
+  return { ok: true, storeId, channelKey, customerKey: data, customerName: m.company_name.slice(0, 50), email: (user.user?.email ?? "").slice(0, 100), phone: phoneDigits(me?.phone) };
 }
 
 // 구성 바꾸기(첫 결제 전이면 바로, 결제 중이면 다음 결제일부터)
@@ -135,7 +140,7 @@ export async function payNowAction(): Promise<{ ok: true } | { ok: false; error:
   const status = (state as { subscription?: { status: string } | null } | null)?.subscription?.status;
   if (status !== "past_due") return { ok: false, error: "지금 다시 결제할 내용이 없어요." };
   const admin = createAdminClient();
-  if (!admin || !tossReady()) return { ok: false, error: "결제 설정이 아직 안 됐어요." };
+  if (!admin || !portoneReady()) return { ok: false, error: "결제 설정이 아직 안 됐어요." };
   const r = await chargeCompany(admin, m.company_id, "retry");
   refresh();
   return r.ok ? { ok: true } : { ok: false, error: r.message };

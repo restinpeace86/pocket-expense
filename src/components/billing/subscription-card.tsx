@@ -20,7 +20,7 @@ const dateKo = (iso: string) => {
   return `${d.slice(0, 4)}. ${Number(d.slice(5, 7))}. ${Number(d.slice(8, 10))}.`;
 };
 
-// 결제 화면에서 돌아온 결과(토스 → /admin/billing/card → 여기)
+// 결제 화면에서 돌아온 결과(포트원 카드 등록창 → /admin/billing/card → 여기)
 export function BillingResult({ kind, msg }: { kind?: string; msg?: string }) {
   if (!kind) return null;
   const ok = kind === "paid" || kind === "scheduled" || kind === "card_saved";
