@@ -25,3 +25,13 @@
    - app/sitemap.ts: 메인 페이지 및 주요 공개 페이지 포함 사이트맵 동적 리턴 로직 구현
 
 위 요구사항을 바탕으로 변경 또는 새로 추가해야 하는 파일 경로와 코드 전체를 수정하여 적용해줘.
+
+
+[개선사항 2]
+현재 Next.js 기반의 '다모온' 프로젝트를 Android 앱(.aab)으로 빌드하려고 해.
+Play Console 업로드용 릴리스 버전 AAB(Android App Bundle) 파일 생성하는 것 검토해줘
+
+요구사항:
+1. Android Studio를 열거나 CLI 명령어를 통해 Release .aab 파일을 생성하는 단계별 명령어/방법
+2. 릴리스 서명 키(Keystore) 생성 및 android/app/build.gradle 설정 방법
+3. 생성된 .aab 파일이 저장되는 최종 경로 확인 방법
