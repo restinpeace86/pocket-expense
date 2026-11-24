@@ -10,3 +10,9 @@
   - `@tosspayments/tosspayments-sdk`·`toss-format.ts` 삭제, `.env.example` 키 3개로
 - 특이 사항: DB·화면·결제 규칙(D-298) 그대로. 키가 없으면 모든 회사 '결제 준비 중'(운영 그대로). 이니시스 테스트 결제창 E2E는 사용자가 테스트 채널 키를 넣은 뒤(B-4h). 휴대폰 리디렉트 쿼리 이름은 문서에 명시가 없어 `billingKey`/`code`/`message`로 받고, 어떤 값이 와도 서버가 포트원에 다시 확인하므로 위조 빌링키는 저장되지 않음
 - 검증: tsc · vitest 522 · build · 로컬 e2e-billing-prod(키 없음: 결제 준비 중, 실패 코드 → 돌아옴, 가짜 빌링키 저장 안 됨, 비로그인 → 로그인) ALL_OK · leftovers []
+
+## 2026-11-24 테스트 채널 E2E (B-4h)
+- 채널: inicis_v2 · MID INIBillTst(테스트). 키 3개 .env.local·Vercel(사용자)
+- PC 이니시스 창: 카드번호(보안 키보드)·주민번호 → [확인] 뒤 공동인증서 필수 → 공동인증서가 없으면 등록 불가. 휴대폰 창(inilitepay): 카드번호·유효기간·생년월일만
+- `.responsive/live/e2e-billing-inicis.mjs`(로컬 전용): 실제 크롬(channel chrome)·휴대폰 화면, 카드 입력만 사람 → ALL_OK 23. 끝나면 포트원 결제 취소·빌링키 삭제
+- 코드 변경 없음(D-312 그대로 동작 확인)
