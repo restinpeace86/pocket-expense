@@ -37,7 +37,7 @@
   - 2026-11-22 사용자 추가 요구(U-1): 시작 안내에 '최초 1회 설정'·예상 소요 시간·해야 하는 이유, 진행 중 'N단계 중 M단계·%' 표시, [나중에 할게요] 뒤 '설정 마법사'로 이어서 하기 → 시안 https://claude.ai/artifact/25Wvh9VQdz4MQ137TTEqCx — 사용자 확인(진행률 계산·DB 표 승인·기존 회사 처리) 전 구현 금지
   - 남은 것(사용자): ~~PG 다시 선택~~ → 포트원+이니시스(D-312) 전자계약·사전검수·AML 고객확인 → 키를 Vercel에 → 테스트 회사로 확인 → 열기
 - [ ] B-5 `OPERATOR` 일부 채움(2026-11-05: 상호·대표·사업자등록번호·전화) — 개인정보 보호책임자 조호신(2026-11-06) — 문의 이메일 damoun.workon@gmail.com(2026-11-06) — 남은 것: 통신판매업 신고번호(B-1), 사업장 주소 — 일단 뺌(2026-11-06), 비상주 오피스로 사업자 주소 정정 뒤 넣기(유료 판매 전 필수)
-- [ ] B-6 (사용자 할 일 — 도메인 damo-on.com 확정으로 보류 해제 2026-11-19, robots·sitemap 운영 확인됨) Vercel `GOOGLE_SITE_VERIFICATION`·`NAVER_SITE_VERIFICATION` 등록 → 다시 배포 → 서치 콘솔·서치어드바이저에 사이트맵 제출(D-129)
+- [ ] B-6 (2026-11-24: 구글 값 Vercel 입력 완료 · D-313 SEO 2단계 배포 → 구글 [확인]·사이트맵 제출, 네이버는 값 받아 넣기 남음) (사용자 할 일 — 도메인 damo-on.com 확정으로 보류 해제 2026-11-19, robots·sitemap 운영 확인됨) Vercel `GOOGLE_SITE_VERIFICATION`·`NAVER_SITE_VERIFICATION` 등록 → 다시 배포 → 서치 콘솔·서치어드바이저에 사이트맵 제출(D-129)
 
 ## 하네스 구축 (완료)
 - [x] GitHub 원격 연결 (`restinpeace86/pocket-expense`)

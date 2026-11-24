@@ -16,6 +16,7 @@ import { SectionNav } from "@/components/landing/section-nav";
 import { MobileStartBar } from "@/components/landing/mobile-start-bar";
 import { KakaoFab } from "@/components/landing/kakao-fab";
 import { FEATURE_GROUPS } from "@/lib/landing/features";
+import { siteOrigin, structuredData } from "@/lib/seo";
 
 // 랜딩 페이지 (spec/screens/landing-page.md §0, D-255 §C 개편). 정적 화면 — 세션을 읽지 않는다.
 // 밝은 바탕 + [기능 미리 보기]만 진한 띠(시뮬레이션 8개 탭). D-273: 구역마다 박히는 한 줄 + 뒷받침 한 줄, 중간 구역 합침. CTA는 로그인 후 회사 생성 위저드로 간다.
@@ -83,6 +84,8 @@ const card = "rounded-2xl border border-zinc-200 bg-white shadow-sm";
 export default function LandingPage() {
   return (
     <div className="flex-1 overflow-x-clip bg-white text-zinc-900" data-landing>
+      {/* 구조화 데이터(D-313): 검색 로봇용, 화면에는 안 보임 */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData(siteOrigin(), OPERATOR)).replace(/</g, "\\u003c") }} />
       <nav className="sticky top-0 z-10 border-b border-zinc-200 bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-2">
