@@ -5,7 +5,7 @@ import "./globals.css";
 import { WebVitals } from "@/components/perf/web-vitals";
 import { KeyboardAware } from "@/components/ui/keyboard-aware";
 import { NativeAppBridge } from "@/components/push/native-app-bridge";
-import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TITLE, siteOrigin, verificationTags } from "@/lib/seo";
+import { NAVER_SITE_VERIFICATION_DEFAULT, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TITLE, siteOrigin, verificationTags } from "@/lib/seo";
 import { THEME_KEYS, THEME_STORAGE_KEY } from "@/lib/theme";
 import { BRAND } from "@/lib/brand";
 
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION },
   // 구글 서치 콘솔·네이버 서치어드바이저 소유 확인(환경변수 GOOGLE_SITE_VERIFICATION·NAVER_SITE_VERIFICATION, 비우면 태그 없음)
-  verification: verificationTags(),
+  verification: verificationTags({ ...process.env, NAVER_SITE_VERIFICATION: process.env.NAVER_SITE_VERIFICATION?.trim() || NAVER_SITE_VERIFICATION_DEFAULT }),
   // 홈 화면에 추가했을 때 아이콘·이름(아이폰 웹 알림은 홈 화면 앱에서만, D-116)
   icons: { apple: "/icons/180" },
   appleWebApp: { capable: true, title: BRAND.name, statusBarStyle: "default" },

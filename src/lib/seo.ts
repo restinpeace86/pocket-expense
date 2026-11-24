@@ -43,6 +43,9 @@ export function siteOrigin(): string {
   return configuredSiteUrl() || "http://localhost:3000";
 }
 
+// 네이버 서치어드바이저 소유 확인 값(사용자 2026-11-24, 사이트에 공개되는 값이라 코드에 둠 — Vercel NAVER_SITE_VERIFICATION이 있으면 그 값이 먼저). 구글은 도메인 속성·가비아 DNS TXT로 확인해 태그 불필요
+export const NAVER_SITE_VERIFICATION_DEFAULT = "7a977572c96947f9ded8cb1e16f4fbaa990b7a66";
+
 // 검색 사이트 소유 확인 값: 구글 서치 콘솔·네이버 서치어드바이저가 준 문자열을 환경변수에 넣는다(비우면 태그를 넣지 않음)
 export function verificationTags(env: Record<string, string | undefined> = process.env) {
   const google = env.GOOGLE_SITE_VERIFICATION?.trim();
