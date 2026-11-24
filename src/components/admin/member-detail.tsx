@@ -131,7 +131,7 @@ export function MemberDetailView({
         <span
           className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs ${m.status === "approved" ? "bg-emerald-50 text-emerald-700" : m.status === "pending" ? "bg-amber-50 text-amber-800" : "bg-zinc-200 text-zinc-600"}`}
         >
-          {STATUS_LABEL[m.status]}
+          {m.account_deleted_at ? "계정 삭제(퇴사)" : STATUS_LABEL[m.status]}
         </span>
       </div>
 
@@ -218,7 +218,7 @@ export function MemberDetailView({
               {[
                 ["부서", m.department ?? "부서 없음"],
                 ["직급", m.position ?? "—"],
-                ["휴대폰", formatPhone(m.phone)],
+                ["휴대폰", formatPhone(m.phone) || "—"],
                 ["이메일", m.email ?? "—"],
                 ["사번", m.employee_number ?? "—"],
                 ["자가운전보조금", m.receives_car_allowance ? "받음 (자차 유류비 청구 불가)" : "안 받음"],

@@ -47,7 +47,14 @@ async function Billing({ params, searchParams }: Pick<PageProps<"/workspace/[id]
   const str = (v: unknown) => (typeof v === "string" ? v.slice(0, 200) : undefined);
   return (
     <div className="flex flex-col gap-6">
+      {/* 안드로이드 설치 앱(Play 결제 정책, D-314): 요금제·결제는 앱에서 다루지 않는다 */}
+      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm" data-store-only data-store-billing-note>
+        <h1 className="text-xl font-bold tracking-tight">요금제</h1>
+        <p className="mt-2 break-keep text-sm text-zinc-600">앱에서는 요금제·결제를 다루지 않아요. 아래에서 영수증 사용 내역은 볼 수 있어요.</p>
+      </section>
+      <div data-store-hide className="flex flex-col gap-6">
       <BillingView status={status} plans={plans} addons={addons} storage={(storage.data as unknown as StorageStatus) ?? null} storageAddons={storageAddons.data ?? []} docQuota={(docQuota.data as unknown as DocConvertQuota) ?? null} billing={billing} result={{ kind: str(sp.billing), msg: str(sp.msg) ?? str(sp.message) }} />
+      </div>
       <CreditUsageSection base={`/workspace/${id}/admin/billing`} month={q} thisMonth={thisMonth} data={(usage.data as unknown as CreditUsage) ?? null} unlimited={status.exempt} />
     </div>
   );

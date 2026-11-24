@@ -63,7 +63,7 @@ async function Content({ params }: { params: PageProps<"/workspace/[id]/admin/ch
       {/* D-291: 결재 문서를 쓰는 회사(양식이 있었거나 정리할 첨부가 있음)만 */}
       {purge.data && ((docForms ?? 0) > 0 || (purge.data as unknown as PurgeStatus)["0"].files > 0) && <ApprovalFilesPurge companyId={id} status={purge.data as unknown as PurgeStatus} />}
       {/* D-262: 공간이 모자라면 요금제에서 추가 공간 신청(관리자만 이 화면을 봄) */}
-      <Link href={`/workspace/${id}/admin/billing#storage`} className="inline-flex min-h-11 items-center gap-1 self-start rounded-xl border border-brand-300 bg-brand-50 px-4 text-sm font-semibold text-brand-800 hover:bg-brand-100" data-storage-more>
+      <Link href={`/workspace/${id}/admin/billing#storage`} className="inline-flex min-h-11 items-center gap-1 self-start rounded-xl border border-brand-300 bg-brand-50 px-4 text-sm font-semibold text-brand-800 hover:bg-brand-100" data-storage-more data-store-hide>
         저장 공간 늘리기 →
       </Link>
     </div>

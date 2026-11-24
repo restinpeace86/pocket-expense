@@ -53,6 +53,9 @@ const THEME_BOOT = `try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAG
 // 홈 화면에 추가(D-219): 안드로이드 크롬·삼성 인터넷은 화면이 그려지기 전에 '설치 가능' 신호를 한 번 보낸다 → 잡아 두었다가 [홈 화면에 추가] 버튼이 쓴다
 const INSTALL_BOOT = `window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__peInstall=e;window.dispatchEvent(new Event("pe-install-ready"))});window.addEventListener("appinstalled",function(){window.__peInstall=null;window.__peInstalled=true;window.dispatchEvent(new Event("pe-install-ready"))});`;
 
+// 안드로이드 설치 앱(Play 스토어) 표시(D-314): 앱 안에서는 요금제·결제를 숨긴다(Play 결제 정책). 앱이 붙이는 UA 꼬리표 또는 Capacitor 다리로 알아본다
+const STORE_BOOT = `try{var w=window;if(/DamoOnApp\\/android/.test(navigator.userAgent)||w.androidBridge||(w.Capacitor&&w.Capacitor.getPlatform&&w.Capacitor.getPlatform()==="android"))document.documentElement.setAttribute("data-store","android")}catch(e){}`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -63,6 +66,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <script dangerouslySetInnerHTML={{ __html: INSTALL_BOOT }} />
+        <script dangerouslySetInnerHTML={{ __html: STORE_BOOT }} />
       </head>
       <body className="min-h-full flex flex-col">
         <WebVitals />

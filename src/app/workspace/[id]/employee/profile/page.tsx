@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PushToggle } from "@/components/push/push-toggle";
 import { Suspense } from "react";
+import { DeleteAccountLink } from "@/components/account/delete-account-link";
 import { ProfileForm } from "@/components/employee/profile-form";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { chatEnabled } from "@/lib/chat/server";
@@ -30,6 +31,7 @@ async function Profile({ params }: { params: PageProps<"/workspace/[id]/employee
     <>
       <PushToggle />
       <ProfileForm profile={profile} chat={chat} />
+      <DeleteAccountLink />
     </>
   );
 }

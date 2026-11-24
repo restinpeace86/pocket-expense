@@ -4392,8 +4392,9 @@ export type Database = {
       }
       members: {
         Row: {
+          account_deleted_at: string | null
           approved_at: string | null
-          auth_user_id: string
+          auth_user_id: string | null
           chat_theme: string | null
           chat_visual_alert: boolean
           company_id: string
@@ -4423,8 +4424,9 @@ export type Database = {
           vehicle_number: string | null
         }
         Insert: {
+          account_deleted_at?: string | null
           approved_at?: string | null
-          auth_user_id: string
+          auth_user_id?: string | null
           chat_theme?: string | null
           chat_visual_alert?: boolean
           company_id: string
@@ -4454,8 +4456,9 @@ export type Database = {
           vehicle_number?: string | null
         }
         Update: {
+          account_deleted_at?: string | null
           approved_at?: string | null
-          auth_user_id?: string
+          auth_user_id?: string | null
           chat_theme?: string | null
           chat_visual_alert?: boolean
           company_id?: string
@@ -5775,6 +5778,7 @@ export type Database = {
         }
         Returns: string
       }
+      account_deletion_check: { Args: never; Returns: Json }
       ack_item_category: {
         Args: { p_ack?: boolean; p_item_id: string }
         Returns: undefined
@@ -6547,6 +6551,7 @@ export type Database = {
         Args: { p_account_title_id: string; p_item_id: string }
         Returns: undefined
       }
+      prepare_account_deletion: { Args: never; Returns: undefined }
       push_approval_targets: {
         Args: { p_hours?: number; p_now?: string }
         Returns: Json

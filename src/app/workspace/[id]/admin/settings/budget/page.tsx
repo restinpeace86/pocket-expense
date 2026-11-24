@@ -55,7 +55,7 @@ async function Content({ params }: Pick<PageProps<"/workspace/[id]/admin/setting
     <div className="flex flex-col gap-4">
       {!status.enabled && (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-budget-plan>
-          예산 알림은 프로 플랜부터 쓸 수 있어요. 지금은 이번 달 쓴 돈만 보여요. <Link href={`/workspace/${id}/admin/billing`} className="font-semibold underline">요금제 보기</Link>
+          예산 알림은 프로 플랜부터 쓸 수 있어요. 지금은 이번 달 쓴 돈만 보여요. <Link href={`/workspace/${id}/admin/billing`} className="font-semibold underline" data-store-hide>요금제 보기</Link>
         </p>
       )}
       <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm md:p-5" aria-labelledby="budget-now-title" data-budget-status>

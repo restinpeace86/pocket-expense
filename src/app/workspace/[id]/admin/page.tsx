@@ -79,6 +79,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
           href={`/workspace/${membership.company_id}/admin/billing#subscription`}
           className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 hover:bg-red-100"
           data-billing-banner
+          data-store-hide
         >
           <span className="break-keep">
             {billingSub.status === "canceled"
@@ -93,6 +94,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
       {askReview && (
         <Link
           href={`/workspace/${membership.company_id}/admin/billing`}
+          data-store-hide
           className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900 hover:bg-rose-100"
         >
           <span className="break-keep">

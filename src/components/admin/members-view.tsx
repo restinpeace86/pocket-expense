@@ -168,7 +168,7 @@ function MemberItem({ member: m, preview, href, reminder }: { member: MemberRow;
           {m.position && <span className="ml-1 text-sm font-normal text-zinc-500">({m.position})</span>}
         </p>
         <p className="mt-0.5 break-all text-sm text-zinc-600">
-          {m.department ?? "부서 없음"} · {formatPhone(m.phone)}
+          {m.department ?? "부서 없음"} · {formatPhone(m.phone) || "계정 삭제"}
           {m.email && <span className="text-zinc-400"> · {m.email}</span>}
         </p>
       </div>

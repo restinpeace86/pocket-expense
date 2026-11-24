@@ -356,3 +356,7 @@ html[data-chat-theme="cool"] {
 @media (min-width: 768px) and (max-width: 1179px) {
   body[data-open-thread] [data-chat-list] { display: none; }
 }
+
+/* 안드로이드 설치 앱(Play 스토어, D-314): 요금제·결제는 앱에서 숨기고 웹에서만 */
+html[data-store="android"] [data-store-hide] { display: none !important; }
+html:not([data-store="android"]) [data-store-only] { display: none !important; }

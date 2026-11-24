@@ -54,5 +54,6 @@ describe("capabilitiesFor", () => {
     expect(capabilitiesFor(adm, { id: "a2", role: "admin", status: "inactive" }).canReactivate).toBe(false);
     expect(capabilitiesFor(sup, { id: "a2", role: "admin", status: "inactive" }).canReactivate).toBe(true);
     expect(capabilitiesFor(sup, emp("e", "approved")).canReactivate).toBe(false);
+    expect(capabilitiesFor(sup, { ...emp("e", "inactive"), account_deleted_at: "2026-11-25T00:00:00Z" }).canReactivate).toBe(false); // 계정 삭제(D-314)
   });
 });

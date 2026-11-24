@@ -197,7 +197,7 @@ export function AdminHomeView({
         ) : (
           <ul className="mt-2 flex flex-col gap-1">
             {visibleTodos.map((t) => (
-              <li key={t.text}>
+              <li key={t.text} data-store-hide={t.href.endsWith("/billing") ? "" : undefined}>
                 <Link href={t.href} className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm hover:bg-zinc-50 ${t.tone === "warn" ? "text-amber-900" : "text-zinc-800"}`}>
                   <span className={t.tone === "warn" ? "text-amber-600" : "text-zinc-500"}>{t.icon}</span>
                   <span className="min-w-0 flex-1">{t.text}</span>

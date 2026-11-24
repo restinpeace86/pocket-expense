@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { DeleteAccountLink } from "@/components/account/delete-account-link";
 import { Suspense } from "react";
 import { CloseOfficeSection, LeaveOfficeSection } from "@/components/tax-office/office-actions";
 import { OfficeInvite, OfficeMembers } from "@/components/tax-office/office-manage";
@@ -32,6 +33,7 @@ async function Content() {
         </div>
         <PushToggle office />
         <LeaveOfficeSection officeName={state.office_name} />
+        <DeleteAccountLink />
       </>
     );
   }
@@ -48,6 +50,7 @@ async function Content() {
       <OfficeInvite code={state.invite_code} officeName={state.office_name} />
       <OfficeMembers members={members} myId={state.member_id} />
       <CloseOfficeSection officeName={state.office_name} memberCount={members.length} clientCount={clients.length} />
+      <DeleteAccountLink />
     </>
   );
 }

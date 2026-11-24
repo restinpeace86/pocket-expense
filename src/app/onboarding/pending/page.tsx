@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { DeleteAccountLink } from "@/components/account/delete-account-link";
 import { InstallNextStep } from "@/components/push/install-next-step";
 import { buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
 import { requireUnapprovedMembership } from "@/lib/auth/guards";
@@ -64,6 +65,7 @@ async function PendingContent() {
       <div className="text-center">
         <SignOutButton />
       </div>
+      <DeleteAccountLink />
     </>
   );
 }

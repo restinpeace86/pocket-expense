@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { DeleteAccountLink } from "@/components/account/delete-account-link";
 import { InviteCodeForm } from "@/components/onboarding/invite-code-form";
 import { buttonPrimary, buttonSecondary, Card, PageShell } from "@/components/ui/page-shell";
 import { requireNoMembership } from "@/lib/auth/guards";
@@ -49,6 +50,7 @@ async function OnboardingChoices() {
       <div className="text-center">
         <SignOutButton />
       </div>
+      <DeleteAccountLink />
     </>
   );
 }

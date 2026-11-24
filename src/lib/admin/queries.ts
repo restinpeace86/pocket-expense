@@ -45,13 +45,14 @@ export type MemberDetail = MemberRow & {
   employee_number: string | null;
   receives_car_allowance: boolean;
   meal_limit_override: number | null;
+  account_deleted_at: string | null; // 본인이 계정을 지움(D-314) — 기록의 이름만 남음, 다시 활성화 불가
 };
 
 export async function getMember(companyId: string, memberId: string): Promise<MemberDetail | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("members")
-    .select("id, name, phone, email, position, role, status, created_at, department_id, employee_number, receives_car_allowance, meal_limit_override, department:departments(name)")
+    .select("id, name, phone, email, position, role, status, created_at, department_id, employee_number, receives_car_allowance, meal_limit_override, account_deleted_at, department:departments(name)")
     .eq("company_id", companyId)
     .eq("id", memberId)
     .maybeSingle();

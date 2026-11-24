@@ -9,7 +9,7 @@ describe("검색 사이트 소유 확인 태그", () => {
     expect(verificationTags({ GOOGLE_SITE_VERIFICATION: "g", NAVER_SITE_VERIFICATION: "n" })).toEqual({ google: "g", other: { "naver-site-verification": "n" } });
   });
   it("로그인 뒤 화면·운영자 화면은 검색 로봇에서 막는다", () => {
-    for (const p of ["/workspace/", "/app-admin", "/onboarding", "/api/"]) expect(ROBOTS_DISALLOW).toContain(p);
+    for (const p of ["/workspace/", "/app-admin", "/onboarding", "/api/", "/account/"]) expect(ROBOTS_DISALLOW).toContain(p);
   });
 });
 

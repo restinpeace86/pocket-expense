@@ -58,10 +58,10 @@ export function verificationTags(env: Record<string, string | undefined> = proce
 }
 
 // 검색 로봇이 들어가지 않을 곳: 로그인 뒤 화면·운영자·내부 주소(공개 화면만 수집)
-export const ROBOTS_DISALLOW = ["/workspace/", "/onboarding", "/app-admin", "/api/", "/auth/", "/dev/", "/join/", "/share/", "/push/"];
+export const ROBOTS_DISALLOW = ["/workspace/", "/onboarding", "/app-admin", "/api/", "/auth/", "/dev/", "/join/", "/share/", "/push/", "/account/"];
 
 // 공개 화면을 마지막으로 고친 날(D-313): 사이트맵 lastModified. 요청마다 "오늘"이면 검색 로봇이 바뀐 날을 믿지 않는다 → 랜딩·약관을 고치면 이 날짜도 바꾼다
-export const PUBLIC_UPDATED = "2026-11-24";
+export const PUBLIC_UPDATED = "2026-11-25";
 
 // 사이트맵에 넣는 공개 화면
 export const PUBLIC_PAGES: { path: string; priority: number; changeFrequency: "weekly" | "monthly" | "yearly" }[] = [

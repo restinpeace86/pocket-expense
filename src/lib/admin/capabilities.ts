@@ -12,7 +12,7 @@ export type MemberCapabilities = {
 // 화면 표시용일 뿐이며, 실제 권한 검사는 DB 함수(migration 013)가 다시 한다.
 export function capabilitiesFor(
   viewer: { member_id: string; role: MemberRole },
-  target: { id: string; role: MemberRole; status: MemberStatus },
+  target: { id: string; role: MemberRole; status: MemberStatus; account_deleted_at?: string | null },
 ): MemberCapabilities {
   const isSuper = viewer.role === "super_admin";
   const isSelf = viewer.member_id === target.id;
@@ -22,6 +22,6 @@ export function capabilitiesFor(
     canChangeRole: isSuper && target.role !== "super_admin" && active,
     canTransfer: isSuper && !isSelf && active,
     canDeactivate: active && !isSelf && target.role !== "super_admin" && (isSuper || target.role === "employee"),
-    canReactivate: target.status === "inactive" && (isSuper || target.role === "employee"),
+    canReactivate: target.status === "inactive" && !target.account_deleted_at && (isSuper || target.role === "employee"), // 계정을 지운 사람은 로그인 계정이 없음(D-314)
   };
 }

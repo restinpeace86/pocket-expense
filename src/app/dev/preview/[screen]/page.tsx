@@ -270,6 +270,7 @@ const SAMPLE_DETAIL = {
   employee_number: "PK-2024-007",
   receives_car_allowance: false,
   meal_limit_override: 15000,
+  account_deleted_at: null as string | null,
 };
 const SAMPLE_DEPT_ROWS = [
   { id: "d1", name: "경영지원", sort_order: 1, memberCount: 2, hasApprovalLine: false },

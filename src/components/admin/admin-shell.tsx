@@ -155,6 +155,7 @@ function NavList({ base, onNavigate, previewPath, settingsOpen = false, feedback
                 onClick={onNavigate}
                 aria-current={on ? "page" : undefined}
                 data-settings-group={g.key}
+                data-store-hide={g.key === "billing" ? "" : undefined}
                 className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm ${g.key === "billing" ? "mt-2 border-t border-sidebar-border pt-2" : ""} ${on ? "bg-sidebar-active font-semibold text-sidebar-active-fg" : "text-sidebar-fg hover:bg-sidebar-hover"}`}
               >
                 <Icon className="size-5 shrink-0" />

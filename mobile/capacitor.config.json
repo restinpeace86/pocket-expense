@@ -9,7 +9,8 @@
   },
   "android": {
     "allowMixedContent": false,
-    "backgroundColor": "#ffffff"
+    "backgroundColor": "#ffffff",
+    "appendUserAgent": "DamoOnApp/android"
   },
   "plugins": {
     "PushNotifications": {
