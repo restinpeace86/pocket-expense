@@ -6,6 +6,7 @@
   "scripts": {
     "sync": "cap sync android",
     "apk": "cap sync android && cd android && gradlew.bat assembleRelease",
+    "aab": "cap sync android && cd android && gradlew.bat bundleRelease",
     "sync:ios": "cap sync ios"
   },
   "dependencies": {
