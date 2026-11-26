@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { SpendingReport, type SpendingGroup } from "@/components/admin/spending-report";
+import { SpendingTrend } from "@/components/admin/spending-trend";
 import { MonthPicker } from "@/components/tax-office/month-picker";
 import { AccountTitleHistory, type AccountTitleChange } from "@/components/tax-office/account-title-history";
 import { SectionHeading } from "@/components/ui/help";
@@ -45,12 +46,20 @@ async function Content({ params, searchParams }: Pick<PageProps<"/workspace/[id]
   const now = currentMonthKst();
   const months = recentMonths(now);
   const month = typeof sp.month === "string" && MONTH.test(sp.month) && sp.month <= now ? sp.month : months[0];
-  const byDept = sp.view === "dept"; // 부서별 보기(reference 4-1 ⑦)
+  const view = sp.view === "dept" || sp.view === "member" ? sp.view : ""; // 부서별(reference 4-1 ⑦) · 직원별(D-319)
+  const byDept = view === "dept";
+  const byMember = view === "member";
+  // 최근 6개월 추이(D-319): 고른 달까지 6달, 같은 기준(세무 마감 행)
+  const trendMonths = Array.from({ length: 6 }, (_, i) => {
+    const [ty, tm] = month.split("-").map(Number);
+    return new Date(Date.UTC(ty, tm - 6 + i, 1)).toISOString().slice(0, 7);
+  });
   const supabase = await createClient();
-  const [res, { data: office }, { data: changes }] = await Promise.all([
+  const [res, { data: office }, { data: changes }, trendRes] = await Promise.all([
     getTaxMonth(month),
     supabase.rpc("my_company_tax_office"),
     supabase.from("account_title_changes").select("id, entity, action, detail, actor_name, office_name, created_at").order("created_at", { ascending: false }).limit(20),
+    Promise.all(trendMonths.slice(0, 5).map((tm) => getTaxMonth(tm))),
   ]);
   if (!res.ok) notFound();
   const o = office as { registered?: boolean; registered_name?: string | null } | null;
@@ -59,18 +68,20 @@ async function Content({ params, searchParams }: Pick<PageProps<"/workspace/[id]
   for (const r of res.data.rows) {
     const amount = r.amount ?? 0;
     total += amount;
-    const key = (byDept ? r.department : r.account_title_name) ?? "";
+    const key = (byDept ? r.department : byMember ? r.member_name : r.account_title_name) ?? "";
     const g =
       byKey.get(key) ??
       (byDept
         ? { key: key || "-", name: r.department ?? "부서 없음", code: null, amount: 0, items: [] }
-        : { key: key || "-", name: r.account_title_name ?? "미지정", code: r.account_title_code, amount: 0, items: [] });
+        : byMember
+          ? { key: key || "-", name: r.member_name ?? "-", code: r.department ?? null, amount: 0, items: [] }
+          : { key: key || "-", name: r.account_title_name ?? "미지정", code: r.account_title_code, amount: 0, items: [] });
     g.amount += amount;
     g.items.push({
       id: r.item_id,
       date: r.expense_date,
       merchant: isOwnCar(r) ? `자차 ${r.start_location ?? ""}→${r.end_location ?? ""}` : (r.merchant_name ?? "-"),
-      member: byDept ? `${r.member_name} · ${r.account_title_name ?? "미지정"}` : r.member_name,
+      member: byDept ? `${r.member_name} · ${r.account_title_name ?? "미지정"}` : byMember ? (r.account_title_name ?? "미지정") : r.member_name,
       amount,
       overridden: !!r.account_title_overridden,
     });
@@ -79,11 +90,16 @@ async function Content({ params, searchParams }: Pick<PageProps<"/workspace/[id]
   const groups = [...byKey.values()].sort((a, b) => b.amount - a.amount);
   const [y, m] = month.split("-").map(Number);
   const base = `/workspace/${id}/admin/spending`;
+  const trend = trendMonths.map((tm, i) => {
+    const rr = i === 5 ? res : trendRes[i];
+    return { month: tm, total: rr.ok ? rr.data.rows.reduce((s, r) => s + (r.amount ?? 0), 0) : 0 };
+  });
+  const groupTitle = byDept ? "부서별 지출" : byMember ? "직원별 지출" : "계정과목별 지출";
 
   return (
     <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <MonthPicker months={months.includes(month) ? months : [month, ...months]} value={month} base={base} label="볼 달" query={byDept ? "&view=dept" : ""} />
+        <MonthPicker months={months.includes(month) ? months : [month, ...months]} value={month} base={base} label="볼 달" query={view ? `&view=${view}` : ""} />
         <p className="text-sm text-zinc-600">
           {y}년 {m}월 승인 지출 <b className="text-lg tabular-nums text-zinc-900">{total.toLocaleString("ko-KR")}원</b> · {res.data.rows.length}건
         </p>
@@ -97,19 +113,21 @@ async function Content({ params, searchParams }: Pick<PageProps<"/workspace/[id]
           <>이 화면은 보기만 할 수 있어요. 분류 기준(지출 종류 → 계정과목)은 아래 [계정과목 분류 기준]에서 확인해요.</>
         )}
       </p>
-      <section className="min-w-0 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5" aria-label={byDept ? "부서별 지출" : "계정과목별 지출"}>
+      <SpendingTrend points={trend} month={month} hrefFor={(tm) => `${base}?month=${tm}${view ? `&view=${view}` : ""}`} />
+      <section className="min-w-0 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5" aria-label={groupTitle}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-semibold">{byDept ? "부서별 지출" : "계정과목별 지출"}</h2>
+          <h2 className="font-semibold">{groupTitle}</h2>
           <nav aria-label="보기 방식" className="flex gap-1 rounded-xl bg-zinc-100 p-1 text-sm">
             {[
               ["", "계정과목별"],
               ["dept", "부서별"],
+              ["member", "직원별"],
             ].map(([v, label]) => (
               <Link
                 key={label}
                 href={`${base}?month=${month}${v ? `&view=${v}` : ""}`}
-                aria-current={(v === "dept") === byDept ? "page" : undefined}
-                className={`inline-flex min-h-9 items-center rounded-lg px-3 ${(v === "dept") === byDept ? "bg-white font-semibold shadow-sm" : "text-zinc-600"}`}
+                aria-current={v === view ? "page" : undefined}
+                className={`inline-flex min-h-9 items-center rounded-lg px-3 ${v === view ? "bg-white font-semibold shadow-sm" : "text-zinc-600"}`}
               >
                 {label}
               </Link>

@@ -326,6 +326,8 @@
 - [x] 8-76 앱 알림을 채팅 [알림]방 카드로도(핵심 알림 6종 제외) (2026-11-05, D-224, migration 122·테스트 076)
 - [x] 8-77 알림 진동 길게 + 홈 화면 추가 안내 반복 안 뜨게 (2026-11-06, D-227)
 - [x] 9-46 월 마감 도우미(D-315, 2026-11-26, `implementation/2026-11-26_closing-wizard.md`) — E2E ALL_OK(.responsive/live/e2e-closing-wizard.mjs)
+- [x] 9-47 알림 안내 계정 기준(D-318, 2026-11-26) — E2E ALL_OK(.responsive/live/e2e-report-prompt.mjs)
+- [x] 9-48 지난달 지출 리포트·월별 지출 현황 6개월 추이·직원별(D-319, 2026-11-26, `implementation/2026-11-26_report-prompt.md`)
 - [ ] 8-78p Play 스토어 등록(사용자 2026-11-25 결정, D-314) — ~~AAB 빌드 확인~~(2026-11-25 bundleRelease 성공, targetSdk 36) · ~~앱 안 결제 숨김~~ · ~~계정 삭제(/account/delete)~~ (D-314, 운영 DB 174) → 남은 것(사용자): 조직 계정(D-U-N-S, 최대 30일) [2026-11-25 Apple 무료 창구(developer.apple.com/enroll/duns-lookup)로 D-U-N-S 신청 완료, D&B 메일 대기(damoun.workon@gmail.com). Play 조직 계정에 똑같이 쓸 영문 정보: 법인명 DAMOUNLAB / 480, Hangeulbiseok-ro, 208-709 / Nowon-gu / Seoul / 01671 / South Korea. 나이스디앤비 유료(신규 50만) 경로는 쓰지 않음] → Play Console 앱 만들기(kr.damounlab.app) → 앱 서명: 이미 설치한 사람 없음(사용자 본인뿐) → Google이 만든 서명 키 + 지금 키(workon-release.jks)는 업로드 키 → 데이터 보안·콘텐츠 등급·광고 없음·계정 삭제 URL https://damo-on.com/account/delete·심사용 계정(다모온테스트) → 1.0.7 AAB 올리기(~~JDK 25 빌드 실패~~ 2026-11-25 Gradle 9.1로 올려 해결, 1.0.7 AAB 빌드·서명 확인) · ~~등록 준비물~~(2026-11-25 mobile/store/play: 설명 글·아이콘·대표 그래픽·스크린샷 5장·데이터 보안/콘텐츠 등급/앱 액세스 답 — README 순서대로 입력) → 출시 뒤 다운로드 화면 APK 버튼을 Play 링크로(승인 필요)
 - [ ] 8-78 안드로이드 설치 앱(D-228, spec/features/android-app.md) — APK v1.0.0 배포(2026-11-06). 남은 것: 사용자 실기기 설치·알림(진동·소리·누르면 그 방) 확인
   - [x] 8-78a Capacitor 안드로이드 껍데기(운영 주소 열기·알림 누르면 그 화면) — APK 빌드 완료(2026-11-06)

@@ -4,6 +4,7 @@ import { getMembership } from "@/lib/auth/session";
 import { pushConfigured, pushToMembers } from "@/lib/push/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { nextAskDate, PUSH_PROMPT_KEY, PUSH_PROMPT_NEVER } from "@/lib/push/prompt";
 
 // 이 기기(브라우저)에서 알림 받기 (D-116). 로그인한 활성 멤버 본인 것만.
 type Result = { ok: true } | { ok: false; error: string };
@@ -25,6 +26,15 @@ export async function savePushSubscriptionAction(sub: BrowserSubscription, userA
   const { error } = await supabase.from("push_subscriptions").insert({ company_id: m.company_id, member_id: m.member_id, endpoint, p256dh, auth, user_agent: userAgent.slice(0, 300) || null });
   if (error) return { ok: false, error: "알림을 켜지 못했어요. 잠시 후 다시 시도해 주세요." };
   return { ok: true };
+}
+
+// 알림 안내를 계정 기준으로 미룸(D-318): later = 30일 뒤, never = 홈 화면 앱으로 쓰는 계정(다시 안 물음)
+export async function deferPushPromptAction(mode: "later" | "never"): Promise<void> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) return;
+  if (data.user.user_metadata?.[PUSH_PROMPT_KEY] === PUSH_PROMPT_NEVER) return;
+  await supabase.auth.updateUser({ data: { [PUSH_PROMPT_KEY]: mode === "never" ? PUSH_PROMPT_NEVER : nextAskDate(new Date()) } });
 }
 
 export async function deletePushSubscriptionAction(endpoint: string): Promise<Result> {

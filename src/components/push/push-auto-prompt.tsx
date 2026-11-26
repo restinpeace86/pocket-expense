@@ -6,6 +6,8 @@ import { useInstallPrompt } from "./install";
 import { ANDROID_APK_READY } from "@/lib/app-download";
 import { initNativePush } from "./native";
 import { usePushSubscription } from "./push-toggle";
+import { deferPushPromptAction } from "@/app/push/actions";
+import { isInAppBrowser } from "@/lib/push/prompt";
 
 // 알림 기본 켜기(D-213) + 홈 화면에 추가(D-219)
 // 브라우저는 사이트가 알림을 마음대로 켜거나 바탕화면 아이콘을 몰래 만들지 못하게 해서(사용자가 눌러야 함):
@@ -13,7 +15,9 @@ import { usePushSubscription } from "./push-toggle";
 // ② 휴대폰 브라우저 탭이면 → "1. 홈 화면에 추가 → 2. 알림 켜기" 두 단계 안내(안드로이드는 버튼 한 번에 휴대폰의 추가 창, 아이폰은 메뉴 안내)
 //    홈 화면 아이콘(앱)으로 연 경우·PC는 → 알림 켜기만
 // PC에서는 관리자 1:1 문의 노란 버튼(data-kakao-fab)·아래 고정 버튼 줄 위로 비켜 선다(겹쳐서 [알림 켜기]가 가려지던 문제)
-// [나중에]·[확인]은 쿠키로 7일(만료되면 다시 물음). 막혀 있거나 지원 안 하면 알림 단계는 빼고 안내
+// D-318: 띄울지는 계정 기준(ask, 서버가 판단 — 알림 켠 기기·앱이 있거나 '다음에 물을 날' 전이면 false). 보여 주면 계정에 30일 뒤로 기록,
+// 홈 화면 아이콘으로 연 계정은 다시 안 물음. 카카오톡 등 앱 안 브라우저에서는 안 띄움. 쿠키는 같은 브라우저에서 바로 다시 안 뜨게 하는 보조
+// 막혀 있거나 지원 안 하면 알림 단계는 빼고 안내
 const ASK_COOKIE = "pe_push_ask";
 const ASK_AGAIN_S = 7 * 86400;
 
@@ -24,7 +28,7 @@ function markAsked() {
   document.cookie = `${ASK_COOKIE}=1; path=/; max-age=${ASK_AGAIN_S}; samesite=lax`;
 }
 
-export function PushAutoPrompt() {
+export function PushAutoPrompt({ ask = true }: { ask?: boolean }) {
   const { state, pending, turnOn } = usePushSubscription();
   const { kind, installed, install } = useInstallPrompt();
   const [show, setShow] = useState(false);
@@ -48,6 +52,10 @@ export function PushAutoPrompt() {
   }, []);
 
   const mobileTab = kind === "prompt" || kind === "ios" || kind === "android-manual";
+  // 홈 화면 아이콘(앱)으로 쓰는 계정은 다시 묻지 않게 계정에 기록(D-318)
+  useEffect(() => {
+    if (ask && (installed || kind === "standalone") && state === "on") deferPushPromptAction("never").catch(() => undefined);
+  }, [ask, installed, kind, state]);
   useEffect(() => {
     if (state === "loading" || kind === null) return;
     if (state === "off" && typeof Notification !== "undefined" && Notification.permission === "granted" && !auto.current) {
@@ -60,13 +68,14 @@ export function PushAutoPrompt() {
     // 신호가 없는 안드로이드는 이미 추가했을 때가 많아(크롬은 추가한 사이트엔 신호를 안 줌) 그것만으로는 띄우지 않는다
     const needInstall = (kind === "prompt" || kind === "ios") && !installed;
     if (!needPush && !needInstall && state !== "ios-install") return;
-    if (askedRecently()) return;
+    if (!ask || askedRecently() || isInAppBrowser(navigator.userAgent)) return;
     const t = setTimeout(() => {
-      markAsked(); // 한 번 보여 주면 닫지 않고 다른 화면으로 가도 7일 동안 다시 안 띄움(D-227)
+      markAsked(); // 한 번 보여 주면 닫지 않고 다른 화면으로 가도 다시 안 띄움 — 계정에도 30일 뒤로(D-318)
+      deferPushPromptAction("later").catch(() => undefined);
       setShow(true);
     }, 1200); // 첫 화면을 먼저 보여 준 뒤
     return () => clearTimeout(t);
-  }, [state, kind, installed]);
+  }, [state, kind, installed, ask]);
 
   if (!show) return null;
   const close = () => {

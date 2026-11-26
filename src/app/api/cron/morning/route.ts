@@ -4,6 +4,7 @@ import { runClosingReminders } from "@/lib/push/closing";
 import { runPushReminders } from "@/lib/push/reminders";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runBilling } from "@/lib/billing/server";
+import { runMonthlyReports } from "@/lib/report/monthly-server";
 
 // 매일 아침 07:00(KST) 작업 하나로 모음(vercel.json): ① 개인카드 정기 결제 결제일 알림(D-110→D-171) ② 웹푸시 리마인더(D-116) ③ 관리자 월말 마감 알림(D-161)
 // CRON_SECRET이 없거나 맞지 않으면 아무것도 하지 않는다. 여러 번 불려도 같은 날 같은 일은 한 번만.
@@ -38,6 +39,12 @@ export async function GET(request: NextRequest) {
     out.billing = await runBilling();
   } catch (e) {
     out.billing_error = e instanceof Error ? e.message : String(e);
+  }
+  // ⑤ 지난달 지출 리포트(D-319): 매월 1일만, 관리자 [알림]방 카드 + 앱 알림
+  try {
+    out.report = await runMonthlyReports();
+  } catch (e) {
+    out.report_error = e instanceof Error ? e.message : String(e);
   }
   return NextResponse.json(out);
 }
