@@ -1,4 +1,4 @@
-import { ArrowRight, Briefcase, Building2, Camera, CheckCircle2, Crown, FileText, Landmark, Layers, Smartphone, Sparkles, Wallet } from "lucide-react";
+import { Archive, ArrowRight, Briefcase, Building2, Camera, CheckCircle2, Crown, FileText, Landmark, Layers, ShieldCheck, Smartphone, Sparkles, Users, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Faq } from "@/components/landing/faq";
@@ -9,7 +9,7 @@ import { Testimonials } from "@/components/landing/testimonials";
 import { OPERATOR, SHOW_FULL_BUSINESS_INFO } from "@/components/legal/documents";
 import { ADMIN_FEEDBACK_URL } from "@/lib/feedback";
 import { Wordmark } from "@/components/brand/logo";
-import { BRAND, BRAND_JOSA } from "@/lib/brand";
+import { BRAND } from "@/lib/brand";
 import { ACCENT, BRAND_BUTTON, type Accent } from "@/components/landing/accent";
 import { WhyArtwork, type WhyArt } from "@/components/landing/why-art";
 import { SectionNav } from "@/components/landing/section-nav";
@@ -38,20 +38,37 @@ const START_HREF = `/login?next=${encodeURIComponent("/onboarding/create-company
 // D-273 랜딩 다시 짜기: 구역마다 박히는 한 줄 + 뒷받침 한 줄. 비슷한 카드가 이어지던 중간(이어짐·경비 더 깊게·한 달 흐름)은 [한 달 흐름] 하나로.
 // [다른 점] 큰 글씨 4장 + 아래 [기능] 벽(모든 플랜 공통 기능을 구역별 칩으로 — 기능이 안 보이지 않게)
 const WHY: { icon: typeof Layers; big: string; body: string; accent: Accent; art: WhyArt }[] = [
-  { icon: Layers, big: "앱 다섯 개 → 하나", body: "경비·근태·채팅·캘린더·서류를 한 구독으로.", accent: "attend", art: "bundle" },
-  { icon: Sparkles, big: "찍으면 결의서", body: "AI가 채우고, 사람은 확인만.", accent: "expense", art: "ai" },
+  { icon: Layers, big: "앱 다섯 개 → 하나", body: "경비·근태·사내 채팅·캘린더·서류를 한 번 결제로. 기능마다 따로 돈 내지 않아요.", accent: "attend", art: "bundle" },
+  { icon: Sparkles, big: "찍으면 결의서", body: "영수증 사진만 올리면 가맹점·날짜·금액·계정과목까지 채워져요. 사람은 확인만.", accent: "expense", art: "ai" },
   { icon: FileText, big: "쓰던 양식 그대로", body: "결의서·휴가·근태 신청서, 품의서·구매요청서까지 우리 회사 양식 그대로 채워요.", accent: "docs", art: "form" },
-  { icon: Landmark, big: "세무사무소까지 한 번에", body: "월말 마감 파일이 메일 없이 넘어가요.", accent: "tax", art: "tax" },
+  { icon: Landmark, big: "세무사무소까지 한 번에", body: "마감 버튼 한 번이면 장부·영수증·결의서가 세무사무소로. 메일·압축 파일이 필요 없어요.", accent: "tax", art: "tax" },
 ];
 
 // 한 달 흐름(4단계) + 이어지는 점(칩) — 예전 [이어져서 편해요]·[경비 처리는 더 깊게]를 칩으로
 const FLOW: { verb: string; when: string; body: string; accent: Accent; icon: typeof Layers }[] = [
   { verb: "찍는다", when: "매일 · 직원", body: "AI가 결의서를 채워요", accent: "expense", icon: Camera },
   { verb: "누른다", when: "수시로 · 대표", body: "알림 받고 휴대폰에서 승인", accent: "attend", icon: CheckCircle2 },
-  { verb: "모인다", when: "월말 · 경리", body: "정산·카드 대조·마감 파일 자동", accent: "docs", icon: Wallet },
+  { verb: "모인다", when: "월말 · 관리자", body: "정산 금액 자동 계산, 마감은 도우미가 순서대로", accent: "docs", icon: Wallet },
   { verb: "넘어간다", when: "마감 뒤 · 세무사무소", body: "메일·압축 파일 없이 바로", accent: "tax", icon: Landmark },
 ];
 const LINKS = ["출장 일정 → 결의서 자동 채움", "결의서마다 바로 대화", "회의실 예약 = 참석자 일정", "QR 한 번 → 월 근태", "휴가 승인 → 회사 휴가신청서", "법인카드 내역 자동 대조", "우리 회사 양식 그대로 PDF·엑셀"];
+
+const PAINS: { before: string; after: string }[] = [
+  { before: "영수증 모아서 엑셀에 하나하나 옮겨 적기", after: "찍어서 올리면 AI가 결의서까지 채워요" },
+  { before: "결재 받으려고 대표님 자리에 계실 때까지 기다리기", after: "알림 받고 휴대폰에서 바로 승인·반려" },
+  { before: "직원이 사비로 쓴 돈, 얼마 돌려줄지 계산기 두드리기", after: "식대 한도 같은 회사 규정대로 돌려줄 금액이 자동 계산" },
+  { before: "법인카드 내역 보며 빠진 영수증 찾아다니기", after: "카드사 내역 파일을 올리면 영수증 없는 결제를 찾아 줘요" },
+  { before: "월말에 압축 파일 만들어 세무사무소에 메일 보내기", after: "마감 버튼 한 번이면 세무사무소가 바로 받아요" },
+  { before: "출퇴근·휴가는 종이나 엑셀로 따로 관리", after: "QR로 출근, 연차는 입사일 기준 자동 계산까지 같은 앱에서" },
+];
+
+const TRUST: { icon: typeof Layers; title: string; body: string }[] = [
+  { icon: ShieldCheck, title: "회사끼리 완전 분리", body: "다른 회사는 우리 자료를 볼 수 없어요" },
+  { icon: Users, title: "직원 수 무제한", body: "사람이 늘어도 요금이 그대로예요" },
+  { icon: Landmark, title: "세무사무소는 무료", body: "우리 세무사도 돈 안 내고 받아 가요" },
+  { icon: Archive, title: "해지해도 자료 그대로", body: "지난 자료는 언제든 보고 내려받아요" },
+  { icon: Smartphone, title: "설치 없이 바로", body: "휴대폰 브라우저로도 다 돼요" },
+];
 
 const ROLES: { who: string; line: string; accent: Accent; icon: typeof Layers }[] = [
   { who: "대표", line: "결재는 휴대폰으로", accent: "expense", icon: Crown },
@@ -114,7 +131,7 @@ export default function LandingPage() {
       >
         <div className="mx-auto grid max-w-5xl items-center gap-12 px-4 pb-20 pt-12 sm:pt-16 lg:grid-cols-2 lg:gap-16 lg:pt-20">
           <div>
-            <p className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-700">✦ 5~20인 작은 회사를 위한 통합 운영관리</p>
+            <p className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-700">✦ 직원 5~20명 회사의 경비·결재·근태를 한 앱으로</p>
             {/* 메인 카피는 두 줄로 고정(휴대폰에서도 어절 중간에서 끊기지 않게 break-keep) */}
             <h1 className="mt-5 break-keep text-[2.5rem] font-extrabold leading-[1.15] tracking-tight sm:text-6xl lg:text-[3.5rem]">
               {/* D-274 슬로건: 진짜 일에만 / 집중하세요. */}
@@ -123,7 +140,7 @@ export default function LandingPage() {
               <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">집중하세요.</span>
             </h1>
             <p className="mt-5 max-w-md text-balance break-keep text-lg leading-relaxed text-zinc-600 sm:text-xl">
-              {BRAND.sloganSub} 결재·근태부터 채팅·일정·회의실까지, 회사 생활은 {BRAND_JOSA.i} 챙겨요.
+              영수증은 찍기만, 결재는 휴대폰으로, 월말 자료는 세무사무소로 바로. 엑셀에 옮겨 적던 시간을 돌려드려요.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link href={START_HREF} className={`inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-xl px-6 font-semibold ${BRAND_BUTTON}`}>
@@ -139,6 +156,23 @@ export default function LandingPage() {
         </div>
       </header>
 
+      {/* 고민 → 해결(8-51, 2026-11-26 사용자 "고객 니즈에 확 끌리도록") — 지금 있는 기능만 */}
+      <section className="bg-zinc-50 py-16" aria-labelledby="pain-title" data-pains>
+        <div className="mx-auto max-w-5xl px-4">
+          <Heading id="pain-title" eyebrow="이런 일, 아직 손으로 하세요?" title="월말마다 반복되는 일," accent="이제 앱이 해요." sub="작은 회사일수록 대표와 경리 한두 명이 다 떠안아요. 그 시간을 줄이는 게 다모온의 일이에요." />
+          <ul className="mt-10 grid gap-3 md:grid-cols-2">
+            {PAINS.map(({ before, after }) => (
+              <li key={before} className={`${card} flex flex-col gap-2 p-5`}>
+                <p className="break-keep text-zinc-500 line-through decoration-zinc-300">{before}</p>
+                <p className="flex items-start gap-2 break-keep text-lg font-bold leading-snug text-zinc-900">
+                  <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-indigo-600" aria-hidden />
+                  {after}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
       <section id="why" className="mx-auto max-w-5xl scroll-mt-20 px-4 py-16" aria-labelledby="why-title">
         <Heading id="why-title" eyebrow="무엇이 다른가요" title="회사 운영에 필요한 기능," accent="전부 들어 있어요." sub="따로 쓰던 앱은 하나로, 손 가는 일은 AI가 대신." />
         {/* 큰 글씨 4장(D-273) — 뒷받침은 한 줄 */}
@@ -239,6 +273,21 @@ export default function LandingPage() {
             ))}
           </ul>
         </div>
+      </section>
+      {/* 안심하고 쓰세요(8-51 ⑥) — FAQ·약관과 같은 사실만 */}
+      <section className="mx-auto max-w-5xl px-4 pb-4 pt-12" aria-labelledby="trust-title" data-trust>
+        <h2 id="trust-title" className="text-center text-sm font-bold text-indigo-600">
+          안심하고 쓰세요
+        </h2>
+        <ul className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-5">
+          {TRUST.map(({ icon: Icon, title, body }) => (
+            <li key={title} className={`${card} flex flex-col gap-1 p-4`}>
+              <Icon className="size-5 text-indigo-600" aria-hidden />
+              <b className="break-keep text-[15px] leading-snug">{title}</b>
+              <span className="break-keep text-xs leading-relaxed text-zinc-600">{body}</span>
+            </li>
+          ))}
+        </ul>
       </section>
       <Pricing />
 

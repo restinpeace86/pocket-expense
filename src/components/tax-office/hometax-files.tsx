@@ -6,6 +6,7 @@ import { thrownActionMessage } from "@/lib/action-guard";
 import { formatDateTimeKst } from "@/lib/claims/format";
 import { HOMETAX_KIND_LABEL, HOMETAX_KINDS, type HometaxKind, type HometaxUpload } from "@/lib/hometax/kinds";
 import { inputClass } from "@/components/ui/page-shell";
+import { HometaxGuide } from "./hometax-guide";
 
 const size = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)}MB` : `${Math.max(1, Math.round(n / 1024))}KB`);
 
@@ -22,6 +23,7 @@ export function HometaxFiles({
   viewer,
   uploadAction,
   deleteAction,
+  guideOpen = false,
 }: {
   uploads: HometaxUpload[];
   month: string;
@@ -29,6 +31,7 @@ export function HometaxFiles({
   viewer: "company" | "tax_office";
   uploadAction: Upload;
   deleteAction: Remove;
+  guideOpen?: boolean; // 홈택스 내려받는 방법을 펼친 채로(월 마감 도우미, D-315)
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -74,6 +77,7 @@ export function HometaxFiles({
           ? "홈택스에서 이 달을 조회해 내려받은 엑셀·CSV(전자세금계산서·현금영수증·사업용 신용카드 매입 등)를 그대로 올려 두면, 세무사무소가 홈택스에 다시 들어가지 않고 여기서 보고 받아요. 세무 마감 ZIP에도 함께 들어가요."
           : "고객사가 홈택스에서 내려받아 올린 원본이에요. 표로 바로 보거나 원본을 받을 수 있고, 증빙 묶음(ZIP)에도 함께 들어가요. 세무대리로 직접 받은 자료가 있으면 여기 올려 회사와 함께 볼 수 있어요."}
       </p>
+      {viewer === "company" && <HometaxGuide month={month} open={guideOpen && uploads.length === 0} />}
 
         <form ref={form} action={upload} className="mt-3 flex min-w-0 flex-col gap-2 rounded-lg bg-zinc-50 p-3 sm:flex-row sm:flex-wrap sm:items-end">
           <input type="hidden" name="month" value={month} />

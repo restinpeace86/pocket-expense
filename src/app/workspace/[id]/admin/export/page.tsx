@@ -89,7 +89,10 @@ async function Export({ params, searchParams }: Pick<PageProps<"/workspace/[id]/
     <div className="flex flex-col gap-4">
       {/* 고정 마감 일정(D-161): 청구 마감 2일 · 세무 마감 5일(영업일로 당김), 늦은 청구는 다음 달 정산 */}
       <p className="break-keep rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
-        {monthLabel(month)}분 <b>세무 마감일은 {mdLabel(due)}</b>이에요(직원 청구 마감 {mdLabel(cutoff)}). 홈택스 자료를 올리고 마감해 세무사무소에 넘겨 주세요. 청구 마감 뒤에 상신된 {monthLabel(month)} 영수증은 다음 달 세무 마감의 &ldquo;전월 추가분&rdquo;으로 들어가요.
+        {monthLabel(month)}분 <b>세무 마감일은 {mdLabel(due)}</b>이에요(직원 청구 마감 {mdLabel(cutoff)}). 홈택스 자료를 올리고 마감해 세무사무소에 넘겨 주세요. 청구 마감 뒤에 상신된 {monthLabel(month)} 영수증은 다음 달 세무 마감의 &ldquo;전월 추가분&rdquo;으로 들어가요.{" "}
+        <Link href={`/workspace/${id}/admin/closing?month=${month}`} className="font-semibold underline underline-offset-2" data-closing-link>
+          처음이면 월 마감 도우미로 순서대로 하기 →
+        </Link>
       </p>
       {pendingClaims > 0 && (
         <div role="alert" className="flex flex-col gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">

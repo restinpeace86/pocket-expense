@@ -19,9 +19,10 @@ describe("월말 마감 알림 문구 (D-161·D-166)", () => {
     expect(m.text).not.toContain("홈택스");
     expect(m.text).toContain("10/2까지 승인 또는 반려");
   });
-  it("대기 없으면 기존 문구·세무 마감 버튼", () => {
+  it("대기 없으면 기존 문구·월 마감 도우미 버튼(D-315)", () => {
     const m = closingNotice({ ...base, kind: "close_due", pending: 0, closed: false });
-    expect(m.buttonLabel).toBe("세무 마감 열기");
+    expect(m.buttonLabel).toBe("월 마감 순서대로 하기");
+    expect(m.buttonPath).toMatch(/\/admin\/closing\?month=/);
     expect(m.text).toBe("[한빛] 오늘(10/2)이 9월 지출 세무 마감일이에요. 누락 내역을 확인하고 마감을 완료해 주세요.");
   });
   it("D-190: 법인카드를 쓰는 회사 — 1일 안내에 카드 내역 올리기, 3일·5일 대조 안 했으면 권유(마감했으면 빼기)", () => {

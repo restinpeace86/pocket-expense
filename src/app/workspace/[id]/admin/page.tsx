@@ -19,6 +19,11 @@ import { BudgetHomeCard } from "@/components/admin/budget-home-card";
 import type { BudgetStatus } from "@/lib/budget/format";
 import { mdKo, pastDueSchedule } from "@/lib/billing/state";
 import { getSetupState } from "@/lib/admin/setup-wizard-server";
+import { ClosingHomeCard } from "@/components/admin/closing-home-card";
+import { closingProgress, closingSteps, showClosingHomeCard } from "@/lib/admin/closing-wizard";
+import { getClosingData } from "@/lib/admin/closing-wizard-server";
+import { mdLabel, taxCloseDue } from "@/lib/expense/deadline";
+import { getHolidays } from "@/lib/expense/holidays";
 
 export const metadata = { title: `관리자 · ${BRAND.name}` };
 
@@ -61,6 +66,8 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
   ]);
   // 최초 1회 설정(D-300): 시작 안내 창·진행 카드
   const setupState = await getSetupState();
+  // 월 마감 도우미(D-315): 지난달이 마감 전이면 홈 카드 — 마감 기록이 없을 때만 단계 데이터를 읽는다
+  const closing = await closingCard(membership.company_id);
   // 오늘 출근 카드(D-242)
   const attendanceDay =
     attendancePending === null ? null : ((await supabase.rpc("attendance_day_admin", { p_date: todayKst() })).data as unknown as DayAdminData | null);
@@ -121,6 +128,7 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
           <span className="shrink-0 font-semibold">이력 보기 →</span>
         </Link>
       )}
+      {closing && <ClosingHomeCard href={`/workspace/${membership.company_id}/admin/closing?month=${closing.month}`} {...closing} />}
       {attendanceDay && <AttendanceHomeCard data={attendanceDay} pending={attendancePending ?? 0} href={`/workspace/${membership.company_id}/admin/attendance`} />}
       <AdminHomeView
       adminName={membership.name}
@@ -140,4 +148,20 @@ async function AdminHome({ params }: { params: PageProps<"/workspace/[id]/admin"
       {budget && <BudgetHomeCard status={budget as unknown as BudgetStatus} href={`/workspace/${membership.company_id}/admin/settings/budget`} />}
     </>
   );
+}
+
+async function closingCard(companyId: string) {
+  const today = todayKst();
+  const [y, m] = today.split("-").map(Number);
+  const month = new Date(Date.UTC(y, m - 2, 1)).toISOString().slice(0, 7);
+  const supabase = await createClient();
+  const { data: mc } = await supabase.from("monthly_closings").select("status").eq("company_id", companyId).eq("year_month", month).maybeSingle();
+  if (mc?.status === "closed") return null;
+  const [data, holidays] = await Promise.all([getClosingData(companyId, month).catch(() => null), getHolidays()]);
+  if (!data) return null;
+  const hasWork = data.rows > 0 || data.input.pendingClaims > 0;
+  if (!showClosingHomeCard({ month, today, closed: data.input.closed, hasWork })) return null;
+  const p = closingProgress(closingSteps(data.input));
+  const due = taxCloseDue(month, holidays);
+  return { month, done: p.done, total: p.total, due: mdLabel(due), overdue: today > due };
 }

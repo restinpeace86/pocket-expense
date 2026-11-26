@@ -201,8 +201,8 @@ export function closingNotice(p: ClosingNoticeInput): BuiltMessage {
   return {
     template: "CLOSING",
     text: `[${p.companyName}] ${parts.join(" ")}`,
-    buttonLabel: nag ? "승인 대기 보기" : "세무 마감 열기",
-    buttonPath: nag ? `/workspace/${p.companyId}/admin/claims?tab=pending` : `/workspace/${p.companyId}/admin/export?month=${p.month}`,
+    buttonLabel: nag ? "승인 대기 보기" : "월 마감 순서대로 하기",
+    buttonPath: nag ? `/workspace/${p.companyId}/admin/claims?tab=pending` : `/workspace/${p.companyId}/admin/closing?month=${p.month}`,
     vars: { kind: p.kind, month: p.month, pending: String(pending) },
   };
 }

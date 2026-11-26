@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   const fail = (e: unknown) => ({ ok: false, error: String(e) });
   // ⑥ 서울 버스 정류장 위치(D-243) — 월요일 새벽만
   const monday = new Date(Date.now() + 9 * 3600_000).getUTCDay() === 1;
-  const [purge, oil, chat, meeting, meetingExpired, leaveProofs, busStops, vaultLeavers, vaultTrash, storageTotal, feedback, docConvert, formDrafts] = await Promise.all([
+  const [purge, oil, chat, meeting, meetingExpired, leaveProofs, busStops, vaultLeavers, vaultTrash, storageTotal, feedback, docConvert, formDrafts, storageAlerts] = await Promise.all([
     purgeReceiptArchive(admin).catch(fail),
     syncOilPrices(admin).catch(fail),
     purgeChatFiles(admin).catch(fail),
@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
     purgeFeedback(admin).catch(fail),
     purgeConversions(admin).catch(fail),
     purgeFormDrafts(admin).catch(fail),
+    admin.rpc("storage_alert_check_all").then((r) => (r.error ? fail(r.error.message) : r.data), fail), // D-316 회사 저장 공간 80%·100% → 관리자 [알림]방
   ]);
-  return NextResponse.json({ ok: true, purge, oil, chat, meeting, meetingExpired, leaveProofs, busStops, vaultLeavers, vaultTrash, storageTotal, feedback, docConvert, formDrafts });
+  return NextResponse.json({ ok: true, purge, oil, chat, meeting, meetingExpired, leaveProofs, busStops, vaultLeavers, vaultTrash, storageTotal, feedback, docConvert, formDrafts, storageAlerts });
 }

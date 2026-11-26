@@ -160,6 +160,7 @@ describe("noticeCard (D-224 앱 알림 카드)", () => {
     expect(assistantLinkLabel("/workspace/c/admin/attendance")).toBe("근태 승인 열기");
     expect(assistantLinkLabel("/workspace/c/employee/bus/02503")).toBe("도착 정보 보기");
     expect(assistantLinkLabel("/workspace/c/admin/export?month=2026-10")).toBe("세무 마감 열기");
+    expect(assistantLinkLabel("/workspace/c/admin/closing?month=2026-10")).toBe("월 마감 도우미 열기");
     expect(assistantLinkLabel("/workspace/c/employee/claims/x")).toBe("결의서 열기");
   });
 });

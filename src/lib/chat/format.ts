@@ -240,6 +240,8 @@ export function assistantLinkLabel(link: string): string {
   const p = link.replace(/^\/workspace\/[^/]+/, "");
   if (p.includes("#notices")) return "공지 보기";
   if (p.startsWith("/admin/export")) return "세무 마감 열기";
+  if (p.startsWith("/admin/closing")) return "월 마감 도우미 열기";
+  if (p.startsWith("/admin/billing")) return "요금제 열기";
   if (p.startsWith("/admin/recurring")) return "정기 결제 보기";
   if (p.startsWith("/admin/corporate-cards")) return "카드 대조 열기";
   if (p.startsWith("/calendar/rooms")) return "회의실 예약 열기";
