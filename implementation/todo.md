@@ -520,7 +520,7 @@
 - [x] 9-21 ③ 서류 변환 플랜별 한도(2026-11-13, D-265, migration 154, `implementation/2026-11-13_doc-convert-quota.md`)
 - [x] 9-22 ② 휴지통(2026-11-13, D-266, migration 155, `implementation/2026-11-13_vault-trash.md`)
 - [x] 9-23 ① 예산(2026-11-13, D-267, migration 156, `implementation/2026-11-13_budgets.md`)
-- [ ] 9-24 용량 80% 알림 — D-316 구현(2026-11-26, migration 175 dry-run 통과) · **운영 DB 적용 = 사용자 승인 대기**
+- [x] 9-24 용량 80% 알림 — D-316 (2026-11-26, migration 175 사용자 승인 후 운영 적용, test 108 운영 DB 통과, 매일 새벽 작업에서 확인)
 - ⏭️ 홈택스 세금계산서 대사 문구: 8-12 보류(실제 홈택스 파일 견본 대기)와 같은 기능이라 랜딩·FAQ에 넣지 않음
 
 ## todo_improvement (2026-11-11) — D-251 승인, 순서대로

@@ -5233,6 +5233,32 @@ export type Database = {
         }
         Relationships: []
       }
+      storage_alert_logs: {
+        Row: {
+          company_id: string
+          created_at: string
+          level: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          level: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          level?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_alert_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storage_requests: {
         Row: {
           company_id: string
