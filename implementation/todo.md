@@ -491,7 +491,7 @@
 - [x] 9-34a migration 162 적용(2026-11-17 사용자 승인) — 약관·처리방침 버전 2026-11-17, 도우미 방 이름 다모온
 - [x] 9-34b 안드로이드 APK 1.0.4(versionCode 5, 이름 다모온) 빌드·올리기 — aapt 이름 다모온·kr.damounlab.app 확인, 4.1MB 올림(200), ANDROID_APP_VERSION 1.0.4 → 아이콘 C로 1.0.5(versionCode 6)
 - [ ] 9-34c 도메인 damo-on.com(대표)·damo-on.kr — 2026-11-17 구입·Vercel 연결됨, 카카오 JS 키 도메인(새 주소·www 허용 확인)·구글 동의 화면(앱 이름 다모온 확인)·설치 앱 server.url = damo-on.com + 안드로이드 1.0.6(versionCode 7) 올림·www CNAME(가비아)·www → damo-on.com 넘기기(next.config redirects, 308)·NEXT_PUBLIC_SITE_URL(사용자) 반영 확인(canonical = damo-on.com), Supabase site_url·허용 주소 바꿈(승인, D-287). 남은 것: (사용자) Vercel NEXT_PUBLIC_SITE_URL·www DNS·카카오 플랫폼 Web 도메인·구글 동의 화면·서치콘솔/네이버 → (나) 설치 앱 server.url + APK. 처음 계획: Supabase site_url·리디렉트(인증 설정 = 사용자 확인 후), 카카오·구글 리디렉트 주소, NEXT_PUBLIC_SITE_URL, 설치 앱 server.url. 옛 주소(pocket-expense-ruby.vercel.app)는 당분간 그대로 열림
-- [ ] 9-34d (사용자) 카카오 디벨로퍼스·구글 OAuth 동의 화면 앱 이름 → 다모온 · 상표 출원(다모온·DamoOn, 9·35·42류) — 2026-11-19 확인: 구글 로그인 창에 'qmgkkplmpbechnkfbqnq.supabase.co(으)로 이동'으로 보임(앱 이름 아님) → 구글 OAuth 브랜딩 확인(서치 콘솔 도메인 소유 확인 B-6 뒤 신청) 또는 Supabase 사용자 지정 도메인(Pro 유료 추가 기능). 카카오는 로그인 전 화면에 앱 이름이 안 나와 사용자 확인 필요
+- [ ] 9-34d (2026-11-28 구글 완료: 브랜딩 인증 통과 — 로그인 창 "다모온(으)로 이동"·로고·처리방침/약관 링크 확인. 남은 것: 카카오 앱 이름 확인·상표 출원) (사용자) 카카오 디벨로퍼스·구글 OAuth 동의 화면 앱 이름 → 다모온 · 상표 출원(다모온·DamoOn, 9·35·42류) — 2026-11-19 확인: 구글 로그인 창에 'qmgkkplmpbechnkfbqnq.supabase.co(으)로 이동'으로 보임(앱 이름 아님) → 구글 OAuth 브랜딩 확인(서치 콘솔 도메인 소유 확인 B-6 뒤 신청) 또는 Supabase 사용자 지정 도메인(Pro 유료 추가 기능). 카카오는 로그인 전 화면에 앱 이름이 안 나와 사용자 확인 필요
 - [ ] 9-34e 아이폰 앱 빌드 — 9-13e 준비 뒤(이름 파일은 이미 다모온)
 ## 2026-11-14 서비스 이름 RealOn
 - [x] 9-30 저장 공간 추가 상자 높이 = 선택한 구성(D-275, PC 277px = 277px)
